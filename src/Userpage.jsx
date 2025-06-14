@@ -6,7 +6,7 @@ function user() {
         <>
           <Nav/>
           <Hero/>
-            <section id="product" className="py-16"></section>
+            <section id="product" className="py-16"> </section>
             <section id="transactions" className="py-16"></section>
             <section id="about-us" className="py-16"></section>
             <section id="contact" className="py-16"></section>

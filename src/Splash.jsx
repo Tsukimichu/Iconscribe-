@@ -1,18 +1,20 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import bg from './assets/org.jpg';
 import logo from './assets/ICONS.png';
 
-const SplashScreen = ({ onFinish }) => {
+const Splash = () => {
   const [isVisible, setIsVisible] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(false);
-      if (onFinish) onFinish();
+      navigate('/dashboard'); // Redirect after splash
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [onFinish]);
+  }, [navigate]);
 
   if (!isVisible) return null;
 
@@ -43,4 +45,4 @@ const SplashScreen = ({ onFinish }) => {
   );
 };
 
-export default SplashScreen;
+export default Splash;

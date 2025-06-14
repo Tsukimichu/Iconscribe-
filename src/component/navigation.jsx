@@ -18,7 +18,7 @@ function Navigation() {
   ];
 
   return (
-    <nav className="flex items-center justify-between px-6 py-3 bg-[#243b7d] text-white shadow-md rounded-b-lg">
+    <nav className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 bg-[#243b7d] text-white shadow-md rounded-b-lg">
       <div className="flex-shrink-0">
         <img
           src={logo}

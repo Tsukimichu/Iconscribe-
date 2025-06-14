@@ -1,15 +1,64 @@
 import React, { useRef, useState } from 'react';
+import atp from '../assets/atp.png';
+import brochure from '../assets/brochure.png';
+import calendar from '../assets/calendar.png';
+import yearbook from '../assets/yearbook.png';
+import org from '../assets/org.jpg';
+import fb from '../assets/fb.png';
+import phone from '../assets/Phone.png';
+import card from '../assets/form.png';
+import sticker from '../assets/ICONS.png';
 
 function ProductSection() {
   const allServices = [
-    { title: 'Official Receipts (ATP)', description: 'Short description', image: '', alt: 'Image of Official Receipts' },
-    { title: 'Calendars & Brochures', description: 'Short description', image: '', alt: 'Image of Calendars and Brochures' },
-    { title: 'Yearbooks & Books', description: 'Short description', image: '', alt: 'Image of Yearbooks and Books' },
-    { title: 'Document Printing', description: 'Short description', image: '', alt: 'Image of Document Printing' },
-    { title: 'Flyers & Posters', description: 'Short description', image: '', alt: 'Image of Flyers and Posters' },
-    { title: 'Business Cards', description: 'Short description', image: '', alt: 'Image of Business Cards' },
-    { title: 'ID Printing', description: 'Short description', image: '', alt: 'Image of ID Printing' },
-    { title: 'Stickers & Labels', description: 'Short description', image: '', alt: 'Image of Stickers and Labels' },
+    {
+      title: 'Official Receipts (ATP)',
+      description: 'We print government-accredited official receipts.',
+      image: atp,
+      alt: 'Official Receipts',
+    },
+    {
+      title: 'Calendars & Brochures',
+      description: 'Custom marketing materials to promote your brand.',
+      image: calendar,
+      alt: 'Calendars and Brochures',
+    },
+    {
+      title: 'Yearbooks & Books',
+      description: 'High-quality yearbook and book printing services.',
+      image: yearbook,
+      alt: 'Yearbooks and Books',
+    },
+    {
+      title: 'Document Printing',
+      description: 'Fast and affordable document printing for all needs.',
+      image: org,
+      alt: 'Document Printing',
+    },
+    {
+      title: 'Flyers & Posters',
+      description: 'Colorful flyers and posters for effective advertising.',
+      image: fb,
+      alt: 'Flyers and Posters',
+    },
+    {
+      title: 'Business Cards',
+      description: 'Professional business cards to leave a strong impression.',
+      image: card,
+      alt: 'Business Cards',
+    },
+    {
+      title: 'ID Printing',
+      description: 'PVC ID printing for schools, companies, and events.',
+      image: phone,
+      alt: 'ID Printing',
+    },
+    {
+      title: 'Stickers & Labels',
+      description: 'Custom sticker and label printing for all surfaces.',
+      image: sticker,
+      alt: 'Stickers and Labels',
+    },
   ];
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,18 +128,26 @@ function ProductSection() {
                 <button
                   key={index}
                   onClick={() => alert(`${service.title} clicked!`)}
-                  className="min-w-[220px] h-[280px] bg-white/10 border border-white/20 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.6)] backdrop-blur-md text-white flex-shrink-0 snap-center transition-transform hover:scale-105"
+                  className="min-w-[220px] h-[280px] bg-white/10 border border-white/20 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.6)] backdrop-blur-md text-white flex-shrink-0 snap-center transition-transform hover:scale-105 overflow-hidden"
                   style={{
                     transform: `rotateY(${rotation}deg) translateZ(${translateZ}px)`,
                     transformOrigin: 'center center',
                   }}
                 >
-                  <div className="flex flex-col justify-center items-center p-4 text-center w-full h-full">
-                    <div className="w-24 h-24 mb-4 bg-white/20 rounded-2xl flex items-center justify-center text-xs text-white/60">
-                      {service.alt}
+                  <div className="w-full h-full flex flex-col">
+                    {/* Image fills 2/3 of the card */}
+                    <div className="h-2/3 w-full">
+                      <img
+                        src={service.image}
+                        alt={service.alt}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                    <h3 className="text-base font-semibold text-yellow-300 mb-1">{service.title}</h3>
-                    <p className="text-sm text-white/70">{service.description}</p>
+                    {/* Text content */}
+                    <div className="h-1/3 px-3 py-2 text-center flex flex-col justify-center items-center">
+                      <h3 className="text-sm font-semibold text-yellow-300">{service.title}</h3>
+                      <p className="text-xs text-white/70 mt-1">{service.description}</p>
+                    </div>
                   </div>
                 </button>
               );
@@ -103,20 +160,23 @@ function ProductSection() {
 
       {/* Inline Scrollbar Styling */}
       <style>
-        {`
-          #product ::-webkit-scrollbar {
-            height: 6px;
-          }
-          #product ::-webkit-scrollbar-track {
-            background: transparent;
-          }
-          #product ::-webkit-scrollbar-thumb {
-            background-color: rgba(255, 255, 255, 0.3);
-            border-radius: 9999px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-          }
-        `}
+      {`
+        #product ::-webkit-scrollbar {
+          height: 4px; /* Smaller height */
+          width: 4px;
+        }
+        #product ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        #product ::-webkit-scrollbar-thumb {
+          background-color: rgba(255, 255, 255, 0.3);
+          border-radius: 9999px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          margin: 0 40px; /* Visually shortens scrollbar length */
+        }
+     `} 
       </style>
+
     </section>
   );
 }

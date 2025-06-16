@@ -1,5 +1,6 @@
 import React from 'react';
 import logo from '../assets/ICONS.png';
+import { Link } from 'react-router-dom';
 
 function Navigation() {
   const handleScroll = (id) => {
@@ -41,12 +42,12 @@ function Navigation() {
           ))}
         </ul>
 
-        <a
-          href="/login"
+        <Link
+          to="/signup"
           className="bg-yellow-400 text-[#243b7d] font-semibold px-4 py-2 rounded-full shadow-md hover:bg-yellow-300 transition"
-        >
+          >
           Login/Register
-        </a>
+        </Link>
       </div>
     </nav>
   );

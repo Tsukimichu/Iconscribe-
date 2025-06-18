@@ -20,17 +20,22 @@ function Navigation() {
     navigate('/');
   };
 
+  // Scroll to center of section
   const handleScroll = (id) => {
     const section = document.getElementById(id);
     if (section) {
-      section.scrollIntoView({ behavior: 'smooth' });
+      section.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center', // Center the section in view
+      });
     }
   };
 
+  // Define nav items
   const navItems = [
     { label: 'Home', id: 'home' },
     { label: 'Products', id: 'product' },
-    { label: 'Transactions', id: 'transactions' },
+    ...(isLoggedIn ? [{ label: 'Transactions', id: 'transactions' }] : []),
     { label: 'About us', id: 'about-us' },
     { label: 'Contact us', id: 'contact' },
   ];
@@ -61,7 +66,6 @@ function Navigation() {
         {/* Auth Section */}
         {isLoggedIn ? (
           <div className="flex items-center gap-2">
-            {/* Logout */}
             <button
               onClick={handleLogout}
               className="flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-full transition"
@@ -69,8 +73,6 @@ function Navigation() {
               <LogOut size={18} />
               Logout
             </button>
-
-            {/* Profile Icon */}
             <Link to="/profile">
               <UserCircle
                 size={32}

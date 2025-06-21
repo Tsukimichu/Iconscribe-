@@ -6,32 +6,53 @@ import { UserCircle, LogOut } from 'lucide-react';
 function Navigation() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [activeSection, setActiveSection] = useState('');
 
-  // Check login status on mount
   useEffect(() => {
     const loginStatus = localStorage.getItem('isLoggedIn') === 'true';
     setIsLoggedIn(loginStatus);
   }, []);
 
-  // Handle logout
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
     setIsLoggedIn(false);
     navigate('/');
   };
 
-  // Scroll to center of section
   const handleScroll = (id) => {
     const section = document.getElementById(id);
     if (section) {
-      section.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center', // Center the section in view
-      });
+      section.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   };
 
-  // Define nav items
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        });
+      },
+      { threshold: 0.6 }
+    );
+
+    const observedSections = ['home', 'product', 'transactions', 'about-us', 'contact'];
+
+    observedSections.forEach((id) => {
+      const section = document.getElementById(id);
+      if (section) observer.observe(section);
+    });
+
+    return () => {
+      observedSections.forEach((id) => {
+        const section = document.getElementById(id);
+        if (section) observer.unobserve(section);
+      });
+    };
+  }, []);
+
   const navItems = [
     { label: 'Home', id: 'home' },
     { label: 'Products', id: 'product' },
@@ -42,20 +63,21 @@ function Navigation() {
 
   return (
     <nav className="sticky top-0 z-50 flex flex-wrap items-center justify-between w-full px-4 py-3 bg-[#243b7d] text-white shadow-md rounded-b-lg">
-      {/* Logo */}
       <div className="flex-shrink-0">
         <img src={logo} alt="logo" className="w-16 h-16 object-contain" />
       </div>
 
-      {/* Navigation & Auth Buttons */}
       <div className="flex items-center gap-4">
-        {/* Navigation Links */}
         <ul className="flex gap-3 md:gap-6 text-sm md:text-base font-bold">
           {navItems.map(({ label, id }) => (
             <li key={id}>
               <button
                 onClick={() => handleScroll(id)}
-                className="px-3 py-1 rounded-lg transition-colors duration-200 hover:bg-yellow-400 hover:text-black"
+                className={`px-3 py-1 rounded-lg transition-colors duration-200 ${
+                  activeSection === id
+                    ? 'bg-yellow-400 text-black'
+                    : 'hover:bg-yellow-400 hover:text-black'
+                }`}
               >
                 {label}
               </button>
@@ -63,7 +85,6 @@ function Navigation() {
           ))}
         </ul>
 
-        {/* Auth Section */}
         {isLoggedIn ? (
           <div className="flex items-center gap-2">
             <button

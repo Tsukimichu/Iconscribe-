@@ -21,10 +21,36 @@ function ProductSection() {
   ];
 
   const [searchQuery, setSearchQuery] = useState('');
-
   const filteredServices = allServices.filter(service =>
     service.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const carouselRef = useRef(null);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
+
+  const handleMouseDown = (e) => {
+    isDragging.current = true;
+    startX.current = e.pageX - carouselRef.current.offsetLeft;
+    scrollLeft.current = carouselRef.current.scrollLeft;
+  };
+
+  const handleMouseLeave = () => {
+    isDragging.current = false;
+  };
+
+  const handleMouseUp = () => {
+    isDragging.current = false;
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging.current) return;
+    e.preventDefault();
+    const x = e.pageX - carouselRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.5;
+    carouselRef.current.scrollLeft = scrollLeft.current - walk;
+  };
 
   return (
     <section id="product" className="py-20 px-6 bg-gradient-to-b from-[#0f172a] to-[#1e293b] text-white">
@@ -44,7 +70,14 @@ function ProductSection() {
       </div>
 
       {/* Swipeable Product Cards */}
-      <div className="overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory flex gap-6 px-2 py-4 touch-pan-x">
+      <div
+        ref={carouselRef}
+        className="overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory flex gap-6 px-2 py-4 cursor-grab active:cursor-grabbing touch-pan-x"
+        onMouseDown={handleMouseDown}
+        onMouseLeave={handleMouseLeave}
+        onMouseUp={handleMouseUp}
+        onMouseMove={handleMouseMove}
+      >
         {filteredServices.length > 0 ? (
           filteredServices.map((service, index) => (
             <div

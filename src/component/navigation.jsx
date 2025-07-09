@@ -65,32 +65,31 @@ function Navigation() {
 
   return (
     <nav className="sticky top-0 z-50 bg-[#243b7d] text-white shadow-md rounded-b-lg px-4 py-3">
-      <div className="flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between w-full">
+        {/* Logo on the left */}
+        <div className="flex-shrink-0">
           <img src={logo} alt="logo" className="w-14 h-14 object-contain" />
         </div>
 
-        {/* Desktop menu */}
-        <ul className="hidden md:flex gap-4 text-sm md:text-base font-bold items-center">
-          {navItems.map(({ label, id }) => (
-            <li key={id}>
-              <button
-                onClick={() => handleScroll(id)}
-                className={`px-3 py-1 rounded-lg transition-colors duration-200 ${
-                  activeSection === id
-                    ? 'bg-yellow-400 text-black'
-                    : 'hover:bg-yellow-400 hover:text-black'
-                }`}
-              >
-                {label}
-              </button>
-            </li>
-          ))}
-        </ul>
+        {/* Nav + Auth on the right (desktop) */}
+        <div className="hidden md:flex items-center gap-4 ml-auto">
+          <ul className="flex gap-4 text-sm md:text-base font-bold items-center">
+            {navItems.map(({ label, id }) => (
+              <li key={id}>
+                <button
+                  onClick={() => handleScroll(id)}
+                  className={`px-3 py-1 rounded-lg transition-colors duration-200 ${
+                    activeSection === id
+                      ? 'bg-yellow-400 text-black'
+                      : 'hover:bg-yellow-400 hover:text-black'
+                  }`}
+                >
+                  {label}
+                </button>
+              </li>
+            ))}
+          </ul>
 
-        {/* Auth buttons (desktop) */}
-        <div className="hidden md:flex items-center gap-2">
           {isLoggedIn ? (
             <>
               <button
@@ -119,7 +118,7 @@ function Navigation() {
 
         {/* Mobile menu button */}
         <button
-          className="md:hidden"
+          className="md:hidden ml-2"
           onClick={() => setMenuOpen(!menuOpen)}
         >
           {menuOpen ? <X size={28} /> : <Menu size={28} />}

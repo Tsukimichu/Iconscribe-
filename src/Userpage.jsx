@@ -3,7 +3,7 @@ import Hero from "./component/Hero"
 import ProductSection from "./component/ProductSection";
 import Transactions from "./component/Transactions";
 import Aboutus from "./component/Aboutus";
-import ContactUs from "./component/ContactUs";  // <-- Import ContactUs
+import ContactUs from "./component/ContactUs"; 
 
 
 function user() {

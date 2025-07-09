@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import logo from '../assets/ICONS.png';
 import bgImage from '../assets/org.jpg';
 import { User, Lock } from 'lucide-react';
-import googleLogo from '../assets/google-logo.png'; // ✅ Updated path
 
 function Login({ onLogin }) {
   const navigate = useNavigate();
@@ -65,13 +64,6 @@ function Login({ onLogin }) {
             Login
           </button>
         </form>
-
-        <div className="my-4 border-t pt-4 text-center text-gray-600 text-sm">or</div>
-
-        <button className="w-full border py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 transition">
-          <img src={googleLogo} alt="Google" className="h-5 w-5" />
-          Continue with Google
-        </button>
 
         <p className="mt-6 text-xs text-gray-500 text-center">
           By signing up, you agree to Icons' <a href="/terms" className="text-blue-700 hover:underline">Terms of service</a> and <a href="/privacy" className="text-blue-700 hover:underline">Privacy policy</a>.

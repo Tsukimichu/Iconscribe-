@@ -10,18 +10,17 @@ import sticker from '../assets/ICONS.png';
 
 function ProductSection() {
   const allServices = [
-    { title: 'Official Receipts', description: 'We print government-accredited official receipts.', image: atp, alt: 'Official Receipts' },
-    { title: 'Calendars', description: 'Custom marketing materials to promote your brand.', image: calendar, alt: 'Calendars' },
-    { title: 'Brochures', description: 'Custom marketing materials to promote your brand.', image: calendar, alt: 'Brochures' },
-    { title: 'Yearbooks', description: 'High-quality yearbook and book printing services.', image: yearbook, alt: 'Yearbooks' },
-    { title: 'Books', description: 'High-quality yearbook and book printing services.', image: yearbook, alt: 'Books' },
-    { title: 'Document Printing', description: 'Fast and affordable document printing for all needs.', image: org, alt: 'Document Printing' },
-    { title: 'Flyers', description: 'Colorful flyers for effective advertising.', image: fb, alt: 'Flyers' },
-    { title: 'Posters', description: 'Colorful posters for effective advertising.', image: fb, alt: 'Posters' },
-    { title: 'Business Cards', description: 'Professional business cards to leave a strong impression.', image: card, alt: 'Business Cards' },
-    { title: 'ID Printing', description: 'PVC ID printing for schools, companies, and events.', image: phone, alt: 'ID Printing' },
-    { title: 'Stickers', description: 'Custom sticker printing for all surfaces.', image: sticker, alt: 'Stickers' },
-    { title: 'Labels', description: 'Custom label printing for all surfaces.', image: sticker, alt: 'Labels' },
+    { title: 'Official Receipts', description: 'Print BIR-compliant official receipts with premium quality and clear, smudge-free ink. Ideal for businesses needing reliable, legal transaction records.', image: atp, alt: 'Official Receipts' },
+    { title: 'Calendars', description: 'Custom calendars designed with your branding in mind — perfect for giveaways or marketing materials that keep your business top of mind all year round.', image: calendar, alt: 'Calendars' },
+    { title: 'Brochures', description: 'Impress clients with professionally printed brochures that clearly showcase your products, services, and story — available in various folds and finishes.', image: calendar, alt: 'Brochures' },
+    { title: 'Yearbooks', description: 'Capture unforgettable memories with high-quality yearbooks tailored for schools, organizations, or events. Fully customizable layouts and durable binding.', image: yearbook, alt: 'Yearbooks' },
+    { title: 'Books', description: 'From self-published novels to company manuals, we offer book printing with flexible options in size, cover type, and binding for a polished, bookstore-ready finish.', image: yearbook, alt: 'Books' },
+    { title: 'Document Printing', description: 'Fast and accurate document printing for school, business, or personal needs. Choose from black & white or full color, with optional binding or stapling.', image: org, alt: 'Document Printing' },
+    { title: 'Flyers', description: 'Promote your business or event with eye-catching flyers. We offer vibrant, full-color prints on various paper stocks and sizes for maximum impact.', image: fb, alt: 'Flyers' },
+    { title: 'Posters', description: 'Make a statement with large-format posters ideal for advertising, announcements, or décor. Crisp visuals, bold colors, and available in multiple sizes.', image: fb, alt: 'Posters' },
+    { title: 'Business Cards', description: 'Leave a lasting impression with professionally designed and printed business cards. Choose from matte, glossy, textured, or custom finishes.', image: card, alt: 'Business Cards' },
+    { title: 'ID Printing', description: 'Durable and high-resolution ID cards for schools, companies, and events. Includes barcode, QR, and hologram options upon request.', image: phone, alt: 'ID Printing' },
+    { title: 'Labels', description: 'Custom printed labels for products, packaging, or organization. Available in waterproof, removable, and permanent adhesive varieties.', image: sticker, alt: 'Labels' },
   ];
 
   const [searchQuery, setSearchQuery] = useState('');

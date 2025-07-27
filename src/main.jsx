@@ -8,7 +8,7 @@ import Signup from './component/Signup.jsx';
 import Login from './component/Login.jsx';
 import Profile from './component/Profile.jsx';
 import Transactions from './component/Transactions.jsx';
-import ProtectedRoute from './component/ProtectedRoute.jsx'; // ✅ Import
+import ProtectedRoute from './component/ProtectedRoute.jsx';
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 

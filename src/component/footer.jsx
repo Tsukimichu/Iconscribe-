@@ -3,7 +3,7 @@ import { MdOutlineEmail } from 'react-icons/md';
 
 function Footer() {
   return (
-    <footer className="bg-[#FAFAF6] text-black px-4 py-6">
+    <footer className="bg-[#FAFAF6] text-black px-3 py-6">
       <div className="flex flex-col items-center space-y-3">
         {/* Social Icons */}
         <div className="flex space-x-6 text-3xl">

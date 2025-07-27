@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import atp from '../assets/atp.png';
 import calendar from '../assets/calendar.png';
 import yearbook from '../assets/yearbook.png';
@@ -10,17 +10,17 @@ import sticker from '../assets/ICONS.png';
 
 function ProductSection() {
   const allServices = [
-    { title: 'Official Receipts', description: 'Print BIR-compliant official receipts with premium quality and clear, smudge-free ink. Ideal for businesses needing reliable, legal transaction records.', image: atp, alt: 'Official Receipts' },
-    { title: 'Calendars', description: 'Custom calendars designed with your branding in mind — perfect for giveaways or marketing materials that keep your business top of mind all year round.', image: calendar, alt: 'Calendars' },
-    { title: 'Brochures', description: 'Impress clients with professionally printed brochures that clearly showcase your products, services, and story — available in various folds and finishes.', image: calendar, alt: 'Brochures' },
-    { title: 'Yearbooks', description: 'Capture unforgettable memories with high-quality yearbooks tailored for schools, organizations, or events. Fully customizable layouts and durable binding.', image: yearbook, alt: 'Yearbooks' },
-    { title: 'Books', description: 'From self-published novels to company manuals, we offer book printing with flexible options in size, cover type, and binding for a polished, bookstore-ready finish.', image: yearbook, alt: 'Books' },
-    { title: 'Document Printing', description: 'Fast and accurate document printing for school, business, or personal needs. Choose from black & white or full color, with optional binding or stapling.', image: org, alt: 'Document Printing' },
-    { title: 'Flyers', description: 'Promote your business or event with eye-catching flyers. We offer vibrant, full-color prints on various paper stocks and sizes for maximum impact.', image: fb, alt: 'Flyers' },
-    { title: 'Posters', description: 'Make a statement with large-format posters ideal for advertising, announcements, or décor. Crisp visuals, bold colors, and available in multiple sizes.', image: fb, alt: 'Posters' },
-    { title: 'Business Cards', description: 'Leave a lasting impression with professionally designed and printed business cards. Choose from matte, glossy, textured, or custom finishes.', image: card, alt: 'Business Cards' },
-    { title: 'ID Printing', description: 'Durable and high-resolution ID cards for schools, companies, and events. Includes barcode, QR, and hologram options upon request.', image: phone, alt: 'ID Printing' },
-    { title: 'Labels', description: 'Custom printed labels for products, packaging, or organization. Available in waterproof, removable, and permanent adhesive varieties.', image: sticker, alt: 'Labels' },
+    { title: 'Official Receipts', description: 'Print BIR-compliant official receipts with premium quality and clear, smudge-free ink.', image: atp, alt: 'Official Receipts' },
+    { title: 'Calendars', description: 'Custom calendars designed with your branding in mind — perfect for giveaways or marketing materials.', image: calendar, alt: 'Calendars' },
+    { title: 'Brochures', description: 'Professionally printed brochures that clearly showcase your products and services.', image: calendar, alt: 'Brochures' },
+    { title: 'Yearbooks', description: 'Capture memories with high-quality yearbooks for schools, organizations, or events.', image: yearbook, alt: 'Yearbooks' },
+    { title: 'Books', description: 'Book printing for self-published novels, company manuals, and more.', image: yearbook, alt: 'Books' },
+    { title: 'Document Printing', description: 'Fast and accurate document printing for school, business, or personal needs.', image: org, alt: 'Document Printing' },
+    { title: 'Flyers', description: 'Promote your business with vibrant, full-color flyers.', image: fb, alt: 'Flyers' },
+    { title: 'Posters', description: 'Large-format posters ideal for advertising or décor.', image: fb, alt: 'Posters' },
+    { title: 'Business Cards', description: 'High-quality business cards with various finishes.', image: card, alt: 'Business Cards' },
+    { title: 'ID Printing', description: 'Durable and high-resolution ID cards with optional features.', image: phone, alt: 'ID Printing' },
+    { title: 'Labels', description: 'Custom labels for products or packaging in waterproof or adhesive options.', image: sticker, alt: 'Labels' },
   ];
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,6 +32,25 @@ function ProductSection() {
   const isDragging = useRef(false);
   const startX = useRef(0);
   const scrollLeft = useRef(0);
+  const cardRefs = useRef([]);
+
+  // Scroll first result into center when search matches
+  useEffect(() => {
+    if (filteredServices.length === 1 && cardRefs.current[0]) {
+      cardRefs.current[0].scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest',
+      });
+    }
+  }, [filteredServices]);
+
+  // Reset scroll when search is cleared
+  useEffect(() => {
+    if (searchQuery === '' && carouselRef.current) {
+      carouselRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+  }, [searchQuery]);
 
   const handleMouseDown = (e) => {
     isDragging.current = true;
@@ -39,14 +58,8 @@ function ProductSection() {
     scrollLeft.current = carouselRef.current.scrollLeft;
   };
 
-  const handleMouseLeave = () => {
-    isDragging.current = false;
-  };
-
-  const handleMouseUp = () => {
-    isDragging.current = false;
-  };
-
+  const handleMouseLeave = () => { isDragging.current = false; };
+  const handleMouseUp = () => { isDragging.current = false; };
   const handleMouseMove = (e) => {
     if (!isDragging.current) return;
     e.preventDefault();
@@ -85,18 +98,19 @@ function ProductSection() {
           filteredServices.map((service, index) => (
             <div
               key={index}
+              ref={el => cardRefs.current[index] = el}
               onClick={() => alert(`You clicked on ${service.title}`)}
-              className="min-w-[220px] h-[280px] bg-white/10 border border-white/20 rounded-2xl shadow-md backdrop-blur-md flex-shrink-0 snap-center overflow-hidden hover:scale-105 transition-transform duration-300 cursor-pointer"
+              className="min-w-[250px] max-w-[300px] h-[310px] bg-white/10 border border-white/20 rounded-xl shadow-lg backdrop-blur-sm flex-shrink-0 snap-center overflow-hidden hover:scale-105 transition-transform duration-300 cursor-pointer"
             >
-              <div className="h-2/3 w-full">
+              <div className="h-[60%] w-full">
                 <img
                   src={service.image}
                   alt={service.alt}
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="h-1/3 px-3 py-2 text-center flex flex-col justify-center items-center">
-                <h3 className="text-sm font-semibold text-yellow-300">{service.title}</h3>
+              <div className="h-[40%] px-4 py-3 flex flex-col justify-center items-center text-center">
+                <h3 className="text-base font-semibold text-yellow-300">{service.title}</h3>
                 <p className="text-xs text-white/70 mt-1">{service.description}</p>
               </div>
             </div>
@@ -106,7 +120,7 @@ function ProductSection() {
         )}
       </div>
 
-      {/* Hide scrollbar on all browsers */}
+      {/* Hide scrollbar */}
       <style>{`
         .no-scrollbar::-webkit-scrollbar {
           display: none;

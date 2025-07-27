@@ -1,13 +1,12 @@
-
+import {FaInstagram, FaFacebook} from 'react-icons/fa'
 
 function Footer() {
     return(
         <>
         <div>
-            <img src={Instagram} alt="ig" />
-
-            <Facebook />
-        </div>
+            <FaInstagram />
+            <FaFacebook />
+        </div> 
         </>
     );
 }

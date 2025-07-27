@@ -10,7 +10,7 @@ import sticker from '../assets/ICONS.png';
 
 function ProductSection() {
   const allServices = [
-    { title: 'Official Receipts (ATP)', description: 'We print government-accredited official receipts.', image: atp, alt: 'Official Receipts' },
+    { title: 'Official Receipts', description: 'We print government-accredited official receipts.', image: atp, alt: 'Official Receipts' },
     { title: 'Calendars', description: 'Custom marketing materials to promote your brand.', image: calendar, alt: 'Calendars' },
     { title: 'Brochures', description: 'Custom marketing materials to promote your brand.', image: calendar, alt: 'Brochures' },
     { title: 'Yearbooks', description: 'High-quality yearbook and book printing services.', image: yearbook, alt: 'Yearbooks' },

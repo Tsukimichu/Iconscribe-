@@ -11,13 +11,17 @@ import sticker from '../assets/ICONS.png';
 function ProductSection() {
   const allServices = [
     { title: 'Official Receipts (ATP)', description: 'We print government-accredited official receipts.', image: atp, alt: 'Official Receipts' },
-    { title: 'Calendars & Brochures', description: 'Custom marketing materials to promote your brand.', image: calendar, alt: 'Calendars and Brochures' },
-    { title: 'Yearbooks & Books', description: 'High-quality yearbook and book printing services.', image: yearbook, alt: 'Yearbooks and Books' },
+    { title: 'Calendars', description: 'Custom marketing materials to promote your brand.', image: calendar, alt: 'Calendars' },
+    { title: 'Brochures', description: 'Custom marketing materials to promote your brand.', image: calendar, alt: 'Brochures' },
+    { title: 'Yearbooks', description: 'High-quality yearbook and book printing services.', image: yearbook, alt: 'Yearbooks' },
+    { title: 'Books', description: 'High-quality yearbook and book printing services.', image: yearbook, alt: 'Books' },
     { title: 'Document Printing', description: 'Fast and affordable document printing for all needs.', image: org, alt: 'Document Printing' },
-    { title: 'Flyers & Posters', description: 'Colorful flyers and posters for effective advertising.', image: fb, alt: 'Flyers and Posters' },
+    { title: 'Flyers', description: 'Colorful flyers for effective advertising.', image: fb, alt: 'Flyers' },
+    { title: 'Posters', description: 'Colorful posters for effective advertising.', image: fb, alt: 'Posters' },
     { title: 'Business Cards', description: 'Professional business cards to leave a strong impression.', image: card, alt: 'Business Cards' },
     { title: 'ID Printing', description: 'PVC ID printing for schools, companies, and events.', image: phone, alt: 'ID Printing' },
-    { title: 'Stickers & Labels', description: 'Custom sticker and label printing for all surfaces.', image: sticker, alt: 'Stickers and Labels' },
+    { title: 'Stickers', description: 'Custom sticker printing for all surfaces.', image: sticker, alt: 'Stickers' },
+    { title: 'Labels', description: 'Custom label printing for all surfaces.', image: sticker, alt: 'Labels' },
   ];
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -82,7 +86,8 @@ function ProductSection() {
           filteredServices.map((service, index) => (
             <div
               key={index}
-              className="min-w-[220px] h-[280px] bg-white/10 border border-white/20 rounded-2xl shadow-md backdrop-blur-md flex-shrink-0 snap-center overflow-hidden"
+              onClick={() => alert(`You clicked on ${service.title}`)}
+              className="min-w-[220px] h-[280px] bg-white/10 border border-white/20 rounded-2xl shadow-md backdrop-blur-md flex-shrink-0 snap-center overflow-hidden hover:scale-105 transition-transform duration-300 cursor-pointer"
             >
               <div className="h-2/3 w-full">
                 <img

@@ -17,14 +17,7 @@ const router = createBrowserRouter([
   { path: '/dashboard', element: <Userpage /> },
   { path: '/signup', element: <Signup /> },
   { path: '/login', element: <Login onLogin={() => {}} /> },
-  {
-    path: '/transactions',
-    element: (
-      <ProtectedRoute>
-        <Transactions />
-      </ProtectedRoute>
-    ),
-  },
+  { path: '/transactions', element: ( <ProtectedRoute> <Transactions /> </ProtectedRoute>), },
   {
     path: '/profile',
     element: (

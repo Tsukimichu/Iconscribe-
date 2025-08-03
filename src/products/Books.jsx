@@ -1,11 +1,15 @@
+import Nav from "../component/navigation";
+
 function Books() {
   return (
-    <div className="max-w-7xl mx-auto p-6 bg-[#FAF9F7] min-h-screen">
-      {/* Heading */}
+    <>
+    <Nav/>
+     <div className="max-w-7xl mx-auto p-6 bg-[#FAF9F7] min-h-screen">
+
       <h1 className="text-2xl font-bold mb-6">Service Details</h1>
 
       <div className="grid md:grid-cols-2 gap-10">
-        {/* Left: Image */}
+
         <div className="w-full">
           <img
             src="/your-image-path.jpg"
@@ -14,7 +18,6 @@ function Books() {
           />
         </div>
 
-        {/* Right: Details */}
         <div>
           <h2 className="text-xl font-bold mb-2">Books</h2>
           <p className="mb-4 text-sm text-gray-700">
@@ -24,11 +27,10 @@ function Books() {
             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
           </p>
 
-          {/* Order Details */}
           <h3 className="font-semibold mb-2">Order Details</h3>
 
           <div className="space-y-4">
-            {/* Upload Design */}
+
             <div>
               <label className="block text-sm font-medium">Upload Design</label>
               <input
@@ -37,7 +39,6 @@ function Books() {
               />
             </div>
 
-            {/* Quantity and Size */}
             <div className="flex gap-4">
               <div className="w-1/2">
                 <label className="block text-sm font-medium">Quantity <span className="text-xs text-gray-500">(count)</span></label>
@@ -49,7 +50,7 @@ function Books() {
                 <label className="block text-sm font-medium">Size <span className="text-xs text-gray-500">(inch)</span></label>
                 <select className="mt-1 w-full border border-gray-300 p-2 rounded-md">
                   <option>8.5” x 11”</option>
-                  {/* Add more sizes as needed */}
+
                 </select>
               </div>
             </div>
@@ -84,6 +85,7 @@ function Books() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

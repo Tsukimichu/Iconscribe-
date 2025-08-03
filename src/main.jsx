@@ -9,6 +9,7 @@ import Login from './component/Login.jsx';
 import Profile from './component/Profile.jsx';
 import Transactions from './component/Transactions.jsx';
 import ProtectedRoute from './ProtectedRoute.jsx';
+import Books from './products/Books.jsx';
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
@@ -18,14 +19,8 @@ const router = createBrowserRouter([
   { path: '/signup', element: <Signup /> },
   { path: '/login', element: <Login onLogin={() => {}} /> },
   { path: '/transactions', element: ( <ProtectedRoute> <Transactions /> </ProtectedRoute>), },
-  {
-    path: '/profile',
-    element: (
-      <ProtectedRoute>
-        <Profile />
-      </ProtectedRoute>
-    ),
-  },
+  { path: '/profile', element: ( <ProtectedRoute> <Profile /> </ProtectedRoute> ), },
+  { path: '/books', element: <Books/> },
 ]);
 
 createRoot(document.getElementById('root')).render(

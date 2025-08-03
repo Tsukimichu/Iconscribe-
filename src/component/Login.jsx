@@ -8,12 +8,21 @@ function Login({ onLogin }) {
   const navigate = useNavigate();
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('user'); // default to 'user'
 
   const handleLogin = (e) => {
     e.preventDefault();
     localStorage.setItem('isLoggedIn', 'true');
-    onLogin(); // ✅ Notify app of login
-    navigate('/dashboard');
+    localStorage.setItem('role', role);
+    onLogin();
+
+    if (role === 'admin') {
+      navigate('/admin');
+    } else if (role === 'manager') {
+      navigate('/manager');
+    } else {
+      navigate('/dashboard'); // user page
+    }
   };
 
   return (
@@ -53,8 +62,20 @@ function Login({ onLogin }) {
             />
           </div>
 
-          <div className="text-sm text-center text-gray-500">
-            Don't have an account? <a href="/signup" className="text-blue-600 font-medium hover:underline">Sign up</a>
+          {/* Role Selection */}
+          <div className="text-left">
+            <label htmlFor="role" className="block text-gray-600 text-sm mb-1">Select Role</label>
+            <select
+              id="role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="w-full border rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-400"
+              required
+            >
+              <option value="user">User</option>
+              <option value="manager">Manager</option>
+              <option value="admin">Admin</option>
+            </select>
           </div>
 
           <button
@@ -64,6 +85,10 @@ function Login({ onLogin }) {
             Login
           </button>
         </form>
+
+        <div className="text-sm text-center text-gray-500 mt-4">
+          Don't have an account? <a href="/signup" className="text-blue-600 font-medium hover:underline">Sign up</a>
+        </div>
 
         <p className="mt-6 text-xs text-gray-500 text-center">
           By signing up, you agree to Icons' <a href="/terms" className="text-blue-700 hover:underline">Terms of service</a> and <a href="/privacy" className="text-blue-700 hover:underline">Privacy policy</a>.

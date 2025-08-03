@@ -21,6 +21,7 @@ function ProductSection() {
     { title: 'Business Cards', description: 'High-quality business cards with various finishes.', image: card, alt: 'Business Cards' },
     { title: 'ID Printing', description: 'Durable and high-resolution ID cards with optional features.', image: phone, alt: 'ID Printing' },
     { title: 'Labels', description: 'Custom labels for products or packaging in waterproof or adhesive options.', image: sticker, alt: 'Labels' },
+    { title: 'Calling Card', description: 'Print BIR-compliant official receipts with premium quality and clear, smudge-free ink.', image: atp, alt: 'Official Receipts' },
   ];
 
   const [searchQuery, setSearchQuery] = useState('');

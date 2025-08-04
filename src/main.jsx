@@ -10,8 +10,8 @@ import Profile from './component/Profile.jsx';
 import Transactions from './component/Transactions.jsx';
 import ProtectedRoute from './component/ProtectedRoute.jsx';
 import Books from './products/Books.jsx';
-import AdminPage from './component/admin/AdminPage.jsx';     // ✅ Import
-import ManagerPage from './component/manager/ManagerPage.jsx'; // ✅ Import
+import AdminPage from './component/admin/AdminPage.jsx';  
+import ManagerPage from './component/manager/ManagerPage.jsx'; 
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
@@ -23,8 +23,8 @@ const router = createBrowserRouter([
   { path: '/transactions', element: (<ProtectedRoute><Transactions /></ProtectedRoute>) },
   { path: '/profile', element: (<ProtectedRoute><Profile /></ProtectedRoute>) },
   { path: '/books', element: <Books /> },
-  { path: '/admin', element: <AdminPage /> },       // ✅ Add admin route
-  { path: '/manager', element: <ManagerPage /> },   // ✅ Add manager route
+  { path: '/admin', element: <AdminPage /> },      
+  { path: '/manager', element: <ManagerPage /> },  
 ]);
 
 createRoot(document.getElementById('root')).render(

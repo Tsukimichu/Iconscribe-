@@ -10,6 +10,7 @@ import Profile from './component/Profile.jsx';
 import Transactions from './component/Transactions.jsx';
 import ProtectedRoute from './component/ProtectedRoute.jsx';
 import Books from './products/Books.jsx';
+import OfficialReceipt from './products/OfficialReceipt.jsx';
 import AdminPage from './component/admin/AdminPage.jsx';  
 import ManagerPage from './component/manager/ManagerPage.jsx'; 
 
@@ -25,6 +26,7 @@ const router = createBrowserRouter([
   { path: '/books', element: <Books /> },
   { path: '/admin', element: <AdminPage /> },      
   { path: '/manager', element: <ManagerPage /> },  
+  { path: '/official', element: <OfficialReceipt/>}
 ]);
 
 createRoot(document.getElementById('root')).render(

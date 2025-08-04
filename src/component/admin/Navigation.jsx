@@ -50,9 +50,24 @@ const Navigation = ({ selectedSection, setSelectedSection, handleLogout }) => {
           active={selectedSection === 'manageUser'}
           onClick={() => setSelectedSection('manageUser')}
         />
-        <NavItem icon={<Settings size={18} />} label="Maintenance" />
-        <NavItem icon={<RefreshCcw size={18} />} label="Backup & Restore" />
-        <NavItem icon={<BarChart3 size={18} />} label="Sales & Expense" />
+        <NavItem
+          icon={<Settings size={18} />}
+          label="Maintenance"
+          active={selectedSection === 'maintenance'}
+          onClick={() => setSelectedSection('maintenance')}
+        />
+        <NavItem
+          icon={<RefreshCcw size={18} />}
+          label="Backup & Restore"
+          active={selectedSection === 'backup'}
+          onClick={() => setSelectedSection('backup')}
+        />
+        <NavItem
+          icon={<BarChart3 size={18} />}
+          label="Sales & Expense"
+          active={selectedSection === 'sales'}
+          onClick={() => setSelectedSection('sales')}
+        />
         <NavItem
           icon={<LogOut size={18} />}
           label="Log-out"

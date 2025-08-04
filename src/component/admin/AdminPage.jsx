@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import Navigation from './Navigation';
 import OverviewSection from './OverviewSection';
 import ManageUserSection from './ManageUserSection';
+import Maintenance from './Maintenance';
+import BackupRestoreSection from './BackupRestoreSection';
+import SalesExpenseSection from './SalesExpenseSection';
 
 const AdminPage = () => {
   const navigate = useNavigate();
@@ -23,6 +26,9 @@ const AdminPage = () => {
       <main className="flex-1 p-6 overflow-y-auto">
         {selectedSection === 'overview' && <OverviewSection />}
         {selectedSection === 'manageUser' && <ManageUserSection />}
+        {selectedSection === 'maintenance' && <Maintenance />}
+        {selectedSection === 'backup' && <BackupRestoreSection/>}
+        {selectedSection === 'sales' && <SalesExpenseSection/>}
       </main>
     </div>
   );

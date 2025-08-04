@@ -13,8 +13,10 @@ const ManageUserSection = () => {
 
   const [archived, setArchived] = useState([]);
   const [showArchives, setShowArchives] = useState(false);
-  const [modal, setModal] = useState({ show: false, userId: null, action: null });
-  const [duration, setDuration] = useState('');
+  const [modal, setModal] = useState({ show: false, userId: null });
+  const [time, setTime] = useState('00:00');
+  const [duration, setDuration] = useState('1 day');
+  const [message, setMessage] = useState('');
   const [countdowns, setCountdowns] = useState({});
   const [tick, setTick] = useState(0);
 
@@ -59,15 +61,19 @@ const ManageUserSection = () => {
     setArchived(archived.filter(user => user.id !== id));
   };
 
-  const handleTimedAction = () => {
-    const seconds = parseInt(duration) * 60;
-    if (isNaN(seconds) || seconds <= 0) return alert('Invalid duration');
-    const targetStatus = modal.action === 'ban' ? 'Banned' : 'Suspended';
+  const handleSuspendConfirm = () => {
+    const seconds = {
+      '1 day': 86400,
+      '3 days': 259200,
+      '7 days': 604800
+    }[duration] || 86400;
 
-    updateStatus(modal.userId, targetStatus);
+    updateStatus(modal.userId, 'Suspended');
     setCountdowns(prev => ({ ...prev, [modal.userId]: seconds }));
-    setModal({ show: false, userId: null, action: null });
-    setDuration('');
+    setModal({ show: false, userId: null });
+    setTime('00:00');
+    setDuration('1 day');
+    setMessage('');
 
     setTimeout(() => {
       updateStatus(modal.userId, 'Active');
@@ -77,6 +83,12 @@ const ManageUserSection = () => {
         return updated;
       });
     }, seconds * 1000);
+  };
+
+  const handleBan = userId => {
+    if (window.confirm('Are you sure you want to ban this user?')) {
+      updateStatus(userId, 'Banned');
+    }
   };
 
   const formatTime = seconds => {
@@ -105,13 +117,13 @@ const ManageUserSection = () => {
             {user.status === 'Active' && (
               <>
                 <button
-                  onClick={() => setModal({ show: true, userId: user.id, action: 'suspend' })}
+                  onClick={() => setModal({ show: true, userId: user.id })}
                   className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
                 >
                   Suspend
                 </button>
                 <button
-                  onClick={() => setModal({ show: true, userId: user.id, action: 'ban' })}
+                  onClick={() => handleBan(user.id)}
                   className="bg-red-500 text-white px-3 py-1 rounded text-xs"
                 >
                   Ban
@@ -187,27 +199,55 @@ const ManageUserSection = () => {
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white p-6 rounded-lg shadow-xl w-80 space-y-4"
+            className="bg-white p-6 rounded-lg shadow-xl w-96 space-y-4"
           >
-            <h2 className="text-xl font-bold">
-              Set {modal.action === 'ban' ? 'Ban' : 'Suspend'} Time
-            </h2>
-            <input
-              type="number"
-              value={duration}
-              onChange={e => setDuration(e.target.value)}
-              className="w-full border border-gray-300 rounded p-2 text-sm focus:ring focus:ring-blue-300"
-              placeholder="Enter minutes"
-            />
+            <h2 className="text-xl font-bold text-gray-800">Suspend User</h2>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Time</label>
+              <input
+                type="time"
+                value={time}
+                onChange={e => setTime(e.target.value)}
+                className="w-full border border-gray-300 rounded p-2 text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Duration</label>
+              <select
+                value={duration}
+                onChange={e => setDuration(e.target.value)}
+                className="w-full border border-gray-300 rounded p-2 text-sm"
+              >
+                <option value="1 day">1 day</option>
+                <option value="3 days">3 days</option>
+                <option value="7 days">7 days</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Suspension Message</label>
+              <textarea
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+                className="w-full border border-gray-300 rounded p-2 text-sm"
+                rows={3}
+              />
+            </div>
+
             <div className="flex justify-end space-x-2">
               <button
-                onClick={() => setModal({ show: false, userId: null, action: null })}
-                className="bg-gray-300 px-3 py-1 rounded"
+                onClick={() => setModal({ show: false, userId: null })}
+                className="bg-gray-300 px-4 py-2 rounded text-sm"
               >
                 Cancel
               </button>
-              <button onClick={handleTimedAction} className="bg-blue-600 text-white px-3 py-1 rounded">
-                Confirm
+              <button
+                onClick={handleSuspendConfirm}
+                className="bg-blue-600 text-white px-4 py-2 rounded text-sm"
+              >
+                Suspend
               </button>
             </div>
           </motion.div>

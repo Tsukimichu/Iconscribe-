@@ -26,7 +26,7 @@ const router = createBrowserRouter([
   { path: '/books', element: <Books /> },
   { path: '/admin', element: <AdminPage /> },      
   { path: '/manager', element: <ManagerPage /> },  
-  { path: '/official', element: <OfficialReceipt/>}
+  { path: '/official-receipt', element: <OfficialReceipt/>}
 ]);
 
 createRoot(document.getElementById('root')).render(

@@ -1,4 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+
 import atp from '../assets/atp.png';
 import calendar from '../assets/calendar.png';
 import yearbook from '../assets/yearbook.png';
@@ -10,18 +12,18 @@ import sticker from '../assets/ICONS.png';
 
 function ProductSection() {
   const allServices = [
-    { title: 'Official Receipts', description: 'Print BIR-compliant official receipts with premium quality and clear, smudge-free ink.', image: atp, alt: 'Official Receipts' },
-    { title: 'Calendars', description: 'Custom calendars designed with your branding in mind — perfect for giveaways or marketing materials.', image: calendar, alt: 'Calendars' },
-    { title: 'Brochures', description: 'Professionally printed brochures that clearly showcase your products and services.', image: calendar, alt: 'Brochures' },
-    { title: 'Yearbooks', description: 'Capture memories with high-quality yearbooks for schools, organizations, or events.', image: yearbook, alt: 'Yearbooks' },
-    { title: 'Books', description: 'Book printing for self-published novels, company manuals, and more.', image: yearbook, alt: 'Books' },
-    { title: 'Document Printing', description: 'Fast and accurate document printing for school, business, or personal needs.', image: org, alt: 'Document Printing' },
-    { title: 'Flyers', description: 'Promote your business with vibrant, full-color flyers.', image: fb, alt: 'Flyers' },
-    { title: 'Posters', description: 'Large-format posters ideal for advertising or décor.', image: fb, alt: 'Posters' },
-    { title: 'Business Cards', description: 'High-quality business cards with various finishes.', image: card, alt: 'Business Cards' },
-    { title: 'ID Printing', description: 'Durable and high-resolution ID cards with optional features.', image: phone, alt: 'ID Printing' },
-    { title: 'Labels', description: 'Custom labels for products or packaging in waterproof or adhesive options.', image: sticker, alt: 'Labels' },
-    { title: 'Calling Card', description: 'Print BIR-compliant official receipts with premium quality and clear, smudge-free ink.', image: atp, alt: 'Official Receipts' },
+    { title: 'Official Receipts', description: 'Print BIR-compliant official receipts with premium quality and clear, smudge-free ink.', image: atp, alt: 'Official Receipts', link: '/official-receipt' },
+    { title: 'Calendars', description: 'Custom calendars designed with your branding in mind — perfect for giveaways or marketing materials.', image: calendar, alt: 'Calendars', link: '/calendars' },
+    { title: 'Brochures', description: 'Professionally printed brochures that clearly showcase your products and services.', image: calendar, alt: 'Brochures', link: '/brochures' },
+    { title: 'Yearbooks', description: 'Capture memories with high-quality yearbooks for schools, organizations, or events.', image: yearbook, alt: 'Yearbooks', link: '/yearbooks' },
+    { title: 'Books', description: 'Book printing for self-published novels, company manuals, and more.', image: yearbook, alt: 'Books', link: '/books' },
+    { title: 'Document Printing', description: 'Fast and accurate document printing for school, business, or personal needs.', image: org, alt: 'Document Printing', link: '/documents' },
+    { title: 'Flyers', description: 'Promote your business with vibrant, full-color flyers.', image: fb, alt: 'Flyers', link: '/flyers' },
+    { title: 'Posters', description: 'Large-format posters ideal for advertising or décor.', image: fb, alt: 'Posters', link: '/posters' },
+    { title: 'Business Cards', description: 'High-quality business cards with various finishes.', image: card, alt: 'Business Cards', link: '/business-cards' },
+    { title: 'ID Printing', description: 'Durable and high-resolution ID cards with optional features.', image: phone, alt: 'ID Printing', link: '/id-printing' },
+    { title: 'Labels', description: 'Custom labels for products or packaging in waterproof or adhesive options.', image: sticker, alt: 'Labels', link: '/labels' },
+    { title: 'Calling Card', description: 'Print high-quality calling cards.', image: atp, alt: 'Calling Card', link: '/calling-card' },
   ];
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,7 +37,6 @@ function ProductSection() {
   const scrollLeft = useRef(0);
   const cardRefs = useRef([]);
 
-  // Scroll first result into center when search matches
   useEffect(() => {
     if (filteredServices.length === 1 && cardRefs.current[0]) {
       cardRefs.current[0].scrollIntoView({
@@ -46,7 +47,6 @@ function ProductSection() {
     }
   }, [filteredServices]);
 
-  // Reset scroll when search is cleared
   useEffect(() => {
     if (searchQuery === '' && carouselRef.current) {
       carouselRef.current.scrollTo({ left: 0, behavior: 'smooth' });
@@ -75,7 +75,6 @@ function ProductSection() {
         Services Offered
       </h2>
 
-      {/* Search Bar */}
       <div className="mb-8 flex justify-center">
         <input
           type="text"
@@ -86,7 +85,6 @@ function ProductSection() {
         />
       </div>
 
-      {/* Swipeable Product Cards */}
       <div
         ref={carouselRef}
         className="overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory flex gap-6 px-2 py-4 cursor-grab active:cursor-grabbing touch-pan-x"
@@ -97,10 +95,10 @@ function ProductSection() {
       >
         {filteredServices.length > 0 ? (
           filteredServices.map((service, index) => (
-            <div
+            <Link
+              to={service.link}
               key={index}
               ref={el => cardRefs.current[index] = el}
-              onClick={() => alert(`You clicked on ${service.title}`)}
               className="min-w-[250px] max-w-[300px] h-[310px] bg-white/10 border border-white/20 rounded-xl shadow-lg backdrop-blur-sm flex-shrink-0 snap-center overflow-hidden hover:scale-105 transition-transform duration-300 cursor-pointer"
             >
               <div className="h-[60%] w-full">
@@ -114,14 +112,13 @@ function ProductSection() {
                 <h3 className="text-base font-semibold text-yellow-300">{service.title}</h3>
                 <p className="text-xs text-white/70 mt-1">{service.description}</p>
               </div>
-            </div>
+            </Link>
           ))
         ) : (
           <p className="text-white/60 px-4">No matching service found.</p>
         )}
       </div>
 
-      {/* Hide scrollbar */}
       <style>{`
         .no-scrollbar::-webkit-scrollbar {
           display: none;

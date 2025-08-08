@@ -1,11 +1,14 @@
 import Nav from "../component/navigation";
+import { ArrowBigLeft } from "lucide-react";
 
 function Books() {
   return (
     <>
     <Nav/>
-     <div className="max-w-7xl mx-auto p-6 bg-[#FAF9F7] min-h-screen">
+     <div className="max-w-7xl mx-auto p-5 bg-[#FAF9F7] min-h-screen">
 
+      <ArrowBigLeft/>
+      
       <h1 className="text-2xl font-bold mb-6">Service Details</h1>
 
       <div className="grid md:grid-cols-2 gap-10">

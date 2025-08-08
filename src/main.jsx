@@ -13,6 +13,7 @@ import Books from './products/Books.jsx';
 import OfficialReceipt from './products/OfficialReceipt.jsx';
 import AdminPage from './component/admin/AdminPage.jsx';  
 import ManagerPage from './component/manager/ManagerPage.jsx'; 
+import Calendars from './products/Calendars.jsx';
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
@@ -26,7 +27,8 @@ const router = createBrowserRouter([
   { path: '/books', element: <Books /> },
   { path: '/admin', element: <AdminPage /> },      
   { path: '/manager', element: <ManagerPage /> },  
-  { path: '/official-receipt', element: <OfficialReceipt/>}
+  { path: '/official-receipt', element: <OfficialReceipt/>},
+  { path: '/calendars', element: <Calendars/>}
 ]);
 
 createRoot(document.getElementById('root')).render(

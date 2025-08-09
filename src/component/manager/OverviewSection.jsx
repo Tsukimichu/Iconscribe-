@@ -3,7 +3,7 @@ import React from 'react';
 const OverviewSection = () => {
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold mb-4">Manager Overview</h1>
+      <h1 className="text-3xl font-bold mb-4">Manageruserredgsgsdg Overview</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-md">

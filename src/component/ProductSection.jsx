@@ -10,6 +10,7 @@ import phone from '../assets/Phone.png';
 import card from '../assets/form.png';
 import sticker from '../assets/ICONS.png';
 import poster from '../assets/Poster.png'
+import book from '../assets/books.png';
 
 function ProductSection() {
   const allServices = [
@@ -17,7 +18,7 @@ function ProductSection() {
     { title: 'Calendars', description: 'Custom calendars designed with your branding in mind — perfect for giveaways or marketing materials.', image: calendar, alt: 'Calendars', link: '/calendars' },
     { title: 'Brochures', description: 'Professionally printed brochures that clearly showcase your products and services.', image: calendar, alt: 'Brochures', link: '/brochures' },
     { title: 'Yearbooks', description: 'Capture memories with high-quality yearbooks for schools, organizations, or events.', image: yearbook, alt: 'Yearbooks', link: '/yearbooks' },
-    { title: 'Books', description: 'Book printing for self-published novels, company manuals, and more.', image: yearbook, alt: 'Books', link: '/books' },
+    { title: 'Books', description: 'Book printing for self-published novels, company manuals, and more.', image: book, alt: 'Books', link: '/books' },
     { title: 'Document Printing', description: 'Fast and accurate document printing for school, business, or personal needs.', image: org, alt: 'Document Printing', link: '/documents' },
     { title: 'Flyers', description: 'Promote your business with vibrant, full-color flyers.', image: fb, alt: 'Flyers', link: '/flyers' },
     { title: 'Posters', description: 'Large-format posters ideal for advertising or décor.', image: poster, alt: 'Posters', link: '/posters' },

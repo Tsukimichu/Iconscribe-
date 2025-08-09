@@ -9,6 +9,7 @@ import fb from '../assets/fb.png';
 import phone from '../assets/Phone.png';
 import card from '../assets/form.png';
 import sticker from '../assets/ICONS.png';
+import poster from '../assets/Poster.png'
 
 function ProductSection() {
   const allServices = [
@@ -19,7 +20,7 @@ function ProductSection() {
     { title: 'Books', description: 'Book printing for self-published novels, company manuals, and more.', image: yearbook, alt: 'Books', link: '/books' },
     { title: 'Document Printing', description: 'Fast and accurate document printing for school, business, or personal needs.', image: org, alt: 'Document Printing', link: '/documents' },
     { title: 'Flyers', description: 'Promote your business with vibrant, full-color flyers.', image: fb, alt: 'Flyers', link: '/flyers' },
-    { title: 'Posters', description: 'Large-format posters ideal for advertising or décor.', image: fb, alt: 'Posters', link: '/posters' },
+    { title: 'Posters', description: 'Large-format posters ideal for advertising or décor.', image: poster, alt: 'Posters', link: '/posters' },
     { title: 'Business Cards', description: 'High-quality business cards with various finishes.', image: card, alt: 'Business Cards', link: '/business-cards' },
     { title: 'ID Printing', description: 'Durable and high-resolution ID cards with optional features.', image: phone, alt: 'ID Printing', link: '/id-printing' },
     { title: 'Labels', description: 'Custom labels for products or packaging in waterproof or adhesive options.', image: sticker, alt: 'Labels', link: '/labels' },
@@ -101,13 +102,16 @@ function ProductSection() {
               ref={el => cardRefs.current[index] = el}
               className="min-w-[250px] max-w-[300px] h-[310px] bg-white/10 border border-white/20 rounded-xl shadow-lg backdrop-blur-sm flex-shrink-0 snap-center overflow-hidden hover:scale-105 transition-transform duration-300 cursor-pointer"
             >
-              <div className="h-[60%] w-full">
+              {/* Image Section */}
+              <div className="h-[60%] w-full relative">
                 <img
                   src={service.image}
                   alt={service.alt}
-                  className="w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
+
+              {/* Text Section */}
               <div className="h-[40%] px-4 py-3 flex flex-col justify-center items-center text-center">
                 <h3 className="text-base font-semibold text-yellow-300">{service.title}</h3>
                 <p className="text-xs text-white/70 mt-1">{service.description}</p>

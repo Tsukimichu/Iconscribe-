@@ -1,37 +1,94 @@
+import React from 'react';
+import {
+  Home,
+  ClipboardList,
+  Package,
+  Truck,
+  BarChart3,
+  Archive,
+  LogOut,
+} from 'lucide-react';
+import { motion } from 'framer-motion';
 import logo from '../../assets/ICONS.png';
 
-
 const Navigation = ({ selectedSection, setSelectedSection, handleLogout }) => {
-  const navItem = (label, key) => (
-    <button
-      className={`flex items-center px-4 py-3 w-full text-left transition ${
-        selectedSection === key ? 'bg-white text-blue-900 font-semibold' : 'hover:bg-blue-800'
+  const NavItem = ({ icon, label, onClick, active }) => (
+    <motion.div
+      whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.08)' }}
+      className={`flex items-center space-x-3 cursor-pointer p-2 rounded-xl transition ${
+        active ? 'bg-white/10' : ''
       }`}
-      onClick={() => setSelectedSection(key)}
+      onClick={onClick}
     >
-      {label}
-    </button>
+      {icon}
+      <span className="font-semibold tracking-wide text-sm">{label}</span>
+    </motion.div>
   );
 
   return (
-    <div className="w-64 bg-blue-900 text-white min-h-screen py-6 space-y-2">
-      <img
+    <motion.aside
+      initial={{ x: -120, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ duration: 0.6 }}
+      className="w-64 bg-[#243b7d] text-white flex flex-col items-center py-6 shadow-xl rounded-r-3xl"
+    >
+      {/* Logo */}
+      <motion.img
         src={logo}
         alt="Logo"
         className="w-20 mb-6"
-      />      {navItem('Overview', 'overview')}
-      {navItem('Orders', 'orders')}
-      {navItem('Product', 'products')}
-      {navItem('Supply', 'supply')}
-      {navItem('Sales & Expense', 'salesExpense')}
-      {navItem('Archive', 'archive')}
-      <button
-        onClick={handleLogout}
-        className="absolute bottom-6 left-4 right-4 bg-red-500 hover:bg-red-600 text-white py-2 rounded"
-      >
-        Log out
-      </button>
-    </div>
+        whileHover={{ scale: 1.1 }}
+      />
+
+      {/* Navigation Items */}
+      <nav className="space-y-3 w-full px-6">
+        <NavItem
+          icon={<Home size={18} />}
+          label="Overview"
+          active={selectedSection === 'overview'}
+          onClick={() => setSelectedSection('overview')}
+        />
+        <NavItem
+          icon={<ClipboardList size={18} />}
+          label="Orders"
+          active={selectedSection === 'orders'}
+          onClick={() => setSelectedSection('orders')}
+        />
+        <NavItem
+          icon={<Package size={18} />}
+          label="Product"
+          active={selectedSection === 'products'}
+          onClick={() => setSelectedSection('products')}
+        />
+        <NavItem
+          icon={<Truck size={18} />}
+          label="Supply"
+          active={selectedSection === 'supply'}
+          onClick={() => setSelectedSection('supply')}
+        />
+        <NavItem
+          icon={<BarChart3 size={18} />}
+          label="Sales & Expense"
+          active={selectedSection === 'salesExpense'}
+          onClick={() => setSelectedSection('salesExpense')}
+        />
+        <NavItem
+          icon={<Archive size={18} />}
+          label="Archive"
+          active={selectedSection === 'archive'}
+          onClick={() => setSelectedSection('archive')}
+        />
+
+        {/* Logout Button */}
+        <div className="pt-6 border-t border-white/20 mt-6">
+          <NavItem
+            icon={<LogOut size={18} />}
+            label="Log-out"
+            onClick={handleLogout}
+          />
+        </div>
+      </nav>
+    </motion.aside>
   );
 };
 

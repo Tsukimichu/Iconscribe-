@@ -1,15 +1,12 @@
-// ManagerPage.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from './Navigation';
 import OverviewSection from './OverviewSection';
-
-// import OverviewSection from './OverviewSection';
-// import OrdersSection from './OrdersSection';
-// import ProductSection from './ProductSection';
-// import SupplySection from './SupplySection';
-// import SalesAndExpenseSection from './SalesAndExpenseSection';
-// import ArchiveSection from './ArchiveSection';
+import OrdersSection from './OrdersSection';
+import ProductSection from './ProductSection';
+import SupplySection from './SupplySection';
+import SalesAndExpenseSection from './SalesAndExpenseSection';
+import ArchiveSection from './ArchiveSection';
 
 const ManagerPage = () => {
   const navigate = useNavigate();

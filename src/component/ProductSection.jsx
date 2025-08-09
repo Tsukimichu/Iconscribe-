@@ -11,12 +11,14 @@ import card from '../assets/form.png';
 import sticker from '../assets/ICONS.png';
 import poster from '../assets/Poster.png'
 import book from '../assets/books.png';
+import brochure from '../assets/bro1chure.png'
+
 
 function ProductSection() {
   const allServices = [
     { title: 'Official Receipts', description: 'Print BIR-compliant official receipts with premium quality and clear, smudge-free ink.', image: atp, alt: 'Official Receipts', link: '/official-receipt' },
     { title: 'Calendars', description: 'Custom calendars designed with your branding in mind — perfect for giveaways or marketing materials.', image: calendar, alt: 'Calendars', link: '/calendars' },
-    { title: 'Brochures', description: 'Professionally printed brochures that clearly showcase your products and services.', image: calendar, alt: 'Brochures', link: '/brochures' },
+    { title: 'Brochures', description: 'Professionally printed brochures that clearly showcase your products and services.', image: brochure, alt: 'Brochures', link: '/brochures' },
     { title: 'Yearbooks', description: 'Capture memories with high-quality yearbooks for schools, organizations, or events.', image: yearbook, alt: 'Yearbooks', link: '/yearbooks' },
     { title: 'Books', description: 'Book printing for self-published novels, company manuals, and more.', image: book, alt: 'Books', link: '/books' },
     { title: 'Document Printing', description: 'Fast and accurate document printing for school, business, or personal needs.', image: org, alt: 'Document Printing', link: '/documents' },
@@ -97,27 +99,28 @@ function ProductSection() {
       >
         {filteredServices.length > 0 ? (
           filteredServices.map((service, index) => (
-            <Link
-              to={service.link}
-              key={index}
-              ref={el => cardRefs.current[index] = el}
-              className="min-w-[250px] max-w-[300px] h-[310px] bg-white/10 border border-white/20 rounded-xl shadow-lg backdrop-blur-sm flex-shrink-0 snap-center overflow-hidden hover:scale-105 transition-transform duration-300 cursor-pointer"
-            >
-              {/* Image Section */}
-              <div className="h-[60%] w-full relative">
-                <img
-                  src={service.image}
-                  alt={service.alt}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-              </div>
+<Link
+  to={service.link}
+  key={index}
+  ref={el => cardRefs.current[index] = el}
+  className="min-w-[250px] max-w-[300px] h-[310px] bg-white/10 border border-white/20 rounded-xl shadow-lg backdrop-blur-sm flex-shrink-0 snap-center overflow-hidden hover:scale-105 transition-transform duration-300 cursor-pointer"
+>
+  {/* Image Section */}
+  <div className="h-[60%] w-full flex items-center justify-center bg-transparent">
+    <img
+      src={service.image}
+      alt={service.alt}
+      className="h-[90%] w-auto object-contain"
+    />
+  </div>
 
-              {/* Text Section */}
-              <div className="h-[40%] px-4 py-3 flex flex-col justify-center items-center text-center">
-                <h3 className="text-base font-semibold text-yellow-300">{service.title}</h3>
-                <p className="text-xs text-white/70 mt-1">{service.description}</p>
-              </div>
-            </Link>
+  {/* Text Section */}
+  <div className="h-[40%] px-4 py-3 flex flex-col justify-center items-center text-center">
+    <h3 className="text-base font-semibold text-yellow-300">{service.title}</h3>
+    <p className="text-xs text-white/70 mt-1">{service.description}</p>
+  </div>
+</Link>
+
           ))
         ) : (
           <p className="text-white/60 px-4">No matching service found.</p>

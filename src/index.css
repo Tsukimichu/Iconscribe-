@@ -9,3 +9,23 @@ body {
 body::-webkit-scrollbar {
   display: none; 
 }
+
+@keyframes text-glow {
+  0%, 100% {
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.6), 
+                 0 0 10px rgba(255, 255, 255, 0.4);
+  }
+  50% {
+    text-shadow: 0 0 15px rgba(235, 232, 232, 0.9), 
+                 0 0 25px rgba(255, 255, 255, 0.7);
+  }
+}
+
+.animate-text-glow {
+  animation: text-glow 2s ease-in-out infinite;
+}
+
+.animate-text-glow-slow {
+  animation: text-glow 4s ease-in-out infinite;
+}
+

@@ -1,139 +1,145 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Autoplay } from "swiper/modules";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import atp from '../assets/atp.png';
-import calendar from '../assets/calendar.png';
-import yearbook from '../assets/yearbook.png';
-import org from '../assets/org.jpg';
-import fb from '../assets/fb.png';
-import phone from '../assets/Phone.png';
-import card from '../assets/form.png';
-import sticker from '../assets/ICONS.png';
-import poster from '../assets/Poster.png'
-import book from '../assets/books.png';
-import brochure from '../assets/bro1chure.png'
+import "swiper/css";
+import "swiper/css/navigation";
 
+// Assets
+import atp from "../assets/atp.png";
+import calendar from "../assets/calendar.png";
+import yearbook from "../assets/yearbook.png";
+import org from "../assets/org.jpg";
+import fb from "../assets/fb.png";
+import phone from "../assets/Phone.png";
+import card from "../assets/form.png";
+import sticker from "../assets/ICONS.png";
+import poster from "../assets/Poster.png";
+import book from "../assets/books.png";
+import brochure from "../assets/bro1chure.png";
 
 function ProductSection() {
   const allServices = [
-    { title: 'Official Receipts', description: 'Print BIR-compliant official receipts with premium quality and clear, smudge-free ink.', image: atp, alt: 'Official Receipts', link: '/official-receipt' },
-    { title: 'Calendars', description: 'Custom calendars designed with your branding in mind — perfect for giveaways or marketing materials.', image: calendar, alt: 'Calendars', link: '/calendars' },
-    { title: 'Brochures', description: 'Professionally printed brochures that clearly showcase your products and services.', image: brochure, alt: 'Brochures', link: '/brochures' },
-    { title: 'Yearbooks', description: 'Capture memories with high-quality yearbooks for schools, organizations, or events.', image: yearbook, alt: 'Yearbooks', link: '/yearbooks' },
-    { title: 'Books', description: 'Book printing for self-published novels, company manuals, and more.', image: book, alt: 'Books', link: '/books' },
-    { title: 'Document Printing', description: 'Fast and accurate document printing for school, business, or personal needs.', image: org, alt: 'Document Printing', link: '/documents' },
-    { title: 'Flyers', description: 'Promote your business with vibrant, full-color flyers.', image: fb, alt: 'Flyers', link: '/flyers' },
-    { title: 'Posters', description: 'Large-format posters ideal for advertising or décor.', image: poster, alt: 'Posters', link: '/posters' },
-    { title: 'Business Cards', description: 'High-quality business cards with various finishes.', image: card, alt: 'Business Cards', link: '/business-cards' },
-    { title: 'ID Printing', description: 'Durable and high-resolution ID cards with optional features.', image: phone, alt: 'ID Printing', link: '/id-printing' },
-    { title: 'Labels', description: 'Custom labels for products or packaging in waterproof or adhesive options.', image: sticker, alt: 'Labels', link: '/labels' },
-    { title: 'Calling Card', description: 'Print high-quality calling cards.', image: atp, alt: 'Calling Card', link: '/calling-card' },
+    { title: "Official Receipts", description: "BIR-compliant official receipts with premium quality, smudge-free ink.", image: atp, alt: "Official Receipts", link: "/official-receipt" },
+    { title: "Calendars", description: "Custom calendars designed with your branding in mind.", image: calendar, alt: "Calendars", link: "/calendars" },
+    { title: "Brochures", description: "Professionally printed brochures to showcase your products and services.", image: brochure, alt: "Brochures", link: "/brochures" },
+    { title: "Yearbooks", description: "Capture memories with high-quality yearbooks for schools or events.", image: yearbook, alt: "Yearbooks", link: "/yearbooks" },
+    { title: "Books", description: "Book printing for self-published novels, manuals, and more.", image: book, alt: "Books", link: "/books" },
+    { title: "Document Printing", description: "Fast, accurate document printing for school, business, or personal needs.", image: org, alt: "Document Printing", link: "/documents" },
+    { title: "Flyers", description: "Promote your business with vibrant, full-color flyers.", image: fb, alt: "Flyers", link: "/flyers" },
+    { title: "Posters", description: "Large-format posters ideal for advertising or décor.", image: poster, alt: "Posters", link: "/posters" },
+    { title: "Business Cards", description: "High-quality business cards with various finishes.", image: card, alt: "Business Cards", link: "/business-cards" },
+    { title: "ID Printing", description: "Durable, high-resolution ID cards with optional features.", image: phone, alt: "ID Printing", link: "/id-printing" },
+    { title: "Labels", description: "Custom labels for packaging in waterproof or adhesive options.", image: sticker, alt: "Labels", link: "/labels" },
+    { title: "Calling Card", description: "Print high-quality calling cards with sharp details.", image: atp, alt: "Calling Card", link: "/calling-card" },
   ];
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const filteredServices = allServices.filter(service =>
+  const [searchQuery, setSearchQuery] = useState("");
+  const filteredServices = allServices.filter((service) =>
     service.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const carouselRef = useRef(null);
-  const isDragging = useRef(false);
-  const startX = useRef(0);
-  const scrollLeft = useRef(0);
-  const cardRefs = useRef([]);
-
-  useEffect(() => {
-    if (filteredServices.length === 1 && cardRefs.current[0]) {
-      cardRefs.current[0].scrollIntoView({
-        behavior: 'smooth',
-        inline: 'center',
-        block: 'nearest',
-      });
-    }
-  }, [filteredServices]);
-
-  useEffect(() => {
-    if (searchQuery === '' && carouselRef.current) {
-      carouselRef.current.scrollTo({ left: 0, behavior: 'smooth' });
-    }
-  }, [searchQuery]);
-
-  const handleMouseDown = (e) => {
-    isDragging.current = true;
-    startX.current = e.pageX - carouselRef.current.offsetLeft;
-    scrollLeft.current = carouselRef.current.scrollLeft;
-  };
-
-  const handleMouseLeave = () => { isDragging.current = false; };
-  const handleMouseUp = () => { isDragging.current = false; };
-  const handleMouseMove = (e) => {
-    if (!isDragging.current) return;
-    e.preventDefault();
-    const x = e.pageX - carouselRef.current.offsetLeft;
-    const walk = (x - startX.current) * 1.5;
-    carouselRef.current.scrollLeft = scrollLeft.current - walk;
-  };
-
   return (
-    <section id="product" className="py-20 px-6 bg-gradient-to-b from-[#0f172a] to-[#1e293b] text-white">
-      <h2 className="text-4xl font-extrabold text-center mb-8 text-yellow-400 drop-shadow-lg tracking-wide">
+    <section id="product" className="relative py-20 px-6 text-white overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,0,0.07),transparent_70%)] animate-pulse-slow" />
+      <div className="absolute inset-0 bg-[conic-gradient(at_top_right,rgba(34,211,238,0.05),transparent_70%)] animate-spin-slow" />
+
+      {/* Title */}
+      <h2 className="relative text-4xl font-extrabold text-center mb-8 text-yellow-400 tracking-wide">
         Services Offered
       </h2>
 
-      <div className="mb-8 flex justify-center">
+      {/* Search Bar */}
+      <div className="relative mb-12 flex justify-center">
         <input
           type="text"
           placeholder="Search a service..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="px-4 py-2 rounded-full w-full max-w-md bg-white/10 text-white placeholder-white/60 focus:outline-none border border-white/20 focus:ring-2 focus:ring-yellow-400 transition"
+          className="px-5 py-3 rounded-full w-full max-w-md bg-white/10 text-white placeholder-white/60 focus:outline-none border border-yellow-400/40 focus:ring-2 focus:ring-yellow-400 transition backdrop-blur-lg"
         />
       </div>
 
-      <div
-        ref={carouselRef}
-        className="overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory flex gap-6 px-2 py-4 cursor-grab active:cursor-grabbing touch-pan-x"
-        onMouseDown={handleMouseDown}
-        onMouseLeave={handleMouseLeave}
-        onMouseUp={handleMouseUp}
-        onMouseMove={handleMouseMove}
-      >
-        {filteredServices.length > 0 ? (
-          filteredServices.map((service, index) => (
-            <Link
-              to={service.link}
-              key={index}
-              ref={el => cardRefs.current[index] = el}
-              className="min-w-[250px] max-w-[300px] h-[310px] bg-white/10 border border-white/20 rounded-xl shadow-lg backdrop-blur-sm flex-shrink-0 snap-center overflow-hidden hover:scale-105 transition-transform duration-300 cursor-pointer"
-            >
-              {/* Image Section */}
-              <div className="h-[60%] w-full flex items-center justify-center bg-transparent">
-                <img
-                  src={service.image}
-                  alt={service.alt}
-                  className="h-[90%] w-auto object-contain"
-                />
-              </div>
+      {/* Swiper Carousel */}
+      {filteredServices.length > 0 ? (
+        <div className="relative">
+          <Swiper
+            modules={[Navigation, Autoplay]}
+            spaceBetween={24}
+            slidesPerView={3}
+            loop={true}
+            autoplay={{ delay: 4000 }}
+            navigation={{
+              nextEl: ".custom-swiper-button-next",
+              prevEl: ".custom-swiper-button-prev",
+            }}
+            breakpoints={{
+              320: { slidesPerView: 1 },
+              640: { slidesPerView: 2 },
+              1024: { slidesPerView: 3 },
+            }}
+            className="pb-12"
+          >
+            {filteredServices.map((service, index) => (
+              <SwiperSlide key={index}>
+                <Link
+                  to={service.link}
+                  className="group relative bg-white/10 border border-white/20 backdrop-blur-xl rounded-2xl h-[340px] flex flex-col overflow-hidden shadow-lg transition duration-500 hover:border-yellow-400/50 hover:shadow-yellow-400/20"
+                >
+                  {/* Image */}
+                  <div className="h-[60%] w-full flex items-center justify-center bg-gradient-to-b from-transparent to-black/20 overflow-hidden">
+                    <img
+                      src={service.image}
+                      alt={service.alt}
+                      className="h-[85%] w-auto object-contain transform transition-transform duration-500 group-hover:scale-110 group-hover:rotate-1"
+                    />
+                  </div>
 
-              {/* Text Section */}
-              <div className="h-[40%] px-4 py-3 flex flex-col justify-center items-center text-center">
-                <h3 className="text-base font-semibold text-yellow-300">{service.title}</h3>
-                <p className="text-xs text-white/70 mt-1">{service.description}</p>
-              </div>
-            </Link>
-          ))
-        ) : (
-          <p className="text-white/60 px-4">No matching service found.</p>
-        )}
-      </div>
+                  {/* Text */}
+                  <div className="h-[40%] px-4 py-4 flex flex-col justify-center items-center text-center">
+                    <h3 className="text-lg font-semibold text-yellow-300 group-hover:text-yellow-400 transition-colors">
+                      {service.title}
+                    </h3>
+                    <p className="text-xs text-white/70 mt-2 leading-relaxed">
+                      {service.description}
+                    </p>
+                  </div>
 
+                  {/* Glow Line Effect */}
+                  <div className="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-yellow-400 to-transparent opacity-0 group-hover:opacity-100 transition" />
+                </Link>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+
+          {/* Navigation Arrows */}
+          <div className="custom-swiper-button-prev absolute -left-10 top-1/2 -translate-y-1/2 cursor-pointer z-10 bg-white/10 hover:bg-yellow-400/40 transition rounded-full p-3 backdrop-blur-lg shadow-md">
+            <ChevronLeft className="w-6 h-6 text-white" />
+          </div>
+          <div className="custom-swiper-button-next absolute -right-10 top-1/2 -translate-y-1/2 cursor-pointer z-10 bg-white/10 hover:bg-yellow-400/40 transition rounded-full p-3 backdrop-blur-lg shadow-md">
+            <ChevronRight className="w-6 h-6 text-white" />
+          </div>
+        </div>
+      ) : (
+        <p className="relative text-white/60 text-center mt-6">No matching service found.</p>
+      )}
+
+      {/* Extra Animations */}
       <style>{`
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 0.15; }
+          50% { opacity: 0.35; }
         }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
+        .animate-pulse-slow { animation: pulse-slow 12s ease-in-out infinite; }
+        .animate-spin-slow { animation: spin-slow 60s linear infinite; }
       `}</style>
     </section>
   );

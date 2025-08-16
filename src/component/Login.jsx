@@ -27,12 +27,16 @@ function Login({ onLogin }) {
 
   return (
     <div
-      className="min-h-screen bg-no-repeat bg-cover flex items-center justify-center"
+      className="min-h-screen bg-no-repeat bg-cover flex items-center justify-center relative"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <div className="bg-white/90 backdrop-blur-md p-8 rounded-2xl shadow-xl max-w-sm w-full text-center transition-all duration-700">
+      {/* 🌫️ Backdrop blur overlay */}
+      <div className="absolute inset-0 bg-white/30 backdrop-blur-[6px]"></div>
+
+      {/* Login Card */}
+      <div className="relative bg-white/30 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center border border-white/40">
         <div className="flex justify-center mb-4">
-          <img src={logo} alt="Logo" className="h-20" />
+          <img src={logo} alt="Logo" className="h-20 drop-shadow-md" />
         </div>
 
         <h2 className="text-2xl font-bold mb-6 text-gray-800">Log In</h2>
@@ -43,7 +47,7 @@ function Login({ onLogin }) {
             <input
               type="tel"
               placeholder="Phone number"
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
+              className="w-full pl-10 pr-4 py-2 rounded-xl bg-white/60 border border-gray-300 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               required
@@ -55,7 +59,7 @@ function Login({ onLogin }) {
             <input
               type="password"
               placeholder="Password"
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
+              className="w-full pl-10 pr-4 py-2 rounded-xl bg-white/60 border border-gray-300 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -69,7 +73,7 @@ function Login({ onLogin }) {
               id="role"
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="w-full border rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-400"
+              className="w-full border rounded-xl py-2 px-3 bg-white/60 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400"
               required
             >
               <option value="user">User</option>
@@ -80,18 +84,18 @@ function Login({ onLogin }) {
 
           <button
             type="submit"
-            className="w-full bg-[#243b7d] text-white py-2 rounded-lg hover:bg-blue-800 transition"
+            className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-black py-2 rounded-xl shadow-lg hover:shadow-xl transition-all font-semibold"
           >
             Login
           </button>
         </form>
 
-        <div className="text-sm text-center text-gray-500 mt-4">
-          Don't have an account? <a href="/signup" className="text-blue-600 font-medium hover:underline">Sign up</a>
+        <div className="text-sm text-center text-gray-700 mt-4">
+          Don't have an account? <a href="/signup" className="text-yellow-500 font-medium hover:underline">Sign up</a>
         </div>
 
-        <p className="mt-6 text-xs text-gray-500 text-center">
-          By signing up, you agree to Icons' <a href="/terms" className="text-blue-700 hover:underline">Terms of service</a> and <a href="/privacy" className="text-blue-700 hover:underline">Privacy policy</a>.
+        <p className="mt-6 text-xs text-gray-600 text-center">
+          By signing up, you agree to Icons' <a href="/terms" className="text-yellow-500 hover:underline">Terms of service</a> and <a href="/privacy" className="text-yellow-500 hover:underline">Privacy policy</a>.
         </p>
       </div>
     </div>

@@ -11,10 +11,14 @@ import Transactions from './component/Transactions.jsx';
 import ProtectedRoute from './component/ProtectedRoute.jsx';
 import Books from './products/Books.jsx';
 import Brochure from './products/Brochure.jsx';
+import BusinessCard from './products/BusinessCard.jsx';
+import CallingCard from './products/CallingCard.jsx';
+import Calendars from './products/Calendars.jsx';
 import OfficialReceipt from './products/OfficialReceipt.jsx';
 import AdminPage from './component/admin/AdminPage.jsx';  
-import ManagerPage from './component/manager/ManagerPage.jsx'; 
-import Calendars from './products/Calendars.jsx';
+import ManagerPage from './component/manager/ManagerPage.jsx';
+import YearBooks from './products/Yearbooks.jsx'; 
+
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
@@ -27,10 +31,13 @@ const router = createBrowserRouter([
   { path: '/profile', element: (<ProtectedRoute><Profile /></ProtectedRoute>) },
   { path: '/books', element: <Books /> },
   { path: '/brochure', element: <Brochure/>},
+  { path: '/business-card', element: <BusinessCard/>},
+  { path: '/calling-card', element: <CallingCard/>},
   { path: '/admin', element: <AdminPage /> },      
   { path: '/manager', element: <ManagerPage /> },  
   { path: '/official-receipt', element: <OfficialReceipt/>},
-  { path: '/calendars', element: <Calendars/>}
+  { path: '/calendars', element: <Calendars/>},
+  { path: '/yearbooks', element: <YearBooks/>},
 ]);
 
 createRoot(document.getElementById('root')).render(

@@ -11,11 +11,8 @@ import "swiper/css/navigation";
 import atp from "../assets/atp.png";
 import calendar from "../assets/calendar.png";
 import yearbook from "../assets/yearbook.png";
-import org from "../assets/org.jpg";
 import document from "../assets/DocumentP.png";
-import fb from "../assets/fb.png";
 import id from "../assets/ID.png";
-import phone from "../assets/Phone.png";
 import bcard from "../assets/BusinessCard.png";
 import card from "../assets/CallingCard.png";
 import sticker from "../assets/ICONS.png";
@@ -34,7 +31,7 @@ function ProductSection() {
     { title: "Document Printing", description: "Fast, accurate document printing for school, business, or personal needs.", image: document, alt: "Document Printing", link: "/documents" },
     { title: "Flyers", description: "Promote your business with vibrant, full-color flyers.", image: flyers, alt: "Flyers", link: "/flyers" },
     { title: "Posters", description: "Large-format posters ideal for advertising or décor.", image: poster, alt: "Posters", link: "/posters" },
-    { title: "Business Cards", description: "High-quality business cards with various finishes.", image: bcard, alt: "Business Cards", link: "/business-cards" },
+    { title: "Business Cards", description: "High-quality business cards with various finishes.", image: bcard, alt: "Business Cards", link: "/business-card" },
     { title: "ID Printing", description: "Durable, high-resolution ID cards with optional features.", image: id, alt: "ID Printing", link: "/id-printing" },
     { title: "Labels", description: "Custom labels for packaging in waterproof or adhesive options.", image: sticker, alt: "Labels", link: "/labels" },
     { title: "Calling Card", description: "Print high-quality calling cards with sharp details.", image: card, alt: "Calling Card", link: "/calling-card" },

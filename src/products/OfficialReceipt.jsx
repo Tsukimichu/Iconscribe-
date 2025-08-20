@@ -78,26 +78,29 @@ function OfficialReceipt() {
 
             <div className="space-y-4">
                 
-                <div className="flex gap-4">
-                 
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium">
-                      Message <span className="text-xs text-gray-500">(optional)</span>
-                    </label>
-                    <textarea
-                      className="mt-1 w-full border border-gray-300 p-2 rounded-md h-28"
-                      placeholder="Enter message"
-                    ></textarea>
-                  </div>
+              <div className="flex gap-4">
+               
+                <div className="flex-1">
+                  <label className="block text-sm font-medium">
+                    Message <span className="text-xs text-gray-500">(optional)</span>
+                  </label>
+                  <textarea
+                    className="mt-1 w-full border border-gray-300 p-2 rounded-md h-28 resize-none"
+                    placeholder="Enter message"
+                  ></textarea>
+                </div>
 
-                 
-                  <div className="w-1/3 border border-gray-300 p-4 rounded-md flex items-center justify-between">
+                
+                <div className="w-1/3 flex flex-col">
+                  <div className="h-[22px]"></div>
+                  <div className="border border-gray-300 p-4 rounded-md flex flex-col justify-between h-28">
                     <div>
                       <span className="text-sm text-gray-500">Estimated cost</span>
                       <p className="text-xl font-bold text-gray-800">₱10,000.00</p>
                     </div>
                   </div>
                 </div>
+              </div>
 
                 
                 <p className="text-xs text-gray-500">

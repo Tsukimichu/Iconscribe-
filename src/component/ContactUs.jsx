@@ -101,7 +101,7 @@ function ContactUs() {
             <textarea
               placeholder="Message"
               rows="4"
-              className="p-3 rounded-lg bg-black/40 border border-white/10 text-white placeholder-gray-500 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 transition md:col-span-2"
+              className="p-3 rounded-lg bg-black/40 border border-white/10 text-white placeholder-gray-500 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 transition md:col-span-2 resize-none"
             ></textarea>
 
             <button

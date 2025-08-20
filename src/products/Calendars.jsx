@@ -76,25 +76,26 @@ function Calendars() {
               </div>
             </div>
 
-            
             <div className="grid md:grid-cols-2 gap-4 mb-2">
-              <div>
-                <label className="block text-sm font-medium">
-                  Message <span className="text-xs text-gray-500">(optional)</span>
-                </label>
-                <textarea
-                  className="mt-1 w-full border border-gray-300 p-2 rounded-md h-[100px]"
-                  placeholder="Enter message"
-                ></textarea>
-              </div>
-
-              <div className="flex justify-between items-center border border-gray-300 p-4 rounded-md">
                 <div>
-                  <span className="text-sm text-gray-500">Estimated cost</span>
-                  <p className="text-xl font-bold text-gray-800">₱6,000.00</p>
-                </div>
-              </div>
+                  <label className="block text-sm font-medium">
+                    Message <span className="text-xs text-gray-500">(optional)</span>
+                  </label>
+                  <textarea
+                    className="mt-1 w-full border border-gray-300 p-2 rounded-md h-[100px] resize-none"
+                    placeholder="Enter message"
+                  ></textarea>
             </div>
+
+                
+            <div className="border border-gray-300 p-4 rounded-md flex flex-col justify-between h-[100px] mt-6">
+                  <div>
+                    <span className="text-sm text-gray-500">Estimated cost</span>
+                    <p className="text-xl font-bold text-gray-800">₱10,000.00</p>
+                  </div>
+                </div>
+          </div>
+
 
             <p className="text-xs text-gray-500 mb-4">
               If you have any questions, please contact{" "}

@@ -12,13 +12,17 @@ import atp from "../assets/atp.png";
 import calendar from "../assets/calendar.png";
 import yearbook from "../assets/yearbook.png";
 import org from "../assets/org.jpg";
+import document from "../assets/DocumentP.png";
 import fb from "../assets/fb.png";
+import id from "../assets/ID.png";
 import phone from "../assets/Phone.png";
-import card from "../assets/form.png";
+import bcard from "../assets/BusinessCard.png";
+import card from "../assets/CallingCard.png";
 import sticker from "../assets/ICONS.png";
-import poster from "../assets/Poster.png";
-import book from "../assets/books.png";
-import brochure from "../assets/bro1chure.png";
+import poster from "../assets/Flyers.png";
+import flyers from "../assets/Posters.png";
+import book from "../assets/Book.png";
+import brochure from "../assets/Brochure.png";
 
 function ProductSection() {
   const allServices = [
@@ -27,13 +31,13 @@ function ProductSection() {
     { title: "Brochures", description: "Professionally printed brochures to showcase your products and services.", image: brochure, alt: "Brochures", link: "/brochures" },
     { title: "Yearbooks", description: "Capture memories with high-quality yearbooks for schools or events.", image: yearbook, alt: "Yearbooks", link: "/yearbooks" },
     { title: "Books", description: "Book printing for self-published novels, manuals, and more.", image: book, alt: "Books", link: "/books" },
-    { title: "Document Printing", description: "Fast, accurate document printing for school, business, or personal needs.", image: org, alt: "Document Printing", link: "/documents" },
-    { title: "Flyers", description: "Promote your business with vibrant, full-color flyers.", image: fb, alt: "Flyers", link: "/flyers" },
+    { title: "Document Printing", description: "Fast, accurate document printing for school, business, or personal needs.", image: document, alt: "Document Printing", link: "/documents" },
+    { title: "Flyers", description: "Promote your business with vibrant, full-color flyers.", image: flyers, alt: "Flyers", link: "/flyers" },
     { title: "Posters", description: "Large-format posters ideal for advertising or décor.", image: poster, alt: "Posters", link: "/posters" },
-    { title: "Business Cards", description: "High-quality business cards with various finishes.", image: card, alt: "Business Cards", link: "/business-cards" },
-    { title: "ID Printing", description: "Durable, high-resolution ID cards with optional features.", image: phone, alt: "ID Printing", link: "/id-printing" },
+    { title: "Business Cards", description: "High-quality business cards with various finishes.", image: bcard, alt: "Business Cards", link: "/business-cards" },
+    { title: "ID Printing", description: "Durable, high-resolution ID cards with optional features.", image: id, alt: "ID Printing", link: "/id-printing" },
     { title: "Labels", description: "Custom labels for packaging in waterproof or adhesive options.", image: sticker, alt: "Labels", link: "/labels" },
-    { title: "Calling Card", description: "Print high-quality calling cards with sharp details.", image: atp, alt: "Calling Card", link: "/calling-card" },
+    { title: "Calling Card", description: "Print high-quality calling cards with sharp details.", image: card, alt: "Calling Card", link: "/calling-card" },
   ];
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -91,16 +95,16 @@ function ProductSection() {
                   className="group relative bg-white/10 border border-white/20 backdrop-blur-xl rounded-2xl h-[340px] flex flex-col overflow-hidden shadow-lg transition duration-500 hover:border-yellow-400/50 hover:shadow-yellow-400/20"
                 >
                   {/* Image */}
-                  <div className="h-[60%] w-full flex items-center justify-center bg-gradient-to-b from-transparent to-black/20 overflow-hidden">
+                  <div className="h-[200px] w-full flex items-center justify-center bg-gradient-to-b from-transparent to-black/20 overflow-hidden">
                     <img
                       src={service.image}
                       alt={service.alt}
-                      className="h-[85%] w-auto object-contain transform transition-transform duration-500 group-hover:scale-110 group-hover:rotate-1"
+                      className="h-full w-full object-contain p-4 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-1"
                     />
                   </div>
 
                   {/* Text */}
-                  <div className="h-[40%] px-4 py-4 flex flex-col justify-center items-center text-center">
+                  <div className="flex-1 px-4 py-4 flex flex-col justify-center items-center text-center">
                     <h3 className="text-lg font-semibold text-yellow-300 group-hover:text-yellow-400 transition-colors">
                       {service.title}
                     </h3>

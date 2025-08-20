@@ -1,5 +1,6 @@
 import Nav from "../component/navigation";
 import { ArrowBigLeft } from "lucide-react";
+import Book from "../assets/Book.png";
 
 function Books() {
   return (
@@ -15,7 +16,7 @@ function Books() {
 
         <div className="w-full">
           <img
-            src="/your-image-path.jpg"
+            src={Book}
             alt="Sample Book"
             className="rounded-lg border"
           />

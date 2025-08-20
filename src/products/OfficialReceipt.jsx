@@ -21,13 +21,14 @@ function OfficialReceipt() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-10">
-          <div className="w-full">
+          <div className="w-full flex justify-center">
             <img
               src={or}
               alt="Sample OR"
-              className="rounded-lg border w-full"
+              className="rounded-lg border max-w-md w-full h-max object-contain"
             />
           </div>
+
 
           <div>
             <h2 className="text-xl font-bold mb-2">Official Receipt</h2>
@@ -75,35 +76,43 @@ function OfficialReceipt() {
                 </div>
               </div>
 
-              {/* Message */}
-              <div>
-                <label className="block text-sm font-medium">
-                  Message <span className="text-xs text-gray-500">(optional)</span>
-                </label>
-                <textarea
-                  className="mt-1 w-full border border-gray-300 p-2 rounded-md"
-                  placeholder="Enter message"
-                ></textarea>
-              </div>
+            <div className="space-y-4">
+                
+                <div className="flex gap-4">
+                 
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium">
+                      Message <span className="text-xs text-gray-500">(optional)</span>
+                    </label>
+                    <textarea
+                      className="mt-1 w-full border border-gray-300 p-2 rounded-md h-28"
+                      placeholder="Enter message"
+                    ></textarea>
+                  </div>
 
-              {/* Estimated Cost */}
-              <div className="flex justify-between items-center border border-gray-300 p-4 rounded-md">
-                <div>
-                  <span className="text-sm text-gray-500">Estimated cost</span>
-                  <p className="text-xl font-bold text-gray-800">₱1,100.00</p>
+                 
+                  <div className="w-1/3 border border-gray-300 p-4 rounded-md flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-gray-500">Estimated cost</span>
+                      <p className="text-xl font-bold text-gray-800">₱10,000.00</p>
+                    </div>
+                  </div>
+                </div>
+
+                
+                <p className="text-xs text-gray-500">
+                  If you have any questions, please contact{" "}
+                  <span className="font-medium">#09123456789</span>
+                </p>
+
+               
+                <div className="flex justify-end">
+                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md">
+                    Place Order
+                  </button>
                 </div>
               </div>
-
-              {/* Contact Info */}
-              <p className="text-xs text-gray-500">
-                If you have any questions, please contact: <span className="font-medium">#09123456789</span>
-              </p>
-
-              {/* Submit Button */}
-              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md">
-                Place Order
-              </button>
-            </div>
+              </div>
           </div>
         </div>
       </div>

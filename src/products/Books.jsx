@@ -1,16 +1,24 @@
 import Nav from "../component/navigation";
 import { ArrowBigLeft } from "lucide-react";
 import Book from "../assets/Book.png";
+import { useNavigate } from "react-router-dom";
 
 function Books() {
+   const navigate = useNavigate();
+   
   return (
     <>
     <Nav/>
-     <div className="max-w-7xl mx-auto p-5 bg-[#FAF9F7] min-h-screen">
-
-      <ArrowBigLeft/>
-      
-      <h1 className="text-2xl font-bold mb-6">Service Details</h1>
+     <div className="max-w-full mx-auto p-5 bg-[#FAF9F7] min-h-screen">
+  <div className="flex items-center gap-3 mb-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="px-3 py-1 hover:bg-gray-300 rounded-md text-sm font-medium"
+          >
+            <ArrowBigLeft/>
+          </button>
+          <h1 className="text-2xl font-bold">Service Details</h1>
+        </div>
 
       <div className="grid md:grid-cols-2 gap-10">
 
@@ -59,32 +67,44 @@ function Books() {
               </div>
             </div>
 
-            {/* Optional Message */}
-            <div>
-              <label className="block text-sm font-medium">Message <span className="text-xs text-gray-500">(optional)</span></label>
-              <textarea
-                className="mt-1 w-full border border-gray-300 p-2 rounded-md"
-                placeholder="Enter message"
-              ></textarea>
-            </div>
+           
+            <div className="space-y-4">
+                
+                <div className="flex gap-4">
+                 
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium">
+                      Message <span className="text-xs text-gray-500">(optional)</span>
+                    </label>
+                    <textarea
+                      className="mt-1 w-full border border-gray-300 p-2 rounded-md h-28"
+                      placeholder="Enter message"
+                    ></textarea>
+                  </div>
 
-            {/* Cost */}
-            <div className="flex justify-between items-center border border-gray-300 p-4 rounded-md">
-              <div>
-                <span className="text-sm text-gray-500">Estimated cost</span>
-                <p className="text-xl font-bold text-gray-800">₱10,000.00</p>
+                 
+                  <div className="w-1/3 border border-gray-300 p-4 rounded-md flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-gray-500">Estimated cost</span>
+                      <p className="text-xl font-bold text-gray-800">₱10,000.00</p>
+                    </div>
+                  </div>
+                </div>
+
+                
+                <p className="text-xs text-gray-500">
+                  If you have any questions, please contact{" "}
+                  <span className="font-medium">#09123456789</span>
+                </p>
+
+               
+                <div className="flex justify-end">
+                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md">
+                    Place Order
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {/* Contact */}
-            <p className="text-xs text-gray-500">
-              If you have any questions, please contact <span className="font-medium">#09123456789</span>
-            </p>
-
-            {/* Button */}
-            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md">
-              Place Order
-            </button>
           </div>
         </div>
       </div>

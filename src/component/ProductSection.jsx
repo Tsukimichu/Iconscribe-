@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
@@ -28,7 +28,7 @@ function ProductSection() {
   const allServices = [
     { title: "Official Receipts", description: "BIR-compliant official receipts with premium quality, smudge-free ink.", image: atp, alt: "Official Receipts", link: "/official-receipt" },
     { title: "Calendars", description: "Custom calendars designed with your branding in mind.", image: calendar, alt: "Calendars", link: "/calendars" },
-    { title: "Brochures", description: "Professionally printed brochures to showcase your products and services.", image: brochure, alt: "Brochures", link: "/brochures" },
+    { title: "Brochures", description: "Professionally printed brochures to showcase your products and services.", image: brochure, alt: "Brochures", link: "/brochure" },
     { title: "Yearbooks", description: "Capture memories with high-quality yearbooks for schools or events.", image: yearbook, alt: "Yearbooks", link: "/yearbooks" },
     { title: "Books", description: "Book printing for self-published novels, manuals, and more.", image: book, alt: "Books", link: "/books" },
     { title: "Document Printing", description: "Fast, accurate document printing for school, business, or personal needs.", image: document, alt: "Document Printing", link: "/documents" },
@@ -45,19 +45,21 @@ function ProductSection() {
     service.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Refs for custom navigation
+  const prevRef = useRef(null);
+  const nextRef = useRef(null);
+
   return (
     <section id="product" className="relative py-20 px-6 text-white overflow-hidden">
-      {/* Animated Background */}
+  
       <div className="absolute inset-0 bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,0,0.07),transparent_70%)] animate-pulse-slow" />
       <div className="absolute inset-0 bg-[conic-gradient(at_top_right,rgba(34,211,238,0.05),transparent_70%)] animate-spin-slow" />
 
-      {/* Title */}
       <h2 className="relative text-4xl font-extrabold text-center mb-8 text-yellow-400 tracking-wide">
         Services Offered
       </h2>
 
-      {/* Search Bar */}
       <div className="relative mb-12 flex justify-center">
         <input
           type="text"
@@ -68,18 +70,21 @@ function ProductSection() {
         />
       </div>
 
-      {/* Swiper Carousel */}
       {filteredServices.length > 0 ? (
         <div className="relative">
-          <Swiper
+         <Swiper
             modules={[Navigation, Autoplay]}
             spaceBetween={24}
             slidesPerView={3}
             loop={true}
             autoplay={{ delay: 4000 }}
-            navigation={{
-              nextEl: ".custom-swiper-button-next",
-              prevEl: ".custom-swiper-button-prev",
+            onSwiper={(swiper) => {
+              setTimeout(() => {
+                swiper.params.navigation.prevEl = prevRef.current;
+                swiper.params.navigation.nextEl = nextRef.current;
+                swiper.navigation.init();
+                swiper.navigation.update();
+              });
             }}
             breakpoints={{
               320: { slidesPerView: 1 },
@@ -94,7 +99,6 @@ function ProductSection() {
                   to={service.link}
                   className="group relative bg-white/10 border border-white/20 backdrop-blur-xl rounded-2xl h-[340px] flex flex-col overflow-hidden shadow-lg transition duration-500 hover:border-yellow-400/50 hover:shadow-yellow-400/20"
                 >
-                  {/* Image */}
                   <div className="h-[200px] w-full flex items-center justify-center bg-gradient-to-b from-transparent to-black/20 overflow-hidden">
                     <img
                       src={service.image}
@@ -102,8 +106,6 @@ function ProductSection() {
                       className="h-full w-full object-contain p-4 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-1"
                     />
                   </div>
-
-                  {/* Text */}
                   <div className="flex-1 px-4 py-4 flex flex-col justify-center items-center text-center">
                     <h3 className="text-lg font-semibold text-yellow-300 group-hover:text-yellow-400 transition-colors">
                       {service.title}
@@ -112,19 +114,21 @@ function ProductSection() {
                       {service.description}
                     </p>
                   </div>
-
-                  {/* Glow Line Effect */}
-                  <div className="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-yellow-400 to-transparent opacity-0 group-hover:opacity-100 transition" />
                 </Link>
               </SwiperSlide>
             ))}
           </Swiper>
 
-          {/* Navigation Arrows */}
-          <div className="custom-swiper-button-prev absolute -left-10 top-1/2 -translate-y-1/2 cursor-pointer z-10 bg-white/10 hover:bg-yellow-400/40 transition rounded-full p-3 backdrop-blur-lg shadow-md">
+          <div
+            ref={prevRef}
+            className="custom-swiper-button-prev absolute -left-10 top-1/2 -translate-y-1/2 cursor-pointer z-10 bg-white/10 hover:bg-yellow-400/40 transition rounded-full p-3 backdrop-blur-lg shadow-md"
+          >
             <ChevronLeft className="w-6 h-6 text-white" />
           </div>
-          <div className="custom-swiper-button-next absolute -right-10 top-1/2 -translate-y-1/2 cursor-pointer z-10 bg-white/10 hover:bg-yellow-400/40 transition rounded-full p-3 backdrop-blur-lg shadow-md">
+          <div
+            ref={nextRef}
+            className="custom-swiper-button-next absolute -right-10 top-1/2 -translate-y-1/2 cursor-pointer z-10 bg-white/10 hover:bg-yellow-400/40 transition rounded-full p-3 backdrop-blur-lg shadow-md"
+          >
             <ChevronRight className="w-6 h-6 text-white" />
           </div>
         </div>
@@ -132,7 +136,6 @@ function ProductSection() {
         <p className="relative text-white/60 text-center mt-6">No matching service found.</p>
       )}
 
-      {/* Extra Animations */}
       <style>{`
         @keyframes pulse-slow {
           0%, 100% { opacity: 0.15; }

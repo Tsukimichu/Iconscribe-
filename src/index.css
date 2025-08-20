@@ -6,8 +6,16 @@ body {
   overflow-y: scroll;
 }
 
-body::-webkit-scrollbar {
-  display: none; 
+::-webkit-scrollbar {
+  display: none;
+}
+
+html {
+  scrollbar-width: none;
+}
+
+body {
+  -ms-overflow-style: none;
 }
 
 @keyframes text-glow {

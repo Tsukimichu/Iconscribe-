@@ -1,31 +1,41 @@
 import Nav from "../component/navigation";
 import or from '../assets/atp.png';
+import { ArrowBigLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function OfficialReceipt() {
+  const navigate = useNavigate();
+
   return (
     <>
       <Nav />
-      <div className="max-w-7xl mx-auto p-6 bg-[#FAF9F7] min-h-screen">
-        <h1 className="text-2xl font-bold mb-6">Service Details</h1>
+      <div className="w-full p-6 bg-[#FAF9F7] min-h-screen">
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="px-3 py-1 hover:bg-gray-300 rounded-md text-sm font-medium"
+          >
+            <ArrowBigLeft/>
+          </button>
+          <h1 className="text-2xl font-bold">Service Details</h1>
+        </div>
 
         <div className="grid md:grid-cols-2 gap-10">
-          
           <div className="w-full">
             <img
               src={or}
               alt="Sample OR"
-              className="rounded-lg border"
+              className="rounded-lg border w-full"
             />
           </div>
 
-          
           <div>
             <h2 className="text-xl font-bold mb-2">Official Receipt</h2>
             <p className="mb-4 text-sm text-gray-700">
               Official receipt, often known as an OR, is a record that confirms the completion of a service-related sale transaction.
             </p>
             <p className="mb-6 text-sm text-gray-600">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua...
             </p>
 
             <h3 className="font-semibold mb-2">Order Details</h3>
@@ -65,7 +75,7 @@ function OfficialReceipt() {
                 </div>
               </div>
 
-              {/* Optional Message */}
+              {/* Message */}
               <div>
                 <label className="block text-sm font-medium">
                   Message <span className="text-xs text-gray-500">(optional)</span>

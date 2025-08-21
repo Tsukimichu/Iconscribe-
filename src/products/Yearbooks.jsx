@@ -31,7 +31,7 @@ function YearBooks() {
         </div>
 
         <div>
-          <h2 className="text-xl font-bold mb-2">Books</h2>
+          <h2 className="text-xl font-bold mb-2">Year Books</h2>
           <p className="mb-4 text-sm text-gray-700">
             Our high quality presentation prints are available with a combination of Perfect Binding & Printing in as fast as same day. Full color presentations are fast and easy with different paper stocks to choose from.
           </p>

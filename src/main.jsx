@@ -21,7 +21,9 @@ import Flyers from './products/Flyers.jsx';
 import Posters from './products/Posters.jsx';
 import ManagerPage from './component/manager/ManagerPage.jsx';
 import YearBooks from './products/Yearbooks.jsx'; 
-
+import DocumentPrint from './products/DocumentPrint.jsx';  
+import Id from './products/Id.jsx';        // ✅ NEW
+import Label from './products/Label.jsx';  // ✅ NEW // ✅ NEW IMPORT
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
@@ -32,17 +34,24 @@ const router = createBrowserRouter([
   { path: '/login', element: <Login onLogin={() => {}} /> },
   { path: '/transactions', element: (<ProtectedRoute><Transactions /></ProtectedRoute>) },
   { path: '/profile', element: (<ProtectedRoute><Profile /></ProtectedRoute>) },
+
+  // Products
   { path: '/books', element: <Books /> },
   { path: '/brochure', element: <Brochure/>},
   { path: '/business-card', element: <BusinessCard/>},
   { path: '/calling-card', element: <CallingCard/>},
-  { path: '/admin', element: <AdminPage /> },      
-  { path: '/manager', element: <ManagerPage /> },  
   { path: '/official-receipt', element: <OfficialReceipt/>},
   { path: '/calendars', element: <Calendars/>},
   { path: '/flyers', element: <Flyers/>},
   { path: '/posters', element: <Posters/>},
   { path: '/yearbooks', element: <YearBooks/>},
+  { path: '/documents', element: <DocumentPrint/>},
+  { path: '/id-printing', element: <Id/>},            // ✅
+  { path: '/labels', element: <Label/>},              // ✅   // ✅ NEW ROUTE
+
+  // Roles
+  { path: '/admin', element: <AdminPage /> },      
+  { path: '/manager', element: <ManagerPage /> },  
 ]);
 
 createRoot(document.getElementById('root')).render(

@@ -9,13 +9,16 @@ import Login from './component/Login.jsx';
 import Profile from './component/Profile.jsx';
 import Transactions from './component/Transactions.jsx';
 import ProtectedRoute from './component/ProtectedRoute.jsx';
+
+import AdminPage from './component/admin/AdminPage.jsx';  
 import Books from './products/Books.jsx';
 import Brochure from './products/Brochure.jsx';
 import BusinessCard from './products/BusinessCard.jsx';
 import CallingCard from './products/CallingCard.jsx';
 import Calendars from './products/Calendars.jsx';
 import OfficialReceipt from './products/OfficialReceipt.jsx';
-import AdminPage from './component/admin/AdminPage.jsx';  
+import Flyers from './products/Flyers.jsx';
+import Posters from './products/Posters.jsx';
 import ManagerPage from './component/manager/ManagerPage.jsx';
 import YearBooks from './products/Yearbooks.jsx'; 
 
@@ -37,6 +40,8 @@ const router = createBrowserRouter([
   { path: '/manager', element: <ManagerPage /> },  
   { path: '/official-receipt', element: <OfficialReceipt/>},
   { path: '/calendars', element: <Calendars/>},
+  { path: '/flyers', element: <Flyers/>},
+  { path: '/posters', element: <Posters/>},
   { path: '/yearbooks', element: <YearBooks/>},
 ]);
 

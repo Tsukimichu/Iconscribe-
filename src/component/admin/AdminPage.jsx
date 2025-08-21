@@ -1,47 +1,93 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
-import Navigation from './Navigation';
-import OverviewSection from './OverviewSection';
-import ManageUserSection from './ManageUserSection';
-import Maintenance from './Maintenance';
-import BackupRestoreSection from './BackupRestoreSection';
-import SalesExpenseSection from './SalesExpenseSection';
+import Navigation from "./Navigation";
+import OverviewSection from "./OverviewSection";
+import ManageUserSection from "./ManageUserSection";
+import Maintenance from "./Maintenance";
+import BackupRestoreSection from "./BackupRestoreSection";
+import SalesExpenseSection from "./SalesExpenseSection";
 
 const AdminPage = () => {
   const navigate = useNavigate();
-  const [selectedSection, setSelectedSection] = useState('overview');
+  const [selectedSection, setSelectedSection] = useState("overview");
 
-  // Load section from localStorage on mount
   useEffect(() => {
-    const savedSection = localStorage.getItem('adminSelectedSection');
+    const savedSection = localStorage.getItem("adminSelectedSection");
     if (savedSection) setSelectedSection(savedSection);
   }, []);
 
-  // Save section to localStorage whenever it changes
   const handleSectionChange = (section) => {
     setSelectedSection(section);
-    localStorage.setItem('adminSelectedSection', section);
+    localStorage.setItem("adminSelectedSection", section);
   };
 
   const handleLogout = () => {
     localStorage.clear();
-    navigate('/login');
+    navigate("/login");
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-[#f7f9fb] to-[#e1e7f0] text-gray-800 font-sans">
+    <div className="flex min-h-screen w-full text-white font-sans bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155]">
+      {/* Sidebar */}
       <Navigation
         selectedSection={selectedSection}
         setSelectedSection={handleSectionChange}
         handleLogout={handleLogout}
       />
-      <main className="flex-1 p-6 overflow-y-auto">
-        {selectedSection === 'overview' && <OverviewSection />}
-        {selectedSection === 'manageUser' && <ManageUserSection />}
-        {selectedSection === 'maintenance' && <Maintenance />}
-        {selectedSection === 'backup' && <BackupRestoreSection />}
-        {selectedSection === 'sales' && <SalesExpenseSection />}
+
+      {/* Main content */}
+      <main className="flex-1 p-8 space-y-6 overflow-y-auto">
+        {selectedSection === "overview" && (
+          <div className="p-8 rounded-3xl bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] shadow-2xl space-y-8 min-h-screen">
+            <OverviewSection />
+          </div>
+        )}
+
+        {selectedSection === "manageUser" && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="p-8 rounded-3xl bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] shadow-2xl space-y-6 min-h-screen"
+          >
+            <ManageUserSection />
+          </motion.div>
+        )}
+
+        {selectedSection === "maintenance" && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="p-8 rounded-3xl bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] shadow-2xl space-y-6 min-h-screen"
+          >
+            <Maintenance />
+          </motion.div>
+        )}
+
+        {selectedSection === "backup" && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="p-8 rounded-3xl bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] shadow-2xl space-y-6 min-h-screen"
+          >
+            <BackupRestoreSection />
+          </motion.div>
+        )}
+
+        {selectedSection === "sales" && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="p-8 rounded-3xl bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] shadow-2xl space-y-6 min-h-screen"
+          >
+            <SalesExpenseSection />
+          </motion.div>
+        )}
       </main>
     </div>
   );

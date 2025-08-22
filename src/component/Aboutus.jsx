@@ -18,7 +18,7 @@ function Aboutus() {
             Our commitment is to deliver exceptional quality and service, whether for personal projects or business endeavors.
           </p>
 
-          {/* Why Choose Us */}
+          
           <div className="mt-6 text-left w-full max-w-xl">
             <div className="flex items-center gap-2 mb-4">
               <svg

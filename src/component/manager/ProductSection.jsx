@@ -74,7 +74,7 @@ const ProductSection = () => {
   };
 
   return (
-    <div className="p-6 min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 text-white">
+    <div className="p-6 min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 text-white rounded-3xl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-6">
         <h1 className="text-3xl font-bold text-white">Product Management</h1>

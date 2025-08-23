@@ -18,7 +18,16 @@ function Login({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-150 flex items-center justify-center relative">
+    <div className="min-h-screen flex items-center justify-center relative">
+
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url(${orgImage})`,
+          filter: "blur(4px)"
+        }}>
+
+  </div>
       <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[650px] flex overflow-hidden">
         
         
@@ -30,11 +39,9 @@ function Login({ onLogin }) {
           />
         </div>
 
-        {/* RIGHT side - login form */}
         <div className="w-1/2 p-10 flex flex-col relative overflow-y-auto">
           <div className="flex flex-col flex-grow justify-center">
             
-            {/* Logo */}
             <div className="flex justify-center mb-6">
               <img
                 src={logo}
@@ -47,7 +54,6 @@ function Login({ onLogin }) {
               Log In
             </h2>
 
-            {/* Form */}
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="relative">
                 <User className="absolute left-3 top-2.5 text-gray-600" size={18} />
@@ -83,7 +89,6 @@ function Login({ onLogin }) {
                     </motion.button>
             </form>
 
-            {/* Links */}
             <div className="text-sm text-center text-gray-800 mt-4">
               Don’t have an account?{" "}
               <span

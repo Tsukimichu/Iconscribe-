@@ -17,7 +17,14 @@ function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-150 flex items-center justify-center relative">
+    <div className="min-h-screen flex items-center justify-center relative">
+
+            <div
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{
+                backgroundImage: `url(${orgImage})`,
+                filter: "blur(4px)"
+              }}></div>
       <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[650px] flex overflow-hidden">
         
         <div className="w-1/2 p-10 flex flex-col relative overflow-y-auto">

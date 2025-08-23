@@ -28,7 +28,7 @@ function Login({ onLogin }) {
         }}>
 
   </div>
-      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[650px] flex overflow-hidden">
+      <div className="relative bg-white rounded-3xl shadow-4xl w-full max-w-5xl h-[650px] flex overflow-hidden">
         
         
         <div className="w-1/2 h-full">

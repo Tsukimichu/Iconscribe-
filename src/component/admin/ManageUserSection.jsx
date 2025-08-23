@@ -98,7 +98,7 @@ const ManageUserSection = () => {
   };
 
   const UserRow = ({ user }) => (
-    <tr className="hover:bg-gray-100 transition">
+    <tr className="hover:bg-gray-50 transition">
       <td className="px-4 py-3 font-medium">{user.id}</td>
       <td className="px-4 py-3">{user.name}</td>
       <td className="px-4 py-3">{user.email}</td>
@@ -162,7 +162,7 @@ const ManageUserSection = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="rounded-3xl bg-white p-6 shadow-2xl"
+      className="rounded-3xl bg-white p-6 shadow-sm"
     >
       <div className="flex justify-between mb-6">
         <h1 className="text-3xl font-extrabold text-[#243b7d]">Manage Users</h1>
@@ -174,7 +174,8 @@ const ManageUserSection = () => {
         </button>
       </div>
 
-      <div className="rounded-xl overflow-hidden border border-gray-200">
+      {/* Removed border here */}
+      <div className="rounded-xl overflow-hidden">
         <table className="min-w-full text-sm text-left">
           <thead className="bg-gray-100 text-gray-600">
             <tr>
@@ -195,11 +196,11 @@ const ManageUserSection = () => {
       </div>
 
       {modal.show && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white p-6 rounded-lg shadow-xl w-96 space-y-4"
+            className="bg-white p-6 rounded-lg shadow-md w-96 space-y-4"
           >
             <h2 className="text-xl font-bold text-gray-800">Suspend User</h2>
 

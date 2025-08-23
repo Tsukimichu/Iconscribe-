@@ -29,7 +29,7 @@ const AdminPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen w-full text-white font-sans bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155]">
+    <div className="flex min-h-screen w-full text-gray-900 font-sans bg-white">
       {/* Sidebar */}
       <Navigation
         selectedSection={selectedSection}
@@ -40,7 +40,7 @@ const AdminPage = () => {
       {/* Main content */}
       <main className="flex-1 p-8 space-y-6 overflow-y-auto">
         {selectedSection === "overview" && (
-          <div className="p-8 rounded-3xl bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] shadow-2xl space-y-8 min-h-screen">
+          <div className="p-8 rounded-3xl bg-white shadow-2xl space-y-8 min-h-screen">
             <OverviewSection />
           </div>
         )}
@@ -50,7 +50,7 @@ const AdminPage = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="p-8 rounded-3xl bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] shadow-2xl space-y-6 min-h-screen"
+            className="p-8 rounded-3xl bg-white shadow-2xl space-y-6 min-h-screen"
           >
             <ManageUserSection />
           </motion.div>
@@ -61,7 +61,7 @@ const AdminPage = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="p-8 rounded-3xl bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] shadow-2xl space-y-6 min-h-screen"
+            className="p-8 rounded-3xl bg-white shadow-2xl space-y-6 min-h-screen"
           >
             <Maintenance />
           </motion.div>
@@ -72,7 +72,7 @@ const AdminPage = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="p-8 rounded-3xl bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] shadow-2xl space-y-6 min-h-screen"
+            className="p-8 rounded-3xl bg-white shadow-2xl space-y-6 min-h-screen"
           >
             <BackupRestoreSection />
           </motion.div>
@@ -83,7 +83,7 @@ const AdminPage = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="p-8 rounded-3xl bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] shadow-2xl space-y-6 min-h-screen"
+            className="p-8 rounded-3xl bg-white shadow-2xl space-y-6 min-h-screen"
           >
             <SalesExpenseSection />
           </motion.div>

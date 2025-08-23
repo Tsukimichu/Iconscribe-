@@ -8,40 +8,40 @@ const initialOrders = [
     service: "Official Receipts",
     name: "Aldrin Portento",
     dateOrdered: "04/11/2025",
-    urgency: { label: "Minor", color: "bg-green-500/20 text-green-400" },
-    status: { label: "In review", color: "bg-blue-500/20 text-blue-400" },
+    urgency: { label: "Minor", color: "bg-green-100 text-green-700" },
+    status: { label: "In review", color: "bg-blue-100 text-blue-700" },
   },
   {
     enquiryNo: "002",
     service: "Official Receipts",
     name: "Dave Geroleo",
     dateOrdered: "04/11/2025",
-    urgency: { label: "Moderate", color: "bg-yellow-500/20 text-yellow-400" },
-    status: { label: "Ongoing", color: "bg-purple-500/20 text-purple-400" },
+    urgency: { label: "Moderate", color: "bg-yellow-100 text-yellow-700" },
+    status: { label: "Ongoing", color: "bg-purple-100 text-purple-700" },
   },
   {
     enquiryNo: "003",
     service: "Books",
     name: "Carl Madrigal",
     dateOrdered: "04/11/2025",
-    urgency: { label: "Moderate", color: "bg-yellow-500/20 text-yellow-400" },
-    status: { label: "Pending", color: "bg-amber-500/20 text-amber-400" },
+    urgency: { label: "Moderate", color: "bg-yellow-100 text-yellow-700" },
+    status: { label: "Pending", color: "bg-amber-100 text-amber-700" },
   },
   {
     enquiryNo: "004",
     service: "Official Receipts",
     name: "Mark Matining",
     dateOrdered: "04/11/2025",
-    urgency: { label: "--", color: "bg-gray-500/20 text-gray-400" },
-    status: { label: "Completed", color: "bg-green-500/20 text-green-400" },
+    urgency: { label: "--", color: "bg-gray-100 text-gray-700" },
+    status: { label: "Completed", color: "bg-green-100 text-green-700" },
   },
   {
     enquiryNo: "005",
     service: "Official Receipts",
     name: "John Portento",
     dateOrdered: "04/11/2025",
-    urgency: { label: "Critical", color: "bg-red-500/20 text-red-400" },
-    status: { label: "Out for Delivery", color: "bg-orange-500/20 text-orange-400" },
+    urgency: { label: "Critical", color: "bg-red-100 text-red-700" },
+    status: { label: "Out for Delivery", color: "bg-orange-100 text-orange-700" },
   },
 ];
 
@@ -112,10 +112,8 @@ const OrdersSection = () => {
     ) : null;
 
   return (
-    <div
-      className="p-8 rounded-3xl bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] shadow-2xl space-y-8 text-white min-h-screen"
-    >
-      {/* Animate only the content (not background) */}
+    <div className="p-8 rounded-3xl bg-white shadow-2xl space-y-8 min-h-screen">
+      {/* Animate only the content */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -124,7 +122,7 @@ const OrdersSection = () => {
       >
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+          <h1 className="text-4xl font-extrabold text-gray-900">
             Orders
           </h1>
           <div className="relative w-full md:w-72">
@@ -133,9 +131,9 @@ const OrdersSection = () => {
               placeholder="Search orders..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 rounded-full bg-white/10 border border-white/20 focus:ring-2 focus:ring-cyan-400 outline-none w-full text-white placeholder-gray-400"
+              className="pl-10 pr-4 py-2 rounded-full bg-gray-100 border border-gray-300 focus:ring-2 focus:ring-cyan-500 outline-none w-full text-gray-900 placeholder-gray-500"
             />
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+            <Search className="absolute left-3 top-2.5 text-gray-500" size={18} />
           </div>
         </div>
 
@@ -144,10 +142,10 @@ const OrdersSection = () => {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="bg-white/5 backdrop-blur-lg rounded-2xl shadow-lg border border-white/10 overflow-x-auto"
+          className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-x-auto"
         >
           <table className="w-full text-left border-collapse min-w-[800px] text-sm">
-            <thead className="bg-white/10">
+            <thead className="bg-gray-100">
               <tr>
                 {[
                   { key: "enquiryNo", label: "Enquiry No." },
@@ -160,15 +158,15 @@ const OrdersSection = () => {
                   <th
                     key={col.key}
                     onClick={() => col.sortable !== false && requestSort(col.key)}
-                    className={`py-3 px-6 font-semibold cursor-pointer select-none text-gray-300 ${
-                      col.sortable !== false ? "hover:text-cyan-400" : ""
+                    className={`py-3 px-6 font-semibold cursor-pointer select-none text-gray-700 ${
+                      col.sortable !== false ? "hover:text-cyan-600" : ""
                     }`}
                   >
                     {col.label}
                     {col.sortable !== false && <SortIcon column={col.key} />}
                   </th>
                 ))}
-                <th className="py-3 px-6 font-semibold text-gray-300 text-right">Actions</th>
+                <th className="py-3 px-6 font-semibold text-gray-700 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -178,7 +176,7 @@ const OrdersSection = () => {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="border-b border-white/10 hover:bg-white/10 transition"
+                  className="border-b border-gray-200 hover:bg-gray-50 transition"
                 >
                   <td className="py-3 px-6">{order.enquiryNo}</td>
                   <td className="py-3 px-6">{order.service}</td>
@@ -197,7 +195,7 @@ const OrdersSection = () => {
                   <td className="py-3 px-6 flex justify-end">
                     <button
                       onClick={() => openModal(order)}
-                      className="flex items-center gap-1 bg-red-500/20 text-red-400 px-3 py-1 rounded-lg hover:bg-red-500/30 transition"
+                      className="flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-lg hover:bg-red-200 transition"
                     >
                       <Trash2 size={16} /> Archive
                     </button>
@@ -210,15 +208,15 @@ const OrdersSection = () => {
 
         {/* Archived Orders Section */}
         {archived.length > 0 && (
-          <div className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl shadow-lg border border-white/10">
-            <h2 className="text-lg font-semibold text-white mb-3">Archived Orders</h2>
+          <div className="bg-gray-50 p-6 rounded-2xl shadow-lg border border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Archived Orders</h2>
             <ul className="space-y-2 text-sm">
               {archived.map((order) => (
-                <li key={order.enquiryNo} className="flex justify-between border-b border-white/10 pb-2">
+                <li key={order.enquiryNo} className="flex justify-between border-b border-gray-200 pb-2">
                   <span>
                     <b>{order.enquiryNo}</b> - {order.name} ({order.service})
                   </span>
-                  <span className="text-gray-400">{order.dateOrdered}</span>
+                  <span className="text-gray-500">{order.dateOrdered}</span>
                 </li>
               ))}
             </ul>
@@ -239,16 +237,16 @@ const OrdersSection = () => {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-[#1e293b] rounded-2xl shadow-lg p-6 max-w-sm w-full text-center text-white"
+              className="bg-white rounded-2xl shadow-lg p-6 max-w-sm w-full text-center"
             >
-              <h2 className="text-xl font-bold mb-3">Archive Order</h2>
-              <p className="text-gray-400 mb-5">
+              <h2 className="text-xl font-bold mb-3 text-gray-900">Archive Order</h2>
+              <p className="text-gray-600 mb-5">
                 Are you sure you want to archive order <b>{selectedOrder?.enquiryNo}</b>?
               </p>
               <div className="flex justify-center gap-3">
                 <button
                   onClick={closeModal}
-                  className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition"
+                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
                 >
                   Cancel
                 </button>

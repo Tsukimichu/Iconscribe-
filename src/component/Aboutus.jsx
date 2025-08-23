@@ -4,7 +4,9 @@ function Aboutus() {
   return (
     <div className="bg-[#0f172a] py-20 px-6 md:px-12 lg:px-40">
       {/* Title */}
-      <h2 className="text-3xl font-bold text-center mb-10 text-white">About us</h2>
+    <h2 className="text-3xl text-white md:text-5xl font-extrabold text-center mb-16 tracking-wide relative z-10">
+        About <span className="text-yellow-400">Us</span>
+      </h2>
 
       {/* Flex Container */}
       <div className="flex flex-col lg:flex-row items-center justify-between w-wrap">

@@ -11,7 +11,7 @@ function ContactUs() {
       </div>
 
       {/* Title */}
-      <h2 className="text-4xl md:text-5xl font-extrabold text-center mb-16 tracking-wide relative z-10">
+      <h2 className="text-3xl md:text-5xl font-extrabold text-center mb-16 tracking-wide relative z-10">
         Contact <span className="text-yellow-400">Us</span>
       </h2>
 

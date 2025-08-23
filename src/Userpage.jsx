@@ -15,9 +15,9 @@ function user() {
             <section id="home"> <Hero/> </section>
             <section id="product"> <ProductSection /> </section>
             {/* Check if authentication then show transaction section */}
-            <section id="transactions" className="py-16"><Transactions /></section>
-            <section id="about-us" className="py-16 justify-center"> <Aboutus/> </section>
-            <section id="contact" className="py-16 justify-center"> <ContactUs/> </section>
+            <section id="transactions" className=""><Transactions /></section>
+            <section id="about-us" className=" justify-center"> <Aboutus/> </section>
+            <section id="contact" className=" justify-center"> <ContactUs/> </section>
           </main>
           <footer>
             <Footer/>

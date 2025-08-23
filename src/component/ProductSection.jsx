@@ -47,14 +47,14 @@ function ProductSection() {
   const nextRef = useRef(null);
 
   return (
-    <section id="product" className="relative py-20 px-6 text-white overflow-hidden">
+    <section id="product" className="relative py-25 px-6 text-white overflow-hidden">
   
       <div className="absolute inset-0 bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,0,0.07),transparent_70%)] animate-pulse-slow" />
       <div className="absolute inset-0 bg-[conic-gradient(at_top_right,rgba(34,211,238,0.05),transparent_70%)] animate-spin-slow" />
 
-      <h2 className="relative text-4xl font-extrabold text-center mb-8 text-yellow-400 tracking-wide">
-        Services Offered
+    <h2 className="text-3xl text-white md:text-5xl font-extrabold text-center mb-16 tracking-wide relative z-10">
+        Service <span className="text-yellow-400">Offered</span>
       </h2>
 
       <div className="relative mb-12 flex justify-center">

@@ -1,5 +1,5 @@
 import Nav from '../component/navigation';
-import label from "../assets/ICONS.png"; // Assuming sticker/label image
+import label from "../assets/ICONS.png"; 
 import { ArrowBigLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,7 +10,7 @@ function Label() {
     <>
       <Nav />
 
-      <div className="max-w-full mx-auto p-5 bg-[#FAF9F7] min-h-screen">
+      <div className="max-w-full mx-auto p-5 bg-[#FAF9F7] max-h-screen">
 
         <div className="flex items-center gap-3 mb-6">
           <button

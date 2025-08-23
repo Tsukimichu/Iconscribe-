@@ -10,7 +10,7 @@ function DocumentPrint() {
     <>
       <Nav />
 
-      <div className="max-w-full mx-auto p-5 bg-[#FAF9F7] min-h-screen">
+      <div className="max-w-full mx-auto p-5 bg-[#FAF9F7] max-h-screen">
 
         {/* Back Button & Title */}
         <div className="flex items-center gap-3 mb-6">

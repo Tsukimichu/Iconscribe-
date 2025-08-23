@@ -9,7 +9,7 @@ function OfficialReceipt() {
   return (
     <>
       <Nav />
-      <div className="w-full p-6 bg-[#FAF9F7] min-h-screen">
+      <div className="w-full p-6 bg-[#FAF9F7] max-h-screen">
         <div className="flex items-center gap-3 mb-6">
           <button
             onClick={() => navigate(-1)}

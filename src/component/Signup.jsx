@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import logo from "../assets/ICONS.png";
 import orgImage from "../assets/org.jpg";
 import { Eye, EyeOff, ArrowBigLeft, CheckCircle } from "lucide-react";
@@ -11,24 +12,57 @@ function Signup() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const handleSubmit = (e) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    address: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setTimeout(() => setSuccess(true), 500);
+
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+
+    try {
+      const res = await axios.post("http://localhost:5000/api/signup", {
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email,
+        address: formData.address,
+        password: formData.password,
+      });
+
+      if (res.data.success) {
+        setSuccess(true);
+      }
+    } catch (err) {
+      console.error("Signup error:", err);
+      alert("Signup failed. Check console for details.");
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center relative">
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url(${orgImage})`,
+          filter: "blur(4px)",
+        }}
+      ></div>
 
-            <div
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-              style={{
-                backgroundImage: `url(${orgImage})`,
-                filter: "blur(4px)"
-              }}></div>
       <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[650px] flex overflow-hidden">
-        
         <div className="w-1/2 p-10 flex flex-col relative overflow-y-auto">
-          
           <button
             onClick={() => navigate(-1)}
             className="absolute top-6 left-6 text-gray-600 hover:text-yellow-500 transition"
@@ -36,9 +70,7 @@ function Signup() {
             <ArrowBigLeft size={26} />
           </button>
 
-          
           <div className="flex flex-col flex-grow justify-center">
-            
             <div className="flex justify-center mb-6">
               <motion.img
                 src={logo}
@@ -93,58 +125,74 @@ function Signup() {
                   <form className="space-y-3 flex-grow" onSubmit={handleSubmit}>
                     <input
                       type="text"
-                      placeholder="Username"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      placeholder="Name"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300"
                       required
                     />
                     <input
                       type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
                       placeholder="Phone Number"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300"
                       required
                     />
                     <input
                       type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
                       placeholder="Email"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300"
                       required
                     />
                     <input
                       type="text"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleChange}
                       placeholder="Address"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300"
                       required
                     />
 
-                    
                     <div className="relative">
                       <input
                         type={showPassword ? "text" : "password"}
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
                         placeholder="Password"
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 pr-12"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-300 pr-12"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-2.5 text-gray-600 hover:text-gray-800"
+                        className="absolute right-3 top-2.5"
                       >
                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                       </button>
                     </div>
 
-                    
                     <div className="relative">
                       <input
                         type={showConfirm ? "text" : "password"}
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
                         placeholder="Confirm Password"
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 pr-12"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-300 pr-12"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirm(!showConfirm)}
-                        className="absolute right-3 top-2.5 text-gray-600 hover:text-gray-800"
+                        className="absolute right-3 top-2.5"
                       >
                         {showConfirm ? <EyeOff size={20} /> : <Eye size={20} />}
                       </button>
@@ -159,47 +207,12 @@ function Signup() {
                       Sign Up
                     </motion.button>
                   </form>
-
-                  
-                  <div className="mt-auto text-center">
-                    <p className="mt-3 text-sm text-gray-800">
-                      Already have an account?{" "}
-                      <span
-                        className="text-yellow-500 font-semibold cursor-pointer hover:underline"
-                        onClick={() => navigate("/login")}
-                      >
-                        Login
-                      </span>
-                    </p>
-                    <p className="mt-2 text-xs text-gray-700">
-                      By signing up, you agree to{" "}
-                      <a
-                        href="/terms"
-                        className="text-yellow-500 hover:underline"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Terms of Service
-                      </a>{" "}
-                      and{" "}
-                      <a
-                        href="/privacy"
-                        className="text-yellow-500 hover:underline"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Privacy Policy
-                      </a>
-                      .
-                    </p>
-                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         </div>
 
-        
         <div className="w-1/2 h-full">
           <img
             src={orgImage}

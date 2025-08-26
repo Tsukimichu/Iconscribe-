@@ -16,7 +16,6 @@ function Transactions() {
 
   return (
     <section className="relative w-full px-6 py-10 bg-white text-gray-800">
-      {/* Heading */}
       <motion.h2
         className="text-4xl font-extrabold text-center mb-10"
         initial={{ opacity: 0, y: -20 }}
@@ -25,9 +24,7 @@ function Transactions() {
         Transactions
       </motion.h2>
 
-      {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Project Summary */}
         <motion.div
           className="md:col-span-2 rounded-2xl backdrop-blur-xl bg-white/50 shadow-lg border border-gray-200 p-6 flex flex-col transition-all hover:shadow-xl hover:scale-[1.02]"
           initial={{ opacity: 0, x: -40 }}
@@ -94,7 +91,6 @@ function Transactions() {
           </div>
         </motion.div>
 
-        {/* Notifications */}
         <motion.div
           className="rounded-2xl backdrop-blur-xl bg-white/50 shadow-lg border border-gray-200 p-6 flex flex-col transition-all hover:shadow-xl hover:scale-[1.02]"
           initial={{ opacity: 0, x: 40 }}

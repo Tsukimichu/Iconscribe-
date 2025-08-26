@@ -4,18 +4,18 @@ import { MdEmail, MdPhone, MdLocationOn, MdAccessTime } from "react-icons/md";
 function ContactUs() {
   return (
     <section className="relative bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-[#2b2b2b] text-white py-20 px-6 md:px-12 lg:px-32 overflow-hidden">
-      {/* Decorative Glow */}
+      
       <div className="absolute inset-0">
         <div className="absolute -top-20 -left-20 w-72 h-72 bg-yellow-400/20 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute -bottom-20 -right-20 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
       </div>
 
-      {/* Title */}
+      
       <h2 className="text-3xl md:text-5xl font-extrabold text-center mb-16 tracking-wide relative z-10">
         Contact <span className="text-yellow-400">Us</span>
       </h2>
 
-      {/* Info Cards */}
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-20 relative z-10">
         {[
           {
@@ -50,9 +50,9 @@ function ContactUs() {
         ))}
       </div>
 
-      {/* Bottom Section */}
+      
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 relative z-10">
-        {/* Left Text */}
+        
         <div>
           <h3 className="text-3xl font-bold mb-6">
             Get in <span className="text-yellow-400">touch</span> with us
@@ -62,7 +62,6 @@ function ContactUs() {
             message and our team will get back to you as soon as possible.
           </p>
 
-          {/* Google Maps Embed (fixed link) */}
           <div className="w-full h-64 rounded-2xl overflow-hidden shadow-lg border border-white/10">
             <iframe
               title="Google Maps – Bantad, Boac, Marinduque"
@@ -75,7 +74,7 @@ function ContactUs() {
           </div>
         </div>
 
-        {/* Right Form */}
+        
         <div className="bg-white/5 backdrop-blur-lg p-10 rounded-2xl shadow-lg border border-white/10">
           <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <input

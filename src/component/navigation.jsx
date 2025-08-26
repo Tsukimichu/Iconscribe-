@@ -66,7 +66,6 @@ function Navigation() {
     >
       <div className="flex items-center justify-between w-full px-6 py-3">
         
-        {/* Left: Logo */}
         <div className="flex-shrink-0">
           <img 
             src={logo} 
@@ -75,7 +74,6 @@ function Navigation() {
           />
         </div>
 
-        {/* Middle: Nav Items */}
         <div className="hidden md:flex flex-1 justify-center">
           <ul className="flex gap-6 text-sm md:text-base font-semibold tracking-wide">
             {navItems.map(({ label, id }) => (
@@ -96,7 +94,6 @@ function Navigation() {
           </ul>
         </div>
 
-        {/* Right: Auth */}
         <div className="hidden md:flex items-center gap-4">
           {isLoggedIn ? (
             <>
@@ -126,13 +123,11 @@ function Navigation() {
           )}
         </div>
 
-        {/* Mobile Menu Button */}
         <button className="md:hidden ml-2" onClick={() => setMenuOpen(!menuOpen)}>
           {menuOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
       </div>
 
-      {/* Mobile Dropdown */}
       {menuOpen && (
         <div className="md:hidden mt-3 border-t border-yellow-400/30 pt-4 bg-[#0a2a6c]/95 backdrop-blur-lg rounded-b-lg">
           <ul className="space-y-2 font-medium text-sm">

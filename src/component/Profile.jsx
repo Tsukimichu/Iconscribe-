@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, ArrowLeft } from "lucide-react";
+import { LogOut, ArrowBigLeft } from "lucide-react";
 import logo from "../assets/ICONS.png";
 
 // Reusable Modal Component
@@ -25,20 +25,18 @@ function Modal({ isOpen, onClose, title, children }) {
 function Profile() {
   const navigate = useNavigate();
 
-  // States
   const [isEditing, setIsEditing] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
-  // Sample profile state
   const [profile, setProfile] = useState({
-    name: "Aldrin Portento",
-    email: "Aldrin@gmail.com",
+    name: "",
+    email: "",
     business: "",
-    contact: "09123456789",
-    location: "#30 Bangus St. Murallon Boac, Marinduque",
+    contact: "",
+    location: "",
   });
 
   const handleLogout = () => {
@@ -56,16 +54,16 @@ function Profile() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] text-white relative">
-      {/* Navbar */}
+
       <nav className="flex items-center justify-between bg-white/5 backdrop-blur-lg px-6 py-4 shadow-lg border-b border-white/10">
         <img src={logo} alt="Logo" className="h-10 drop-shadow-lg" />
         <div className="flex items-center gap-3">
-          {/* 🔙 Back button inside nav */}
+
           <button
             onClick={handleBack}
             className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition"
           >
-            <ArrowLeft size={20} />
+            <ArrowBigLeft/>
           </button>
           <div className="w-9 h-9 bg-white/20 backdrop-blur-lg border border-yellow-400 rounded-full flex items-center justify-center text-lg">
             👤
@@ -73,9 +71,7 @@ function Profile() {
         </div>
       </nav>
 
-      {/* Profile Content */}
       <div className="max-w-6xl mx-auto py-10 px-6 grid grid-cols-1 md:grid-cols-3 gap-10">
-        {/* Profile Card */}
         <div className="bg-white/5 backdrop-blur-lg shadow-lg rounded-2xl p-6 text-center border border-white/10">
           <div className="w-full border border-yellow-400/50 rounded-xl p-4">
             <div className="w-32 h-32 mx-auto rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-4xl">
@@ -99,7 +95,6 @@ function Profile() {
           </div>
         </div>
 
-        {/* Account Details */}
         <div className="md:col-span-2 bg-white/5 backdrop-blur-lg shadow-lg rounded-2xl p-6 border border-white/10">
           <h3 className="text-lg font-bold mb-4">Account Details</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

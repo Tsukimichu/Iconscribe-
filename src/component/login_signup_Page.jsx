@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import orgImage from "../assets/org.jpg"; // replace with your image
+import orgImage from "../assets/org.jpg"; 
 
 function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -9,7 +9,6 @@ function Auth() {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="relative flex w-[900px] h-[600px] bg-white shadow-xl rounded-3xl overflow-hidden">
         
-        {/* IMAGE SLIDER */}
         <AnimatePresence mode="wait">
           <motion.div
     className={`absolute top-0 h-full w-1/2 ${isLogin ? "left-0" : "right-0"}`}
@@ -26,7 +25,6 @@ function Auth() {
           </motion.div>
         </AnimatePresence>
 
-        {/* FORMS */}
         <AnimatePresence mode="wait">
           {isLogin ? (
             <motion.div

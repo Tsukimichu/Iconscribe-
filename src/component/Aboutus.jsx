@@ -3,16 +3,16 @@ import logo from "../assets/ICONS.png";
 function Aboutus() {
   return (
     <div className="bg-[#0f172a] py-20 px-6 md:px-12 lg:px-40">
-      {/* Title */}
+      
     <h2 className="text-3xl text-white md:text-5xl font-extrabold text-center mb-16 tracking-wide relative z-10">
         About <span className="text-yellow-400">Us</span>
       </h2>
 
-      {/* Flex Container */}
+      
       <div className="flex flex-col lg:flex-row items-center justify-between w-wrap">
-        {/* Left Content */}
+        
         <div className="flex-1 text-white text-center lg:text-left flex flex-col items-center lg:items-start">
-          {/* Our Story */}
+          
           <h3 className="text-2xl font-bold text-yellow-400 mb-2">Our Story</h3>
           <p className="font-semibold leading-relaxed mb-6 max-w-xl text-justify">
             At ICONS, we offer a wide array of printing solutions that cater to diverse needs,
@@ -60,7 +60,7 @@ function Aboutus() {
           </div>
         </div>
 
-        {/* Right Logo */}
+        
         <div className="flex-1 flex justify-center lg:justify-center">
           <img
             src={logo}

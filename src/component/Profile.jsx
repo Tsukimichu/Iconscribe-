@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, ArrowBigLeft } from "lucide-react";
+import { ArrowBigLeft } from "lucide-react";
 import logo from "../assets/ICONS.png";
 
-// Reusable Modal Component
 function Modal({ isOpen, onClose, title, children }) {
   if (!isOpen) return null;
   return (
@@ -32,6 +31,7 @@ function Profile() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   const [profile, setProfile] = useState({
+    user_id: "",
     name: "",
     email: "",
     business: "",
@@ -39,8 +39,32 @@ function Profile() {
     location: "",
   });
 
+  // 🔹 Load user from localStorage (or fetch from API if needed)
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      setProfile({
+        user_id: user.user_id || "",
+        name: user.name || "",
+        email: user.email || "",
+        business: user.business || "",
+        contact: user.phone || "",
+        location: user.address || "",
+      });
+    }
+  }, []);
+
+  // 🔹 Save user back to localStorage
+  const handleSaveProfile = () => {
+    localStorage.setItem("user", JSON.stringify(profile));
+    setIsEditing(false);
+    setShowSaveModal(true);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("user");
     navigate("/");
   };
 
@@ -55,15 +79,15 @@ function Profile() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] text-white relative">
 
+      {/* 🔹 Navbar */}
       <nav className="flex items-center justify-between bg-white/5 backdrop-blur-lg px-6 py-4 shadow-lg border-b border-white/10">
         <img src={logo} alt="Logo" className="h-10 drop-shadow-lg" />
         <div className="flex items-center gap-3">
-
           <button
             onClick={handleBack}
             className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition"
           >
-            <ArrowBigLeft/>
+            <ArrowBigLeft />
           </button>
           <div className="w-9 h-9 bg-white/20 backdrop-blur-lg border border-yellow-400 rounded-full flex items-center justify-center text-lg">
             👤
@@ -71,16 +95,19 @@ function Profile() {
         </div>
       </nav>
 
+      {/* 🔹 Profile Layout */}
       <div className="max-w-6xl mx-auto py-10 px-6 grid grid-cols-1 md:grid-cols-3 gap-10">
+        {/* Left Card */}
         <div className="bg-white/5 backdrop-blur-lg shadow-lg rounded-2xl p-6 text-center border border-white/10">
           <div className="w-full border border-yellow-400/50 rounded-xl p-4">
             <div className="w-32 h-32 mx-auto rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-4xl">
               👤
             </div>
             <h2 className="mt-4 text-xl font-bold">{profile.name}</h2>
-            <p className="text-sm text-gray-400">#089643</p>
+            <p className="text-sm text-gray-400">User ID: #{profile.user_id}</p>
           </div>
 
+          {/* Delete Account */}
           <div className="mt-6 text-left">
             <p className="text-sm text-red-500 font-semibold">Delete my account</p>
             <p className="text-xs text-gray-400">
@@ -95,6 +122,7 @@ function Profile() {
           </div>
         </div>
 
+        {/* Right Card */}
         <div className="md:col-span-2 bg-white/5 backdrop-blur-lg shadow-lg rounded-2xl p-6 border border-white/10">
           <h3 className="text-lg font-bold mb-4">Account Details</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -114,6 +142,7 @@ function Profile() {
             ))}
           </div>
 
+          {/* Action Buttons */}
           <div className="flex gap-3 mt-6">
             {!isEditing ? (
               <button
@@ -124,10 +153,7 @@ function Profile() {
               </button>
             ) : (
               <button
-                onClick={() => {
-                  setIsEditing(false);
-                  setShowSaveModal(true);
-                }}
+                onClick={handleSaveProfile}
                 className="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-400 transition"
               >
                 Save Changes
@@ -139,7 +165,6 @@ function Profile() {
             >
               Change Password
             </button>
-            {/* 🔽 Logout moved down here */}
             <button
               onClick={() => setShowLogoutModal(true)}
               className="bg-yellow-400 text-[#1e293b] px-4 py-2 rounded-full hover:bg-yellow-300 transition"
@@ -148,6 +173,7 @@ function Profile() {
             </button>
           </div>
 
+          {/* Order Summary */}
           <div className="mt-8">
             <h3 className="text-lg font-bold mb-2">Order Summary</h3>
             <div className="bg-white/5 rounded-lg border border-white/10 p-4 text-center text-gray-400 text-sm">
@@ -158,7 +184,6 @@ function Profile() {
       </div>
 
       {/* 🔹 Modals Section */}
-      {/* Logout Modal */}
       <Modal
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}
@@ -173,7 +198,6 @@ function Profile() {
         </button>
       </Modal>
 
-      {/* Delete Modal */}
       <Modal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
@@ -187,7 +211,6 @@ function Profile() {
         </button>
       </Modal>
 
-      {/* Save Modal */}
       <Modal
         isOpen={showSaveModal}
         onClose={() => setShowSaveModal(false)}
@@ -196,7 +219,6 @@ function Profile() {
         <p>Your account details have been updated successfully.</p>
       </Modal>
 
-      {/* Change Password Modal */}
       <Modal
         isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}

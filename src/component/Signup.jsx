@@ -198,7 +198,7 @@ function Signup() {
                       </button>
                     </div>
 
-                  <motion.button
+                    <motion.button
                       type="submit"
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
@@ -211,27 +211,6 @@ function Signup() {
               )}
             </AnimatePresence>
           </div>
-                      <div className="text-sm text-center text-gray-800 mt-2">
-              Don’t have an account?{" "}
-              <span
-                onClick={() => navigate("/login")}
-                className="text-yellow-500 font-medium cursor-pointer hover:underline"
-              >
-                Login
-              </span>
-            </div>
-
-            <p className="mt-2 text-xs text-gray-700 text-center">
-              By signing up, you agree to Icons’{" "}
-              <a href="/terms" className="text-yellow-500 hover:underline">
-                Terms of Service
-              </a>{" "}
-              and{" "}
-              <a href="/privacy" className="text-yellow-500 hover:underline">
-                Privacy Policy
-              </a>
-              .
-            </p>
         </div>
 
         <div className="w-1/2 h-full">

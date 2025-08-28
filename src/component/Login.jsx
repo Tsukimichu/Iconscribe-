@@ -3,54 +3,34 @@ import { useNavigate } from "react-router-dom";
 import logo from "../assets/ICONS.png";
 import orgImage from "../assets/org.jpg";
 import { User, Lock } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion } from "framer-motion"; 
 
 function Login({ onLogin }) {
   const navigate = useNavigate();
-  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  
 
-  const handleLogin = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
-    setLoading(true);
-
-    try {
-      const res = await fetch("http://localhost:5000/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, password }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        localStorage.setItem("isLoggedIn", "true");
-        localStorage.setItem("user", JSON.stringify(data.user));
-        onLogin();
-        navigate("/dashboard");
-      } else {
-        alert(data.message || "Invalid name or password");
-      }
-    } catch (error) {
-      console.error("❌ Login error:", error);
-      alert("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    localStorage.setItem("isLoggedIn", "true");
+    onLogin();
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center relative">
-      {/* Background */}
+
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${orgImage})`, filter: "blur(4px)" }}
-      />
+        style={{
+          backgroundImage: `url(${orgImage})`,
+          filter: "blur(4px)"
+        }}>
 
-      {/* Card */}
+  </div>
       <div className="relative bg-white rounded-3xl shadow-4xl w-full max-w-5xl h-[650px] flex overflow-hidden">
-        {/* Left Image */}
+        
+        
         <div className="w-1/2 h-full">
           <img
             src={orgImage}
@@ -59,40 +39,36 @@ function Login({ onLogin }) {
           />
         </div>
 
-        {/* Right Side (Form) */}
         <div className="w-1/2 p-10 flex flex-col relative overflow-y-auto">
           <div className="flex flex-col flex-grow justify-center">
-            {/* Logo */}
+            
             <div className="flex justify-center mb-6">
-              <img src={logo} alt="Logo" className="h-14 drop-shadow-md" />
+              <img
+                src={logo}
+                alt="Logo"
+                className="h-14 drop-shadow-md"
+              />
             </div>
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900 text-center">
               Log In
             </h2>
 
-            {/* Login Form */}
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="relative">
-                <User
-                  className="absolute left-3 top-2.5 text-gray-600"
-                  size={18}
-                />
+                <User className="absolute left-3 top-2.5 text-gray-600" size={18} />
                 <input
-                  type="text"
-                  placeholder="Username"
+                  type="tel"
+                  placeholder="Phone number"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                   required
                 />
               </div>
 
               <div className="relative">
-                <Lock
-                  className="absolute left-3 top-2.5 text-gray-600"
-                  size={18}
-                />
+                <Lock className="absolute left-3 top-2.5 text-gray-600" size={18} />
                 <input
                   type="password"
                   placeholder="Password"
@@ -103,15 +79,14 @@ function Login({ onLogin }) {
                 />
               </div>
 
-              <motion.button
-                type="submit"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-black py-2.5 rounded-xl shadow-lg font-semibold hover:shadow-xl transition-all disabled:opacity-70"
-              >
-                {loading ? "Logging in..." : "Log in"}
-              </motion.button>
+                    <motion.button
+                      type="submit"
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-black py-2.5 rounded-xl shadow-lg font-semibold hover:shadow-xl transition-all"
+                    >
+                      Log in
+                    </motion.button>
             </form>
 
             <div className="text-sm text-center text-gray-800 mt-4">

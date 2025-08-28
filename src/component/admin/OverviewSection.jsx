@@ -77,7 +77,7 @@ const OverviewSection = () => {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8 }}
-      className="p-6 rounded-3xl space-y-6 bg-transparent"
+      className="p-6 rounded-3xl bg-white shadow-2xl space-y-6"
     >
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
         <div>
@@ -92,7 +92,7 @@ const OverviewSection = () => {
             key={i}
             whileHover={{ scale: 1.04 }}
             transition={{ type: 'spring', stiffness: 250 }}
-            className={`rounded-xl px-5 py-4 text-center flex flex-col justify-center items-center ${card.bg}`}
+            className={`rounded-xl px-5 py-4 text-center shadow-md flex flex-col justify-center items-center ${card.bg}`}
           >
             <p className={`text-3xl font-bold mb-1 ${card.text}`}>
               {card.count.toString().padStart(2, '0')}
@@ -103,22 +103,22 @@ const OverviewSection = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="p-5 rounded-xl bg-transparent border border-gray-200">
+        <div className="bg-gray-50 p-5 rounded-xl shadow-inner">
           <h2 className="text-lg font-semibold text-gray-700 mb-3">Total Orders</h2>
           <Chart options={orderData.options} series={orderData.series} type="area" height={260} />
         </div>
-        <div className="p-5 rounded-xl bg-transparent border border-gray-200">
+        <div className="bg-gray-50 p-5 rounded-xl shadow-inner">
           <h2 className="text-lg font-semibold text-gray-700 mb-3">Total Sales</h2>
           <Chart options={salesData.options} series={salesData.series} type="line" height={260} />
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="p-5 rounded-xl bg-transparent border border-gray-200">
+        <div className="bg-gray-50 p-5 rounded-xl shadow-inner">
           <h2 className="text-lg font-semibold text-gray-700 mb-2">Reports</h2>
           <Chart options={reportData.options} series={reportData.series} type="donut" height={300} />
         </div>
-        <div className="p-5 rounded-xl bg-transparent border border-gray-200">
+        <div className="bg-gray-50 p-5 rounded-xl shadow-inner">
           <h2 className="text-lg font-semibold text-gray-700 mb-2">Expenses</h2>
           <Chart options={expenseData.options} series={expenseData.series} type="bar" height={300} />
         </div>

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Plus, Edit2, Archive, List, X, RotateCcw } from "lucide-react";
+import { Search, Plus, Edit2, Archive, List, X } from "lucide-react";
 
 const initialServices = [
   { name: "Official Receipt", status: "Active" },
@@ -14,28 +14,24 @@ const initialServices = [
 ];
 
 const statusColors = {
-  Active: "bg-green-100 text-green-700",
-  Inactive: "bg-red-100 text-red-700",
-  Archived: "bg-yellow-100 text-yellow-700",
+  Active: "bg-green-500/20 text-green-400 border border-green-500/30",
+  Inactive: "bg-red-500/20 text-red-400 border border-red-500/30",
+  Archived: "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
 };
 
 const ProductSection = () => {
   const [services, setServices] = useState(initialServices);
   const [archived, setArchived] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filter, setFilter] = useState("all");
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [popupType, setPopupType] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [newServiceName, setNewServiceName] = useState("");
   const [newServiceStatus, setNewServiceStatus] = useState("Active");
 
-  // Filtering + searching
-  const filteredServices = services.filter((s) => {
-    const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filter === "all" || s.status === filter;
-    return matchesSearch && matchesFilter;
-  });
+  const filteredServices = services.filter((s) =>
+    s.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const openPopup = (type, service = null) => {
     setPopupType(type);
@@ -77,24 +73,19 @@ const ProductSection = () => {
     closePopup();
   };
 
-  const handleRestore = (service) => {
-    setArchived((prev) => prev.filter((s) => s.name !== service.name));
-    setServices((prev) => [...prev, { ...service, status: "Inactive" }]);
-  };
-
   return (
-    <div className="p-6 min-h-screen bg-white text-gray-900 rounded-3xl">
+    <div className="p-6 min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 text-white rounded-3xl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-6">
-        <h1 className="text-3xl font-extrabold">📦 Product Management</h1>
+        <h1 className="text-3xl font-bold text-white">Product Management</h1>
         <div className="relative w-full sm:w-auto">
           <input
             type="text"
-            placeholder="Search services..."
+            placeholder="Search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 pr-4 py-2 w-full sm:w-64 rounded-full 
-                       bg-gray-100 border border-gray-300 text-gray-800
+                       bg-slate-800 border border-white/10 text-white
                        focus:ring-2 focus:ring-cyan-400 outline-none"
           />
           <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
@@ -102,23 +93,16 @@ const ProductSection = () => {
       </div>
 
       {/* Action buttons */}
-      <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
-        <div className="flex gap-2">
-          <button
-            onClick={() => openPopup("add")}
-            className="flex items-center gap-2 bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 transition"
-          >
-            <Plus size={18} /> Add Service
-          </button>
-          <button
-            onClick={() =>
-              setFilter(filter === "all" ? "Active" : filter === "Active" ? "Inactive" : filter === "Inactive" ? "Archived" : "all")
-            }
-            className="flex items-center gap-2 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
-          >
-            <List size={18} /> Filter: {filter}
-          </button>
-        </div>
+      <div className="flex justify-end gap-3 mb-4">
+        <button
+          onClick={() => openPopup("add")}
+          className="flex items-center gap-2 bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 transition"
+        >
+          <Plus size={18} /> Add Service
+        </button>
+        <button className="flex items-center gap-2 bg-slate-800 text-gray-300 px-4 py-2 rounded-lg border border-white/10 hover:bg-slate-700 transition">
+          <List size={18} /> Sort Items
+        </button>
       </div>
 
       {/* Active/Inactive Table */}
@@ -126,57 +110,51 @@ const ProductSection = () => {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-200"
+        className="bg-slate-800/80 shadow-xl rounded-2xl overflow-hidden border border-white/10"
       >
         <table className="w-full text-left border-collapse">
-          <thead className="bg-gray-100 sticky top-0">
+          <thead className="bg-slate-900/70 sticky top-0">
             <tr>
-              <th className="py-3 px-6 font-semibold text-gray-700">Product Name</th>
-              <th className="py-3 px-6 font-semibold text-gray-700">Status</th>
-              <th className="py-3 px-6 font-semibold text-gray-700">Action</th>
+              <th className="py-3 px-6 font-semibold text-gray-300">
+                Product Name
+              </th>
+              <th className="py-3 px-6 font-semibold text-gray-300">Status</th>
+              <th className="py-3 px-6 font-semibold text-gray-300">Action</th>
             </tr>
           </thead>
           <tbody>
-            {filteredServices.length === 0 ? (
-              <tr>
-                <td colSpan="3" className="text-center py-6 text-gray-500">
-                  No services found.
+            {filteredServices.map((service, idx) => (
+              <motion.tr
+                key={idx}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="border-b border-white/10 hover:bg-slate-700/30 transition"
+              >
+                <td className="py-3 px-6">{service.name}</td>
+                <td className="py-3 px-6">
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[service.status]}`}
+                  >
+                    {service.status}
+                  </span>
                 </td>
-              </tr>
-            ) : (
-              filteredServices.map((service, idx) => (
-                <motion.tr
-                  key={idx}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="border-b border-gray-200 hover:bg-gray-50 transition"
-                >
-                  <td className="py-3 px-6">{service.name}</td>
-                  <td className="py-3 px-6">
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-semibold ${statusColors[service.status]}`}
-                    >
-                      {service.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-6 flex gap-2">
-                    <button
-                      onClick={() => openPopup("edit", service)}
-                      className="flex items-center gap-1 bg-gray-200 px-3 py-1 rounded-lg hover:bg-gray-300 transition"
-                    >
-                      <Edit2 size={16} /> Edit
-                    </button>
-                    <button
-                      onClick={() => openPopup("archive", service)}
-                      className="flex items-center gap-1 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-lg hover:bg-yellow-200 transition"
-                    >
-                      <Archive size={16} /> Archive
-                    </button>
-                  </td>
-                </motion.tr>
-              ))
-            )}
+                <td className="py-3 px-6 flex gap-2">
+                  <button
+                    onClick={() => openPopup("edit", service)}
+                    className="flex items-center gap-1 bg-slate-700 px-3 py-1 rounded-lg hover:bg-slate-600 transition"
+                  >
+                    <Edit2 size={16} /> Edit
+                  </button>
+                  <button
+                    onClick={() => openPopup("archive", service)}
+                    className="flex items-center gap-1 bg-yellow-600/20 text-yellow-400 px-3 py-1 rounded-lg hover:bg-yellow-600/40 transition"
+                  >
+                    <Archive size={16} /> Archive
+                  </button>
+                </td>
+              </motion.tr>
+            ))}
           </tbody>
         </table>
       </motion.div>
@@ -184,42 +162,35 @@ const ProductSection = () => {
       {/* Archived Section */}
       {archived.length > 0 && (
         <div className="mt-10">
-          <h2 className="text-xl font-bold mb-3 text-yellow-700">🗂 Archived Services</h2>
+          <h2 className="text-xl font-bold mb-3 text-yellow-400">Archived Services</h2>
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-200"
+            className="bg-slate-800/80 shadow-xl rounded-2xl overflow-hidden border border-white/10"
           >
             <table className="w-full text-left border-collapse">
-              <thead className="bg-gray-100 sticky top-0">
+              <thead className="bg-slate-900/70 sticky top-0">
                 <tr>
-                  <th className="py-3 px-6 font-semibold text-gray-700">Product Name</th>
-                  <th className="py-3 px-6 font-semibold text-gray-700">Status</th>
-                  <th className="py-3 px-6 font-semibold text-gray-700">Action</th>
+                  <th className="py-3 px-6 font-semibold text-gray-300">
+                    Product Name
+                  </th>
+                  <th className="py-3 px-6 font-semibold text-gray-300">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {archived.map((service, idx) => (
                   <tr
                     key={idx}
-                    className="border-b border-gray-200 hover:bg-gray-50 transition"
+                    className="border-b border-white/10 hover:bg-slate-700/30 transition"
                   >
                     <td className="py-3 px-6">{service.name}</td>
                     <td className="py-3 px-6">
                       <span
-                        className={`px-3 py-1 rounded-full text-sm font-semibold ${statusColors["Archived"]}`}
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors["Archived"]}`}
                       >
                         Archived
                       </span>
-                    </td>
-                    <td className="py-3 px-6">
-                      <button
-                        onClick={() => handleRestore(service)}
-                        className="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-lg hover:bg-green-200 transition"
-                      >
-                        <RotateCcw size={16} /> Restore
-                      </button>
                     </td>
                   </tr>
                 ))}
@@ -233,43 +204,44 @@ const ProductSection = () => {
       <AnimatePresence>
         {isPopupOpen && (
           <motion.div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50"
+            className="fixed inset-0 bg-black/60 backdrop-blur-md flex justify-center items-center z-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="bg-white text-gray-900 rounded-2xl p-6 shadow-2xl max-w-md w-full relative"
+              className="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 
+                         text-white rounded-2xl p-6 shadow-2xl max-w-sm w-full 
+                         border border-white/10 backdrop-blur-xl relative"
               initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.85, opacity: 0 }}
               transition={{ duration: 0.25 }}
             >
               <button
-                className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-200"
                 onClick={closePopup}
               >
                 <X size={20} />
               </button>
 
-              {/* Popup Content */}
               {popupType === "add" && (
                 <>
-                  <h3 className="text-xl font-bold mb-4">➕ Add New Service</h3>
+                  <h3 className="text-lg font-semibold mb-4">Add New Service</h3>
                   <input
                     type="text"
                     placeholder="Service name"
                     value={newServiceName}
                     onChange={(e) => setNewServiceName(e.target.value)}
                     className="w-full px-4 py-2 mb-4 rounded-lg 
-                               bg-gray-100 border border-gray-300 text-gray-900 
+                               bg-slate-800 border border-white/10 text-white 
                                focus:ring-2 focus:ring-cyan-400 outline-none"
                   />
                   <select
                     value={newServiceStatus}
                     onChange={(e) => setNewServiceStatus(e.target.value)}
                     className="w-full px-4 py-2 mb-6 rounded-lg 
-                               bg-gray-100 border border-gray-300 text-gray-900 
+                               bg-slate-800 border border-white/10 text-white 
                                focus:ring-2 focus:ring-cyan-400 outline-none"
                   >
                     <option value="Active">Active</option>
@@ -280,20 +252,20 @@ const ProductSection = () => {
 
               {popupType === "edit" && (
                 <>
-                  <h3 className="text-xl font-bold mb-4">✏️ Edit Service</h3>
+                  <h3 className="text-lg font-semibold mb-4">Edit Service</h3>
                   <input
                     type="text"
                     value={newServiceName}
                     onChange={(e) => setNewServiceName(e.target.value)}
                     className="w-full px-4 py-2 mb-4 rounded-lg 
-                               bg-gray-100 border border-gray-300 text-gray-900 
+                               bg-slate-800 border border-white/10 text-white 
                                focus:ring-2 focus:ring-cyan-400 outline-none"
                   />
                   <select
                     value={newServiceStatus}
                     onChange={(e) => setNewServiceStatus(e.target.value)}
                     className="w-full px-4 py-2 mb-6 rounded-lg 
-                               bg-gray-100 border border-gray-300 text-gray-900 
+                               bg-slate-800 border border-white/10 text-white 
                                focus:ring-2 focus:ring-cyan-400 outline-none"
                   >
                     <option value="Active">Active</option>
@@ -304,15 +276,11 @@ const ProductSection = () => {
 
               {popupType === "archive" && (
                 <>
-                  <h3 className="text-xl font-bold mb-2 text-yellow-700">
-                    ⚠️ Archive Service
+                  <h3 className="text-lg font-semibold mb-2">
+                    Archive {selectedService?.name}?
                   </h3>
-                  <p className="text-gray-600 mb-6">
-                    Are you sure you want to archive{" "}
-                    <span className="font-semibold text-gray-900">
-                      {selectedService?.name}
-                    </span>
-                    ? This can be restored later.
+                  <p className="text-gray-400 mb-6">
+                    This service will be archived and can be restored later.
                   </p>
                 </>
               )}
@@ -321,7 +289,7 @@ const ProductSection = () => {
               <div className="flex justify-center gap-4">
                 <button
                   onClick={closePopup}
-                  className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 transition"
+                  className="px-4 py-2 rounded-xl border border-white/10 hover:bg-white/10 transition"
                 >
                   Cancel
                 </button>

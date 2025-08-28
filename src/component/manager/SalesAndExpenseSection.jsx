@@ -1,15 +1,5 @@
 import React, { useMemo, useState } from "react";
-import {
-  X,
-  Edit2,
-  Search,
-  Plus,
-  Archive,
-  Trash2,
-  RotateCcw,
-  ChevronDown,
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { X, Edit2, Search, Plus, Archive, Trash2, RotateCcw } from "lucide-react";
 
 const SalesAndExpenseSection = () => {
   const [sales, setSales] = useState([
@@ -25,19 +15,12 @@ const SalesAndExpenseSection = () => {
   const [archivedExpenses, setArchivedExpenses] = useState([]);
 
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState("date");
-
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState(null); // { source, id }
   const [formData, setFormData] = useState({ id: null, item: "", amount: "", date: "" });
   const [isNew, setIsNew] = useState(false);
 
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
-  const [archiveType, setArchiveType] = useState(null);
-  const [confirmDelete, setConfirmDelete] = useState(null);
-
-  const totalSales = useMemo(() => sales.reduce((sum, s) => sum + Number(s.amount), 0), [sales]);
-  const totalExpenses = useMemo(() => expenses.reduce((sum, e) => sum + Number(e.amount), 0), [expenses]);
-  const profit = totalSales - totalExpenses;
+  const [archiveType, setArchiveType] = useState(null); // "sale" | "expense"
 
   const openEdit = (source, record) => {
     setSelected({ source, id: record.id });
@@ -63,24 +46,25 @@ const SalesAndExpenseSection = () => {
   };
 
   const handleSave = () => {
-    if (!formData.item.trim() || !formData.amount || !formData.date) return alert("All fields are required");
+    if (!selected) return;
 
     if (selected.source === "sale") {
-      if (isNew) setSales((prev) => [...prev, { ...formData, id: Date.now() }]);
-      else setSales((prev) => prev.map((r) => (r.id === formData.id ? { ...formData } : r)));
+      if (isNew) {
+        setSales((prev) => [...prev, { ...formData, id: Date.now() }]);
+      } else {
+        setSales((prev) => prev.map((r) => (r.id === formData.id ? { ...formData } : r)));
+      }
     } else {
-      if (isNew) setExpenses((prev) => [...prev, { ...formData, id: Date.now() }]);
-      else setExpenses((prev) => prev.map((r) => (r.id === formData.id ? { ...formData } : r)));
+      if (isNew) {
+        setExpenses((prev) => [...prev, { ...formData, id: Date.now() }]);
+      } else {
+        setExpenses((prev) => prev.map((r) => (r.id === formData.id ? { ...formData } : r)));
+      }
     }
     closeEdit();
   };
 
   const handleDelete = (source, record) => {
-    setConfirmDelete({ source, record });
-  };
-
-  const confirmDeleteAction = () => {
-    const { source, record } = confirmDelete;
     if (source === "sale") {
       setSales((prev) => prev.filter((r) => r.id !== record.id));
       setArchivedSales((prev) => [...prev, record]);
@@ -88,7 +72,6 @@ const SalesAndExpenseSection = () => {
       setExpenses((prev) => prev.filter((r) => r.id !== record.id));
       setArchivedExpenses((prev) => [...prev, record]);
     }
-    setConfirmDelete(null);
   };
 
   const handleRestore = (source, record) => {
@@ -101,54 +84,60 @@ const SalesAndExpenseSection = () => {
     }
   };
 
-  const filterAndSort = (data) => {
-    let filtered = data.filter((r) => r.item.toLowerCase().includes(search.toLowerCase()) || r.date.includes(search));
-    return [...filtered].sort((a, b) => {
-      if (sortBy === "amount") return b.amount - a.amount;
-      if (sortBy === "date") return new Date(b.date) - new Date(a.date);
-      return a.item.localeCompare(b.item);
-    });
-  };
+  const filteredSales = useMemo(
+    () =>
+      sales.filter(
+        (r) =>
+          r.item.toLowerCase().includes(search.toLowerCase()) ||
+          r.date.includes(search)
+      ),
+    [sales, search]
+  );
 
-  const filteredSales = useMemo(() => filterAndSort(sales), [sales, search, sortBy]);
-  const filteredExpenses = useMemo(() => filterAndSort(expenses), [expenses, search, sortBy]);
+  const filteredExpenses = useMemo(
+    () =>
+      expenses.filter(
+        (r) =>
+          r.item.toLowerCase().includes(search.toLowerCase()) ||
+          r.date.includes(search)
+      ),
+    [expenses, search]
+  );
+
+  const sortedArchivedSales = useMemo(
+    () => [...archivedSales].sort((a, b) => new Date(b.date) - new Date(a.date)),
+    [archivedSales]
+  );
+
+  const sortedArchivedExpenses = useMemo(
+    () => [...archivedExpenses].sort((a, b) => new Date(b.date) - new Date(a.date)),
+    [archivedExpenses]
+  );
 
   return (
-    <div className="p-8 rounded-3xl bg-gradient-to-br from-cyan-50 to-white shadow-xl min-h-screen text-gray-900">
+    <div className="p-8 rounded-3xl bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] shadow-2xl text-white min-h-screen">
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-10">
-        <h1 className="text-4xl font-extrabold text-cyan-700 tracking-tight">Sales & Expenses</h1>
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="relative w-full md:w-80">
-            <input
-              type="text"
-              placeholder="Search records..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 rounded-full bg-gray-100 border border-gray-300 focus:ring-2 focus:ring-cyan-500 outline-none w-full"
-            />
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-          </div>
-          <div className="relative">
-            <button
-              onClick={() => setSortBy((prev) => (prev === "date" ? "amount" : prev === "amount" ? "item" : "date"))}
-              className="flex items-center gap-1 px-3 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-            >
-              Sort: {sortBy} <ChevronDown size={14} />
-            </button>
-          </div>
+        <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+          Sales & Expenses
+        </h1>
+        <div className="relative w-full md:w-80">
+          <input
+            type="text"
+            placeholder="Search records..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10 pr-4 py-2 rounded-full bg-white/10 border border-white/20 focus:ring-2 focus:ring-cyan-400 outline-none w-full text-white placeholder-gray-400"
+          />
+          <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <SummaryCard title="Total Sales" value={totalSales} color="text-green-600" />
-        <SummaryCard title="Total Expenses" value={totalExpenses} color="text-red-600" />
-        <SummaryCard title="Profit" value={profit} color={profit >= 0 ? "text-green-700" : "text-red-700"} />
-      </div>
-
+      {/* Sales Section */}
       <Section
         title="Sales"
         data={filteredSales}
-        color="text-green-600"
+        color="text-green-400"
         source="sale"
         openAdd={openAdd}
         openEdit={openEdit}
@@ -156,10 +145,11 @@ const SalesAndExpenseSection = () => {
         openArchive={() => { setArchiveType("sale"); setIsArchiveOpen(true); }}
       />
 
+      {/* Expenses Section */}
       <Section
         title="Expenses"
         data={filteredExpenses}
-        color="text-red-600"
+        color="text-red-400"
         source="expense"
         openAdd={openAdd}
         openEdit={openEdit}
@@ -167,169 +157,195 @@ const SalesAndExpenseSection = () => {
         openArchive={() => { setArchiveType("expense"); setIsArchiveOpen(true); }}
       />
 
-      <AnimatePresence>
-        {selected && (
-          <Modal onClose={closeEdit}>
+      {/* Add/Edit Modal */}
+      {selected && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 text-white rounded-2xl p-6 shadow-2xl w-full max-w-md border border-white/10 relative">
+            <button
+              onClick={closeEdit}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-200"
+            >
+              <X size={20} />
+            </button>
+
             <h2 className="text-lg font-semibold mb-4">
-              {isNew ? `Add ${selected.source === "sale" ? "Sale" : "Expense"}` : `Edit ${selected.source === "sale" ? "Sale" : "Expense"}`}
+              {isNew
+                ? `Add ${selected.source === "sale" ? "Sale" : "Expense"}`
+                : `Edit ${selected.source === "sale" ? "Sale" : "Expense"}`}
             </h2>
 
-            <FormInput label="Item" name="item" value={formData.item} onChange={handleChange} />
-            <FormInput label="Amount (₱)" type="number" min="1" name="amount" value={formData.amount} onChange={handleChange} />
-            <FormInput label="Date" type="date" name="date" value={formData.date} onChange={handleChange} />
+            <label className="block text-sm text-gray-300 mb-1">Item</label>
+            <input
+              type="text"
+              name="item"
+              value={formData.item}
+              onChange={handleChange}
+              className="w-full px-4 py-2 mb-4 rounded-lg bg-slate-800 border border-white/10 text-white focus:ring-2 focus:ring-cyan-400 outline-none"
+            />
 
-            <div className="flex justify-end gap-3 mt-6">
-              <Button variant="secondary" onClick={closeEdit}>Cancel</Button>
-              <Button variant="primary" onClick={handleSave}>{isNew ? "Add" : "Save"}</Button>
+            <label className="block text-sm text-gray-300 mb-1">Amount</label>
+            <input
+              type="number"
+              name="amount"
+              value={formData.amount}
+              onChange={handleChange}
+              className="w-full px-4 py-2 mb-4 rounded-lg bg-slate-800 border border-white/10 text-white focus:ring-2 focus:ring-cyan-400 outline-none"
+            />
+
+            <label className="block text-sm text-gray-300 mb-1">Date</label>
+            <input
+              type="date"
+              name="date"
+              value={formData.date}
+              onChange={handleChange}
+              className="w-full px-4 py-2 mb-6 rounded-lg bg-slate-800 border border-white/10 text-white focus:ring-2 focus:ring-cyan-400 outline-none"
+            />
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={closeEdit}
+                className="px-4 py-2 rounded-xl border border-white/10 hover:bg-white/10 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 rounded-xl text-white bg-cyan-600 hover:bg-cyan-700 transition"
+              >
+                {isNew ? "Add" : "Save"}
+              </button>
             </div>
-          </Modal>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      )}
 
-      <AnimatePresence>
-        {isArchiveOpen && (
-          <Modal onClose={() => setIsArchiveOpen(false)}>
+      {/* Archive Modal */}
+      {isArchiveOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 text-white rounded-2xl p-6 shadow-2xl w-full max-w-3xl border border-white/10 relative">
+            <button
+              onClick={() => setIsArchiveOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-200"
+            >
+              <X size={20} />
+            </button>
+
             <h2 className="text-2xl font-bold mb-6">
               {archiveType === "sale" ? "Archived Sales" : "Archived Expenses"}
             </h2>
 
-            <Table
-              data={archiveType === "sale" ? archivedSales : archivedExpenses}
-              color={archiveType === "sale" ? "text-green-600" : "text-red-600"}
-              actionLabel="Restore"
-              actionIcon={<RotateCcw size={16} />}
-              onAction={(row) => handleRestore(archiveType, row)}
-            />
-          </Modal>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {confirmDelete && (
-          <Modal onClose={() => setConfirmDelete(null)}>
-            <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
-            <p className="mb-6">Are you sure you want to delete <span className="font-semibold">{confirmDelete.record.item}</span>?</p>
-            <div className="flex justify-end gap-3">
-              <Button variant="secondary" onClick={() => setConfirmDelete(null)}>Cancel</Button>
-              <Button variant="danger" onClick={confirmDeleteAction}>Delete</Button>
+            <div className="bg-white/5 backdrop-blur-lg rounded-2xl shadow-lg border border-white/10 overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[720px] text-sm">
+                <thead className="bg-white/10">
+                  <tr>
+                    <th className="py-3 px-6 font-semibold text-gray-300">Item</th>
+                    <th className="py-3 px-6 font-semibold text-gray-300">Amount</th>
+                    <th className="py-3 px-6 font-semibold text-gray-300">Date</th>
+                    <th className="py-3 px-6 font-semibold text-gray-300 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(archiveType === "sale" ? sortedArchivedSales : sortedArchivedExpenses).map((row) => (
+                    <tr key={row.id} className="border-b border-white/10 hover:bg-white/10 transition">
+                      <td className="py-3 px-6">{row.item}</td>
+                      <td className={`py-3 px-6 font-semibold ${archiveType === "sale" ? "text-green-400" : "text-red-400"}`}>
+                        ₱{Number(row.amount).toLocaleString()}
+                      </td>
+                      <td className="py-3 px-6">{new Date(row.date).toLocaleDateString()}</td>
+                      <td className="py-3 px-6 text-right">
+                        <button
+                          onClick={() => handleRestore(archiveType, row)}
+                          className="flex items-center gap-2 bg-cyan-600 px-3 py-1 rounded-lg hover:bg-cyan-700 transition"
+                        >
+                          <RotateCcw size={16} /> Restore
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {(archiveType === "sale" ? sortedArchivedSales : sortedArchivedExpenses).length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="py-6 px-6 text-center text-gray-400">
+                        No archived records.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-          </Modal>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-const SummaryCard = ({ title, value, color }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.3 }}
-    className="p-6 bg-white border rounded-2xl shadow-sm hover:shadow-md transition"
-  >
-    <h3 className="text-lg font-semibold text-gray-600">{title}</h3>
-    <p className={`text-2xl font-bold ${color}`}>₱{value.toLocaleString()}</p>
-  </motion.div>
-);
-
+// Reusable Section Component
 const Section = ({ title, data, color, source, openAdd, openEdit, handleDelete, openArchive }) => (
   <div className="mb-10">
     <div className="flex justify-between items-center mb-4">
       <h2 className={`text-2xl font-bold ${color}`}>{title}</h2>
       <div className="flex gap-2">
-        <Button variant="primary" onClick={() => openAdd(source)} icon={<Plus size={16} />}>Add</Button>
-        <Button variant="secondary" onClick={openArchive} icon={<Archive size={16} />}>Archive</Button>
+        <button
+          onClick={() => openAdd(source)}
+          className="flex items-center gap-2 bg-cyan-600 px-4 py-2 rounded-lg hover:bg-cyan-700 transition"
+        >
+          <Plus size={16} /> Add
+        </button>
+        <button
+          onClick={openArchive}
+          className="flex items-center gap-2 bg-slate-700 px-4 py-2 rounded-lg hover:bg-slate-600 transition"
+        >
+          <Archive size={16} /> Archive
+        </button>
       </div>
     </div>
-    <Table
-      data={data}
-      color={color}
-      onEdit={(row) => openEdit(source, row)}
-      onDelete={(row) => handleDelete(source, row)}
-    />
-  </div>
-);
 
-const Table = ({ data, color, onEdit, onDelete, actionLabel, actionIcon, onAction }) => (
-  <div className="bg-white rounded-2xl shadow-md border overflow-x-auto">
-    <table className="w-full text-left border-collapse min-w-[720px] text-sm">
-      <thead className="bg-gray-100">
-        <tr>
-          <th className="py-3 px-6 font-semibold text-gray-700">Item</th>
-          <th className="py-3 px-6 font-semibold text-gray-700">Amount</th>
-          <th className="py-3 px-6 font-semibold text-gray-700">Date</th>
-          <th className="py-3 px-6 font-semibold text-gray-700 text-right">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {data.map((row) => (
-          <tr key={row.id} className="border-b hover:bg-gray-50 transition">
-            <td className="py-3 px-6">{row.item}</td>
-            <td className={`py-3 px-6 font-semibold ${color}`}>₱{Number(row.amount).toLocaleString()}</td>
-            <td className="py-3 px-6">{new Date(row.date).toLocaleDateString()}</td>
-            <td className="py-3 px-6 text-right">
-              <div className="flex justify-end gap-2">
-                {onEdit && <Button variant="secondary" onClick={() => onEdit(row)} icon={<Edit2 size={16} />}>Edit</Button>}
-                {onDelete && <Button variant="danger" onClick={() => onDelete(row)} icon={<Trash2 size={16} />}>Delete</Button>}
-                {onAction && <Button variant="primary" onClick={() => onAction(row)} icon={actionIcon}>{actionLabel}</Button>}
-              </div>
-            </td>
-          </tr>
-        ))}
-        {data.length === 0 && (
+    <div className="bg-white/5 backdrop-blur-lg rounded-2xl shadow-lg border border-white/10 overflow-x-auto">
+      <table className="w-full text-left border-collapse min-w-[720px] text-sm">
+        <thead className="bg-white/10">
           <tr>
-            <td colSpan={4} className="py-6 px-6 text-center text-gray-500">No records found.</td>
+            <th className="py-3 px-6 font-semibold text-gray-300">Item</th>
+            <th className="py-3 px-6 font-semibold text-gray-300">Amount</th>
+            <th className="py-3 px-6 font-semibold text-gray-300">Date</th>
+            <th className="py-3 px-6 font-semibold text-gray-300 text-right">Action</th>
           </tr>
-        )}
-      </tbody>
-    </table>
-  </div>
-);
-
-const Modal = ({ children, onClose }) => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
-  >
-    <motion.div
-      initial={{ scale: 0.95, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0.95, opacity: 0 }}
-      transition={{ duration: 0.2 }}
-      className="bg-white text-gray-900 rounded-2xl p-6 shadow-2xl w-full max-w-lg border relative"
-    >
-      <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-        <X size={20} />
-      </button>
-      {children}
-    </motion.div>
-  </motion.div>
-);
-
-const Button = ({ children, variant, onClick, icon }) => {
-  const base = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition";
-  const styles = {
-    primary: "bg-cyan-600 text-white hover:bg-cyan-700",
-    secondary: "bg-gray-200 text-gray-800 hover:bg-gray-300",
-    danger: "bg-red-600 text-white hover:bg-red-700",
-  };
-  return (
-    <button onClick={onClick} className={`${base} ${styles[variant]}`}>
-      {icon} {children}
-    </button>
-  );
-};
-
-const FormInput = ({ label, ...props }) => (
-  <div className="mb-4">
-    <label className="block text-sm font-medium mb-1">{label}</label>
-    <input
-      {...props}
-      className="w-full px-4 py-2 rounded-lg bg-gray-100 border border-gray-300 focus:ring-2 focus:ring-cyan-500 outline-none"
-      required
-    />
+        </thead>
+        <tbody>
+          {data.map((row) => (
+            <tr key={row.id} className="border-b border-white/10 hover:bg-white/10 transition">
+              <td className="py-3 px-6">{row.item}</td>
+              <td className={`py-3 px-6 font-semibold ${color}`}>
+                ₱{Number(row.amount).toLocaleString()}
+              </td>
+              <td className="py-3 px-6">{new Date(row.date).toLocaleDateString()}</td>
+              <td className="py-3 px-6">
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => openEdit(source, row)}
+                    className="flex items-center gap-2 bg-slate-700 px-3 py-1 rounded-lg hover:bg-slate-600 transition"
+                  >
+                    <Edit2 size={16} /> Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(source, row)}
+                    className="flex items-center gap-2 bg-red-600 px-3 py-1 rounded-lg hover:bg-red-700 transition"
+                  >
+                    <Trash2 size={16} /> Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+          {data.length === 0 && (
+            <tr>
+              <td colSpan={4} className="py-6 px-6 text-center text-gray-400">
+                No records found.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
   </div>
 );
 

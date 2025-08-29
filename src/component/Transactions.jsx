@@ -26,7 +26,7 @@ function Transactions() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <motion.div
-          className="md:col-span-2 rounded-2xl backdrop-blur-xl bg-white/50 shadow-lg border border-gray-200 p-6 flex flex-col transition-all hover:shadow-xl hover:scale-[1.02]"
+          className="md:col-span-2 rounded-2xl backdrop-blur-xl bg-white/50 shadow-lg border border-gray-200 p-6 flex flex-col "
           initial={{ opacity: 0, x: -40 }}
           animate={{ opacity: 1, x: 0 }}
         >
@@ -92,7 +92,7 @@ function Transactions() {
         </motion.div>
 
         <motion.div
-          className="rounded-2xl backdrop-blur-xl bg-white/50 shadow-lg border border-gray-200 p-6 flex flex-col transition-all hover:shadow-xl hover:scale-[1.02]"
+          className="rounded-2xl backdrop-blur-xl bg-white/50 shadow-lg border border-gray-200 p-6 flex flex-col "
           initial={{ opacity: 0, x: 40 }}
           animate={{ opacity: 1, x: 0 }}
         >

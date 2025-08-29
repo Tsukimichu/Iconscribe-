@@ -39,7 +39,6 @@ function Profile() {
     location: "",
   });
 
-  // 🔹 Load user from localStorage (or fetch from API if needed)
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -55,7 +54,6 @@ function Profile() {
     }
   }, []);
 
-  // 🔹 Save user back to localStorage
   const handleSaveProfile = () => {
     localStorage.setItem("user", JSON.stringify(profile));
     setIsEditing(false);
@@ -79,7 +77,6 @@ function Profile() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] text-white relative">
 
-      {/* 🔹 Navbar */}
       <nav className="flex items-center justify-between bg-white/5 backdrop-blur-lg px-6 py-4 shadow-lg border-b border-white/10">
         <img src={logo} alt="Logo" className="h-10 drop-shadow-lg" />
         <div className="flex items-center gap-3">

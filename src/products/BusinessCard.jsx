@@ -21,7 +21,7 @@ function BusinessCard() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-10">
-         
+          {/* Left: Image */}
           <div className="w-full">
             <img
               src={businesscard}
@@ -30,7 +30,7 @@ function BusinessCard() {
             />
           </div>
 
-          
+          {/* Right: Details */}
           <div>
             <h2 className="text-xl font-bold mb-2">Business Card</h2>
             <p className="mb-4 text-sm text-gray-700">
@@ -42,7 +42,7 @@ function BusinessCard() {
 
             <h3 className="font-semibold mb-2">Order Details</h3>
             <div className="space-y-4">
-             
+              {/* Upload Design */}
               <div>
                 <label className="block text-sm font-medium">Upload Design</label>
                 <input
@@ -51,7 +51,7 @@ function BusinessCard() {
                 />
               </div>
 
-              
+              {/* Quantity & Size */}
               <div className="flex gap-4">
                 <div className="w-1/2">
                   <label className="block text-sm font-medium">
@@ -72,10 +72,9 @@ function BusinessCard() {
                 </div>
               </div>
 
-             
+              {/* Message & Cost */}
               <div className="space-y-4">
                 <div className="flex gap-4">
-             
                   <div className="flex-1">
                     <label className="block text-sm font-medium">
                       Message <span className="text-xs text-gray-500">(optional)</span>
@@ -86,7 +85,6 @@ function BusinessCard() {
                     ></textarea>
                   </div>
 
-           
                   <div className="w-1/3 flex flex-col">
                     <div className="h-[22px]"></div>
                     <div className="border border-gray-300 p-4 rounded-md flex flex-col justify-between h-28">
@@ -98,14 +96,22 @@ function BusinessCard() {
                   </div>
                 </div>
 
-            
+                {/* Contact Info */}
                 <p className="text-xs text-gray-500">
                   If you have any questions, please contact{" "}
                   <span className="font-medium">#09123456789</span>
                 </p>
 
-             
-                <div className="flex justify-end">
+                {/* Buttons */}
+                <div className="flex justify-between mt-4">
+                  {/* New Create Design Button */}
+                  <button
+                    onClick={() => navigate("/customize/business-card")}
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md"
+                  >
+                    Create Design
+                  </button>
+
                   <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md">
                     Place Order
                   </button>

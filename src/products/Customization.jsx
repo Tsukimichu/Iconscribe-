@@ -20,7 +20,7 @@ const Customization = () => {
         Customize Your {productName}
       </h2>
 
-      <label className="block mb-2">Upload Your Design:</label>
+      <label className="block mb-2">Upload Your Designs:</label>
       <input
         type="file"
         accept="image/*"

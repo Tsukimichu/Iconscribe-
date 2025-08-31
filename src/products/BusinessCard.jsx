@@ -6,6 +6,9 @@ import { useNavigate } from "react-router-dom";
 function BusinessCard() {
   const navigate = useNavigate();
 
+  // replace this with your real auth logic
+  const isLoggedIn = false; // set true if logged in
+
   return (
     <>
       <Nav />
@@ -21,7 +24,6 @@ function BusinessCard() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-10">
-          {/* Left: Image */}
           <div className="w-full">
             <img
               src={businesscard}
@@ -30,28 +32,27 @@ function BusinessCard() {
             />
           </div>
 
-          {/* Right: Details */}
           <div>
             <h2 className="text-xl font-bold mb-2">Business Card</h2>
             <p className="mb-4 text-sm text-gray-700">
               Our high quality presentation prints are available with a combination of Perfect Binding & Printing in as fast as same day. Full color presentations are fast and easy with different paper stocks to choose from.
             </p>
             <p className="mb-6 text-sm text-gray-600">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
             </p>
 
             <h3 className="font-semibold mb-2">Order Details</h3>
             <div className="space-y-4">
-              {/* Upload Design */}
-              <div>
-                <label className="block text-sm font-medium">Upload Design</label>
-                <input
-                  type="file"
-                  className="mt-1 w-full border border-gray-300 p-2 rounded-md"
-                />
-              </div>
+              {isLoggedIn && (
+                <div>
+                  <label className="block text-sm font-medium">Upload Design</label>
+                  <input
+                    type="file"
+                    className="mt-1 w-full border border-gray-300 p-2 rounded-md"
+                  />
+                </div>
+              )}
 
-              {/* Quantity & Size */}
               <div className="flex gap-4">
                 <div className="w-1/2">
                   <label className="block text-sm font-medium">
@@ -72,7 +73,6 @@ function BusinessCard() {
                 </div>
               </div>
 
-              {/* Message & Cost */}
               <div className="space-y-4">
                 <div className="flex gap-4">
                   <div className="flex-1">
@@ -96,21 +96,20 @@ function BusinessCard() {
                   </div>
                 </div>
 
-                {/* Contact Info */}
                 <p className="text-xs text-gray-500">
                   If you have any questions, please contact{" "}
                   <span className="font-medium">#09123456789</span>
                 </p>
 
-                {/* Buttons */}
                 <div className="flex justify-between mt-4">
-                  {/* New Create Design Button */}
-                  <button
-                    onClick={() => navigate("/customize/business-card")}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md"
-                  >
-                    Create Design
-                  </button>
+                  {isLoggedIn && (
+                    <button
+                      onClick={() => navigate("/customize/business-card")}
+                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md"
+                    >
+                      Create Design
+                    </button>
+                  )}
 
                   <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md">
                     Place Order

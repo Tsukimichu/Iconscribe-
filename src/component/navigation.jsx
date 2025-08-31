@@ -148,7 +148,6 @@ function Navigation() {
             ))}
           </ul>
 
-          {/* Auth (Mobile) */}
           <div className="mt-4 space-y-2 px-4 pb-4">
             {isLoggedIn ? (
               <>

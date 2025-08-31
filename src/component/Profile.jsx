@@ -77,7 +77,7 @@ function Profile() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] text-white relative">
 
-      <nav className="flex items-center justify-between bg-white/5 backdrop-blur-lg px-6 py-4 shadow-lg border-b border-white/10">
+      <nav className="flex items-center justify-between bg-gray px-6 py-4 border-b border-white/10">
         <img src={logo} alt="Logo" className="h-10 drop-shadow-lg" />
         <div className="flex items-center gap-3">
           <button

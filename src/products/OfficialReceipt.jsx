@@ -142,6 +142,7 @@ function OfficialReceipt() {
                       placeholder="Enter message"
                     ></textarea>
                   </div>
+                  
                   <div className="flex flex-col justify-between bg-white border border-gray-200 rounded-lg shadow-sm p-4">
                     <span className="text-sm text-gray-500">Estimated cost</span>
                     <p className="text-xl font-bold text-gray-800">₱1,100.00</p>

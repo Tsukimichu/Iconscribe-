@@ -120,7 +120,7 @@ function Books() {
 
               {/* Note */}
               <p className="text-sm text-gray-500">
-                📞 For inquiries, contact{" "}
+                For inquiries, contact{" "}
                 <span className="font-medium">#09123456789</span>
               </p>
 
@@ -128,9 +128,9 @@ function Books() {
               <div className="flex justify-between gap-4 mt-auto">
                 <button
                   type="button"
-                  className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl shadow-md transition font-medium text-lg"
+                  className="flex items-center gap-2 bg-yellow-300 hover:bg-yellow-400 text-white px-2 py-1 rounded-xl shadow-md transition font-medium text-lg"
                 >
-                  <Brush className="w-5 h-5" />
+                  <Brush className="w-4 h-4"/>
                   Customize Design
                 </button>
                 <button

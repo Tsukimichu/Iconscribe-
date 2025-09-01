@@ -10,7 +10,6 @@ import "swiper/css/navigation";
 // Assets
 import atp from "../assets/atp.png";
 import calendar from "../assets/calendar.png";
-import yearbook from "../assets/yearbook.png";
 import document from "../assets/DocumentP.png";
 import id from "../assets/ID.png";
 import bcard from "../assets/BusinessCard.png";
@@ -26,7 +25,6 @@ function ProductSection() {
     { title: "Official Receipts", description: "BIR-compliant official receipts with premium quality, smudge-free ink.", image: atp, alt: "Official Receipts", link: "/official-receipt" },
     { title: "Calendars", description: "Custom calendars designed with your branding in mind.", image: calendar, alt: "Calendars", link: "/calendars" },
     { title: "Brochures", description: "Professionally printed brochures to showcase your products and services.", image: brochure, alt: "Brochures", link: "/brochure" },
-    { title: "Yearbooks", description: "Capture memories with high-quality yearbooks for schools or events.", image: yearbook, alt: "Yearbooks", link: "/yearbooks" },
     { title: "Books", description: "Book printing for self-published novels, manuals, and more.", image: book, alt: "Books", link: "/books" },
     { title: "Document Printing", description: "Fast, accurate document printing for school, business, or personal needs.", image: document, alt: "Document Printing", link: "/documents" },
     { title: "Flyers", description: "Promote your business with vibrant, full-color flyers.", image: flyers, alt: "Flyers", link: "/flyers" },

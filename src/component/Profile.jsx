@@ -6,10 +6,10 @@ import logo from "../assets/ICONS.png";
 function Modal({ isOpen, onClose, title, children }) {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 w-full max-w-md shadow-xl">
-        <h2 className="text-xl font-bold text-yellow-400 mb-4">{title}</h2>
-        <div className="text-white">{children}</div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 w-full max-w-md shadow-xl">
+        <h2 className="text-xl font-bold text-gray-800 mb-4">{title}</h2>
+        <div className="text-gray-700">{children}</div>
         <button
           onClick={onClose}
           className="mt-4 w-full py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition"
@@ -75,39 +75,39 @@ function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] text-white relative">
-
-      <nav className="flex items-center justify-between bg-gray px-6 py-4 border-b border-white/10">
-        <img src={logo} alt="Logo" className="h-10 drop-shadow-lg" />
+    <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100 text-gray-900 relative">
+      {/* Navbar */}
+      <nav className="flex items-center justify-between bg-white px-6 py-4 border-b border-gray-200 shadow-sm">
+        <img src={logo} alt="Logo" className="h-10" />
         <div className="flex items-center gap-3">
           <button
             onClick={handleBack}
-            className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition"
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 transition"
           >
             <ArrowBigLeft />
           </button>
-          <div className="w-9 h-9 bg-white/20 backdrop-blur-lg border border-yellow-400 rounded-full flex items-center justify-center text-lg">
+          <div className="w-9 h-9 bg-gray-200 border border-gray-300 rounded-full flex items-center justify-center text-lg">
             👤
           </div>
         </div>
       </nav>
 
-      {/* 🔹 Profile Layout */}
+      {/* Profile Layout */}
       <div className="max-w-6xl mx-auto py-10 px-6 grid grid-cols-1 md:grid-cols-3 gap-10">
         {/* Left Card */}
-        <div className="bg-white/5 backdrop-blur-lg shadow-lg rounded-2xl p-6 text-center border border-white/10">
-          <div className="w-full border border-yellow-400/50 rounded-xl p-4">
-            <div className="w-32 h-32 mx-auto rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-4xl">
+        <div className="bg-white shadow-md rounded-2xl p-6 text-center border border-gray-200">
+          <div className="w-full border border-gray-300 rounded-xl p-4">
+            <div className="w-32 h-32 mx-auto rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-4xl">
               👤
             </div>
             <h2 className="mt-4 text-xl font-bold">{profile.name}</h2>
-            <p className="text-sm text-gray-400">User ID: #{profile.user_id}</p>
+            <p className="text-sm text-gray-500">User ID: #{profile.user_id}</p>
           </div>
 
           {/* Delete Account */}
           <div className="mt-6 text-left">
-            <p className="text-sm text-red-500 font-semibold">Delete my account</p>
-            <p className="text-xs text-gray-400">
+            <p className="text-sm text-red-600 font-semibold">Delete my account</p>
+            <p className="text-xs text-gray-500">
               If you delete your account, your data will be gone forever.
             </p>
             <button
@@ -120,7 +120,7 @@ function Profile() {
         </div>
 
         {/* Right Card */}
-        <div className="md:col-span-2 bg-white/5 backdrop-blur-lg shadow-lg rounded-2xl p-6 border border-white/10">
+        <div className="md:col-span-2 bg-white shadow-md rounded-2xl p-6 border border-gray-200">
           <h3 className="text-lg font-bold mb-4">Account Details</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {["name", "email", "business", "contact", "location"].map((field, idx) => (
@@ -132,7 +132,7 @@ function Profile() {
                 onChange={handleChange}
                 placeholder={field}
                 disabled={!isEditing}
-                className={`px-3 py-2 rounded-lg border border-white/20 bg-black/30 text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 outline-none ${
+                className={`px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 outline-none ${
                   field === "location" ? "md:col-span-2" : ""
                 } ${!isEditing && "opacity-70 cursor-not-allowed"}`}
               />
@@ -140,11 +140,11 @@ function Profile() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 mt-6">
+          <div className="flex gap-3 mt-6 flex-wrap">
             {!isEditing ? (
               <button
                 onClick={() => setIsEditing(true)}
-                className="bg-yellow-400 text-[#1e293b] px-4 py-2 rounded-full hover:bg-yellow-300 transition"
+                className="bg-yellow-400 text-gray-900 px-4 py-2 rounded-full hover:bg-yellow-300 transition"
               >
                 Edit Info
               </button>
@@ -164,7 +164,7 @@ function Profile() {
             </button>
             <button
               onClick={() => setShowLogoutModal(true)}
-              className="bg-yellow-400 text-[#1e293b] px-4 py-2 rounded-full hover:bg-yellow-300 transition"
+              className="bg-yellow-400 text-gray-900 px-4 py-2 rounded-full hover:bg-yellow-300 transition"
             >
               Logout
             </button>
@@ -173,14 +173,14 @@ function Profile() {
           {/* Order Summary */}
           <div className="mt-8">
             <h3 className="text-lg font-bold mb-2">Order Summary</h3>
-            <div className="bg-white/5 rounded-lg border border-white/10 p-4 text-center text-gray-400 text-sm">
+            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 text-center text-gray-500 text-sm">
               ~ No Transactions ~
             </div>
           </div>
         </div>
       </div>
 
-      {/* 🔹 Modals Section */}
+      {/* Modals Section */}
       <Modal
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}
@@ -189,7 +189,7 @@ function Profile() {
         <p>Are you sure you want to log out?</p>
         <button
           onClick={handleLogout}
-          className="mt-4 w-full py-2 rounded-lg bg-yellow-400 hover:bg-yellow-300 text-[#1e293b] font-semibold transition"
+          className="mt-4 w-full py-2 rounded-lg bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-semibold transition"
         >
           Yes, Logout
         </button>
@@ -225,17 +225,17 @@ function Profile() {
           <input
             type="password"
             placeholder="Current Password"
-            className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 outline-none"
+            className="w-full px-3 py-2 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 outline-none"
           />
           <input
             type="password"
             placeholder="New Password"
-            className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 outline-none"
+            className="w-full px-3 py-2 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 outline-none"
           />
           <input
             type="password"
             placeholder="Confirm New Password"
-            className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 outline-none"
+            className="w-full px-3 py-2 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 outline-none"
           />
         </div>
         <button className="mt-4 w-full py-2 rounded-lg bg-green-500 hover:bg-green-400 text-white font-semibold transition">

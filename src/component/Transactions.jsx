@@ -15,7 +15,7 @@ function Transactions() {
   if (!isLoggedIn) return null;
 
   return (
-    <section className="relative w-full px-6 py-10 bg-white text-gray-800">
+    <section className="relative w-full px-6 py-25 bg-white text-gray-800">
       <motion.h2
         className="text-4xl font-extrabold text-center mb-10"
         initial={{ opacity: 0, y: -20 }}

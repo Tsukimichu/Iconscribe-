@@ -2,7 +2,7 @@ import logo from "../assets/ICONS.png";
 
 function Aboutus() {
   return (
-    <div className="bg-[#0f172a] py-20 px-6 md:px-12 lg:px-40">
+    <div className="bg-[#0f172a] py-15 px-6 md:px-12 lg:px-40">
       
     <h2 className="text-3xl text-white md:text-5xl font-extrabold text-center mb-16 tracking-wide relative z-10">
         About <span className="text-yellow-400">Us</span>

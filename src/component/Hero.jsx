@@ -3,7 +3,7 @@ import bg from '../assets/org.jpg';
 function Hero() {
   return (
     <div
-      className="relative h-[500px] bg-cover bg-center flex items-center px-6 sm:px-10 lg:px-20"
+      className="relative h-[600px] bg-cover bg-center flex items-center px-6 sm:px-10 lg:px-20"
       style={{ backgroundImage: `url(${bg})` }}
     >
       <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-transparent"></div>

@@ -1,46 +1,73 @@
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+
 
 const Customization = () => {
-  const { productName } = useParams();
-  const [customDesign, setCustomDesign] = useState("");
+  const [text, setText] = useState("Your text here");
+  const [uploadedImage, setUploadedImage] = useState(null);
 
-  const handleDesignUpload = (e) => {
-    setCustomDesign(URL.createObjectURL(e.target.files[0]));
-  };
-
-  const handleSubmit = () => {
-    alert(`Customization submitted for ${productName}`);
-    // Add backend logic or API calls here if needed
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setUploadedImage(URL.createObjectURL(file));
+    }
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">
-        Customize Your {productName}
-      </h2>
+    <div className="flex h-screen bg-gray-100">
+      {/* Sidebar */}
+      <div className="w-48 bg-gray-800 text-white p-4 space-y-4">
+        <button className="w-full bg-gray-700 p-2 rounded">Upload</button>
+        <button className="w-full bg-gray-700 p-2 rounded">Images</button>
+        <button className="w-full bg-gray-700 p-2 rounded">Text</button>
+        <button className="w-full bg-gray-700 p-2 rounded">Elements</button>
+        <button className="w-full bg-gray-700 p-2 rounded">Background</button>
 
-      <label className="block mb-2">Upload Your Designs:</label>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleDesignUpload}
-        className="mb-4"
-      />
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          className="hidden"
+          id="fileInput"
+        />
+      </div>
 
-      {customDesign && (
-        <div className="mt-4">
-          <p className="font-semibold">Preview:</p>
-          <img src={customDesign} alt="Preview" className="w-64 border rounded" />
+      {/* Main Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Top Toolbar */}
+        <div className="flex items-center bg-gray-200 p-2 space-x-2">
+          <button className="px-3 py-1 bg-white rounded border">Undo</button>
+          <button className="px-3 py-1 bg-white rounded border">Redo</button>
+          <button className="px-3 py-1 bg-white rounded border">Save</button>
+          <button className="px-3 py-1 bg-blue-500 text-white rounded">
+            Confirm Design
+          </button>
         </div>
-      )}
 
-      <button
-        onClick={handleSubmit}
-        className="bg-blue-500 text-white px-4 py-2 mt-4 rounded"
-      >
-        Submit Customization
-      </button>
+        {/* Canvas Area */}
+        <div className="flex-1 flex justify-center items-center bg-white">
+          <div className="w-[700px] h-[400px] bg-gray-200 flex justify-center items-center relative">
+            {/* Uploaded Image */}
+            {uploadedImage && (
+              <img
+                src={uploadedImage}
+                alt="Uploaded Design"
+                className="absolute w-40 h-40 object-contain"
+              />
+            )}
+
+            {/* Text Box */}
+            <div className="absolute">
+              <input
+                type="text"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                className="border border-dashed px-2 py-1 bg-transparent"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

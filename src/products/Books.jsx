@@ -56,7 +56,7 @@ function Books() {
                 <label className="block text-sm font-medium mb-1">
                   Book Type
                 </label>
-                <select className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <select className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
                   <option>Yearbook</option>
                   <option>Coffee Table Book</option>
                   <option>Thesis Book</option>
@@ -70,7 +70,7 @@ function Books() {
                 <label className="block text-sm font-medium mb-2">
                   Upload Design
                 </label>
-                <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-8 bg-gray-50 hover:border-blue-500 transition cursor-pointer">
+                <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-8 bg-gray-50 hover:border-yellow-300 transition cursor-pointer">
                   <Upload className="w-8 h-8 text-gray-400 mb-3" />
                   <span className="text-sm text-gray-600 font-medium">
                     Drag & drop or click to upload
@@ -85,7 +85,7 @@ function Books() {
                   <label className="block text-sm font-medium mb-1">
                     Quantity
                   </label>
-                  <select className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <select className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-yellow-300">
                     <option>100</option>
                     <option>150</option>
                     <option>200</option>
@@ -93,7 +93,7 @@ function Books() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Size</label>
-                  <select className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <select className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-yellow-300">
                     <option>8.5” x 11”</option>
                     <option>6” x 9”</option>
                     <option>5.5” x 8.5”</option>
@@ -128,6 +128,7 @@ function Books() {
               <div className="flex justify-between gap-4 mt-auto">
                 <button
                   type="button"
+                  onClick={() => navigate('/customize/:productName')}
                   className="flex items-center gap-2 bg-yellow-300 hover:bg-yellow-400 text-white px-2 py-1 rounded-xl shadow-md transition font-medium text-lg"
                 >
                   <Brush className="w-4 h-4"/>

@@ -25,7 +25,7 @@ import DocumentPrint from './products/DocumentPrint.jsx';
 import Id from './products/Id.jsx';        
 import Label from './products/Label.jsx';  
 
-import Customization from './products/Customization.jsx';
+import Customization from './component/Customization.jsx';
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
@@ -52,7 +52,7 @@ const router = createBrowserRouter([
   { path: '/labels', element: <Label/>},              
 
   // Customization route for selected products
-  { path: '/customize/:productName', element: <Customization /> },
+  { path: '/customize', element: <Customization /> },
 
   // Roles
   { path: '/admin', element: <AdminPage /> },      

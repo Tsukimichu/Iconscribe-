@@ -109,7 +109,7 @@ function Books() {
                   </label>
                   <textarea
                     className="w-full border border-gray-300 p-3 rounded-lg h-28 resize-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Add special instructions..."
+                    placeholder="Message..."
                   ></textarea>
                 </div>
                 <div className="flex flex-col justify-between bg-gradient-to-br from-blue-50 to-white border rounded-xl shadow p-5">
@@ -214,6 +214,9 @@ function Books() {
                     placeholder="Add message..."
                   ></textarea>
                 </div>
+
+                              
+
                 <div className="flex flex-col justify-between bg-gradient-to-br from-blue-50 to-white border rounded-xl shadow p-5">
                   <span className="text-sm text-gray-500">Estimated cost</span>
                   <p className="text-2xl font-bold text-gray-800">₱10,000.00</p>

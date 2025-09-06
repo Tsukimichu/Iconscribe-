@@ -1,6 +1,6 @@
 import Nav from "../component/navigation";
 import brochure from "../assets/Brochure.png";
-import { ArrowBigLeft, Upload } from "lucide-react";
+import { ArrowBigLeft, Upload, Paintbrush } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 function Brochure() {
@@ -10,137 +10,127 @@ function Brochure() {
   return (
     <>
       <Nav />
-      <div className="w-full p-6 bg-white min-h-screen">
+      <div className="w-full p-6 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-8">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-200 rounded-full"
+            className="p-2 hover:bg-gray-200 rounded-full transition"
           >
             <ArrowBigLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-2xl font-bold">Service Request</h1>
+          <h1 className="text-3xl font-bold text-gray-800">Service Request</h1>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-10">
-          {/* Left Section */}
-          <div>
-            <h2 className="text-lg font-bold mb-2">Brochure</h2>
-            <p className="text-sm text-gray-600 mb-6">
-              Professional brochure printing with high-quality paper and
-              different binding options for a polished finish.
-            </p>
-            <img
-              src={brochure}
-              alt="Sample Brochure"
-              className="rounded-xl border max-w-md w-full object-contain shadow-sm"
-            />
-          </div>
+        {isLoggedIn ? (
+          <div className="w-full max-w-[95rem] mx-auto bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-100 p-10">
+            <div className="grid grid-cols-2 gap-12 items-start">
+              {/* Left: Preview */}
+              <div className="flex flex-col items-center">
+                <h2 className="text-2xl font-bold mb-2 text-gray-800">Brochure</h2>
+                <p className="text-sm text-gray-600 mb-6 leading-relaxed text-center max-w-xl">
+                  Professional brochure printing with high-quality paper and
+                  binding options to make your brand stand out.
+                </p>
 
-          {/* Right Section */}
-          <div>
-            <form className="space-y-6 bg-gray-50 p-6 rounded-xl shadow-sm border border-gray-200">
-              {/* Business Name + Quantity (always visible if logged in) */}
-              {isLoggedIn && (
+                <div className="relative w-full max-w-2xl rounded-2xl overflow-hidden shadow-lg group">
+                  <img
+                    src={brochure}
+                    alt="Sample Brochure"
+                    className="w-full h-[480px] object-contain rounded-2xl transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
+                </div>
+              </div>
+
+              {/* Right: Form */}
+              <form className="space-y-6">
+                {/* Business Name */}
                 <div>
-                  <label className="block text-sm font-medium">
+                  <label className="block text-sm font-semibold text-gray-700">
                     Business Name
                   </label>
                   <input
                     type="text"
                     placeholder="Enter business name"
-                    className="mt-1 w-full border border-gray-300 p-2 rounded-md"
+                    className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition"
                   />
                 </div>
-              )}
 
-              {/* Quantity (always visible) */}
-              <div>
-                <label className="block text-sm font-medium">Quantity</label>
-                <select className="mt-1 w-full border border-gray-300 p-2 rounded-md">
-                  <option>100pcs</option>
-                  <option>200pcs</option>
-                  <option>500pcs</option>
-                </select>
-              </div>
+                {/* Quantity */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Quantity (pcs)
+                  </label>
+                  <input
+                    type="number"
+                    min={100}
+                    defaultValue={100}
+                    className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Minimum order: 100 pieces
+                  </p>
+                </div>
 
-              {/* Upload (always visible) */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Upload your design file:
-                </label>
-                <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 bg-white hover:border-blue-500 transition cursor-pointer">
-                  <Upload className="w-6 h-6 text-gray-400 mb-2" />
-                  <span className="text-sm text-gray-600">Click to upload</span>
-                  <input type="file" className="hidden" />
-                </label>
-              </div>
-
-              {/* Customize (only if logged in) */}
-              {isLoggedIn && (
-                <div className="flex justify-start">
+                {/* Upload + Customize */}
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <label className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl w-full cursor-pointer">
+                    <Upload size={18} /> Upload Design
+                    <input type="file" className="hidden" />
+                  </label>
                   <button
                     type="button"
                     onClick={() => navigate("/customize")}
-                    className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-md shadow-sm border"
+                    className="flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl w-full"
                   >
-                    Customize Design
+                    <Paintbrush size={18} /> Customize Design
                   </button>
                 </div>
-              )}
 
-              {/* Estimate & Message */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium">
-                    Message <span className="text-xs text-gray-500">(optional)</span>
-                  </label>
-                  <textarea
-                    className="mt-1 w-full border border-gray-300 p-2 rounded-md h-28 resize-none"
-                    placeholder="Enter message"
-                  ></textarea>
+                {/* Message + Price */}
+                <div className="grid grid-cols-3 gap-6">
+                  <div className="col-span-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Message{" "}
+                      <span className="text-xs text-gray-500">(optional)</span>
+                    </label>
+                    <textarea
+                      className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-28 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition"
+                      placeholder="Enter message"
+                    ></textarea>
+                  </div>
+                  <div className="flex flex-col justify-between bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-2xl shadow-md p-6">
+                    <span className="text-sm text-gray-500">Estimated Cost</span>
+                    <p className="text-2xl font-extrabold text-gray-900">
+                      ₱10,000.00
+                    </p>
+                  </div>
                 </div>
-                <div className="flex flex-col justify-between bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-                  <span className="text-sm text-gray-500">Estimated cost</span>
-                  <p className="text-xl font-bold text-gray-800">₱10,000.00</p>
-                </div>
-              </div>
 
-              {/* Footer Note */}
-              {!isLoggedIn && (
+                {/* Note */}
                 <p className="text-xs text-gray-500">
-                  Please log in to customize your design and place an order.
+                  If you have any questions, please contact{" "}
+                  <span className="font-medium">#09123456789</span>
                 </p>
-              )}
-              {isLoggedIn && (
-                <p className="text-xs text-gray-500">
-                  Questions? Call <span className="font-medium">#09123456789</span>
-                </p>
-              )}
 
-              {/* Action Button */}
-              <div className="flex justify-end">
-                {isLoggedIn ? (
+                {/* Submit */}
+                <div className="flex justify-end">
                   <button
-                    type="button"
-                    onClick={() => alert("Order placed!")}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md shadow-md"
+                    type="submit"
+                    className="bg-gradient-to-r from-blue-600 to-blue-800 hover:shadow-lg hover:scale-105 transition text-white px-10 py-3 rounded-xl font-semibold"
                   >
                     Place Order
                   </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => navigate("/login")}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md shadow-md"
-                  >
-                    Login to Order
-                  </button>
-                )}
-              </div>
-            </form>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
+        ) : (
+          <p className="text-center text-gray-600">
+            Please log in to place an order.
+          </p>
+        )}
       </div>
     </>
   );

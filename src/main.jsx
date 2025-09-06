@@ -21,8 +21,7 @@ import OfficialReceipt from './products/OfficialReceipt.jsx';
 import Flyers from './products/Flyers.jsx';
 import Posters from './products/Posters.jsx';
 import ManagerPage from './component/manager/ManagerPage.jsx';
-import DocumentPrint from './products/DocumentPrint.jsx';  
-import Id from './products/Id.jsx';        
+import DocumentPrint from './products/DocumentPrint.jsx';         
 import Label from './products/Label.jsx';  
 
 import Customization from './component/Customization.jsx';
@@ -47,8 +46,7 @@ const router = createBrowserRouter([
   { path: '/calendars', element: <Calendars/>},
   { path: '/flyers', element: <Flyers/>},
   { path: '/posters', element: <Posters/>},
-  { path: '/documents', element: <DocumentPrint/>},
-  { path: '/id-printing', element: <Id/>},            
+  { path: '/documents', element: <DocumentPrint/>},            
   { path: '/labels', element: <Label/>},              
 
   // Customization route for selected products

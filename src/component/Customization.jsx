@@ -6,6 +6,8 @@ import {
   Shapes,
   Image as ImageIcon,
   Palette,
+  Undo2,
+  Redo2,
 } from "lucide-react";
 
 const Customization = () => {
@@ -14,6 +16,21 @@ const Customization = () => {
   const [activePanel, setActivePanel] = useState(null);
   const canvasRef = useRef(null);
   const fabricCanvasRef = useRef(null);
+
+  // history stacks
+  const history = useRef([]);
+  const redoStack = useRef([]);
+
+  const saveHistory = () => {
+    if (fabricCanvasRef.current) {
+      const json = fabricCanvasRef.current.toJSON();
+      history.current.push(json);
+      if (history.current.length > 50) {
+        history.current.shift(); // keep only last 50 steps
+      }
+      redoStack.current = []; // clear redo stack when new action
+    }
+  };
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -33,6 +50,14 @@ const Customization = () => {
       fill: "black",
     });
     canvas.add(textObj);
+
+    // save initial state
+    saveHistory();
+
+    // record every change as a step
+    canvas.on("object:added", saveHistory);
+    canvas.on("object:modified", saveHistory);
+    canvas.on("object:removed", saveHistory);
 
     return () => {
       canvas.dispose();
@@ -71,6 +96,29 @@ const Customization = () => {
         quality: 1,
       });
       console.log("Saved Image:", dataURL);
+    }
+  };
+
+  const handleUndo = () => {
+    if (history.current.length > 1) {
+      const currentState = history.current.pop();
+      redoStack.current.push(currentState);
+
+      const prevState = history.current[history.current.length - 1];
+      fabricCanvasRef.current.loadFromJSON(prevState, () => {
+        fabricCanvasRef.current.renderAll();
+      });
+    }
+  };
+
+  const handleRedo = () => {
+    if (redoStack.current.length > 0) {
+      const state = redoStack.current.pop();
+      history.current.push(state);
+
+      fabricCanvasRef.current.loadFromJSON(state, () => {
+        fabricCanvasRef.current.renderAll();
+      });
     }
   };
 
@@ -133,7 +181,6 @@ const Customization = () => {
             <div>
               <h2 className="font-semibold mb-2">Text Tools</h2>
 
-              {/* Quick Add Options */}
               <div className="flex flex-col gap-2 mb-4">
                 <button
                   onClick={() => {
@@ -200,7 +247,7 @@ const Customization = () => {
             <div>
               <h2 className="font-semibold mb-2">Shapes</h2>
               <div className="flex gap-2">
-                {/* Rectangle Button */}
+                {/* Rectangle */}
                 <button
                   onClick={() => {
                     const rect = new fabric.Rect({
@@ -215,7 +262,7 @@ const Customization = () => {
                   className="w-10 h-10 bg-blue-300 rounded-sm shadow"
                 ></button>
 
-                {/* Circle Button */}
+                {/* Circle */}
                 <button
                   onClick={() => {
                     const circle = new fabric.Circle({
@@ -229,7 +276,7 @@ const Customization = () => {
                   className="w-10 h-10 bg-green-300 rounded-full shadow"
                 ></button>
 
-                {/* Triangle Button */}
+                {/* Triangle */}
                 <button
                   onClick={() => {
                     const triangle = new fabric.Triangle({
@@ -246,7 +293,7 @@ const Customization = () => {
                             bg-transparent shadow-none outline-none"
                 ></button>
 
-                {/* Line Button */}
+                {/* Line */}
                 <button
                   onClick={() => {
                     const line = new fabric.Line([50, 100, 200, 100], {
@@ -261,7 +308,6 @@ const Customization = () => {
                 ></button>
               </div>
             </div>
-
           )}
 
           {activePanel === "background" && (
@@ -296,11 +342,17 @@ const Customization = () => {
         {/* Toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-2 bg-white rounded-2xl shadow-md p-2 md:p-3 mb-4">
           <div className="space-x-2">
-            <button className="px-3 md:px-4 py-1 md:py-2 bg-gray-100 hover:bg-gray-200 rounded-lg shadow-sm">
-              Undo
+            <button
+              onClick={handleUndo}
+              className="px-3 md:px-4 py-1 md:py-2 bg-gray-100 hover:bg-gray-200 rounded-lg shadow-sm"
+            >
+              <Undo2 />
             </button>
-            <button className="px-3 md:px-4 py-1 md:py-2 bg-gray-100 hover:bg-gray-200 rounded-lg shadow-sm">
-              Redo
+            <button
+              onClick={handleRedo}
+              className="px-3 md:px-4 py-1 md:py-2 bg-gray-100 hover:bg-gray-200 rounded-lg shadow-sm"
+            >
+              <Redo2 />
             </button>
             <button
               onClick={handleSave}

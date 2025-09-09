@@ -6,170 +6,138 @@ import { useNavigate } from "react-router-dom";
 
 function DocumentPrint() {
   const navigate = useNavigate();
-
   const [showAuthModal, setShowAuthModal] = useState(false);
-
-  const isLoggedIn = true; // 👈 toggle this between true/false to test
+  const isLoggedIn = true; // toggle for testing
 
   return (
     <>
       <Nav />
-
-      <div className="w-full min-h-screen p-6 bg-white">
+      <div className="w-full p-6 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-8">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-200 rounded-full"
+            className="p-2 hover:bg-gray-200 rounded-full transition"
           >
             <ArrowBigLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-3xl font-bold text-gray-800">
             {isLoggedIn ? "Service Request" : "Service Details"}
           </h1>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-10">
-          {/* Image Section */}
-          <div className="flex flex-col items-center">
-            <img
-              src={document}
-              alt="Document Printing"
-              className="rounded-xl border max-w-md w-full object-contain shadow-sm"
-            />
-            <h2 className="text-lg font-semibold mt-4">Document Printing</h2>
-            <p className="text-sm text-gray-600 text-center mt-2 max-w-md">
-              We provide fast, accurate document printing for school, business, or
-              personal use. Choose from multiple paper types and sizes with
-              high-quality finishes. Same-day service available for urgent
-              requirements.
-            </p>
-          </div>
+        {isLoggedIn ? (
+          <div className="w-full max-w-[95rem] mx-auto bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-100 p-10">
+            <div className="grid grid-cols-2 gap-12 items-start">
+              {/* Left: Preview */}
+              <div className="flex flex-col items-center">
+                <h2 className="text-2xl font-bold mb-2 text-gray-800">Document Printing</h2>
+                <p className="text-sm text-gray-600 mb-6 leading-relaxed text-center max-w-xl">
+                  We provide fast, accurate printing for {" "}
+                  <span className="font-medium">school, business, or personal use</span>. Choose
+                  from multiple paper types and sizes with high-quality finishes.
+                  Same-day service available for urgent needs.
+                </p>
 
-          {/* Right Section */}
-          {isLoggedIn ? (
-            /* ✅ FULL FORM when logged in */
-            <form className="space-y-6 bg-gray-50 p-6 rounded-xl shadow-sm border border-gray-200">
-              {/* Upload */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Upload Document
-                </label>
-                <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 bg-white hover:border-blue-500 transition cursor-pointer">
-                  <Upload className="w-6 h-6 text-gray-400 mb-2" />
-                  <span className="text-sm text-gray-600">Click to upload</span>
-                  <input type="file" className="hidden" />
-                </label>
+                <div className="relative w-full max-w-2xl rounded-2xl overflow-hidden shadow-lg group">
+                  <img
+                    src={document}
+                    alt="Document Printing"
+                    className="w-full object-contain rounded-2xl"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
+                </div>
               </div>
 
-              {/* Quantity + Paper Size */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Right: Form */}
+              <form className="space-y-6">
+                {/* Upload */}
                 <div>
-                  <label className="block text-sm font-medium">
-                    Quantity <span className="text-xs text-gray-500">(pages)</span>
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Upload Document
                   </label>
-                  <select className="mt-1 w-full border border-gray-300 p-2 rounded-md">
-                    <option>10</option>
-                    <option>50</option>
-                    <option>100</option>
-                    <option>200</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium">Paper Size</label>
-                  <select className="mt-1 w-full border border-gray-300 p-2 rounded-md">
-                    <option>A4</option>
-                    <option>Letter (8.5” x 11”)</option>
-                    <option>Legal (8.5” x 14”)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Message + Price */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium">
-                    Message <span className="text-xs text-gray-500">(optional)</span>
+                  <label className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-xl w-full cursor-pointer transition">
+                    <Upload size={18} /> Upload File
+                    <input type="file" className="hidden" />
                   </label>
-                  <textarea
-                    className="mt-1 w-full border border-gray-300 p-2 rounded-md h-28 resize-none"
-                    placeholder="Enter special instructions"
-                  ></textarea>
                 </div>
-                <div className="flex flex-col justify-between bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-                  <span className="text-sm text-gray-500">Estimated cost</span>
-                  <p className="text-xl font-bold text-gray-800">₱500.00</p>
+
+                {/* Quantity + Paper Size */}
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Quantity <span className="text-xs text-gray-500">(pages)</span>
+                    </label>
+                    <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition">
+                      <option>10</option>
+                      <option>50</option>
+                      <option>100</option>
+                      <option>200</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Paper Size
+                    </label>
+                    <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition">
+                      <option>A4</option>
+                      <option>Letter (8.5” x 11”)</option>
+                      <option>Legal (8.5” x 14”)</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
 
-              {/* Note */}
-              <p className="text-xs text-gray-500">
-                If you have any questions, please contact{" "}
-                <span className="font-medium">#09123456789</span>
-              </p>
-
-              {/* Submit */}
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md shadow-md"
-                >
-                  Place Order
-                </button>
-              </div>
-            </form>
-          ) : (
-            /* ❌ LIMITED VIEW when not logged in */
-            <div className="bg-gray-50 p-6 rounded-xl shadow-sm border border-gray-200">
-              <h3 className="font-semibold text-lg mb-4">Order Estimation</h3>
-
-              {/* Quantity + Paper Size */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                  <label className="block text-sm font-medium">
-                    Quantity <span className="text-xs text-gray-500">(pages)</span>
-                  </label>
-                  <select className="mt-1 w-full border border-gray-300 p-2 rounded-md">
-                    <option>10</option>
-                    <option>50</option>
-                    <option>100</option>
-                    <option>200</option>
-                  </select>
+                {/* Message + Price */}
+                <div className="grid grid-cols-3 gap-6">
+                  <div className="col-span-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Message <span className="text-xs text-gray-500">(optional)</span>
+                    </label>
+                    <textarea
+                      className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-28 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition"
+                      placeholder="Add special instructions..."
+                    ></textarea>
+                  </div>
+                  <div className="flex flex-col justify-between bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-2xl shadow-md p-6">
+                    <span className="text-sm text-gray-500">Estimated Cost</span>
+                    <p className="text-2xl font-extrabold text-gray-900">₱500.00</p>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium">Paper Size</label>
-                  <select className="mt-1 w-full border border-gray-300 p-2 rounded-md">
-                    <option>A4</option>
-                    <option>Letter (8.5” x 11”)</option>
-                    <option>Legal (8.5” x 14”)</option>
-                  </select>
+
+                {/* Note */}
+                <p className="text-xs text-gray-500">
+                  For inquiries, contact <span className="font-medium">#09123456789</span>
+                </p>
+
+                {/* Submit */}
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    className="bg-gradient-to-r from-blue-600 to-blue-800 hover:shadow-lg hover:scale-105 transition text-white px-10 py-3 rounded-xl font-semibold"
+                  >
+                    Place Order
+                  </button>
                 </div>
-              </div>
-
-              {/* Estimation only */}
-              <div className="flex flex-col justify-between bg-white border border-gray-200 rounded-lg shadow-sm p-4 mb-6">
-                <span className="text-sm text-gray-500">Estimated cost</span>
-                <p className="text-xl font-bold text-gray-800">₱500.00</p>
-              </div>
-
-              {/* Place Order Button (opens login/signup modal) */}
-              <div className="flex justify-center">
-                <button
-                  onClick={() => setShowAuthModal(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md shadow-md"
-                >
-                  Place Order
-                </button>
-              </div>
+              </form>
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="text-center text-gray-600">
+            <p className="mb-4">Please log in to place an order.</p>
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="bg-gray-400 text-white px-8 py-3 rounded-xl shadow-md font-medium text-lg"
+            >
+              Login to Place Order
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Login/Signup Modal */}
       {showAuthModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
-          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md relative">
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-8 w-full max-w-md relative">
             {/* Close Button */}
             <button
               onClick={() => setShowAuthModal(false)}
@@ -178,16 +146,16 @@ function DocumentPrint() {
               <X className="w-5 h-5" />
             </button>
 
-            <h2 className="text-xl font-bold mb-4">Login or Sign Up</h2>
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">Login or Sign Up</h2>
             <p className="text-sm text-gray-600 mb-6">
               Please log in or create an account to place your order.
             </p>
 
-            <div className="flex gap-3">
-              <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md">
+            <div className="flex gap-4">
+              <button className="flex-1 bg-gradient-to-r from-blue-600 to-blue-800 hover:shadow-lg hover:scale-105 transition text-white py-3 rounded-xl font-semibold">
                 Login
               </button>
-              <button className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-md">
+              <button className="flex-1 bg-gradient-to-r from-gray-200 to-gray-300 hover:shadow-lg hover:scale-105 transition text-gray-800 py-3 rounded-xl font-semibold">
                 Sign Up
               </button>
             </div>

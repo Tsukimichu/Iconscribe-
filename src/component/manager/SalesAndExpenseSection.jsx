@@ -251,23 +251,30 @@ const Section = ({ title, data, color, source, openAdd, openEdit, handleDelete, 
 );
 
 const Table = ({ data, color, onEdit, onDelete, actionLabel, actionIcon, onAction }) => (
-  <div className="bg-white rounded-2xl shadow-md border overflow-x-auto">
-    <table className="w-full text-left border-collapse min-w-[720px] text-sm">
-      <thead className="bg-gray-100">
+  <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-x-auto">
+    <table className="w-full text-left border-separate border-spacing-0 min-w-[720px] text-sm">
+      <thead className="bg-gray-50">
         <tr>
-          <th className="py-3 px-6 font-semibold text-gray-700">Item</th>
-          <th className="py-3 px-6 font-semibold text-gray-700">Amount</th>
-          <th className="py-3 px-6 font-semibold text-gray-700">Date</th>
-          <th className="py-3 px-6 font-semibold text-gray-700 text-right">Action</th>
+          <th className="py-3 px-6 font-semibold text-gray-700 border-b border-gray-200">Item</th>
+          <th className="py-3 px-6 font-semibold text-gray-700 border-b border-gray-200">Amount</th>
+          <th className="py-3 px-6 font-semibold text-gray-700 border-b border-gray-200">Date</th>
+          <th className="py-3 px-6 font-semibold text-gray-700 text-right border-b border-gray-200">Action</th>
         </tr>
       </thead>
       <tbody>
-        {data.map((row) => (
-          <tr key={row.id} className="border-b hover:bg-gray-50 transition">
-            <td className="py-3 px-6">{row.item}</td>
-            <td className={`py-3 px-6 font-semibold ${color}`}>₱{Number(row.amount).toLocaleString()}</td>
-            <td className="py-3 px-6">{new Date(row.date).toLocaleDateString()}</td>
-            <td className="py-3 px-6 text-right">
+        {data.map((row, i) => (
+          <tr
+            key={row.id}
+            className={`transition ${i % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-cyan-50`}
+          >
+            <td className="py-3 px-6 border-b border-gray-100">{row.item}</td>
+            <td className={`py-3 px-6 font-semibold ${color} border-b border-gray-100`}>
+              ₱{Number(row.amount).toLocaleString()}
+            </td>
+            <td className="py-3 px-6 border-b border-gray-100">
+              {new Date(row.date).toLocaleDateString()}
+            </td>
+            <td className="py-3 px-6 text-right border-b border-gray-100">
               <div className="flex justify-end gap-2">
                 {onEdit && <Button variant="secondary" onClick={() => onEdit(row)} icon={<Edit2 size={16} />}>Edit</Button>}
                 {onDelete && <Button variant="danger" onClick={() => onDelete(row)} icon={<Trash2 size={16} />}>Delete</Button>}

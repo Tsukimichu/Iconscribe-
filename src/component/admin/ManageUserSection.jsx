@@ -2,15 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
 const ManageUserSection = () => {
-  const [users, setUsers] = useState([
-    { id: '001', name: 'Aldrin Portento', email: 'Aldrin@gmail.com', contact: '09098765453', status: 'Active' },
-    { id: '002', name: 'Dave Geroleo', email: 'Dave@gmail.com', contact: '09098765453', status: 'Active' },
-    { id: '003', name: 'Carl Madrigal', email: 'Carl@gmail.com', contact: '09098765453', status: 'Active' },
-    { id: '004', name: 'Mark Meñiring', email: 'Mark@gmail.com', contact: '09098765453', status: 'Suspended' },
-    { id: '005', name: 'Jabiel Medroño', email: 'jabiel@gmail.com', contact: '09098765453', status: 'Inactive' },
-    { id: '006', name: 'James Palma', email: 'James@gmail.com', contact: '09098765453', status: 'Banned' },
-  ]);
-
+  const [users, setUsers] = useState([]);
   const [archived, setArchived] = useState([]);
   const [showArchives, setShowArchives] = useState(false);
   const [modal, setModal] = useState({ show: false, userId: null });
@@ -18,22 +10,34 @@ const ManageUserSection = () => {
   const [duration, setDuration] = useState('1 day');
   const [message, setMessage] = useState('');
   const [countdowns, setCountdowns] = useState({});
-  const [tick, setTick] = useState(0);
 
+  // Fetch users and archived users from the backend
+  useEffect(() => {
+    fetch('http://localhost:5000/api/users')
+      .then(res => res.json())
+      .then(data => setUsers(data))
+      .catch(err => console.error('❌ Error fetching users:', err));
+
+    fetch('http://localhost:5000/api/users/archived')
+      .then(res => res.json())
+      .then(data => setArchived(data))
+      .catch(err => console.error('❌ Error fetching archived users:', err));
+  }, []);
+
+  // Countdown for suspended users
   useEffect(() => {
     const interval = setInterval(() => {
       setCountdowns(prev => {
         const updated = {};
         let changed = false;
-        Object.keys(prev).forEach(id => {
-          if (prev[id] > 0) {
-            updated[id] = prev[id] - 1;
+        Object.keys(prev).forEach(userId => {
+          if (prev[userId] > 0) {
+            updated[userId] = prev[userId] - 1;
             changed = true;
           }
         });
         return changed ? updated : prev;
       });
-      setTick(t => t + 1);
     }, 1000);
     return () => clearInterval(interval);
   }, []);
@@ -45,22 +49,57 @@ const ManageUserSection = () => {
     Banned: 'bg-red-100 text-red-700',
   };
 
-  const updateStatus = (id, status) => {
-    setUsers(users.map(user => (user.id === id ? { ...user, status } : user)));
+  // Update user status
+  const updateStatus = async (userId, status) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/users/${userId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      console.log(data);
+
+      setUsers(users.map(u => (u.user_id === userId ? { ...u, status } : u)));
+      setArchived(archived.map(u => (u.user_id === userId ? { ...u, status } : u)));
+    } catch (err) {
+      console.error('❌ Error updating status:', err);
+    }
   };
 
-  const archiveUser = id => {
-    const toArchive = users.find(user => user.id === id);
-    setArchived([...archived, toArchive]);
-    setUsers(users.filter(user => user.id !== id));
+  const archiveUser = async (userId) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/users/${userId}/archive`, { method: "PUT" });
+      const data = await res.json();
+      console.log(data);
+
+      const toArchive = users.find(u => u.user_id === userId);
+      if (toArchive) {
+        setArchived([...archived, toArchive]);
+        setUsers(users.filter(u => u.user_id !== userId));
+      }
+    } catch (err) {
+      console.error("❌ Error archiving user:", err);
+    }
   };
 
-  const restoreUser = id => {
-    const toRestore = archived.find(user => user.id === id);
-    setUsers([...users, { ...toRestore, status: 'Active' }]);
-    setArchived(archived.filter(user => user.id !== id));
+  const restoreUser = async (userId) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/users/${userId}/restore`, { method: "PUT" });
+      const data = await res.json();
+      console.log(data);
+
+      const toRestore = archived.find(u => u.user_id === userId);
+      if (toRestore) {
+        setUsers([...users, { ...toRestore, status: "Active" }]);
+        setArchived(archived.filter(u => u.user_id !== userId));
+      }
+    } catch (err) {
+      console.error("❌ Error restoring user:", err);
+    }
   };
 
+  // Suspend user
   const handleSuspendConfirm = () => {
     const seconds = {
       '1 day': 86400,
@@ -99,7 +138,7 @@ const ManageUserSection = () => {
 
   const UserRow = ({ user }) => (
     <tr className="hover:bg-gray-50 transition">
-      <td className="px-4 py-3 font-medium">{user.id}</td>
+      <td className="px-4 py-3 font-medium">{user.user_id}</td>
       <td className="px-4 py-3">{user.name}</td>
       <td className="px-4 py-3">{user.email}</td>
       <td className="px-4 py-3">{user.contact}</td>
@@ -107,8 +146,8 @@ const ManageUserSection = () => {
         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusStyle[user.status]}`}>
           {user.status}
         </span>
-        {countdowns[user.id] > 0 && (
-          <div className="text-xs text-gray-500 mt-1">⏱ {formatTime(countdowns[user.id])}</div>
+        {countdowns[user.user_id] > 0 && (
+          <div className="text-xs text-gray-500 mt-1">⏱ {formatTime(countdowns[user.user_id])}</div>
         )}
       </td>
       <td className="px-4 py-3 space-x-2">
@@ -117,13 +156,13 @@ const ManageUserSection = () => {
             {user.status === 'Active' && (
               <>
                 <button
-                  onClick={() => setModal({ show: true, userId: user.id })}
+                  onClick={() => setModal({ show: true, userId: user.user_id })}
                   className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
                 >
                   Suspend
                 </button>
                 <button
-                  onClick={() => handleBan(user.id)}
+                  onClick={() => handleBan(user.user_id)}
                   className="bg-red-500 text-white px-3 py-1 rounded text-xs"
                 >
                   Ban
@@ -132,22 +171,22 @@ const ManageUserSection = () => {
             )}
             {user.status !== 'Active' && (
               <button
-                onClick={() => updateStatus(user.id, 'Active')}
+                onClick={() => updateStatus(user.user_id, 'Active')}
                 className="bg-yellow-400 text-white px-3 py-1 rounded text-xs"
               >
                 Activate
               </button>
             )}
             <button
-              onClick={() => archiveUser(user.id)}
+              onClick={() => archiveUser(user.user_id)}
               className="bg-gray-500 text-white px-3 py-1 rounded text-xs"
             >
-              Delete
+              Archive
             </button>
           </>
         ) : (
           <button
-            onClick={() => restoreUser(user.id)}
+            onClick={() => restoreUser(user.user_id)}
             className="bg-green-600 text-white px-3 py-1 rounded text-xs"
           >
             Restore
@@ -174,7 +213,6 @@ const ManageUserSection = () => {
         </button>
       </div>
 
-      {/* Removed border here */}
       <div className="rounded-xl overflow-hidden">
         <table className="min-w-full text-sm text-left">
           <thead className="bg-gray-100 text-gray-600">
@@ -189,7 +227,7 @@ const ManageUserSection = () => {
           </thead>
           <tbody>
             {(showArchives ? archived : users).map(user => (
-              <UserRow key={user.id} user={user} />
+              <UserRow key={user.user_id} user={user} />
             ))}
           </tbody>
         </table>

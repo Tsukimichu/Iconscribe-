@@ -24,14 +24,20 @@ function Login({ onLogin }) {
 
       const data = await res.json();
 
-      if (res.ok && data.success) {
-        localStorage.setItem("isLoggedIn", "true");
-        localStorage.setItem("user", JSON.stringify(data.user));
-        onLogin();
-        navigate("/dashboard");
-      } else {
-        alert(data.message || "Invalid name or password");
-      }
+if (res.ok && data.success) {
+  localStorage.setItem("isLoggedIn", "true");
+  localStorage.setItem("user", JSON.stringify(data.user));
+  onLogin();
+
+  if (data.user.role === "admin") {
+    navigate("/admin");
+  } else if (data.user.role === "manager") {
+    navigate("/manager");
+  } else {
+    navigate("/dashboard");
+  }
+}
+
     } catch (error) {
       console.error("❌ Login error:", error);
       alert("Something went wrong. Please try again.");

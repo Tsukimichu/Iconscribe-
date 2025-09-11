@@ -23,22 +23,51 @@ router.post("/login", (req, res) => {
   const { name, password } = req.body;
   console.log("Login attempt:", name);
 
+  
+  const hardcodedUsers = [
+    { name: "admin", password: "admin123", role: "admin" },
+    { name: "manager", password: "manager123", role: "manager" },
+  ];
+
+
+  const matchedUser = hardcodedUsers.find(
+    (u) => u.name === name && u.password === password
+  );
+
+  if (matchedUser) {
+    console.log(`✅ ${matchedUser.role} login successful`);
+    return res.json({
+      success: true,
+      message: `✅ ${matchedUser.role} login successful`,
+      user: matchedUser,
+    });
+  }
+
   const query = "SELECT * FROM users WHERE name = ? AND password = ?";
   db.query(query, [name, password], (err, results) => {
     if (err) {
       console.error("❌ Error logging in:", err.message);
-      return res.status(500).json({ success: false, message: "Database error" });
+      return res
+        .status(500)
+        .json({ success: false, message: "Database error" });
     }
 
     if (results.length > 0) {
       console.log("✅ Login successful for:", results[0].name);
-      res.json({ success: true, message: "✅ Login successful", user: results[0] });
+      res.json({
+        success: true,
+        message: "✅ Login successful",
+        user: { ...results[0], role: "user" },
+      });
     } else {
       console.log("❌ Invalid login for:", name);
-      res.status(401).json({ success: false, message: "❌ Invalid name or password" });
+      res
+        .status(401)
+        .json({ success: false, message: "❌ Invalid name or password" });
     }
   });
 });
+
 
 router.get("/users", (req, res) => {
   const query = "SELECT * FROM users";

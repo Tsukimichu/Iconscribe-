@@ -1,5 +1,3 @@
-// Maintenance.jsx
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Clock, Save, X } from "lucide-react";
@@ -11,26 +9,45 @@ const Maintenance = () => {
   const [endDate, setEndDate] = useState("");
   const [showCountdown, setShowCountdown] = useState(true);
 
-  // Load saved settings from localStorage
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("maintenanceConfig"));
-    if (saved) {
-      setIsMaintenance(saved.isMaintenance || false);
-      setMessage(saved.message || "");
-      setStartDate(saved.startDate || "");
-      setEndDate(saved.endDate || "");
-      setShowCountdown(saved.showCountdown ?? true);
-    }
+    // Load current status from backend on page load
+    const fetchStatus = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/maintenance/status");
+        const data = await res.json();
+        setIsMaintenance(data.maintenance || false);
+      } catch (err) {
+        console.error("❌ Failed to fetch maintenance status:", err);
+      }
+    };
+    fetchStatus();
   }, []);
 
-  // Save config
-  const handleSave = () => {
-    const config = { isMaintenance, message, startDate, endDate, showCountdown };
-    localStorage.setItem("maintenanceConfig", JSON.stringify(config));
-    alert("✅ Maintenance configuration saved!");
+  const handleSave = async () => {
+    try {
+      if (isMaintenance) {
+        // Enable maintenance
+        await fetch("http://localhost:5000/api/maintenance/on", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: 1 }) // replace with logged-in admin ID
+        });
+      } else {
+        // Disable maintenance
+        await fetch("http://localhost:5000/api/maintenance/off", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: 1 })
+        });
+      }
+
+      alert("✅ Maintenance configuration saved to backend!");
+    } catch (error) {
+      console.error("❌ Failed to save maintenance:", error);
+      alert("❌ Failed to save maintenance configuration");
+    }
   };
 
-  // Cancel changes
   const handleCancel = () => {
     window.location.reload();
   };

@@ -20,6 +20,8 @@ import Calendars from './products/Calendars.jsx';
 import OfficialReceipt from './products/OfficialReceipt.jsx';
 import Flyers from './products/Flyers.jsx';
 import Posters from './products/Posters.jsx';
+import Maintenance from './component/admin/Maintenance.jsx';
+import MaintenanceUser from './component/MaintenanceUser.jsx';
 import ManagerPage from './component/manager/ManagerPage.jsx';
 import DocumentPrint from './products/DocumentPrint.jsx';         
 import Label from './products/Label.jsx';  
@@ -49,8 +51,14 @@ const router = createBrowserRouter([
   { path: '/documents', element: <DocumentPrint/>},            
   { path: '/labels', element: <Label/>},              
 
-  // Customization route for selected products
+  // Customization/Maintenance route for selected products
   { path: '/customize', element: <Customization /> },
+  { path: '/maintenance', element: <MaintenanceUser/>},
+
+ 
+  // Admin role 
+   { path: '/mainteance', element: <Maintenance/> },
+
 
   // Roles
   { path: '/admin', element: <AdminPage /> },      

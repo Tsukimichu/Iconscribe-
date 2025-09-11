@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Plus, Edit2, Archive, List, X, RotateCcw } from "lucide-react";
+import { Search, Plus, Archive, List, X, RotateCcw } from "lucide-react";
 
 const initialServices = [
   { name: "Official Receipt", status: "Active" },
@@ -86,7 +86,7 @@ const ProductSection = () => {
     <div className="p-6 min-h-screen bg-white text-gray-900 rounded-3xl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-6">
-        <h1 className="text-3xl font-extrabold">📦 Product Management</h1>
+        <h1 className="text-3xl font-extrabold"> Product Management</h1>
         <div className="relative w-full sm:w-auto">
           <input
             type="text"
@@ -112,7 +112,15 @@ const ProductSection = () => {
           </button>
           <button
             onClick={() =>
-              setFilter(filter === "all" ? "Active" : filter === "Active" ? "Inactive" : filter === "Inactive" ? "Archived" : "all")
+              setFilter(
+                filter === "all"
+                  ? "Active"
+                  : filter === "Active"
+                  ? "Inactive"
+                  : filter === "Inactive"
+                  ? "Archived"
+                  : "all"
+              )
             }
             className="flex items-center gap-2 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
           >
@@ -160,13 +168,37 @@ const ProductSection = () => {
                       {service.status}
                     </span>
                   </td>
-                  <td className="py-3 px-6 flex gap-2">
-                    <button
-                      onClick={() => openPopup("edit", service)}
-                      className="flex items-center gap-1 bg-gray-200 px-3 py-1 rounded-lg hover:bg-gray-300 transition"
-                    >
-                      <Edit2 size={16} /> Edit
-                    </button>
+                  <td className="py-3 px-6 flex gap-2 items-center">
+                    {/* Toggle Switch */}
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={service.status === "Active"}
+                        onChange={() =>
+                          setServices((prev) =>
+                            prev.map((s) =>
+                              s.name === service.name
+                                ? {
+                                    ...s,
+                                    status:
+                                      s.status === "Active" ? "Inactive" : "Active",
+                                  }
+                                : s
+                            )
+                          )
+                        }
+                        className="sr-only peer"
+                      />
+                      <div
+                        className="w-11 h-6 bg-red-300 peer-focus:outline-none rounded-full peer
+                          peer-checked:bg-green-500
+                          peer-checked:after:translate-x-full peer-checked:after:border-white
+                          after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+                          after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"
+                      ></div>
+                    </label>
+
+                    {/* Archive button */}
                     <button
                       onClick={() => openPopup("archive", service)}
                       className="flex items-center gap-1 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-lg hover:bg-yellow-200 transition"

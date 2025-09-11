@@ -47,7 +47,7 @@ const MaintenanceUser = ({ children }) => {
           {status.showCountdown && status.endTime && (
             <p className="text-sm text-gray-500">
               Expected end:{" "}
-              <span className="font-medium">
+              <span className="font-medium text-gray-700">
                 {new Date(status.endTime).toLocaleString()}
               </span>
             </p>

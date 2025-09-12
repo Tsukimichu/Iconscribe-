@@ -141,7 +141,7 @@ const ManageUserSection = () => {
       <td className="px-4 py-3 font-medium">{user.user_id}</td>
       <td className="px-4 py-3">{user.name}</td>
       <td className="px-4 py-3">{user.email}</td>
-      <td className="px-4 py-3">{user.contact}</td>
+      <td className="px-4 py-3">{user.phone}</td>
       <td className="px-4 py-3">
         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusStyle[user.status]}`}>
           {user.status}

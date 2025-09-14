@@ -212,7 +212,7 @@ function Signup() {
             </AnimatePresence>
           </div>
                       <div className="text-sm text-center text-gray-800 mt-2">
-              Don’t have an account?{" "}
+              Already have an account?{" "}
               <span
                 onClick={() => navigate("/login")}
                 className="text-yellow-500 font-medium cursor-pointer hover:underline"

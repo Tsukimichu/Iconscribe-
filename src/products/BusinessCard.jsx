@@ -6,11 +6,10 @@ import { useNavigate } from "react-router-dom";
 
 function BusinessCard() {
   const navigate = useNavigate();
-  const isLoggedIn = false; // 👈 toggle for testing
+  const isLoggedIn = true; // 👈 toggle for testing
 
-  const [size, setSize] = useState("2” x 3.5” (Standard)");
-  const [customWidth, setCustomWidth] = useState("");
-  const [customHeight, setCustomHeight] = useState("");
+  const [size, setSize] = useState('2" x 3"');
+  const [paperType, setPaperType] = useState("Matte");
 
   return (
     <>
@@ -36,14 +35,14 @@ function BusinessCard() {
                 Business Card
               </h1>
               <p className="text-sm text-gray-600 mb-6 leading-relaxed text-center max-w-xl">
-                High-quality business cards with sharp colors and premium
-                finish. Available in various sizes and quantities. Same-day
-                printing available on request.
+                High-quality business cards with sharp colors and premium finish. 
+                Available in various sizes and quantities. Same-day printing available 
+                on request.
               </p>
               <p className="text-sm text-gray-600 mb-6 leading-relaxed text-center max-w-xl">
-                Perfect for professionals and entrepreneurs who want to make a
-                lasting impression. Choose your size, upload your design, or let
-                us help you create one.
+                Perfect for professionals and entrepreneurs who want to make a lasting 
+                impression. Choose your size, upload your design, or let us help you 
+                create one.
               </p>
 
               <div className="relative w-full max-w-2xl rounded-2xl overflow-hidden shadow-lg group">
@@ -98,56 +97,27 @@ function BusinessCard() {
                     onChange={(e) => setSize(e.target.value)}
                     className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition"
                   >
-                    <option>2” x 3.5” (Standard)</option>
-                    <option>3.5” x 3.5” (Square)</option>
-                    <option>2” x 2” (Mini)</option>
-                    <option>Custom Size</option>
+                    <option>2" x 3"</option>
                   </select>
                 </div>
               </div>
-
-              {/* Custom Size Fields */}
-              {size === "Custom Size" && (
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Width (inches)
-                    </label>
-                    <input
-                      type="number"
-                      min="0.5"
-                      step="0.1"
-                      value={customWidth}
-                      onChange={(e) => setCustomWidth(e.target.value)}
-                      className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Height (inches)
-                    </label>
-                    <input
-                      type="number"
-                      min="0.5"
-                      step="0.1"
-                      value={customHeight}
-                      onChange={(e) => setCustomHeight(e.target.value)}
-                      className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition"
-                    />
-                  </div>
-                </div>
-              )}
 
               {/* Paper Type */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700">
                   Paper Type
                 </label>
-                <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition">
+                <select
+                  value={paperType}
+                  onChange={(e) => setPaperType(e.target.value)}
+                  className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition"
+                >
                   <option>Matte</option>
                   <option>Glossy</option>
                   <option>Textured</option>
                   <option>Recycled</option>
+                  <option disabled>──────── Special Paper ────────</option>
+                  <option>Vellum Paper</option>
                 </select>
               </div>
 
@@ -155,8 +125,7 @@ function BusinessCard() {
               <div className="grid grid-cols-3 gap-6">
                 <div className="col-span-2">
                   <label className="block text-sm font-semibold text-gray-700">
-                    Message{" "}
-                    <span className="text-xs text-gray-500">(optional)</span>
+                    Message <span className="text-xs text-gray-500">(optional)</span>
                   </label>
                   <textarea
                     className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-28 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition"

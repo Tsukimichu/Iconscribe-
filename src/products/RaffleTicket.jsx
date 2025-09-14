@@ -11,6 +11,7 @@ function RaffleTicket() {
   const [booklets, setBooklets] = useState(1);
   const [colored, setColored] = useState("No");
   const [paperType, setPaperType] = useState("Bond Paper");
+  const [size, setSize] = useState("3x6");
 
   return (
     <>
@@ -73,7 +74,8 @@ function RaffleTicket() {
               {/* Number of Booklets */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700">
-                  Number of Booklets <span className="text-xs text-gray-500">(min. 1)</span>
+                  Number of Booklets{" "}
+                  <span className="text-xs text-gray-500">(min. 1)</span>
                 </label>
                 <input
                   type="number"
@@ -90,9 +92,12 @@ function RaffleTicket() {
                   Size
                 </label>
                 <select
+                  value={size}
+                  onChange={(e) => setSize(e.target.value)}
                   className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition"
-                  defaultValue="6outs"
                 >
+                  <option value="3x6">3" x 6"</option>
+                  <option value="2.75x5.5">2 3/4" x 5 1/2"</option>
                   <option value="6outs">6 outs of Long Bond Paper</option>
                 </select>
               </div>

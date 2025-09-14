@@ -24,20 +24,25 @@ function Login({ onLogin }) {
 
       const data = await res.json();
 
-if (res.ok && data.success) {
-  localStorage.setItem("isLoggedIn", "true");
-  localStorage.setItem("user", JSON.stringify(data.user));
-  onLogin();
+      if (res.ok && data.success) {
+        // ✅ Save JWT + user info in localStorage
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.data));
+        localStorage.setItem("isLoggedIn", "true");
 
-  if (data.user.role === "admin") {
-    navigate("/admin");
-  } else if (data.user.role === "manager") {
-    navigate("/manager");
-  } else {
-    navigate("/dashboard");
-  }
-}
+        if (onLogin) onLogin();
 
+        // ✅ Role-based redirection
+        if (data.data.role === "admin") {
+          navigate("/admin");
+        } else if (data.data.role === "manager") {
+          navigate("/manager");
+        } else {
+          navigate("/dashboard");
+        }
+      } else {
+        alert(data.message || "❌ Invalid credentials");
+      }
     } catch (error) {
       console.error("❌ Login error:", error);
       alert("Something went wrong. Please try again.");

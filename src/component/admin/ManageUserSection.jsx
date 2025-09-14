@@ -11,18 +11,30 @@ const ManageUserSection = () => {
   const [message, setMessage] = useState('');
   const [countdowns, setCountdowns] = useState({});
 
-  // Fetch users and archived users from the backend
-  useEffect(() => {
-    fetch('http://localhost:5000/api/users')
-      .then(res => res.json())
-      .then(data => setUsers(data))
-      .catch(err => console.error('❌ Error fetching users:', err));
+useEffect(() => {
+  // Active users
+  fetch("http://localhost:5000/api/users")
+    .then(res => res.json())
+    .then(data => {
+      setUsers(Array.isArray(data.data) ? data.data : []);
+    })
+    .catch(err => {
+      console.error("❌ Error fetching users:", err);
+      setUsers([]);
+    });
 
-    fetch('http://localhost:5000/api/users/archived')
-      .then(res => res.json())
-      .then(data => setArchived(data))
-      .catch(err => console.error('❌ Error fetching archived users:', err));
-  }, []);
+  // Archived users
+  fetch("http://localhost:5000/api/users/archived")
+    .then(res => res.json())
+    .then(data => {
+      setArchived(Array.isArray(data.data) ? data.data : []);
+    })
+    .catch(err => {
+      console.error("❌ Error fetching archived users:", err);
+      setArchived([]);
+    });
+}, []);
+
 
   // Countdown for suspended users
   useEffect(() => {

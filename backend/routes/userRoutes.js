@@ -1,142 +1,207 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../models/db");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt"); // <-- use bcrypt (or bcryptjs if native build fails)
 
-// Signup
-router.post("/signup", (req, res) => {
-  const { name, phone, email, address, password } = req.body;
+const SECRET_KEY = process.env.JWT_SECRET || "your-secret-key";
+const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS, 10) || 12;
+
+// =================== SIGNUP ===================
+router.post("/signup", async (req, res) => {
+  const { name, phone, email, address, password, role } = req.body;
 
   if (!name || !phone || !email || !address || !password) {
-    console.log("❌ Signup failed: missing fields");
-    return res.status(400).json({ success: false, message: "All fields are required" });
+    return res
+      .status(400)
+      .json({ success: false, message: "All fields are required" });
   }
 
-  const query = "INSERT INTO users (name, phone, email, address, password) VALUES (?, ?, ?, ?, ?)";
-  db.query(query, [name, phone, email, address, password], (err, result) => {
-    if (err) {
-      console.error("❌ Error inserting user:", err.message);
-      return res.status(500).json({ success: false, message: "Database insert failed" });
-    }
-    console.log(`✅ User registered: ${name} (ID: ${result.insertId})`);
-    res.json({ success: true, message: "✅ User registered successfully!" });
-  });
+  try {
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+    const query =
+      "INSERT INTO users (name, phone, email, address, password, role) VALUES (?, ?, ?, ?, ?, ?)";
+    db.query(
+      query,
+      [name, phone, email, address, hashedPassword, role || "user"],
+      (err, result) => {
+        if (err) {
+          console.error("❌ Error inserting user:", err.message);
+          return res
+            .status(500)
+            .json({ success: false, message: "Database insert failed" });
+        }
+
+        res.json({
+          success: true,
+          message: "✅ User registered successfully!",
+          data: {
+            id: result.insertId,
+            name,
+            phone,
+            email,
+            address,
+            role: role || "user",
+          },
+        });
+      }
+    );
+  } catch (err) {
+    console.error("❌ Error hashing password:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 });
 
-// Login
+// =================== LOGIN ===================
 router.post("/login", (req, res) => {
   const { name, password } = req.body;
 
-  const hardcodedUsers = [
-    { name: "admin", password: "admin123", role: "admin" },
-    { name: "manager", password: "manager123", role: "manager" },
-  ];
-
-  const matchedUser = hardcodedUsers.find(u => u.name === name && u.password === password);
-  if (matchedUser) {
-    console.log(`✅ Hardcoded ${matchedUser.role} login successful: ${name}`);
-    return res.json({
-      success: true,
-      message: `✅ ${matchedUser.role} login successful`,
-      user: matchedUser,
-    });
+  if (!name || !password) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Name and password are required" });
   }
 
-  const query = "SELECT * FROM users WHERE name = ? AND password = ?";
-  db.query(query, [name, password], (err, results) => {
+  const query = "SELECT * FROM users WHERE name = ?";
+  db.query(query, [name], async (err, results) => {
     if (err) {
-      console.error("❌ Error logging in:", err.message);
+      console.error("❌ DB error on login:", err);
       return res.status(500).json({ success: false, message: "Database error" });
     }
 
-    if (results.length > 0) {
-      console.log(`✅ Login successful for user: ${results[0].name} (ID: ${results[0].user_id})`);
-      res.json({
+    if (results.length === 0) {
+      console.log("❌ No user found with name:", name);
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid name or password" });
+    }
+
+    const user = results[0];
+    console.log("✅ Found user in DB:", user);
+
+    try {
+      const match = await bcrypt.compare(password, user.password);
+      console.log("🔑 Password match?", match);
+
+      if (!match) {
+        return res
+          .status(401)
+          .json({ success: false, message: "Invalid name or password" });
+      }
+
+      let token;
+      try {
+        token = jwt.sign(
+          { id: user.user_id, role: user.role },
+          SECRET_KEY,
+          { expiresIn: "1h" }
+        );
+      } catch (jwtErr) {
+        console.error("❌ JWT signing error:", jwtErr);
+        return res.status(500).json({ success: false, message: "Token generation failed" });
+      }
+
+      return res.json({
         success: true,
         message: "✅ Login successful",
-        user: { ...results[0], role: "user" },
+        token, // token at top-level
+        user: {
+          id: user.user_id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+        },
       });
-    } else {
-      console.log(`❌ Invalid login attempt: ${name}`);
-      res.status(401).json({ success: false, message: "❌ Invalid name or password" });
+    } catch (err) {
+      console.error("❌ Error comparing password:", err);
+      return res.status(500).json({ success: false, message: "Server error" });
     }
   });
 });
 
-// Update user status (Active / Suspended / Banned)
+
+
+// =================== UPDATE USER STATUS ===================
 router.put("/users/:id/status", (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
-  console.log(`🔄 Updating status for user_id ${id} to "${status}"`);
-
   const query = "UPDATE users SET status = ? WHERE user_id = ?";
-  db.query(query, [status, id], (err, result) => {
+  db.query(query, [status, id], (err) => {
     if (err) {
-      console.error("❌ Error updating status:", err.message);
-      return res.status(500).json({ success: false, message: "Database update failed" });
+      return res
+        .status(500)
+        .json({ success: false, message: "Database update failed" });
     }
-    console.log(`✅ Status update affected rows: ${result.affectedRows}`);
-    res.json({ success: true, message: `✅ User status updated to ${status}` });
+    res.json({
+      success: true,
+      message: `✅ User status updated to ${status}`,
+      data: { id, status },
+    });
   });
 });
 
-// Archive user
+// =================== ARCHIVE / RESTORE ===================
 router.put("/users/:id/archive", (req, res) => {
   const { id } = req.params;
-  console.log(`🗄 Archiving user_id ${id}`);
-
   const query = "UPDATE users SET archived = 1 WHERE user_id = ?";
-  db.query(query, [id], (err, result) => {
+  db.query(query, [id], (err) => {
     if (err) {
-      console.error("❌ Error archiving user:", err.message);
-      return res.status(500).json({ success: false, message: "Database update failed" });
+      return res
+        .status(500)
+        .json({ success: false, message: "Database update failed" });
     }
-    console.log(`✅ Archive affected rows: ${result.affectedRows}`);
-    res.json({ success: true, message: "✅ User archived" });
+    res.json({ success: true, message: "✅ User archived", data: { id } });
   });
 });
 
-// Restore user
 router.put("/users/:id/restore", (req, res) => {
   const { id } = req.params;
-  console.log(`♻️ Restoring user_id ${id}`);
-
   const query = "UPDATE users SET archived = 0 WHERE user_id = ?";
-  db.query(query, [id], (err, result) => {
+  db.query(query, [id], (err) => {
     if (err) {
-      console.error("❌ Error restoring user:", err.message);
-      return res.status(500).json({ success: false, message: "Database update failed" });
+      return res
+        .status(500)
+        .json({ success: false, message: "Database update failed" });
     }
-    console.log(`✅ Restore affected rows: ${result.affectedRows}`);
-    res.json({ success: true, message: "✅ User restored" });
+    res.json({ success: true, message: "✅ User restored", data: { id } });
   });
 });
 
-// Get all active (non-archived) users
+// =================== GET USERS (SAFE FIELDS ONLY) ===================
 router.get("/users", (req, res) => {
-  console.log("📋 Fetching all active users");
-  const query = "SELECT * FROM users WHERE archived = 0";
+  const query =
+    "SELECT user_id, name, email, phone, role, status, archived FROM users WHERE archived = 0";
   db.query(query, (err, results) => {
     if (err) {
-      console.error("❌ Error fetching users:", err.message);
-      return res.status(500).json({ success: false, message: "Database query failed" });
+      return res
+        .status(500)
+        .json({ success: false, message: "Database query failed" });
     }
-    console.log(`✅ Active users fetched: ${results.length} rows`);
-    res.json(results);
+    res.json({
+      success: true,
+      message: "✅ Active users fetched",
+      data: results,
+    });
   });
 });
 
-// Get all archived users
 router.get("/users/archived", (req, res) => {
-  console.log("📦 Fetching all archived users");
-  const query = "SELECT * FROM users WHERE archived = 1";
+  const query =
+    "SELECT user_id, name, email, phone, role, status, archived FROM users WHERE archived = 1";
   db.query(query, (err, results) => {
     if (err) {
-      console.error("❌ Error fetching archived users:", err.message);
-      return res.status(500).json({ success: false, message: "Database query failed" });
+      return res
+        .status(500)
+        .json({ success: false, message: "Database query failed" });
     }
-    console.log(`✅ Archived users fetched: ${results.length} rows`);
-    res.json(results);
+    res.json({
+      success: true,
+      message: "✅ Archived users fetched",
+      data: results,
+    });
   });
 });
 

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 function Books() {
   const navigate = useNavigate();
-  const isLoggedIn = true; // 👈 switch true/false for testing
+  const isLoggedIn = false; 
 
   return (
     <>
@@ -38,7 +38,7 @@ function Books() {
                 <img
                   src={Book}
                   alt="Sample Book"
-                  className="w-full h-[380px] object-contain rounded-xl transition-transform duration-500 group-hover:scale-105"
+                  className="w-full h-full object-contain rounded-xl transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
               </div>

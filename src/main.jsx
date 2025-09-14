@@ -26,6 +26,8 @@ import ManagerPage from './component/manager/ManagerPage.jsx';
 import DocumentPrint from './products/DocumentPrint.jsx';         
 import Label from './products/Label.jsx';  
 import Binding from './products/Binding.jsx';
+import Invitation from './products/Invitation.jsx';
+import RaffleTicket from './products/RaffleTicket.jsx';
 
 import Customization from './component/Customization.jsx';
 
@@ -51,7 +53,9 @@ const router = createBrowserRouter([
   { path: '/posters', element: <Posters/>},
   { path: '/documents', element: <DocumentPrint/>},            
   { path: '/labels', element: <Label/>}, 
-  { path: '/binding', element: <Binding/>},            
+  { path: '/binding', element: <Binding/>},
+  { path: '/invitation', element: <Invitation/>},
+  { path: '/raffleticket', element: <RaffleTicket/>},            
 
   // Customization/Maintenance route for selected products
   { path: '/customize', element: <Customization /> },

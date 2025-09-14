@@ -5,7 +5,7 @@ import calendar from "../assets/calendar.png";
 
 function Calendars() {
   const navigate = useNavigate();
-  const isLoggedIn = false; // replace with real auth state later
+  const isLoggedIn = true; // replace with real auth state later
 
   return (
     <>

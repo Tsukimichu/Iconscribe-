@@ -18,6 +18,7 @@ import poster from "../assets/Flyers.png";
 import flyers from "../assets/Posters.png";
 import book from "../assets/Book.png";
 import brochure from "../assets/Brochure.png";
+import Binding from "../assets/Binding.png";
 
 function ProductSection() {
   const allServices = [
@@ -31,6 +32,7 @@ function ProductSection() {
     { title: "Business Cards", description: "High-quality business cards with various finishes.", image: bcard, alt: "Business Cards", link: "/business-card" },
     { title: "Labels", description: "Custom labels for packaging in waterproof or adhesive options.", image: sticker, alt: "Labels", link: "/labels" },
     { title: "Calling Card", description: "Print high-quality calling cards with sharp details.", image: card, alt: "Calling Card", link: "/calling-card" },
+    { title: "Binding", description: "Binding", image: card, alt: "Binding", link: "/binding" },
   ];
 
   const [searchQuery, setSearchQuery] = useState("");

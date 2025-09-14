@@ -25,6 +25,7 @@ import MaintenanceUser from './component/MaintenanceUser.jsx';
 import ManagerPage from './component/manager/ManagerPage.jsx';
 import DocumentPrint from './products/DocumentPrint.jsx';         
 import Label from './products/Label.jsx';  
+import Binding from './products/Binding.jsx';
 
 import Customization from './component/Customization.jsx';
 
@@ -49,7 +50,8 @@ const router = createBrowserRouter([
   { path: '/flyers', element: <Flyers/>},
   { path: '/posters', element: <Posters/>},
   { path: '/documents', element: <DocumentPrint/>},            
-  { path: '/labels', element: <Label/>},              
+  { path: '/labels', element: <Label/>}, 
+  { path: '/binding', element: <Binding/>},            
 
   // Customization/Maintenance route for selected products
   { path: '/customize', element: <Customization /> },

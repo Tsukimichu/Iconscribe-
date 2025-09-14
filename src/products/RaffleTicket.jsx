@@ -98,7 +98,6 @@ function RaffleTicket() {
                 >
                   <option value="3x6">3" x 6"</option>
                   <option value="2.75x5.5">2 3/4" x 5 1/2"</option>
-                  <option value="6outs">6 outs of Long Bond Paper</option>
                 </select>
               </div>
 

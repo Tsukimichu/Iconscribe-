@@ -6,7 +6,7 @@ const { authenticate, isAdmin } = require("../middleware/authMiddleware");
 // =================== ENABLE MAINTENANCE ===================
 router.post("/maintenance/on", authenticate, isAdmin, (req, res) => {
   const { message, end_time, show_countdown } = req.body;
-  const user_id = req.user.id; // from token
+  const user_id = req.user.id;
 
   const query = `
     INSERT INTO maintenance (user_id, is_maintenance_mode, message, end_time, show_countdown)
@@ -23,7 +23,7 @@ router.post("/maintenance/on", authenticate, isAdmin, (req, res) => {
 
 // =================== DISABLE MAINTENANCE ===================
 router.post("/maintenance/off", authenticate, isAdmin, (req, res) => {
-  const user_id = req.user.id; // from token
+  const user_id = req.user.id;
 
   const query = `
     INSERT INTO maintenance (user_id, is_maintenance_mode, message, end_time, show_countdown)

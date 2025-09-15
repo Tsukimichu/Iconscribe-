@@ -10,12 +10,14 @@ const Maintenance = () => {
   const [showCountdown, setShowCountdown] = useState(true);
 
   useEffect(() => {
-    // Load current status from backend on page load
     const fetchStatus = async () => {
       try {
         const res = await fetch("http://localhost:5000/api/maintenance/status");
         const data = await res.json();
         setIsMaintenance(data.maintenance || false);
+        setMessage(data.message || "");
+        setEndDate(data.endTime || "");
+        setShowCountdown(data.showCountdown || false);
       } catch (err) {
         console.error("❌ Failed to fetch maintenance status:", err);
       }
@@ -25,19 +27,36 @@ const Maintenance = () => {
 
   const handleSave = async () => {
     try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        alert("❌ You must be logged in as admin to change maintenance settings.");
+        return;
+      }
+
       if (isMaintenance) {
         // Enable maintenance
         await fetch("http://localhost:5000/api/maintenance/on", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: 1 }) // replace with logged-in admin ID
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            message,
+            end_time: endDate,
+            show_countdown: showCountdown,
+          }),
         });
       } else {
         // Disable maintenance
         await fetch("http://localhost:5000/api/maintenance/off", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: 1 })
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({}),
         });
       }
 
@@ -60,9 +79,8 @@ const Maintenance = () => {
     >
       <h1 className="text-4xl font-extrabold mb-10">⚙️ Maintenance Settings</h1>
 
-      {/* Full-width container */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left section: Controls */}
+        {/* Left section */}
         <div className="space-y-8 bg-white rounded-2xl p-8 border border-gray-200 shadow-lg">
           {/* Toggle */}
           <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-200">
@@ -118,7 +136,7 @@ const Maintenance = () => {
             </div>
           </div>
 
-          {/* Message box */}
+          {/* Message */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Maintenance Message
@@ -147,7 +165,7 @@ const Maintenance = () => {
             </label>
           </div>
 
-          {/* Action buttons */}
+          {/* Buttons */}
           <div className="flex justify-end space-x-3 pt-4">
             <button
               onClick={handleCancel}
@@ -164,7 +182,7 @@ const Maintenance = () => {
           </div>
         </div>
 
-        {/* Right section: Live Preview */}
+        {/* Right section */}
         <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-lg">
           <h2 className="text-xl font-semibold mb-4">Live Preview</h2>
           {isMaintenance ? (

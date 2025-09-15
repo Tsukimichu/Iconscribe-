@@ -25,17 +25,15 @@ function Login({ onLogin }) {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        // ✅ Save JWT + user info in localStorage
         localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.data));
+        localStorage.setItem("user", JSON.stringify(data.user));
         localStorage.setItem("isLoggedIn", "true");
 
         if (onLogin) onLogin();
 
-        // ✅ Role-based redirection
-        if (data.data.role === "admin") {
+        if (data.user.role === "admin") {
           navigate("/admin");
-        } else if (data.data.role === "manager") {
+        } else if (data.user.role === "manager") {
           navigate("/manager");
         } else {
           navigate("/dashboard");

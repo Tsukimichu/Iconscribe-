@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const db = require("../models/db");
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt"); // <-- use bcrypt (or bcryptjs if native build fails)
+const bcrypt = require("bcrypt");
 
 const SECRET_KEY = process.env.JWT_SECRET || "your-secret-key";
 const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS, 10) || 12;
@@ -27,7 +27,7 @@ router.post("/signup", async (req, res) => {
       [name, phone, email, address, hashedPassword, role || "user"],
       (err, result) => {
         if (err) {
-          console.error("❌ Error inserting user:", err.message);
+          console.error("Error inserting user:", err.message);
           return res
             .status(500)
             .json({ success: false, message: "Database insert failed" });
@@ -35,7 +35,7 @@ router.post("/signup", async (req, res) => {
 
         res.json({
           success: true,
-          message: "✅ User registered successfully!",
+          message: "User registered successfully!",
           data: {
             id: result.insertId,
             name,
@@ -48,7 +48,7 @@ router.post("/signup", async (req, res) => {
       }
     );
   } catch (err) {
-    console.error("❌ Error hashing password:", err);
+    console.error("Error hashing password:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
@@ -66,23 +66,23 @@ router.post("/login", (req, res) => {
   const query = "SELECT * FROM users WHERE name = ?";
   db.query(query, [name], async (err, results) => {
     if (err) {
-      console.error("❌ DB error on login:", err);
+      console.error("DB error on login:", err);
       return res.status(500).json({ success: false, message: "Database error" });
     }
 
     if (results.length === 0) {
-      console.log("❌ No user found with name:", name);
+      console.log("No user found with name:", name);
       return res
         .status(401)
         .json({ success: false, message: "Invalid name or password" });
     }
 
     const user = results[0];
-    console.log("✅ Found user in DB:", user);
+    console.log("Found user in DB:", user);
 
     try {
       const match = await bcrypt.compare(password, user.password);
-      console.log("🔑 Password match?", match);
+      console.log("Password match?", match);
 
       if (!match) {
         return res
@@ -98,14 +98,14 @@ router.post("/login", (req, res) => {
           { expiresIn: "1h" }
         );
       } catch (jwtErr) {
-        console.error("❌ JWT signing error:", jwtErr);
+        console.error("JWT signing error:", jwtErr);
         return res.status(500).json({ success: false, message: "Token generation failed" });
       }
 
       return res.json({
         success: true,
-        message: "✅ Login successful",
-        token, // token at top-level
+        message: "Login successful",
+        token,
         user: {
           id: user.user_id,
           name: user.name,
@@ -115,7 +115,7 @@ router.post("/login", (req, res) => {
         },
       });
     } catch (err) {
-      console.error("❌ Error comparing password:", err);
+      console.error("Error comparing password:", err);
       return res.status(500).json({ success: false, message: "Server error" });
     }
   });
@@ -137,7 +137,7 @@ router.put("/users/:id/status", (req, res) => {
     }
     res.json({
       success: true,
-      message: `✅ User status updated to ${status}`,
+      message: `User status updated to ${status}`,
       data: { id, status },
     });
   });
@@ -153,7 +153,7 @@ router.put("/users/:id/archive", (req, res) => {
         .status(500)
         .json({ success: false, message: "Database update failed" });
     }
-    res.json({ success: true, message: "✅ User archived", data: { id } });
+    res.json({ success: true, message: "User archived", data: { id } });
   });
 });
 
@@ -166,7 +166,7 @@ router.put("/users/:id/restore", (req, res) => {
         .status(500)
         .json({ success: false, message: "Database update failed" });
     }
-    res.json({ success: true, message: "✅ User restored", data: { id } });
+    res.json({ success: true, message: "User restored", data: { id } });
   });
 });
 
@@ -182,7 +182,7 @@ router.get("/users", (req, res) => {
     }
     res.json({
       success: true,
-      message: "✅ Active users fetched",
+      message: "Active users fetched",
       data: results,
     });
   });
@@ -199,7 +199,7 @@ router.get("/users/archived", (req, res) => {
     }
     res.json({
       success: true,
-      message: "✅ Archived users fetched",
+      message: "Archived users fetched",
       data: results,
     });
   });

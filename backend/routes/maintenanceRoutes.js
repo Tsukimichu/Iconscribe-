@@ -14,10 +14,10 @@ router.post("/maintenance/on", authenticate, isAdmin, (req, res) => {
   `;
   db.query(query, [user_id, message || "", end_time || null, show_countdown || false], (err) => {
     if (err) {
-      console.error("❌ Error enabling maintenance:", err.message);
+      console.error("Error enabling maintenance:", err.message);
       return res.status(500).json({ success: false, message: "Database error" });
     }
-    res.json({ success: true, message: "✅ Maintenance mode ON" });
+    res.json({ success: true, message: "Maintenance mode ON" });
   });
 });
 
@@ -31,7 +31,7 @@ router.post("/maintenance/off", authenticate, isAdmin, (req, res) => {
   `;
   db.query(query, [user_id], (err) => {
     if (err) {
-      console.error("❌ Error disabling maintenance:", err.message);
+      console.error("Error disabling maintenance:", err.message);
       return res.status(500).json({ success: false, message: "Database error" });
     }
     res.json({ success: true, message: "✅ Website is back online" });
@@ -48,7 +48,7 @@ router.get("/maintenance/status", (req, res) => {
   `;
   db.query(query, (err, results) => {
     if (err) {
-      console.error("❌ Error checking maintenance:", err.message);
+      console.error("Error checking maintenance:", err.message);
       return res.status(500).json({ success: false, message: "Database error" });
     }
 

@@ -61,7 +61,7 @@ function OfficialReceipt() {
                 <img
                   src={or}
                   alt="Sample OR"
-                  className="w-full h-full sm:h-[520px] object-contain rounded-2xl transition-transform duration-500 group-hover:scale-105"
+                  className="w-full h-full sm:h-[600px] object-contain rounded-2xl transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
               </div>
@@ -225,7 +225,7 @@ function OfficialReceipt() {
                       Message <span className="text-sm text-gray-700">(optional)</span>
                     </label>
                     <textarea
-                      className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-28 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                      className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-23 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                       placeholder="Enter message"
                     ></textarea>
                   </div>

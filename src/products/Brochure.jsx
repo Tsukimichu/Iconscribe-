@@ -176,7 +176,36 @@ function Brochure() {
                     </div>
                   </div>
 
-                  {/* Upload + Size + Message */}
+                  {/* color + lamination */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-base font-semibold text-black">
+                          Color
+                        </label>
+                        <select
+                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                          required
+                        >
+                          <option value="">Select size</option>
+                          <option>11”x17”</option>
+                          <option>17”x22”</option>
+                          <option>22”x34”</option>
+                          <option>81/2”x14”</option>
+                        </select>
+                      </div>
+                    <div>
+                      <label className="block text-base font-semibold text-black">
+                        Lamination
+                      </label>
+                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                        <option value="">Select Calendar type</option>
+                        <option>Single Month (12 pages)</option>
+                        <option>Double Month (6 pages)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Upload + Message */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="flex flex-col gap-4">
                       {/* Customize Button */}
@@ -212,7 +241,18 @@ function Brochure() {
                     </div>
 
                     {/* Size + Message */}
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-3 mt-9  ">
+              
+                      <div className="flex items-center gap-3 p-3">
+                        <input
+                          type="checkbox"
+                          id="backToBack"
+                          className="w-6 h-6 scale-125 cursor-pointer"
+                        />
+                        <label htmlFor="backToBack" className="text-lg font-bold cursor-pointer">
+                          Print Back-to-Back
+                        </label>
+                      </div>
                       <div>
                         <label className="block text-base font-semibold text-black">
                           Message{" "}
@@ -221,7 +261,7 @@ function Brochure() {
                           </span>
                         </label>
                         <textarea
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-23 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-19 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           placeholder="Enter message"
                         ></textarea>
                       </div>

@@ -3,12 +3,15 @@ import or from "../assets/atp.png";
 import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { Contact, MessageCircle, XCircle } from "lucide-react";
+
 
 function OfficialReceipt() {
   const navigate = useNavigate();
   const isLoggedIn = true; // toggle for testing
   const [quantity, setQuantity] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
 
   const handlePlaceOrder = (e) => {
     e.preventDefault();
@@ -159,7 +162,7 @@ function OfficialReceipt() {
                     </div>
                     <div>
                       <label className="block text-base font-semibold text-black">
-                        Pack Type
+                        Booklet Finish
                       </label>
                       <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
                         <option value="">Select pack type</option>
@@ -243,25 +246,14 @@ function OfficialReceipt() {
                         </a>
                       </div>
                     </div>
-
-                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-2xl shadow-md p-6 w-64 text-right">
-                      <span className="text-base text-gray-700">
-                        Estimated Cost
-                      </span>
-                      <p className="text-3xl font-extrabold text-black">
-                        ₱1,100.00
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Submit */}
-                  <div className="flex justify-end">
+                    <div className="flex justify-end">
                     <button
                       type="submit"
                       className="bg-gradient-to-r from-blue-600 to-blue-800 hover:shadow-lg hover:scale-105 transition text-white px-10 py-3 rounded-xl font-semibold text-lg"
                     >
                       Place Order
                     </button>
+                  </div>
                   </div>
                 </form>
               </div>
@@ -354,61 +346,88 @@ function OfficialReceipt() {
                       </div>
                   </div>
 
-                  {/* Upload + Size + Message */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-3">
-                      <h3 className="text-lg font-semibold text-black">
-                        Required Documents
-                      </h3>
-                      {[
-                        { label: "Copy of COR" },
-                        { label: "Copy of Last Receipt" },
-                      ].map((file, idx) => (
-                        <label
-                          key={idx}
-                          className="flex flex-col items-center justify-center border-2 border-blue-400 bg-blue-50 rounded-xl p-4 shadow-sm hover:border-blue-600 hover:bg-blue-100 transition cursor-pointer"
-                        >
-                          <Upload className="w-5 h-5 text-blue-500 mb-1" />
-                          <span className="text-sm font-medium text-black text-center">
-                            {file.label}
-                          </span>
-                          <input type="file" className="hidden" />
-                        </label>
-                      ))}
+                  {/* Paper Type + Pack Type */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-base font-semibold text-black">
+                        Paper Type
+                      </label>
+                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                        <option value="">Select paper type</option>
+                        <option>Carbonized</option>
+                        <option>Colored Bondpaper</option>
+                      </select>
                     </div>
-
-                    {/* Size + Message */}
-                    <div className="flex flex-col gap-3">
-                      <div>
-                        <label className="block text-base font-semibold text-black">
-                          Message <span className="text-sm text-gray-700">(optional)</span>
-                        </label>
-                        <textarea
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-46 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                          placeholder="Enter message"
-                        ></textarea>
-                      </div>
+                    <div>
+                      <label className="block text-base font-semibold text-black">
+                        Booklet Finish
+                      </label>
+                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                        <option value="">Select pack type</option>
+                        <option>Padded</option>
+                        <option>Stapled</option>
+                        <option>Loose</option>
+                      </select>
                     </div>
                   </div>
 
                   {/* Price + Place Order */}
-                  <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-2xl shadow-md p-6 w-64 text-right">
-                      <span className="text-base text-gray-700">Estimated Cost</span>
-                      <p className="text-3xl font-extrabold text-black">
-                        ₱1,100.00
-                      </p>
-                    </div>
-                    <div className="flex justify-end">
+                  <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-0">
+
+                    {/* Contact + Place Order Buttons */}
+                    <div className="flex justify-end gap-4">
+                      {/* Contact Us Button */}
+                      <button
+                        type="button"
+                        onClick={() => setShowContactModal(true)}
+                        className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:shadow-lg hover:scale-105 transition text-white px-8 py-3 rounded-xl font-semibold text-lg"
+                      >
+                        Contact Us
+                      </button>
+
+                      {/* Place Order Button */}
                       <button
                         type="submit"
                         onClick={handlePlaceOrder}
-                        className="bg-gradient-to-r from-blue-600 to-blue-800 hover:shadow-lg hover:scale-105 transition text-white px-10 py-3 rounded-xl font-semibold text-lg"
+                        className="bg-gradient-to-r from-blue-600 to-blue-800 hover:shadow-lg hover:scale-105 transition text-white px-8 py-3 rounded-xl font-semibold text-lg"
                       >
-                        Place Order
+                        Log In to Order
                       </button>
                     </div>
                   </div>
+
+                  {/* Contact Modal */}
+                  {showContactModal && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                      <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md relative animate-fadeIn">
+                        {/* Close Button */}
+                        <button
+                          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+                          onClick={() => setShowContactModal(false)}
+                        >
+                          <XCircle className="w-6 h-6" />
+                        </button>
+
+                        <h3 className="text-2xl font-bold mb-4 text-center flex items-center justify-center gap-2">
+                          <Contact className="text-blue-600 w-6 h-6" /> Contact Us
+                        </h3>
+
+                        <div className="space-y-4 text-black">
+                          <div className="flex items-center gap-2">
+                            <Contact className="text-green-600 w-5 h-5" />
+                            <span className="font-medium">+63 912 345 6789</span>
+                          </div>
+                          <a
+                            href="mailto:iconscribe@email.com"
+                            className="flex items-center gap-2 text-blue-700 hover:underline"
+                          >
+                            <MessageCircle className="w-5 h-5" />
+                            <span className="font-medium">iconscribe@email.com</span>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </>// empty content when not logged in

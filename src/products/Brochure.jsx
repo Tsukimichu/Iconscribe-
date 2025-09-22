@@ -7,7 +7,7 @@ import { Contact, MessageCircle, XCircle } from "lucide-react";
 
 function Brochure() {
   const navigate = useNavigate();
-  const isLoggedIn = true; // toggle for testing
+  const isLoggedIn = false; // toggle for testing
   const [quantity, setQuantity] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -147,9 +147,9 @@ function Brochure() {
                     </div>
                   </div>
 
-                  {/* Paper Type + Pack Type */}
+                  {/* Paper Type + size */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
+                      <div>
                         <label className="block text-base font-semibold text-black">
                           Size
                         </label>
@@ -344,36 +344,13 @@ function Brochure() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-base font-semibold text-black">
-                        Color
-                      </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
-                        <option value="">Select Color</option>
-                        <option>Single Colored</option>
-                        <option>More Than 1 Color</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-base font-semibold text-black">
-                        Calendar Type
-                      </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
-                        <option value="">Select Calendar type</option>
-                        <option>Single Month (12 pages)</option>
-                        <option>Double Month (6 pages)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Business Name + Quantity */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-base font-semibold text-black">
-                        Number of Sets <span className="text-sm text-gray-700">(min 100)</span>
+                        Number of Copies{" "}
+                        <span className="text-sm text-gray-700">(min 1000)</span>
                       </label>
                       <input
                         type="number"
                         placeholder="Enter quantity"
-                        min="100"
+                        min="1000"
                         value={quantity}
                         onChange={(e) => setQuantity(e.target.value)}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
@@ -381,19 +358,70 @@ function Brochure() {
                       />
                     </div>
                     <div>
+                        <label className="block text-base font-semibold text-black">
+                          Size
+                        </label>
+                        <select
+                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                          required
+                        >
+                          <option value="">Select size</option>
+                          <option>11”x17”</option>
+                          <option>17”x22”</option>
+                          <option>22”x34”</option>
+                          <option>81/2”x14”</option>
+                        </select>
+                      </div>
+                  </div>
+
+                  {/* Business Name + Quantity */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
                       <label className="block text-base font-semibold text-black">
-                        Size
+                        Type of Paper
+                      </label>
+                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                        <option value="">Select Calendar type</option>
+                        <option>Single Month (12 pages)</option>
+                        <option>Double Month (6 pages)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-base font-semibold text-black">
+                        Color
                       </label>
                       <select
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       >
-                        <option value="">Select size</option>
+                        <option value="">Select Color</option>
                         <option>11”x17”</option>
                         <option>17”x22”</option>
                         <option>22”x34”</option>
                         <option>81/2”x14”</option>
                       </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-base font-semibold text-black">
+                        Lamination
+                      </label>
+                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                        <option value="">Select Calendar type</option>
+                        <option>Single Month (12 pages)</option>
+                        <option>Double Month (6 pages)</option>
+                      </select>
+                    </div>
+
+                    <div className="mt-4 flex items-center gap-3 p-3">
+                        <input
+                          type="checkbox"
+                          id="backToBack"
+                          className="w-6 h-6 scale-125 cursor-pointer"
+                        />
+                        <label htmlFor="backToBack" className="text-lg font-bold cursor-pointer">
+                          Print Back-to-Back
+                        </label>
                     </div>
                   </div>
 

@@ -8,7 +8,7 @@ import { Contact, MessageCircle, XCircle } from "lucide-react";
 
 function OfficialReceipt() {
   const navigate = useNavigate();
-  const isLoggedIn = true; // toggle for testing
+  const isLoggedIn = false; // toggle for testing
   const [quantity, setQuantity] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);

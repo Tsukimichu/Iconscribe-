@@ -10,7 +10,6 @@ import "swiper/css/navigation";
 // Assets
 import atp from "../assets/atp.png";
 import calendar from "../assets/calendar.png";
-import document from "../assets/DocumentP.png";
 import bcard from "../assets/BusinessCard.png";
 import card from "../assets/CallingCard.png";
 import sticker from "../assets/ICONS.png";
@@ -28,7 +27,6 @@ function ProductSection() {
     { title: "Calendars", description: "Custom calendars designed with your branding in mind.", image: calendar, alt: "Calendars", link: "/calendars" },
     { title: "Brochures", description: "Professionally printed brochures to showcase your products and services.", image: brochure, alt: "Brochures", link: "/brochure" },
     { title: "Books", description: "Book printing for self-published novels, manuals, and more.", image: book, alt: "Books", link: "/books" },
-    { title: "Document Printing", description: "Fast, accurate document printing for school, business, or personal needs.", image: document, alt: "Document Printing", link: "/documents" },
     { title: "Flyers", description: "Promote your business with vibrant, full-color flyers.", image: flyers, alt: "Flyers", link: "/flyers" },
     { title: "Posters", description: "Large-format posters ideal for advertising or décor.", image: poster, alt: "Posters", link: "/posters" },
     { title: "Business Cards", description: "High-quality business cards with various finishes.", image: bcard, alt: "Business Cards", link: "/business-card" },
@@ -50,12 +48,11 @@ function ProductSection() {
 
   return (
     <section id="product" className="relative py-25 px-6 text-white overflow-hidden">
-  
       <div className="absolute inset-0 bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,0,0.07),transparent_70%)] animate-pulse-slow" />
       <div className="absolute inset-0 bg-[conic-gradient(at_top_right,rgba(34,211,238,0.05),transparent_70%)] animate-spin-slow" />
 
-    <h2 className="text-3xl text-white md:text-5xl font-extrabold text-center mb-16 tracking-wide relative z-10">
+      <h2 className="text-3xl text-white md:text-5xl font-extrabold text-center mb-16 tracking-wide relative z-10">
         Service <span className="text-yellow-400">Offered</span>
       </h2>
 
@@ -71,12 +68,16 @@ function ProductSection() {
 
       {filteredServices.length > 0 ? (
         <div className="relative">
-         <Swiper
+          <Swiper
             modules={[Navigation, Autoplay]}
             spaceBetween={24}
             slidesPerView={3}
             loop={true}
-            autoplay={{ delay: 4000 }}
+            speed={2000} // 👈 smooth transition (2s)
+            autoplay={{
+              delay: 4000,
+              disableOnInteraction: false, // 👈 keeps autoplay running
+            }}
             onSwiper={(swiper) => {
               setTimeout(() => {
                 swiper.params.navigation.prevEl = prevRef.current;

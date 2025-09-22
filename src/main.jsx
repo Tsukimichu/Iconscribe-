@@ -22,8 +22,7 @@ import Flyers from './products/Flyers.jsx';
 import Posters from './products/Posters.jsx';
 import Maintenance from './component/admin/Maintenance.jsx';
 import MaintenanceUser from './component/MaintenanceUser.jsx';
-import ManagerPage from './component/manager/ManagerPage.jsx';
-import DocumentPrint from './products/DocumentPrint.jsx';         
+import ManagerPage from './component/manager/ManagerPage.jsx';         
 import Label from './products/Label.jsx';  
 import Binding from './products/Binding.jsx';
 import Invitation from './products/Invitation.jsx';
@@ -51,7 +50,6 @@ const router = createBrowserRouter([
   { path: '/calendars', element: <Calendars/>},
   { path: '/flyers', element: <Flyers/>},
   { path: '/posters', element: <Posters/>},
-  { path: '/documents', element: <DocumentPrint/>},            
   { path: '/labels', element: <Label/>}, 
   { path: '/binding', element: <Binding/>},
   { path: '/invitation', element: <Invitation/>},

@@ -7,7 +7,7 @@ import { Contact, MessageCircle, XCircle } from "lucide-react";
 
 function Brochure() {
   const navigate = useNavigate();
-  const isLoggedIn = false; // toggle for testing
+  const isLoggedIn = true; // toggle for testing
   const [quantity, setQuantity] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -198,7 +198,7 @@ function Brochure() {
                         Lamination
                       </label>
                       <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
-                        <option value="">Select Calendar type</option>
+                        <option value="">Select Lamination type</option>
                         <option>Single Month (12 pages)</option>
                         <option>Double Month (6 pages)</option>
                       </select>

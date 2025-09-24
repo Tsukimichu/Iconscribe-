@@ -6,8 +6,6 @@ import { useState, useEffect } from "react";
 
 function Books() {
   const navigate = useNavigate();
-
-  // initial state: check if token exists
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
   useEffect(() => {
@@ -33,9 +31,9 @@ function Books() {
   const handlePlaceOrder = (e) => {
     e.preventDefault();
     if (!isLoggedIn) {
-      navigate("/login"); // force login
+      navigate("/login")
     } else {
-      setShowConfirm(true); // open confirmation modal
+      setShowConfirm(true);
     }
   };
 

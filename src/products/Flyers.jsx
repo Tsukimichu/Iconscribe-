@@ -2,12 +2,29 @@ import Nav from "../component/navigation";
 import sampleFlyer from "../assets/Flyers.png"; // Replace with your flyer preview image
 import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { Contact, MessageCircle, XCircle } from "lucide-react";
 
 function Flyers() {
   const navigate = useNavigate();
-  const isLoggedIn = false; // toggle for testing
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+
+  useEffect(() => {
+    const checkToken = () => {
+      const token = localStorage.getItem("token");
+      setIsLoggedIn(!!token);
+    };
+
+    checkToken();
+
+    window.addEventListener("auth-change", checkToken);
+
+    return () => {
+      window.removeEventListener("auth-change", checkToken);
+    };
+  }, []);
+
+
   const [quantity, setQuantity] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -15,7 +32,7 @@ function Flyers() {
   const handlePlaceOrder = (e) => {
     e.preventDefault();
     if (!isLoggedIn) {
-      navigate("/login");
+      navigate("/login")
     } else {
       setShowConfirm(true);
     }

@@ -1,17 +1,41 @@
-import React, { useState } from "react";
 import Nav from "../component/navigation";
 import label from "../assets/ICONS.png";
 import { ArrowBigLeft, Upload, Paintbrush } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState,useEffect } from "react";
 
 function Label() {
   const navigate = useNavigate();
-  const isLoggedIn = true; // 👈 toggle for testing
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
-  const [size, setSize] = useState("2” x 2”");
-  const [customWidth, setCustomWidth] = useState("");
-  const [customHeight, setCustomHeight] = useState("");
+  useEffect(() => {
+    const checkToken = () => {
+      const token = localStorage.getItem("token");
+      setIsLoggedIn(!!token);
+    };
 
+    checkToken();
+
+    window.addEventListener("auth-change", checkToken);
+
+    return () => {
+      window.removeEventListener("auth-change", checkToken);
+    };
+  }, []);
+
+
+  const [quantity, setQuantity] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+
+  const handlePlaceOrder = (e) => {
+    e.preventDefault();
+    if (!isLoggedIn) {
+      navigate("/login")
+    } else {
+      setShowConfirm(true);
+    }
+  };
   return (
     <>
       <Nav />

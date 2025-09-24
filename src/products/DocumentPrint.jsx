@@ -1,13 +1,41 @@
-import React from "react";
 import Nav from "../component/navigation";
 import document from "../assets/DocumentP.png";
 import { ArrowBigLeft, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState,useEffect } from "react";
 
 function DocumentPrint() {
   const navigate = useNavigate();
-  const isLoggedIn = true; // toggle true/false for testing
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
+  useEffect(() => {
+    const checkToken = () => {
+      const token = localStorage.getItem("token");
+      setIsLoggedIn(!!token);
+    };
+
+    checkToken();
+
+    window.addEventListener("auth-change", checkToken);
+
+    return () => {
+      window.removeEventListener("auth-change", checkToken);
+    };
+  }, []);
+
+
+  const [quantity, setQuantity] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+
+  const handlePlaceOrder = (e) => {
+    e.preventDefault();
+    if (!isLoggedIn) {
+      navigate("/login")
+    } else {
+      setShowConfirm(true);
+    }
+  };
   return (
     <>
       <Nav />

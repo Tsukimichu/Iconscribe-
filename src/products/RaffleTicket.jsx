@@ -1,179 +1,439 @@
-import React, { useState } from "react";
 import Nav from "../component/navigation";
-import raffle from "../assets/RaffleTicket.png"; // 👈 Replace with your raffle ticket image
-import { ArrowBigLeft, Upload, Paintbrush } from "lucide-react";
+import or from "../assets/RaffleTicket.png";
+import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Contact, MessageCircle, XCircle } from "lucide-react";
 
 function RaffleTicket() {
   const navigate = useNavigate();
-  const isLoggedIn = true; // 👈 toggle for testing
+  const isLoggedIn = true; // toggle for testing
+  const [quantity, setQuantity] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
 
-  const [booklets, setBooklets] = useState(1);
-  const [colored, setColored] = useState("No");
-  const [paperType, setPaperType] = useState("Bond Paper");
-  const [size, setSize] = useState("3x6");
+  const handlePlaceOrder = (e) => {
+    e.preventDefault();
+    if (!isLoggedIn) {
+      navigate("/login");
+    } else {
+      setShowConfirm(true);
+    }
+  };
 
   return (
     <>
       <Nav />
-      <div className="w-full p-6 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-        {/* Main Card Section */}
-        <div className="w-full max-w-[95rem] mx-auto bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-100 p-12">
-          {/* Header with Back Button inside card */}
-          <div className="flex items-center gap-3 mb-10">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 hover:bg-gray-200 rounded-full transition"
-            >
-              <ArrowBigLeft className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Grid Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-start">
-            {/* Left: Preview */}
-            <div className="flex flex-col items-center">
-              <h1 className="text-3xl font-bold text-gray-800 mb-6">
-                Raffle Ticket Printing
-              </h1>
-              <p className="text-sm text-gray-600 mb-6 leading-relaxed text-center max-w-xl">
-                Print professional raffle tickets with secure numbering and
-                perforation. Choose your preferred size, color option, and
-                paper type for durability and style.
-              </p>
-
-              <div className="relative w-full max-w-2xl rounded-2xl overflow-hidden shadow-lg group">
-                <img
-                  src={raffle}
-                  alt="Raffle Ticket Service"
-                  className="w-full h-full object-contain rounded-2xl transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
-              </div>
-            </div>
-
-            {/* Right: Form */}
-            <form className="space-y-8">
-              {/* Upload + Customize (hidden if logged out) */}
-              {isLoggedIn && (
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <label className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl w-full cursor-pointer transition hover:scale-105 hover:shadow-lg">
-                    <Upload size={18} /> Upload Design
-                    <input type="file" className="hidden" />
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => navigate("/customize")}
-                    className="flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-3 rounded-xl w-full transition hover:scale-105 hover:shadow-lg"
-                  >
-                    <Paintbrush size={18} /> Customize Design
-                  </button>
-                </div>
-              )}
-
-              {/* Number of Booklets */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700">
-                  Number of Booklets{" "}
-                  <span className="text-xs text-gray-500">(min. 1)</span>
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={booklets}
-                  onChange={(e) => setBooklets(e.target.value)}
-                  className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition"
-                />
-              </div>
-
-              {/* Size */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700">
-                  Size
-                </label>
-                <select
-                  value={size}
-                  onChange={(e) => setSize(e.target.value)}
-                  className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition"
-                >
-                  <option value="3x6">3" x 6"</option>
-                  <option value="2.75x5.5">2 3/4" x 5 1/2"</option>
-                </select>
-              </div>
-
-              {/* Colored? */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700">
-                  Colored?
-                </label>
-                <select
-                  value={colored}
-                  onChange={(e) => setColored(e.target.value)}
-                  className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition"
-                >
-                  <option>No</option>
-                  <option>Yes</option>
-                </select>
-              </div>
-
-              {/* Paper Type */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700">
-                  Paper Type
-                </label>
-                <select
-                  value={paperType}
-                  onChange={(e) => setPaperType(e.target.value)}
-                  className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition"
-                >
-                  <option>Bond Paper</option>
-                  <option>Matte Paper</option>
-                  <option>Glossy Paper</option>
-                  <option>Recycled Paper</option>
-                </select>
-              </div>
-
-              {/* Message + Price */}
-              <div className="grid grid-cols-3 gap-6">
-                <div className="col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    Message <span className="text-xs text-gray-500">(optional)</span>
-                  </label>
-                  <textarea
-                    className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-28 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition"
-                    placeholder="Add special instructions..."
-                  ></textarea>
-                </div>
-                <div className="flex flex-col justify-between bg-white border border-gray-200 rounded-2xl shadow-md p-6">
-                  <span className="text-sm text-gray-500">Estimated Cost</span>
-                  <p className="text-2xl font-extrabold text-gray-900">₱0.00</p>
-                </div>
-              </div>
-
-              {/* Note when logged out */}
-              {!isLoggedIn && (
-                <p className="text-xs text-gray-500">
-                  Please log in to upload or customize a design.
-                </p>
-              )}
-
-              {/* Submit */}
-              <div className="flex justify-end">
+      <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-5">
+        <div className="w-full max-w-[120rem] p-2 sm:p-2">
+          {isLoggedIn ? (
+            <>
+              {/* Back Button + Title */}
+              <div className="flex items-center gap-3 mb-10">
                 <button
-                  type="submit"
-                  disabled={!isLoggedIn}
-                  onClick={() => {
-                    if (!isLoggedIn) navigate("/login");
-                  }}
-                  className="bg-gradient-to-r from-blue-600 to-blue-800 hover:shadow-lg hover:scale-105 transition text-white px-12 py-4 text-lg rounded-xl font-semibold disabled:opacity-50"
+                  onClick={() => navigate(-1)}
+                  className="p-2 hover:bg-gray-200 rounded-full transition"
                 >
-                  Place Order
+                  <ArrowBigLeft className="w-7 h-7" />
                 </button>
+                <h2 className="text-4xl font-bold text-black ml-200">
+                  Service Request
+                </h2>
               </div>
-            </form>
-          </div>
+
+              {/* Preview + Form */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                {/* Left: Preview */}
+                <div className="flex flex-col items-center">
+                  <h2 className="text-3xl font-bold mb-4 text-black flex justify-center">
+                    Raffle Ticket
+                  </h2>
+                  <p className="text-lg text-black mb-6 leading-relaxed text-center max-w-xl">
+                    A raffle ticket is a printed slip used for contests, 
+                    fundraising events, or giveaways. Customizable with event 
+                    details, serial numbers, and tear-off stubs.
+                  </p>
+
+                  <div className="relative w-full max-w-3xl overflow-hidden group">
+                    <img
+                      src={or}
+                      alt="Sample Raffle Ticket"
+                      className="w-full h-full sm:h-[600px] object-contain rounded-2xl transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
+                  </div>
+                </div>
+
+                {/* Right: Form */}
+                <form
+                  onSubmit={handlePlaceOrder}
+                  className="space-y-6 text-black"
+                >
+                  {/* Name, Email, Location, Contact */}
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-base font-semibold text-black">
+                          Name
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Enter your name"
+                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-base font-semibold text-black">
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          placeholder="Enter your email"
+                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-base font-semibold text-black">
+                          Location
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Enter your location"
+                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-base font-semibold text-black">
+                          Contact Number
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Enter contact number"
+                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                        />
+                      </div>
+                    </div>
+                  </>
+
+                  {/* Event Title + Quantity */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-base font-semibold text-black">
+                        Event Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Enter event name"
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-base font-semibold text-black">
+                        Number of Tickets{" "}
+                        <span className="text-sm text-gray-700">(min 50)</span>
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="Enter quantity"
+                        min="50"
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value)}
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Size + Stub Options */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-base font-semibold text-black">
+                        Size
+                      </label>
+                      <select
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                        required
+                      >
+                        <option value="">Select size</option>
+                        <option>2” x 5” (Standard)</option>
+                        <option>Custom Size</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-base font-semibold text-black">
+                        With Stub
+                      </label>
+                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                        <option value="">Select option</option>
+                        <option>Yes</option>
+                        <option>No</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Upload + Message */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex flex-col gap-4">
+                      {/* Customize Button */}
+                      <h3 className="block text-base font-semibold text-black">
+                        Design Options:
+                      </h3>
+
+                      {/* Upload Design Button */}
+                      <label className="flex items-center justify-center gap-2 border-2 border-yellow-400 bg-yellow-50 rounded-xl p-4 shadow-sm hover:border-yellow-600 hover:bg-yellow-100 transition cursor-pointer">
+                        <Upload className="w-5 h-10 text-yellow-500" />
+                        <span className="text-base font-medium text-black">
+                          Upload Your Design
+                        </span>
+                        <input type="file" className="hidden" />
+                      </label>
+                    </div>
+
+                    {/* Options + Message */}
+                    <div className="flex flex-col gap-3">
+                      <div>
+                        <label className="block text-base font-semibold text-black mb-3">
+                          Message{" "}
+                          <span className="text-sm text-gray-700">
+                            (optional)
+                          </span>
+                        </label>
+                        <textarea
+                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-19 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                          placeholder="Enter special instructions"
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Price + Contact */}
+                  <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                    <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex flex-col sm:flex-row sm:items-center sm:gap-4">
+                      <p className="text-sm text-black">
+                        If you have any questions:
+                      </p>
+                      <div className="flex flex-col sm:flex-row sm:gap-4 text-sm">
+                        <span className="flex items-center gap-1 font-medium text-blue-700">
+                          <Phone size={16} /> #09123456789
+                        </span>
+                        <a
+                          href="mailto:iconscribe@email.com"
+                          className="flex items-center gap-1 font-medium text-blue-700 hover:underline"
+                        >
+                          <Mail size={16} /> iconscribe@email.com
+                        </a>
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        className="bg-gradient-to-r from-blue-600 to-blue-800 hover:shadow-lg hover:scale-105 transition text-white px-10 py-3 rounded-xl font-semibold text-lg"
+                      >
+                        Place Order
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Back Button + Title */}
+              <div className="flex items-center gap-3 mb-10">
+                <button
+                  onClick={() => navigate(-1)}
+                  className="p-2 hover:bg-gray-200 rounded-full transition"
+                >
+                  <ArrowBigLeft className="w-7 h-7" />
+                </button>
+                <h2 className="text-4xl font-bold text-black ml-200">
+                  Service Request
+                </h2>
+              </div>
+
+              {/* Image LEFT | Text + Form RIGHT */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 w-full h-full">
+                {/* Left: Image */}
+                <div className="relative w-full h-full flex items-center justify-center overflow-hidden group">
+                  <img
+                    src={or}
+                    alt="Sample Raffle Ticket"
+                    className="w-full h-[70vh] object-contain rounded-2xl transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
+                </div>
+
+                {/* Right: Title + Desc + Partial Form */}
+                <div className="w-full max-w-2xl flex flex-col justify-center h-full space-y-6 text-black">
+                  <h2 className="text-4xl font-bold text-black">
+                    Raffle Ticket
+                  </h2>
+                  <p className="text-lg text-black leading-relaxed">
+                    A raffle ticket is a printed slip used for contests, 
+                    fundraising events, or giveaways.
+                  </p>
+                  <p>
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit.
+                    Quas mollitia pariatur saepe totam quaerat voluptate
+                    deleniti nihil culpa modi? Nihil quasi est odit ut ratione
+                    aspernatur dicta odio non nemo.
+                  </p>
+
+                  {/* Copies + Size */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-base font-semibold text-black">
+                        Number of Tickets{" "}
+                        <span className="text-sm text-gray-700">(min 50)</span>
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="Enter quantity"
+                        min="50"
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value)}
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-base font-semibold text-black">
+                        Size
+                      </label>
+                      <select
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                        required
+                      >
+                        <option value="">Select size</option>
+                        <option>2” x 5” (Standard)</option>
+                        <option>Custom Size</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Stub Option + Color */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-base font-semibold text-black">
+                        With Stub
+                      </label>
+                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                        <option value="">Select option</option>
+                        <option>Yes</option>
+                        <option>No</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-base font-semibold text-black">
+                        Color
+                      </label>
+                      <select
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                        required
+                      >
+                        <option value="">Select Color</option>
+                        <option>Full Color</option>
+                        <option>Black & White</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Price + Place Order */}
+                  <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-0">
+                    <div className="flex justify-end gap-4">
+                      {/* Contact Us Button */}
+                      <button
+                        type="button"
+                        onClick={() => setShowContactModal(true)}
+                        className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:shadow-lg hover:scale-105 transition text-white px-8 py-3 rounded-xl font-semibold text-lg"
+                      >
+                        Contact Us
+                      </button>
+
+                      {/* Place Order Button */}
+                      <button
+                        type="submit"
+                        onClick={handlePlaceOrder}
+                        className="bg-gradient-to-r from-blue-600 to-blue-800 hover:shadow-lg hover:scale-105 transition text-white px-8 py-3 rounded-xl font-semibold text-lg"
+                      >
+                        Log In to Order
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Contact Modal */}
+                  {showContactModal && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                      <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md relative animate-fadeIn">
+                        <button
+                          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+                          onClick={() => setShowContactModal(false)}
+                        >
+                          <XCircle className="w-6 h-6" />
+                        </button>
+
+                        <h3 className="text-2xl font-bold mb-4 text-center flex items-center justify-center gap-2">
+                          <Contact className="text-blue-600 w-6 h-6" /> Contact
+                          Us
+                        </h3>
+
+                        <div className="space-y-4 text-black">
+                          <div className="flex items-center gap-2">
+                            <Contact className="text-green-600 w-5 h-5" />
+                            <span className="font-medium">
+                              +63 912 345 6789
+                            </span>
+                          </div>
+                          <a
+                            href="mailto:iconscribe@email.com"
+                            className="flex items-center gap-2 text-blue-700 hover:underline"
+                          >
+                            <MessageCircle className="w-5 h-5" />
+                            <span className="font-medium">
+                              iconscribe@email.com
+                            </span>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirm && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full">
+            <h2 className="text-xl font-bold text-black mb-4">
+              Confirm Your Order
+            </h2>
+            <p className="text-base text-black mb-6">
+              Are you sure you want to place this order?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 transition text-black"
+                onClick={() => setShowConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition">
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -20,6 +20,7 @@ import brochure from "../assets/Brochure.png";
 import Binding from "../assets/Binding.png";
 import Invitation from "../assets/Invitation.png";
 import RaffleTicket from "../assets/RaffleTicket.png";
+import NewsLetter from "../assets/NewsLetter.png";
 
 function ProductSection() {
   const allServices = [
@@ -35,6 +36,7 @@ function ProductSection() {
     { title: "Binding", description: "Binding", image: Binding, alt: "Binding", link: "/binding" },
     { title: "Invitation", description: "Invitation", image: Invitation, alt: "Invitation", link: "/invitation" },
     { title: "RaffleTicket", description: "RaffleTicket", image: RaffleTicket, alt: "RaffleTicket", link: "/raffleticket" },
+    { title: "NewsLetter", description: "NewsLetter", image: NewsLetter, alt: "NewsLetter", link: "/newsletter" },
   ];
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -73,10 +75,10 @@ function ProductSection() {
             spaceBetween={24}
             slidesPerView={3}
             loop={true}
-            speed={2000} // 👈 smooth transition (2s)
+            speed={2000} // 👈 autoplay stays smooth (2s)
             autoplay={{
               delay: 4000,
-              disableOnInteraction: false, // 👈 keeps autoplay running
+              disableOnInteraction: false,
             }}
             onSwiper={(swiper) => {
               setTimeout(() => {
@@ -84,6 +86,16 @@ function ProductSection() {
                 swiper.params.navigation.nextEl = nextRef.current;
                 swiper.navigation.init();
                 swiper.navigation.update();
+
+                // 👇 Make arrow clicks faster
+                const fastSpeed = 600; // adjust speed for arrows
+                const origSlideNext = swiper.slideNext;
+                const origSlidePrev = swiper.slidePrev;
+
+                swiper.slideNext = (speed, runCallbacks, internal) =>
+                  origSlideNext.call(swiper, fastSpeed, runCallbacks, internal);
+                swiper.slidePrev = (speed, runCallbacks, internal) =>
+                  origSlidePrev.call(swiper, fastSpeed, runCallbacks, internal);
               });
             }}
             breakpoints={{
@@ -93,6 +105,7 @@ function ProductSection() {
             }}
             className="pb-12"
           >
+
             {filteredServices.map((service, index) => (
               <SwiperSlide key={index}>
                 <Link

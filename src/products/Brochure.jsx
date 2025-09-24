@@ -1,5 +1,5 @@
 import Nav from "../component/navigation";
-import or from "../assets/atp.png";
+import or from "../assets/Brochure.png";
 import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -198,7 +198,7 @@ function Brochure() {
                         Lamination
                       </label>
                       <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
-                        <option value="">Select Calendar type</option>
+                        <option value="">Select Lamination type</option>
                         <option>Single Month (12 pages)</option>
                         <option>Double Month (6 pages)</option>
                       </select>

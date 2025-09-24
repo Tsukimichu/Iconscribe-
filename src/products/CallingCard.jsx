@@ -1,5 +1,5 @@
 import Nav from "../component/navigation";
-import or from "../assets/atp.png";
+import or from "../assets/CallingCard.png";
 import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -7,7 +7,7 @@ import { Contact, MessageCircle, XCircle } from "lucide-react";
 
 function CallingCard() {
   const navigate = useNavigate();
-  const isLoggedIn = false; // toggle for testing
+  const isLoggedIn = true; // toggle for testing
   const [quantity, setQuantity] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -177,33 +177,6 @@ function CallingCard() {
                     </div>
                   </div>
 
-                  {/* Color + Lamination */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-base font-semibold text-black">
-                        Color
-                      </label>
-                      <select
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                        required
-                      >
-                        <option value="">Select Color</option>
-                        <option>Full Color</option>
-                        <option>Black & White</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-base font-semibold text-black">
-                        Lamination
-                      </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
-                        <option value="">Select option</option>
-                        <option>Gloss Lamination</option>
-                        <option>Matte Lamination</option>
-                        <option>None</option>
-                      </select>
-                    </div>
-                  </div>
 
                   {/* Upload + Message */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -247,29 +220,16 @@ function CallingCard() {
                     </div>
 
                     {/* Options + Message */}
-                    <div className="flex flex-col gap-3 mt-9">
-                      <div className="flex items-center gap-3 p-3">
-                        <input
-                          type="checkbox"
-                          id="backToBack"
-                          className="w-6 h-6 scale-125 cursor-pointer"
-                        />
-                        <label
-                          htmlFor="backToBack"
-                          className="text-lg font-bold cursor-pointer"
-                        >
-                          Print Back-to-Back
-                        </label>
-                      </div>
+                    <div className="flex flex-col gap-3">
                       <div>
-                        <label className="block text-base font-semibold text-black">
+                        <label className="block text-base font-semibold text-black mb-3">
                           Message{" "}
                           <span className="text-sm text-gray-700">
                             (optional)
                           </span>
                         </label>
                         <textarea
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-19 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-41 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           placeholder="Enter message"
                         ></textarea>
                       </div>

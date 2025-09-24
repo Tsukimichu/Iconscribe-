@@ -13,13 +13,13 @@ import {
   ZoomOut,
 } from "lucide-react";
 
-import SampleImg from "../assets/Book.png";
 
 const Customization = () => {
   const [text, setText] = useState("Your text here");
   const [activePanel, setActivePanel] = useState(null);
   const [selectedObj, setSelectedObj] = useState(null);
   const [selectedSize, setSelectedSize] = useState({ width: 100, height: 100 });
+    const [previewUrls, setPreviewUrls] = useState([]);
 
   const [zoom, setZoom] = useState(1);
   const [font, setFont] = useState("Arial");
@@ -30,8 +30,10 @@ const Customization = () => {
   // history stacks
   const history = useRef([]);
   const redoStack = useRef([]);
+  const isRestoring = useRef(false);
 
   const saveHistory = () => {
+    if (isRestoring.current) return; 
     const canvas = fabricCanvasRef.current;
     if (canvas) {
       try {
@@ -43,7 +45,7 @@ const Customization = () => {
           redoStack.current = [];
         }
       } catch (err) {
-        // ignore serialization errors
+
       }
     }
   };
@@ -137,47 +139,56 @@ const Customization = () => {
 
   // --- IMAGE UPLOAD (adds an image object) ---
   const handleImageUpload = (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    fabric.Image.fromURL(url, (img) => {
-      img.scaleToWidth(150);
-      img.set({ left: 200, top: 150 });
-      fabricCanvasRef.current.add(img).setActiveObject(img);
-      fabricCanvasRef.current.renderAll();
-      // clean up object URL
-      URL.revokeObjectURL(url);
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const newUrls = files.map((file) => {
+      const url = URL.createObjectURL(file);
+
+      // Add image to Fabric canvas
+      fabric.Image.fromURL(url, (img) => {
+        img.scaleToWidth(150);
+        img.set({ left: 200, top: 150 });
+        fabricCanvasRef.current.add(img).setActiveObject(img);
+        fabricCanvasRef.current.renderAll();
+      });
+
+      return url;
     });
+
+    setPreviewUrls((prev) => [...prev, ...newUrls]);
   };
+
 
   // --- BACKGROUND IMAGE UPLOAD (set as canvas background, scaled to cover) ---
   const handleBackgroundUpload = (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
 
-    // Use setBackgroundImage with url, and in callback scale it to cover canvas
-    canvas.setBackgroundImage(
-      url,
-      (img) => {
-        // img is fabric.Image instance
-        img.set({ originX: "left", originY: "top", left: 0, top: 0, selectable: false });
-        const scale = Math.max(canvas.getWidth() / img.width, canvas.getHeight() / img.height);
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (f) => {
+      fabric.Image.fromURL(f.target.result, (img) => {
+        img.set({
+          originX: "left",
+          originY: "top",
+          left: 0,
+          top: 0,
+          selectable: false,
+        });
+
+        const scale = Math.max(
+          canvas.width / img.width,
+          canvas.height / img.height
+        );
         img.scale(scale);
-        canvas.renderAll();
-        // revoke the blob url (image data already loaded into fabric)
-        try {
-          URL.revokeObjectURL(url);
-        } catch (err) {
-          // ignore
-        }
-      },
-      {
-        crossOrigin: "anonymous",
-      }
-    );
+
+        canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
+      });
+    };
+    reader.readAsDataURL(file);
   };
 
   // --- SHAPES ---
@@ -297,10 +308,11 @@ const Customization = () => {
   const handleBackgroundColorChange = (color) => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
-    canvas.setBackgroundColor(color, () => {
-      canvas.renderAll();
+    canvas.setBackgroundImage(null, () => {
+      canvas.setBackgroundColor(color, canvas.renderAll.bind(canvas));
     });
   };
+
 
   // --- HANDLE ZOOM ---
   const handleZoom = (factor) => {
@@ -348,38 +360,47 @@ const Customization = () => {
       >
         <div className="h-full bg-gray-200 p-4 rounded-2xl shadow-md">
           {/* Upload */}
-          {activePanel === "upload" && (
-            <div>
-              <h2 className="font-semibold mb-2">Upload</h2>
-              <div className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-blue-400 bg-blue-50 rounded-xl text-center">
-                <Upload className="w-10 h-10 text-blue-600 mb-2" />
-                <p className="text-sm text-gray-600 mb-2">
-                  Drag & drop or choose a file
-                </p>
-                <input
-                  type="file"
-                  onChange={handleImageUpload}
-                  className="text-sm text-blue-700 cursor-pointer"
-                />
-              </div>
-
-              {/* Sample image button */}
-              <div className="mt-4">
-                <button
-                  onClick={() =>
-                    fabric.Image.fromURL(SampleImg, (img) => {
-                      img.scaleToWidth(150);
-                      img.set({ left: 200, top: 150 });
-                      fabricCanvasRef.current.add(img).setActiveObject(img);
-                    })
-                  }
-                  className="w-full px-3 py-2 bg-yellow-400 hover:bg-yellow-500 text-black font-medium rounded-lg shadow mt-2"
+            {activePanel === "upload" && (
+              <div>
+                <h2 className="font-semibold mb-2">Upload</h2>
+                <div
+                  onClick={() => document.getElementById("fileUploadInput").click()}
+                  className="cursor-pointer flex flex-col items-center justify-center p-4 border-2 border-dashed border-blue-400 bg-blue-50 rounded-xl text-center hover:bg-blue-100 transition"
                 >
-                  Add Sample Image
-                </button>
+                  <Upload className="w-10 h-10 text-blue-600 mb-2" />
+                  <p className="text-sm text-gray-600">Click to upload images</p>
+
+                  {/* Hidden file input */}
+                  <input
+                    id="fileUploadInput"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </div>
+
+                {/* Gallery Preview */}
+                {previewUrls.length > 0 && (
+                  <div className="mt-4 grid grid-cols-3 gap-2">
+                    {previewUrls.map((url, index) => (
+                      <div
+                        key={index}
+                        className="w-full aspect-square border rounded-lg overflow-hidden shadow"
+                      >
+                        <img
+                          src={url}
+                          alt={`Uploaded Preview ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            )}
+
 
           {/* Text */}
           {activePanel === "text" && (
@@ -486,28 +507,63 @@ const Customization = () => {
               </div>
             </div>
           )}
-
+          
           {/* Background */}
           {activePanel === "background" && (
             <div>
-              <h2 className="font-semibold mb-2">Background</h2>
+              <h2 className="font-semibold mb-3 text-lg">Background</h2>
 
               {/* Solid Color Picker */}
-              <label className="block text-sm mb-1">Background Color</label>
-              <input
-                type="color"
-                onChange={(e) => handleBackgroundColorChange(e.target.value)}
-                className="w-full h-10 cursor-pointer rounded mb-3"
-              />
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">
+                  Choose a Background Color
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {/* Quick preset swatches */}
+                  {["#ffffff", "#f87171", "#60a5fa", "#34d399", "#facc15", "#f472b6"].map(
+                    (color, i) => (
+                      <button
+                        key={i}
+                        className="w-8 h-8 rounded-md border shadow-sm"
+                        style={{ backgroundColor: color }}
+                        onClick={() => handleBackgroundColorChange(color)}
+                      />
+                    )
+                  )}
 
-              {/* Image Upload */}
-              <label className="block text-sm mb-1">Background Image</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleBackgroundUpload}
-                className="w-full text-sm"
-              />
+                  {/* Custom color input */}
+                  <input
+                    type="color"
+                    onChange={(e) => handleBackgroundColorChange(e.target.value)}
+                    className="w-10 h-10 rounded-md cursor-pointer border"
+                  />
+                </div>
+              </div>
+
+              {/* Background Image Upload */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">
+                  Upload a Background Image
+                </label>
+                <div
+                  onClick={() =>
+                    document.getElementById("bgUploadInput").click()
+                  }
+                  className="cursor-pointer flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-400 bg-gray-50 rounded-xl text-center hover:bg-gray-100 transition"
+                >
+                  <ImageIcon className="w-8 h-8 text-gray-500 mb-1" />
+                  <p className="text-sm text-gray-600">
+                    Click to upload background
+                  </p>
+                  <input
+                    id="bgUploadInput"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleBackgroundUpload}
+                    className="hidden"
+                  />
+                </div>
+              </div>
 
               {/* Reset Background */}
               <button
@@ -519,12 +575,13 @@ const Customization = () => {
                     canvas.renderAll()
                   );
                 }}
-                className="w-full mt-3 px-3 py-2 bg-red-400 hover:bg-red-500 text-white rounded-lg shadow"
+                className="w-full mt-2 px-3 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg shadow"
               >
                 Reset Background
               </button>
             </div>
           )}
+
 
           {/* Canvas Size */}
           {activePanel === "canvasSize" && (

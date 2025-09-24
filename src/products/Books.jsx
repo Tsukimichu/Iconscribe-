@@ -1,5 +1,5 @@
 import Nav from "../component/navigation";
-import sampleBook from "../assets/book.png"; // Replace with your book preview image
+import sampleBook from "../assets/Book.png"; // Replace with your book preview image
 import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";

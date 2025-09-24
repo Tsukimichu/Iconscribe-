@@ -27,6 +27,7 @@ import Label from './products/Label.jsx';
 import Binding from './products/Binding.jsx';
 import Invitation from './products/Invitation.jsx';
 import RaffleTicket from './products/RaffleTicket.jsx';
+import NewsLetter from './products/NewsLetter.jsx';
 
 import Customization from './component/Customization.jsx';
 
@@ -53,7 +54,8 @@ const router = createBrowserRouter([
   { path: '/labels', element: <Label/>}, 
   { path: '/binding', element: <Binding/>},
   { path: '/invitation', element: <Invitation/>},
-  { path: '/raffleticket', element: <RaffleTicket/>},            
+  { path: '/raffleticket', element: <RaffleTicket/>},
+  { path: '/newsletter', element: <NewsLetter/>},          
 
   // Customization/Maintenance route for selected products
   { path: '/customize', element: <Customization /> },

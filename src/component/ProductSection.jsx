@@ -20,6 +20,7 @@ import brochure from "../assets/Brochure.png";
 import Binding from "../assets/Binding.png";
 import Invitation from "../assets/Invitation.png";
 import RaffleTicket from "../assets/RaffleTicket.png";
+import NewsLetter from "../assets/NewsLetter.png";
 
 function ProductSection() {
   const allServices = [
@@ -35,6 +36,7 @@ function ProductSection() {
     { title: "Binding", description: "Binding", image: Binding, alt: "Binding", link: "/binding" },
     { title: "Invitation", description: "Invitation", image: Invitation, alt: "Invitation", link: "/invitation" },
     { title: "RaffleTicket", description: "RaffleTicket", image: RaffleTicket, alt: "RaffleTicket", link: "/raffleticket" },
+    { title: "NewsLetter", description: "NewsLetter", image: NewsLetter, alt: "NewsLetter", link: "/newsletter" },
   ];
 
   const [searchQuery, setSearchQuery] = useState("");

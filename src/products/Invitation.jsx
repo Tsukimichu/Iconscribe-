@@ -1,5 +1,5 @@
 import Nav from "../component/navigation";
-import or from "../assets/atp.png";
+import or from "../assets/Invitation.png";
 import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";

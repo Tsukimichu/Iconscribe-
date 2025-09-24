@@ -75,7 +75,7 @@ function ProductSection() {
             spaceBetween={24}
             slidesPerView={3}
             loop={true}
-            speed={2000} // 👈 autoplay stays smooth (2s)
+            speed={2000}
             autoplay={{
               delay: 4000,
               disableOnInteraction: false,
@@ -87,8 +87,8 @@ function ProductSection() {
                 swiper.navigation.init();
                 swiper.navigation.update();
 
-                // 👇 Make arrow clicks faster
-                const fastSpeed = 600; // adjust speed for arrows
+               
+                const fastSpeed = 600; 
                 const origSlideNext = swiper.slideNext;
                 const origSlidePrev = swiper.slidePrev;
 

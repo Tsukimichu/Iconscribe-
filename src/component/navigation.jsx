@@ -10,23 +10,30 @@ function Navigation() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const loginStatus = localStorage.getItem('isLoggedIn') === 'true';
+    const loginStatus = !!localStorage.getItem("token");
     setIsLoggedIn(loginStatus);
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem("token");
     setIsLoggedIn(false);
+    window.dispatchEvent(new Event("auth-change"));
     navigate('/');
   };
 
+
   const handleScroll = (id) => {
-    const section = document.getElementById(id);
-    if (section) {
-      section.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setMenuOpen(false);
+    if (window.location.pathname === "/dashboard") {
+      const section = document.getElementById(id);
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth", block: "center" });
+        setMenuOpen(false);
+      }
+    } else {
+      navigate(`/dashboard`);
     }
   };
+
 
   useEffect(() => {
     const observer = new IntersectionObserver(

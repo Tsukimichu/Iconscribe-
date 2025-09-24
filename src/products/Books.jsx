@@ -1,13 +1,31 @@
 import Nav from "../component/navigation";
-import sampleBook from "../assets/Book.png"; // Replace with your book preview image
-import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
+import sampleBook from "../assets/Book.png"; 
+import { ArrowBigLeft, Upload, Phone, Mail, Contact, MessageCircle, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { Contact, MessageCircle, XCircle } from "lucide-react";
+import { useState, useEffect } from "react";
 
 function Books() {
   const navigate = useNavigate();
-  const isLoggedIn = false; // toggle for testing
+
+  // initial state: check if token exists
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+
+  useEffect(() => {
+    const checkToken = () => {
+      const token = localStorage.getItem("token");
+      setIsLoggedIn(!!token);
+    };
+
+    checkToken();
+
+    window.addEventListener("auth-change", checkToken);
+
+    return () => {
+      window.removeEventListener("auth-change", checkToken);
+    };
+  }, []);
+
+
   const [quantity, setQuantity] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -15,9 +33,9 @@ function Books() {
   const handlePlaceOrder = (e) => {
     e.preventDefault();
     if (!isLoggedIn) {
-      navigate("/login");
+      navigate("/login"); // force login
     } else {
-      setShowConfirm(true);
+      setShowConfirm(true); // open confirmation modal
     }
   };
 

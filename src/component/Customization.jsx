@@ -645,7 +645,7 @@ const Customization = () => {
                   fabricCanvasRef.current.renderAll();
                 }
               }}
-              className="px-2 py-1 border rounded-lg disabled:bg-gray-200 disabled:text-gray-400"
+              className="border border-gray-300 rounded-lg px-3 py-1 text-sm"
             >
               <option value="Arial">Arial</option>
               <option value="Times New Roman">Times New Roman</option>
@@ -688,7 +688,7 @@ const Customization = () => {
         {/* Canvas */}
         <div className="flex-1 flex flex-col items-center bg-white rounded-2xl shadow-md overflow-auto relative">
           <div className="flex-1 flex justify-center items-center">
-            <canvas ref={canvasRef} className="max-w-full h-auto" />
+            <canvas ref={canvasRef} className="relative w-full max-w-3xl overflow-hidden group shadow-2xl rounded-2xl" />
           </div>
 
           {/* Zoom controls */}

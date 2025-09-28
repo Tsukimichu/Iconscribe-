@@ -196,7 +196,6 @@ function RaffleTicket() {
                   {/* Upload + Message */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="flex flex-col gap-4">
-                      {/* Customize Button */}
                       <h3 className="block text-base font-semibold text-black">
                         Design Options:
                       </h3>

@@ -199,7 +199,7 @@ function Newsletters() {
                       </h3>
                       <button
                         type="button"
-                        onClick={() => navigate("/customization")}
+                        onClick={() => navigate("/customize")}
                         className="flex items-center justify-center gap-2 border-2 border-blue-400 bg-blue-50 rounded-xl p-4 shadow-sm hover:border-blue-600 hover:bg-blue-100 transition"
                       >
                         <svg

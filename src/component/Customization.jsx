@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import * as fabric from "fabric";
+import { fabric } from "fabric";
 import {
   Upload,
   Type,
@@ -13,55 +13,40 @@ import {
   ZoomOut,
 } from "lucide-react";
 
-
 const Customization = () => {
   const [text, setText] = useState("Your text here");
   const [activePanel, setActivePanel] = useState(null);
   const [selectedObj, setSelectedObj] = useState(null);
   const [selectedSize, setSelectedSize] = useState({ width: 100, height: 100 });
-    const [previewUrls, setPreviewUrls] = useState([]);
-
+  const [previewUrls, setPreviewUrls] = useState([]);
   const [zoom, setZoom] = useState(1);
-  const [font, setFont] = useState("Arial");
+
   const canvasRef = useRef(null);
   const fabricCanvasRef = useRef(null);
   const initialBgRef = useRef("#f9fafb");
 
-  // history stacks
+  // --- history stacks ---
   const history = useRef([]);
   const redoStack = useRef([]);
   const isRestoring = useRef(false);
 
   const saveHistory = () => {
-    if (isRestoring.current) return; 
+    if (isRestoring.current) return; // skip if restoring
+
     const canvas = fabricCanvasRef.current;
     if (canvas) {
-      try {
-        const json = canvas.toJSON();
-        const last = history.current[history.current.length - 1];
-        if (JSON.stringify(last) !== JSON.stringify(json)) {
-          history.current.push(json);
-          if (history.current.length > 50) history.current.shift();
-          redoStack.current = [];
-        }
-      } catch (err) {
+      const json = canvas.toDatalessJSON(); // smaller history size
+      const last = history.current[history.current.length - 1];
 
+      if (JSON.stringify(last) !== JSON.stringify(json)) {
+        history.current.push(json);
+        if (history.current.length > 50) history.current.shift(); // cap history size
+        redoStack.current = []; // clear redo on new action
       }
     }
   };
 
-  // helper to rescale background image to cover canvas
-  const rescaleBackground = (canvas) => {
-    if (!canvas) return;
-    const bg = canvas.backgroundImage;
-    if (!bg) return;
-    // bg is a fabric.Image instance
-    const scale = Math.max(canvas.getWidth() / bg.width, canvas.getHeight() / bg.height);
-    bg.set({ originX: "left", originY: "top", left: 0, top: 0, selectable: false });
-    bg.scale(scale);
-    canvas.renderAll();
-  };
-
+  // --- useEffect for fabric canvas ---
   useEffect(() => {
     if (!canvasRef.current) return;
 
@@ -84,12 +69,15 @@ const Customization = () => {
     });
     canvas.add(textObj);
 
-    saveHistory();
+    saveHistory(); // first snapshot
 
-    // Record changes
-    canvas.on("object:added", saveHistory);
+    // Record changes safely
+    canvas.on("object:added", () => {
+      if (!isRestoring.current) saveHistory();
+    });
+
     canvas.on("object:modified", () => {
-      saveHistory();
+      if (!isRestoring.current) saveHistory();
       const obj = canvas.getActiveObject();
       if (obj) {
         setSelectedSize({
@@ -98,18 +86,18 @@ const Customization = () => {
         });
       }
     });
-    canvas.on("object:removed", saveHistory);
+
+    canvas.on("object:removed", () => {
+      if (!isRestoring.current) saveHistory();
+    });
 
     // Track selection
     const updateSelection = (e) => {
-      const obj = (e && (e.selected?.[0] || e.target)) || canvas.getActiveObject();
+      const obj =
+        (e && (e.selected?.[0] || e.target)) || canvas.getActiveObject();
       setSelectedObj(obj || null);
 
       if (obj) {
-        if (obj.type === "textbox") {
-          setFont(obj.fontFamily || "Arial");
-        }
-        // use getScaledWidth/getScaledHeight to account for scaling
         setSelectedSize({
           width: Math.round(obj.getScaledWidth()),
           height: Math.round(obj.getScaledHeight()),
@@ -129,6 +117,55 @@ const Customization = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // --- UNDO ---
+  const handleUndo = () => {
+    if (history.current.length > 1) {
+      const currentState = history.current.pop();
+      redoStack.current.push(currentState);
+
+      const prevState = history.current[history.current.length - 1];
+      isRestoring.current = true;
+      fabricCanvasRef.current.loadFromJSON(prevState, () => {
+        fabricCanvasRef.current.renderAll();
+        isRestoring.current = false;
+      });
+    }
+  };
+
+  // --- REDO ---
+  const handleRedo = () => {
+    if (redoStack.current.length > 0) {
+      const nextState = redoStack.current.pop();
+      history.current.push(nextState);
+
+      isRestoring.current = true;
+      fabricCanvasRef.current.loadFromJSON(nextState, () => {
+        fabricCanvasRef.current.renderAll();
+        isRestoring.current = false;
+      });
+    }
+  };
+
+  // helper to rescale background image to cover canvas
+  const rescaleBackground = (canvas) => {
+    if (!canvas) return;
+    const bg = canvas.backgroundImage;
+    if (!bg) return;
+    const scale = Math.max(
+      canvas.getWidth() / bg.width,
+      canvas.getHeight() / bg.height
+    );
+    bg.set({
+      originX: "left",
+      originY: "top",
+      left: 0,
+      top: 0,
+      selectable: false,
+    });
+    bg.scale(scale);
+    canvas.renderAll();
+  };
 
   useEffect(() => {
     if (selectedObj?.type === "textbox") {
@@ -158,7 +195,6 @@ const Customization = () => {
 
     setPreviewUrls((prev) => [...prev, ...newUrls]);
   };
-
 
   // --- BACKGROUND IMAGE UPLOAD (set as canvas background, scaled to cover) ---
   const handleBackgroundUpload = (e) => {
@@ -234,31 +270,8 @@ const Customization = () => {
     link.click();
   };
 
-  // --- UNDO/REDO ---
-  const handleUndo = () => {
-    if (history.current.length > 1) {
-      const currentState = history.current.pop();
-      redoStack.current.push(currentState);
-      const prevState = history.current[history.current.length - 1];
-      fabricCanvasRef.current.loadFromJSON(prevState, () =>
-        fabricCanvasRef.current.renderAll()
-      );
-    }
-  };
-
-  const handleRedo = () => {
-    if (redoStack.current.length > 0) {
-      const state = redoStack.current.pop();
-      history.current.push(state);
-      fabricCanvasRef.current.loadFromJSON(state, () =>
-        fabricCanvasRef.current.renderAll()
-      );
-    }
-  };
-
   // --- HANDLE FONT CHANGE ---
   const handleFontChange = (value) => {
-    setFont(value);
     if (selectedObj?.type === "textbox") {
       selectedObj.set("fontFamily", value);
       fabricCanvasRef.current.renderAll();
@@ -270,16 +283,12 @@ const Customization = () => {
     if (!selectedObj || !fabricCanvasRef.current) return;
     const canvas = fabricCanvasRef.current;
 
-    // ensure value is number
     const v = Number(value) || 0;
     if (v <= 0) return;
 
-    // For textbox, we might treat width as box width; but preserving your behavior:
     if (selectedObj.type === "textbox" && dimension === "width") {
-      // adjust textbox width (not scale)
       selectedObj.set("width", v);
     } else {
-      // for images/shapes, use scaleToWidth/Height
       if (dimension === "width") {
         if (typeof selectedObj.scaleToWidth === "function") {
           selectedObj.scaleToWidth(v);
@@ -295,10 +304,17 @@ const Customization = () => {
       }
     }
 
-    // update selected size state
     setSelectedSize({
-      width: Math.round(selectedObj.getScaledWidth ? selectedObj.getScaledWidth() : (selectedObj.width || 0)),
-      height: Math.round(selectedObj.getScaledHeight ? selectedObj.getScaledHeight() : (selectedObj.height || 0)),
+      width: Math.round(
+        selectedObj.getScaledWidth
+          ? selectedObj.getScaledWidth()
+          : selectedObj.width || 0
+      ),
+      height: Math.round(
+        selectedObj.getScaledHeight
+          ? selectedObj.getScaledHeight()
+          : selectedObj.height || 0
+      ),
     });
 
     canvas.renderAll();
@@ -308,11 +324,26 @@ const Customization = () => {
   const handleBackgroundColorChange = (color) => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
+
     canvas.setBackgroundImage(null, () => {
-      canvas.setBackgroundColor(color, canvas.renderAll.bind(canvas));
+      canvas.setBackgroundColor(color, () => {
+        canvas.renderAll();
+        saveHistory();
+      });
     });
   };
 
+  // --- RESET BACKGROUND ---
+  const handleResetBackground = () => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas) return;
+
+    canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas));
+    canvas.setBackgroundColor(initialBgRef.current, () => {
+      canvas.renderAll();
+      saveHistory();
+    });
+  };
 
   // --- HANDLE ZOOM ---
   const handleZoom = (factor) => {
@@ -326,18 +357,47 @@ const Customization = () => {
     canvas.renderAll();
   };
 
+  // --- Canvas Size Change Helper ---
+  const setCanvasSize = (width, height) => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas || !canvasRef.current) return;
+    canvas.setWidth(width);
+    canvas.setHeight(height);
+    canvasRef.current.width = width;
+    canvasRef.current.height = height;
+    rescaleBackground(canvas);
+    canvas.renderAll();
+  };
+
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50 p-3 md:p-6">
       {/* Sidebar */}
       <div className="flex md:flex-col w-full md:w-20 bg-blue-600 rounded-2xl shadow-md items-center justify-between md:justify-start py-2 md:py-6 space-x-4 md:space-x-0 md:space-y-8">
-        {[
-          { key: "upload", icon: <Upload className="w-6 h-6" /> },
-          { key: "images", icon: <ImageIcon className="w-6 h-6" /> },
-          { key: "text", icon: <Type className="w-6 h-6" /> },
-          { key: "shapes", icon: <Shapes className="w-6 h-6" /> },
-          { key: "background", icon: <Palette className="w-6 h-6" /> },
-          { key: "canvasSize", icon: <Scaling className="w-6 h-6" /> },
-        ].map(({ key, icon }) => (
+       { [{
+          key: "upload",
+          icon: <Upload className="w-6 h-6" />,
+        },
+        {
+          key: "images",
+          icon: <ImageIcon className="w-6 h-6" />,
+        },
+        {
+          key: "text",
+          icon: <Type className="w-6 h-6" />,
+        },
+        {
+          key: "shapes",
+          icon: <Shapes className="w-6 h-6" />,
+        },
+        {
+          key: "background",
+          icon: <Palette className="w-6 h-6" />,
+        },
+        {
+          key: "canvasSize",
+          icon: <Scaling className="w-6 h-6" />,
+        },
+      ].map(({ key, icon }) => (
           <button
             key={key}
             onClick={() => setActivePanel(activePanel === key ? null : key)}
@@ -355,57 +415,58 @@ const Customization = () => {
       {/* Slide-out Panel */}
       <div
         className={`transition-all duration-300 overflow-hidden ${
-          activePanel ? "w-full md:w-64 md:ml-4 mt-4 md:mt-0" : "w-0 md:w-0"
+          activePanel ? "w-full md:w-72 md:ml-4 mt-4 md:mt-0" : "w-0 md:w-0"
         }`}
       >
-        <div className="h-full bg-gray-200 p-4 rounded-2xl shadow-md">
+        <div className="h-full bg-white border border-gray-200 p-5 rounded-2xl shadow-lg">
           {/* Upload */}
-            {activePanel === "upload" && (
-              <div>
-                <h2 className="font-semibold mb-2">Upload</h2>
-                <div
-                  onClick={() => document.getElementById("fileUploadInput").click()}
-                  className="cursor-pointer flex flex-col items-center justify-center p-4 border-2 border-dashed border-blue-400 bg-blue-50 rounded-xl text-center hover:bg-blue-100 transition"
-                >
-                  <Upload className="w-10 h-10 text-blue-600 mb-2" />
-                  <p className="text-sm text-gray-600">Click to upload images</p>
-
-                  {/* Hidden file input */}
-                  <input
-                    id="fileUploadInput"
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                </div>
-
-                {/* Gallery Preview */}
-                {previewUrls.length > 0 && (
-                  <div className="mt-4 grid grid-cols-3 gap-2">
-                    {previewUrls.map((url, index) => (
-                      <div
-                        key={index}
-                        className="w-full aspect-square border rounded-lg overflow-hidden shadow"
-                      >
-                        <img
-                          src={url}
-                          alt={`Uploaded Preview ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
+          {activePanel === "upload" && (
+            <div>
+              <h2 className="font-semibold text-gray-800 mb-3 capitalize">
+                Upload
+              </h2>
+              <div
+                onClick={() =>
+                  document.getElementById("fileUploadInput").click()
+                }
+                className="cursor-pointer flex flex-col items-center justify-center p-4 border-2 border-dashed border-blue-400 bg-blue-50 rounded-xl text-center hover:bg-blue-100 transition"
+              >
+                <Upload className="w-10 h-10 text-blue-600 mb-2" />
+                <p className="text-sm text-gray-600">Click to upload images</p>
+                <input
+                  id="fileUploadInput"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
               </div>
-            )}
-
+              {previewUrls.length > 0 && (
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  {previewUrls.map((url, index) => (
+                    <div
+                      key={index}
+                      className="w-full aspect-square border rounded-lg overflow-hidden shadow"
+                    >
+                      <img
+                        src={url}
+                        alt={`Uploaded Preview ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Text */}
           {activePanel === "text" && (
             <div>
-              <h2 className="font-semibold mb-2">Text Tools</h2>
+              <h2 className="font-semibold text-gray-800 mb-3 capitalize">
+                Text Tools
+              </h2>
               <div className="flex flex-col gap-2 mb-4">
                 <button
                   onClick={() => {
@@ -484,7 +545,9 @@ const Customization = () => {
           {/* Shapes */}
           {activePanel === "shapes" && (
             <div>
-              <h2 className="font-semibold mb-2">Shapes</h2>
+              <h2 className="font-semibold text-gray-800 mb-3 capitalize">
+                Shapes
+              </h2>
               <div className="flex flex-col gap-2 mb-4">
                 <button
                   onClick={() => addShape("rect")}
@@ -507,40 +570,43 @@ const Customization = () => {
               </div>
             </div>
           )}
-          
+
           {/* Background */}
           {activePanel === "background" && (
             <div>
-              <h2 className="font-semibold mb-3 text-lg">Background</h2>
-
-              {/* Solid Color Picker */}
+              <h2 className="font-semibold text-gray-800 mb-3 capitalize">
+                Background
+              </h2>
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-2">
                   Choose a Background Color
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {/* Quick preset swatches */}
-                  {["#ffffff", "#f87171", "#60a5fa", "#34d399", "#facc15", "#f472b6"].map(
-                    (color, i) => (
-                      <button
-                        key={i}
-                        className="w-8 h-8 rounded-md border shadow-sm"
-                        style={{ backgroundColor: color }}
-                        onClick={() => handleBackgroundColorChange(color)}
-                      />
-                    )
-                  )}
-
-                  {/* Custom color input */}
+                  {[
+                    "#ffffff",
+                    "#f87171",
+                    "#60a5fa",
+                    "#34d399",
+                    "#facc15",
+                    "#f472b6",
+                  ].map((color, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className="w-8 h-8 rounded-md border shadow-sm focus:outline-none"
+                      style={{ backgroundColor: color }}
+                      onClick={() => handleBackgroundColorChange(color)}
+                    />
+                  ))}
                   <input
                     type="color"
-                    onChange={(e) => handleBackgroundColorChange(e.target.value)}
+                    onChange={(e) =>
+                      handleBackgroundColorChange(e.target.value)
+                    }
                     className="w-10 h-10 rounded-md cursor-pointer border"
                   />
                 </div>
               </div>
-
-              {/* Background Image Upload */}
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-2">
                   Upload a Background Image
@@ -564,17 +630,8 @@ const Customization = () => {
                   />
                 </div>
               </div>
-
-              {/* Reset Background */}
               <button
-                onClick={() => {
-                  const canvas = fabricCanvasRef.current;
-                  if (!canvas) return;
-                  canvas.setBackgroundImage(null, () => canvas.renderAll());
-                  canvas.setBackgroundColor(initialBgRef.current, () =>
-                    canvas.renderAll()
-                  );
-                }}
+                onClick={handleResetBackground}
                 className="w-full mt-2 px-3 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg shadow"
               >
                 Reset Background
@@ -582,53 +639,31 @@ const Customization = () => {
             </div>
           )}
 
-
           {/* Canvas Size */}
           {activePanel === "canvasSize" && (
             <div>
-              <h2 className="font-semibold mb-2">Canvas Size</h2>
+              <h2 className="font-semibold text-gray-800 mb-3 capitalize">
+                Canvas Size
+              </h2>
               <div className="flex flex-col gap-2">
                 <button
-                  onClick={() => {
-                    const canvas = fabricCanvasRef.current;
-                    if (!canvas) return;
-                    canvas.setWidth(800);
-                    canvas.setHeight(1200);
-                    rescaleBackground(canvas);
-                    canvas.renderAll();
-                  }}
+                  onClick={() => setCanvasSize(800, 1200)}
                   className="px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded-lg shadow"
                 >
                   Poster (800 × 1200)
                 </button>
                 <button
-                  onClick={() => {
-                    const canvas = fabricCanvasRef.current;
-                    if (!canvas) return;
-                    canvas.setWidth(1000);
-                    canvas.setHeight(700);
-                    rescaleBackground(canvas);
-                    canvas.renderAll();
-                  }}
+                  onClick={() => setCanvasSize(1000, 700)}
                   className="px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded-lg shadow"
                 >
                   Brochure (1000 × 700)
                 </button>
                 <button
-                  onClick={() => {
-                    const canvas = fabricCanvasRef.current;
-                    if (!canvas) return;
-                    canvas.setWidth(350);
-                    canvas.setHeight(200);
-                    rescaleBackground(canvas);
-                    canvas.renderAll();
-                  }}
+                  onClick={() => setCanvasSize(350, 200)}
                   className="px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded-lg shadow"
                 >
                   Calling Card (350 × 200)
                 </button>
-
-                {/* Custom size */}
                 <div className="mt-3">
                   <label className="block text-sm mb-1">Custom Size</label>
                   <div className="flex gap-2">
@@ -637,12 +672,8 @@ const Customization = () => {
                       placeholder="Width"
                       className="w-1/2 border rounded p-1"
                       onChange={(e) => {
-                        const canvas = fabricCanvasRef.current;
-                        if (!canvas) return;
-                        const w = parseInt(e.target.value) || canvas.getWidth();
-                        canvas.setWidth(w);
-                        rescaleBackground(canvas);
-                        canvas.renderAll();
+                        const w = parseInt(e.target.value);
+                        if (w > 0) setCanvasSize(w, fabricCanvasRef.current.getHeight());
                       }}
                     />
                     <input
@@ -650,12 +681,8 @@ const Customization = () => {
                       placeholder="Height"
                       className="w-1/2 border rounded p-1"
                       onChange={(e) => {
-                        const canvas = fabricCanvasRef.current;
-                        if (!canvas) return;
-                        const h = parseInt(e.target.value) || canvas.getHeight();
-                        canvas.setHeight(h);
-                        rescaleBackground(canvas);
-                        canvas.renderAll();
+                        const h = parseInt(e.target.value);
+                        if (h > 0) setCanvasSize(fabricCanvasRef.current.getWidth(), h);
                       }}
                     />
                   </div>
@@ -696,12 +723,7 @@ const Customization = () => {
             <select
               disabled={!selectedObj || selectedObj.type !== "textbox"}
               value={selectedObj?.fontFamily || "Arial"}
-              onChange={(e) => {
-                if (selectedObj && selectedObj.type === "textbox") {
-                  selectedObj.set("fontFamily", e.target.value);
-                  fabricCanvasRef.current.renderAll();
-                }
-              }}
+              onChange={(e) => handleFontChange(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-1 text-sm"
             >
               <option value="Arial">Arial</option>
@@ -709,7 +731,7 @@ const Customization = () => {
               <option value="Courier New">Courier New</option>
               <option value="Georgia">Georgia</option>
               <option value="Verdana">Verdana</option>
-              <option value="Poppin">Poppin</option>
+              <option value="Poppins">Poppins</option>
             </select>
           </div>
 
@@ -745,9 +767,11 @@ const Customization = () => {
         {/* Canvas */}
         <div className="flex-1 flex flex-col items-center bg-white rounded-2xl shadow-md overflow-auto relative">
           <div className="flex-1 flex justify-center items-center">
-            <canvas ref={canvasRef} className="relative w-full max-w-3xl overflow-hidden group shadow-2xl rounded-2xl" />
+            <canvas
+              ref={canvasRef}
+              className="relative w-full max-w-3xl overflow-hidden group shadow-2xl rounded-2xl"
+            />
           </div>
-
           {/* Zoom controls */}
           <div className="flex items-center gap-2 p-2 bg-gray-100 rounded-lg shadow mt-2 mb-2">
             <button

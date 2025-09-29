@@ -14,7 +14,7 @@ function authenticate(req, res, next) {
     if (err) {
       return res.status(403).json({ success: false, message: "Invalid token" });
     }
-    req.user = decoded; // { id, role }
+    req.user = decoded;
     next();
   });
 }

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
@@ -8,39 +8,76 @@ import "swiper/css";
 import "swiper/css/navigation";
 
 // Assets
-import atp from "../assets/atp.png";
+import Officialreceipt from "../assets/atp.png";
 import calendar from "../assets/calendar.png";
-import bcard from "../assets/BusinessCard.png";
+import businesscard from "../assets/BusinessCard.png";
 import card from "../assets/CallingCard.png";
-import sticker from "../assets/ICONS.png";
-import poster from "../assets/Flyers.png";
+import label from "../assets/Label.png";
+import posters from "../assets/Flyers.png";
 import flyers from "../assets/Posters.png";
-import book from "../assets/Book.png";
-import brochure from "../assets/Brochure.png";
+import books from "../assets/Book.png";
+import Brochure from "../assets/Brochure.png";
 import Binding from "../assets/Binding.png";
 import Invitation from "../assets/Invitation.png";
 import RaffleTicket from "../assets/RaffleTicket.png";
 import NewsLetter from "../assets/NewsLetter.png";
 
 function ProductSection() {
-  const allServices = [
-    { title: "Official Receipts", description: "BIR-compliant official receipts with premium quality, smudge-free ink.", image: atp, alt: "Official Receipts", link: "/official-receipt" },
+  const [services, setServices] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const productAssets = [
+    { title: "OfficialReceipt", description: "BIR-compliant official receipts with premium quality, smudge-free ink.", image: Officialreceipt, alt: "Official Receipts", link: "/official-receipt" },
     { title: "Calendars", description: "Custom calendars designed with your branding in mind.", image: calendar, alt: "Calendars", link: "/calendars" },
-    { title: "Brochures", description: "Professionally printed brochures to showcase your products and services.", image: brochure, alt: "Brochures", link: "/brochure" },
-    { title: "Books", description: "Book printing for self-published novels, manuals, and more.", image: book, alt: "Books", link: "/books" },
+    { title: "Brochure", description: "Professionally printed brochures to showcase your products and services.", image: Brochure, alt: "Brochures", link: "/brochure" },
+    { title: "Books", description: "Book printing for self-published novels, manuals, and more.", image: books, alt: "Books", link: "/books" },
     { title: "Flyers", description: "Promote your business with vibrant, full-color flyers.", image: flyers, alt: "Flyers", link: "/flyers" },
-    { title: "Posters", description: "Large-format posters ideal for advertising or décor.", image: poster, alt: "Posters", link: "/posters" },
-    { title: "Business Cards", description: "High-quality business cards with various finishes.", image: bcard, alt: "Business Cards", link: "/business-card" },
-    { title: "Labels", description: "Custom labels for packaging in waterproof or adhesive options.", image: sticker, alt: "Labels", link: "/labels" },
-    { title: "Calling Card", description: "Print high-quality calling cards with sharp details.", image: card, alt: "Calling Card", link: "/calling-card" },
+    { title: "Posters", description: "Large-format posters ideal for advertising or décor.", image: posters, alt: "Posters", link: "/posters" },
+    { title: "BusinessCard", description: "High-quality business cards with various finishes.", image: businesscard, alt: "Business Cards", link: "/business-card" },
+    { title: "Label", description: "Custom labels for packaging in waterproof or adhesive options.", image: label, alt: "Labels", link: "/labels" },
+    { title: "CallingCard", description: "Print high-quality calling cards with sharp details.", image: card, alt: "Calling Card", link: "/calling-card" },
     { title: "Binding", description: "Binding", image: Binding, alt: "Binding", link: "/binding" },
     { title: "Invitation", description: "Invitation", image: Invitation, alt: "Invitation", link: "/invitation" },
     { title: "RaffleTicket", description: "RaffleTicket", image: RaffleTicket, alt: "RaffleTicket", link: "/raffleticket" },
     { title: "NewsLetter", description: "NewsLetter", image: NewsLetter, alt: "NewsLetter", link: "/newsletter" },
   ];
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const filteredServices = allServices.filter((service) =>
+  
+  useEffect(() => {
+    fetch("http://localhost:5000/api/products")
+      .then((res) => res.json())
+      .then((data) => {
+        // only include products that are active
+        const active = data.filter(
+          (p) => p.status?.toLowerCase() === "active"
+        );
+
+        // attach image & link from productAssets map
+        const mapped = active.map((p) => {
+          const asset = productAssets.find(
+            (a) => a.title.toLowerCase() === p.product_name.toLowerCase()
+          );
+
+          return {
+            title: p.product_name,
+            description: `${p.product_name} printing service.`,
+            image: asset?.image || null,
+            link: asset?.link || "#",
+            alt: asset?.alt || p.product_name,
+          };
+        });
+
+
+        setServices(mapped);
+      })
+      .catch((err) => {
+        console.error("Error fetching products:", err);
+        setServices([]);
+      });
+  }, []);
+
+
+  const filteredServices = services.filter((service) =>
     service.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 

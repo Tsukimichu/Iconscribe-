@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import logo from '../assets/ICONS.png';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserCircle, LogOut, Menu, X } from 'lucide-react';
+import { UserCircle, LogOut, Menu, X, ChevronDown } from 'lucide-react'; // added ChevronDown
 
 function Navigation() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeSection, setActiveSection] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false); // dropdown state
 
   useEffect(() => {
     const loginStatus = !!localStorage.getItem("token");
@@ -21,7 +22,6 @@ function Navigation() {
     navigate('/');
   };
 
-
   const handleScroll = (id) => {
     if (window.location.pathname === "/dashboard") {
       const section = document.getElementById(id);
@@ -33,31 +33,6 @@ function Navigation() {
       navigate(`/dashboard`);
     }
   };
-
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) setActiveSection(entry.target.id);
-        });
-      },
-      { threshold: 0.6 }
-    );
-
-    const observedSections = ['home', 'product', 'transactions', 'about-us', 'contact'];
-    observedSections.forEach((id) => {
-      const section = document.getElementById(id);
-      if (section) observer.observe(section);
-    });
-
-    return () => {
-      observedSections.forEach((id) => {
-        const section = document.getElementById(id);
-        if (section) observer.unobserve(section);
-      });
-    };
-  }, []);
 
   const navItems = [
     { label: 'Home', id: 'home' },
@@ -73,6 +48,7 @@ function Navigation() {
     >
       <div className="flex items-center justify-between w-full px-6 py-3">
         
+        {/* Logo */}
         <div className="flex-shrink-0">
           <img 
             src={logo} 
@@ -81,6 +57,7 @@ function Navigation() {
           />
         </div>
 
+        {/* Center navigation */}
         <div className="hidden md:flex flex-1 justify-center">
           <ul className="flex gap-6 text-sm md:text-base font-semibold tracking-wide">
             {navItems.map(({ label, id }) => (
@@ -98,9 +75,53 @@ function Navigation() {
                 </button>
               </li>
             ))}
+
+            {/* Dropdown Menu */}
+            <li className="relative">
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-2 px-5 py-2 rounded-lg transition-all duration-300 hover:bg-gradient-to-r hover:from-yellow-300 hover:to-yellow-500 hover:text-black"
+              >
+                Quotation
+                <ChevronDown size={16} />
+              </button>
+
+              {dropdownOpen && (
+                <ul className="absolute left-0 mt-2 w-48 bg-white text-black rounded-lg shadow-lg overflow-hidden z-30">
+                  <li>
+                    <Link
+                      to="/quotation/request"
+                      className="block px-4 py-2 hover:bg-yellow-100"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      Single Shit Service
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/quotation/history"
+                      className="block px-4 py-2 hover:bg-yellow-100"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      Soft Bound Service
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/quotation/history"
+                      className="block px-4 py-2 hover:bg-yellow-100"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      Hard Bound Service
+                    </Link>
+                  </li>
+                </ul>
+              )}
+            </li>
           </ul>
         </div>
 
+        {/* Right side login/logout */}
         <div className="hidden md:flex items-center gap-4">
           {isLoggedIn ? (
             <>
@@ -130,61 +151,11 @@ function Navigation() {
           )}
         </div>
 
+        {/* Mobile toggle button */}
         <button className="md:hidden ml-2" onClick={() => setMenuOpen(!menuOpen)}>
           {menuOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
       </div>
-
-      {menuOpen && (
-        <div className="md:hidden mt-3 border-t border-yellow-400/30 pt-4 bg-[#0a2a6c]/95 backdrop-blur-lg rounded-b-lg">
-          <ul className="space-y-2 font-medium text-sm">
-            {navItems.map(({ label, id }) => (
-              <li key={id}>
-                <button
-                  onClick={() => handleScroll(id)}
-                  className={`block w-full text-left px-4 py-2 rounded-lg transition-all duration-300
-                  ${
-                    activeSection === id
-                      ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-black shadow-[0_0_15px_rgba(250,204,21,0.9)]'
-                      : 'hover:bg-gradient-to-r hover:from-yellow-300 hover:to-yellow-500 hover:text-black'
-                  }`}
-                >
-                  {label}
-                </button>
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-4 space-y-2 px-4 pb-4">
-            {isLoggedIn ? (
-              <>
-                <Link to="/profile" className="flex justify-center">
-                  <UserCircle
-                    size={36}
-                    className="hover:text-yellow-400 transition duration-300"
-                  />
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-semibold shadow-[0_0_12px_rgba(250,204,21,0.7)] hover:shadow-[0_0_15px_rgba(250,204,21,0.9)]"
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <LogOut size={18} />
-                    Logout
-                  </div>
-                </button>
-              </>
-            ) : (
-              <Link
-                to="/signup"
-                className="block text-center bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-bold px-5 py-2 rounded-full shadow-[0_0_12px_rgba(250,204,21,0.6)] hover:shadow-[0_0_15px_rgba(250,204,21,0.9)] transition-all"
-              >
-                Login/Register
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
     </nav>
   );
 }

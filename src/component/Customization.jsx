@@ -25,26 +25,9 @@ const Customization = () => {
   const fabricCanvasRef = useRef(null);
   const initialBgRef = useRef("#f9fafb");
 
-  // --- history stacks ---
-  const history = useRef([]);
-  const redoStack = useRef([]);
-  const isRestoring = useRef(false);
-
-  const saveHistory = () => {
-    if (isRestoring.current) return; // skip if restoring
-
-    const canvas = fabricCanvasRef.current;
-    if (canvas) {
-      const json = canvas.toDatalessJSON(); // smaller history size
-      const last = history.current[history.current.length - 1];
-
-      if (JSON.stringify(last) !== JSON.stringify(json)) {
-        history.current.push(json);
-        if (history.current.length > 50) history.current.shift(); // cap history size
-        redoStack.current = []; // clear redo on new action
-      }
-    }
-  };
+  // --- history stacks for add/remove only ---
+  const addHistory = useRef([]); // stack of added objects
+  const redoStack = useRef([]);  // stack of removed objects
 
   // --- useEffect for fabric canvas ---
   useEffect(() => {
@@ -68,27 +51,20 @@ const Customization = () => {
       fontFamily: "Arial",
     });
     canvas.add(textObj);
+    addHistory.current.push(textObj);
 
-    saveHistory(); // first snapshot
-
-    // Record changes safely
-    canvas.on("object:added", () => {
-      if (!isRestoring.current) saveHistory();
-    });
-
-    canvas.on("object:modified", () => {
-      if (!isRestoring.current) saveHistory();
-      const obj = canvas.getActiveObject();
-      if (obj) {
-        setSelectedSize({
-          width: Math.round(obj.getScaledWidth()),
-          height: Math.round(obj.getScaledHeight()),
-        });
+    // Only track add/remove for undo/redo
+    canvas.on("object:added", (e) => {
+      if (e.target && !addHistory.current.includes(e.target)) {
+        addHistory.current.push(e.target);
+        redoStack.current = [];
       }
     });
 
-    canvas.on("object:removed", () => {
-      if (!isRestoring.current) saveHistory();
+    canvas.on("object:removed", (e) => {
+      if (e.target) {
+        redoStack.current.push(e.target);
+      }
     });
 
     // Track selection
@@ -118,33 +94,30 @@ const Customization = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // --- UNDO ---
+  // --- UNDO: remove the latest added object ---
   const handleUndo = () => {
-    if (history.current.length > 1) {
-      const currentState = history.current.pop();
-      redoStack.current.push(currentState);
+    const canvas = fabricCanvasRef.current;
+    if (!canvas) return;
+    if (addHistory.current.length === 0) return;
 
-      const prevState = history.current[history.current.length - 1];
-      isRestoring.current = true;
-      fabricCanvasRef.current.loadFromJSON(prevState, () => {
-        fabricCanvasRef.current.renderAll();
-        isRestoring.current = false;
-      });
-    }
+    const lastObj = addHistory.current.pop();
+    canvas.remove(lastObj);
+    redoStack.current.push(lastObj);
+    canvas.discardActiveObject();
+    canvas.renderAll();
   };
 
-  // --- REDO ---
+  // --- REDO: re-add the last removed object ---
   const handleRedo = () => {
-    if (redoStack.current.length > 0) {
-      const nextState = redoStack.current.pop();
-      history.current.push(nextState);
+    const canvas = fabricCanvasRef.current;
+    if (!canvas) return;
+    if (redoStack.current.length === 0) return;
 
-      isRestoring.current = true;
-      fabricCanvasRef.current.loadFromJSON(nextState, () => {
-        fabricCanvasRef.current.renderAll();
-        isRestoring.current = false;
-      });
-    }
+    const obj = redoStack.current.pop();
+    canvas.add(obj);
+    addHistory.current.push(obj);
+    canvas.setActiveObject(obj);
+    canvas.renderAll();
   };
 
   // helper to rescale background image to cover canvas
@@ -769,7 +742,7 @@ const Customization = () => {
           <div className="flex-1 flex justify-center items-center">
             <canvas
               ref={canvasRef}
-              className="relative w-full max-w-3xl overflow-hidden group shadow-2xl rounded-2xl"
+              className="relative w-full max-w-3xl overflow-hidden group shadow-2xl"
             />
           </div>
           {/* Zoom controls */}

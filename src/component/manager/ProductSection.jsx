@@ -1,17 +1,7 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Plus, Archive, List, X, RotateCcw } from "lucide-react";
 
-const initialServices = [
-  { name: "Official Receipt", status: "Active" },
-  { name: "Calendars", status: "Active" },
-  { name: "Books", status: "Active" },
-  { name: "Document Printing", status: "Active" },
-  { name: "Flyers", status: "Inactive" },
-  { name: "Calling Cards", status: "Inactive" },
-  { name: "Posters", status: "Inactive" },
-  { name: "Raffle Ticket", status: "Inactive" },
-];
 
 const statusColors = {
   Active: "bg-green-100 text-green-700",
@@ -20,7 +10,20 @@ const statusColors = {
 };
 
 const ProductSection = () => {
-  const [services, setServices] = useState(initialServices);
+  const [services, setServices] = useState([]);
+
+useEffect(() => {
+  fetch("http://localhost:5000/api/product_status")
+    .then((res) => res.json())
+    .then((data) => {
+      console.log("Fetched data:", data);
+      setServices(Array.isArray(data) ? data : []);
+    })
+    .catch((err) => console.error("Error loading product statuses:", err));
+}, []);
+
+
+
   const [archived, setArchived] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
@@ -30,9 +33,8 @@ const ProductSection = () => {
   const [newServiceName, setNewServiceName] = useState("");
   const [newServiceStatus, setNewServiceStatus] = useState("Active");
 
-  // Filtering + searching
   const filteredServices = services.filter((s) => {
-    const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = s.product_name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filter === "all" || s.status === filter;
     return matchesSearch && matchesFilter;
   });
@@ -41,7 +43,7 @@ const ProductSection = () => {
     setPopupType(type);
     setSelectedService(service);
     if (service) {
-      setNewServiceName(service.name);
+      setNewServiceName(service.product_name);
       setNewServiceStatus(service.status);
     }
     setIsPopupOpen(true);
@@ -57,28 +59,44 @@ const ProductSection = () => {
 
   const handleConfirm = () => {
     if (popupType === "archive") {
-      setServices((prev) => prev.filter((s) => s.name !== selectedService.name));
+      setServices((prev) => prev.filter((s) => s.product_name !== selectedService.product_name));
       setArchived((prev) => [...prev, { ...selectedService, status: "Archived" }]);
-    } else if (popupType === "add") {
+    } 
+    else if (popupType === "add") {
       if (!newServiceName.trim()) return;
-      setServices((prev) => [
-        ...prev,
-        { name: newServiceName.trim(), status: newServiceStatus },
-      ]);
-    } else if (popupType === "edit" && selectedService) {
-      setServices((prev) =>
-        prev.map((s) =>
-          s.name === selectedService.name
-            ? { ...s, name: newServiceName, status: newServiceStatus }
-            : s
-        )
-      );
+      const newService = { product_name: newServiceName.trim(), status: newServiceStatus };
+      fetch("http://localhost:5000/api/product_status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newService),
+      })
+        .then((res) => res.json())
+        .then((saved) => setServices((prev) => [...prev, saved]))
+        .catch((err) => console.error(err));
+    } 
+    else if (popupType === "edit" && selectedService) {
+      const updatedService = { product_name: newServiceName, status: newServiceStatus };
+      fetch(`http://localhost:5000/api/product_status/${selectedService.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedService),
+      })
+        .then(() => {
+          setServices((prev) =>
+            prev.map((s) =>
+              s.id === selectedService.id ? { ...s, ...updatedService } : s
+            )
+          );
+        })
+        .catch((err) => console.error(err));
     }
+
     closePopup();
   };
 
+
   const handleRestore = (service) => {
-    setArchived((prev) => prev.filter((s) => s.name !== service.name));
+    setArchived((prev) => prev.filter((s) => s.product_name !== service.product_name));
     setServices((prev) => [...prev, { ...service, status: "Inactive" }]);
   };
 
@@ -160,7 +178,7 @@ const ProductSection = () => {
                   transition={{ delay: idx * 0.05 }}
                   className="border-b border-gray-200 hover:bg-gray-50 transition"
                 >
-                  <td className="py-3 px-6">{service.name}</td>
+                  <td className="py-3 px-6">{service.product_name}</td>
                   <td className="py-3 px-6">
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-semibold ${statusColors[service.status]}`}
@@ -174,19 +192,22 @@ const ProductSection = () => {
                       <input
                         type="checkbox"
                         checked={service.status === "Active"}
-                        onChange={() =>
-                          setServices((prev) =>
-                            prev.map((s) =>
-                              s.name === service.name
-                                ? {
-                                    ...s,
-                                    status:
-                                      s.status === "Active" ? "Inactive" : "Active",
-                                  }
-                                : s
-                            )
-                          )
-                        }
+                        onChange={() => {
+                          const newStatus = service.status === "Active" ? "Inactive" : "Active";
+                          fetch(`http://localhost:5000/api/product_status/${service.id}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ status: newStatus }),
+                          })
+                            .then(() => {
+                              setServices((prev) =>
+                                prev.map((s) =>
+                                  s.id === service.id ? { ...s, status: newStatus } : s
+                                )
+                              );
+                            })
+                            .catch((err) => console.error(err));
+                        }}
                         className="sr-only peer"
                       />
                       <div
@@ -237,7 +258,7 @@ const ProductSection = () => {
                     key={idx}
                     className="border-b border-gray-200 hover:bg-gray-50 transition"
                   >
-                    <td className="py-3 px-6">{service.name}</td>
+                    <td className="py-3 px-6">{service.product_name}</td>
                     <td className="py-3 px-6">
                       <span
                         className={`px-3 py-1 rounded-full text-sm font-semibold ${statusColors["Archived"]}`}
@@ -342,7 +363,7 @@ const ProductSection = () => {
                   <p className="text-gray-600 mb-6">
                     Are you sure you want to archive{" "}
                     <span className="font-semibold text-gray-900">
-                      {selectedService?.name}
+                      {selectedService?.product_name}
                     </span>
                     ? This can be restored later.
                   </p>

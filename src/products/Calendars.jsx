@@ -38,6 +38,22 @@ function Calendars() {
     }
   };
 
+    const [visible, setVisible] = useState(true);
+
+    useEffect(() => {
+      fetch("http://localhost:5000/api/product-status")
+        .then((res) => res.json())
+        .then((data) => {
+          const product = data.find((p) => p.product_name === "Calendars");
+          if (product && (product.status === "Inactive" || product.status === "Archived")) {
+            setVisible(false);
+          }
+        })
+        .catch((err) => console.error("Error loading product status:", err));
+    }, []);
+
+    if (!visible) return null;
+
   return (
     <>
       <Nav />

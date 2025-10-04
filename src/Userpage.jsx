@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+
 import Nav from "./component/navigation";
 import Hero from "./component/Hero";
 import ProductSection from "./component/ProductSection";
@@ -8,6 +10,15 @@ import Footer from "./component/footer";
 import MaintenanceUser from "./component/MaintenanceUser"; 
 
 function UserPage() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token"); 
+    if (token) {
+      setIsLoggedIn(true);
+    }
+  }, []);
+
   return (
     <MaintenanceUser>
       <>
@@ -16,20 +27,26 @@ function UserPage() {
           <section id="home">
             <Hero />
           </section>
+
           <section id="product">
             <ProductSection />
           </section>
 
-          <section id="transactions" className="">
-            <Transactions />
-          </section>
+          {isLoggedIn && (
+            <section id="transactions">
+              <Transactions />
+            </section>
+          )}
+
           <section id="about-us" className="justify-center">
             <Aboutus />
           </section>
+
           <section id="contact" className="justify-center">
             <ContactUs />
           </section>
         </main>
+
         <footer>
           <Footer />
         </footer>

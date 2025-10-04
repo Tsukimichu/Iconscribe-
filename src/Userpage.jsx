@@ -11,13 +11,21 @@ import MaintenanceUser from "./component/MaintenanceUser";
 
 function UserPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [activeProducts, setActiveProducts] = useState([]);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token"); 
-    if (token) {
-      setIsLoggedIn(true);
-    }
+   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) setIsLoggedIn(true);
+
+    fetch("http://localhost:5000/api/products")
+      .then((res) => res.json())
+      .then((data) => {
+        const onlyActive = data.filter((p) => p.status === "active");
+        setActiveProducts(onlyActive);
+      })
+      .catch((err) => console.error("Error fetching products:", err));
   }, []);
+
 
   return (
     <MaintenanceUser>
@@ -29,7 +37,7 @@ function UserPage() {
           </section>
 
           <section id="product">
-            <ProductSection />
+             <ProductSection products={activeProducts} />
           </section>
 
           {isLoggedIn && (

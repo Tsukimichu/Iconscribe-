@@ -27,6 +27,10 @@ function Label() {
   const [quantity, setQuantity] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [size, setSize] = useState("2” x 2”"); 
+  const [customWidth, setCustomWidth] = useState(""); 
+  const [customHeight, setCustomHeight] = useState(""); 
+
 
   const handlePlaceOrder = (e) => {
     e.preventDefault();

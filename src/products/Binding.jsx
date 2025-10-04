@@ -1,5 +1,5 @@
 import Nav from "../component/navigation";
-import sampleBook from "../assets/Binding.png"; // Replace with your binding preview image
+import sampleBook from "../assets/Binding.png"; 
 import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState,useEffect } from "react";

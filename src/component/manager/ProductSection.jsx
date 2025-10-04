@@ -1,29 +1,15 @@
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Plus, Archive, List, X, RotateCcw } from "lucide-react";
 
-
 const statusColors = {
-  Active: "bg-green-100 text-green-700",
-  Inactive: "bg-red-100 text-red-700",
-  Archived: "bg-yellow-100 text-yellow-700",
+  active: "bg-green-100 text-green-700",
+  inactive: "bg-red-100 text-red-700",
+  archived: "bg-yellow-100 text-yellow-700",
 };
 
 const ProductSection = () => {
   const [services, setServices] = useState([]);
-
-useEffect(() => {
-  fetch("http://localhost:5000/api/product_status")
-    .then((res) => res.json())
-    .then((data) => {
-      console.log("Fetched data:", data);
-      setServices(Array.isArray(data) ? data : []);
-    })
-    .catch((err) => console.error("Error loading product statuses:", err));
-}, []);
-
-
-
   const [archived, setArchived] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
@@ -31,7 +17,18 @@ useEffect(() => {
   const [popupType, setPopupType] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [newServiceName, setNewServiceName] = useState("");
-  const [newServiceStatus, setNewServiceStatus] = useState("Active");
+  const [newServiceStatus, setNewServiceStatus] = useState("active");
+
+  // ✅ Fetch all products from backend
+  useEffect(() => {
+    fetch("http://localhost:5000/api/products")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Fetched products:", data);
+        setServices(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => console.error("Error loading products:", err));
+  }, []);
 
   const filteredServices = services.filter((s) => {
     const matchesSearch = s.product_name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -54,18 +51,19 @@ useEffect(() => {
     setPopupType(null);
     setSelectedService(null);
     setNewServiceName("");
-    setNewServiceStatus("Active");
+    setNewServiceStatus("active");
   };
 
   const handleConfirm = () => {
     if (popupType === "archive") {
-      setServices((prev) => prev.filter((s) => s.product_name !== selectedService.product_name));
-      setArchived((prev) => [...prev, { ...selectedService, status: "Archived" }]);
+      // Archive locally (optional)
+      setServices((prev) => prev.filter((s) => s.product_id !== selectedService.product_id));
+      setArchived((prev) => [...prev, { ...selectedService, status: "archived" }]);
     } 
     else if (popupType === "add") {
       if (!newServiceName.trim()) return;
       const newService = { product_name: newServiceName.trim(), status: newServiceStatus };
-      fetch("http://localhost:5000/api/product_status", {
+      fetch("http://localhost:5000/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newService),
@@ -76,7 +74,7 @@ useEffect(() => {
     } 
     else if (popupType === "edit" && selectedService) {
       const updatedService = { product_name: newServiceName, status: newServiceStatus };
-      fetch(`http://localhost:5000/api/product_status/${selectedService.id}`, {
+      fetch(`http://localhost:5000/api/products/${selectedService.product_id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedService),
@@ -84,7 +82,7 @@ useEffect(() => {
         .then(() => {
           setServices((prev) =>
             prev.map((s) =>
-              s.id === selectedService.id ? { ...s, ...updatedService } : s
+              s.product_id === selectedService.product_id ? { ...s, ...updatedService } : s
             )
           );
         })
@@ -94,11 +92,28 @@ useEffect(() => {
     closePopup();
   };
 
+  const handleStatusToggle = (service) => {
+    const newStatus = service.status === "active" ? "inactive" : "active";
+    fetch(`http://localhost:5000/api/products/${service.product_id}/status`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus }),
+    })
+      .then(() => {
+        setServices((prev) =>
+          prev.map((s) =>
+            s.product_id === service.product_id ? { ...s, status: newStatus } : s
+          )
+        );
+      })
+      .catch((err) => console.error(err));
+  };
 
   const handleRestore = (service) => {
-    setArchived((prev) => prev.filter((s) => s.product_name !== service.product_name));
-    setServices((prev) => [...prev, { ...service, status: "Inactive" }]);
+    setArchived((prev) => prev.filter((s) => s.product_id !== service.product_id));
+    setServices((prev) => [...prev, { ...service, status: "inactive" }]);
   };
+
 
   return (
     <div className="p-6 min-h-screen bg-white text-gray-900 rounded-3xl">
@@ -191,10 +206,10 @@ useEffect(() => {
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={service.status === "Active"}
+                        checked={service.status === "active"}
                         onChange={() => {
-                          const newStatus = service.status === "Active" ? "Inactive" : "Active";
-                          fetch(`http://localhost:5000/api/product_status/${service.id}`, {
+                          const newStatus = service.status === "active" ? "inactive" : "active";
+                          fetch(`http://localhost:5000/api/products/${service.product_id}/status`, {
                             method: "PUT",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ status: newStatus }),
@@ -202,7 +217,9 @@ useEffect(() => {
                             .then(() => {
                               setServices((prev) =>
                                 prev.map((s) =>
-                                  s.id === service.id ? { ...s, status: newStatus } : s
+                                  s.product_id === service.product_id
+                                    ? { ...s, status: newStatus }
+                                    : s
                                 )
                               );
                             })

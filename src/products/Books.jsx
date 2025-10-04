@@ -37,22 +37,26 @@ function Books() {
     }
   };
 
-    const [visible, setVisible] = useState(true);
+  const [isActive, setIsActive] = useState(true);
 
     useEffect(() => {
-      fetch("http://localhost:5000/api/product-status")
+      fetch("http://localhost:5000/api/products")
         .then((res) => res.json())
         .then((data) => {
-          const product = data.find((p) => p.product_name === "Books");
-          if (product && (product.status === "Inactive" || product.status === "Archived")) {
-            setVisible(false);
-          }
+          const book = data.find((p) => p.product_name === "Books");
+          // Convert status to lowercase so it matches correctly
+          setIsActive(book?.status?.toLowerCase() === "active");
         })
-        .catch((err) => console.error("Error loading product status:", err));
+        .catch(() => setIsActive(false));
     }, []);
 
-    if (!visible) return null;
-  
+    if (!isActive) {
+      return (
+        <div className="flex justify-center items-center h-screen text-white">
+          <h1 className="text-black">This product is currently unavailable.</h1>
+        </div>
+      );
+    }
 
   return (
     <>

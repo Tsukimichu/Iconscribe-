@@ -81,8 +81,8 @@ const OverviewSection = () => {
     >
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
         <div>
-          <h1 className="text-4xl font-extrabold text-[#243b7d] mb-1">Overview</h1>
-          <p className="text-gray-600 text-lg">Hello Admin!</p>
+          <h1 className="text-4xl font-extrabold text-[#243b7d] mb-1">Dashboard</h1>
+          <p className="text-gray-600 text-lg">Overview</p>
         </div>
       </div>
 
@@ -108,15 +108,15 @@ const OverviewSection = () => {
           <Chart options={orderData.options} series={orderData.series} type="area" height={260} />
         </div>
         <div className="p-5 rounded-xl bg-transparent border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-700 mb-3">Total Sales</h2>
-          <Chart options={salesData.options} series={salesData.series} type="line" height={260} />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="p-5 rounded-xl bg-transparent border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-700 mb-2">Reports</h2>
           <Chart options={reportData.options} series={reportData.series} type="donut" height={300} />
+        </div>
+      </div>
+      <h3 className="text-2xl font-extrabold text-[#243b7d] mb-1">Sales and Expenses</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="p-5 rounded-xl bg-transparent border border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-700 mb-3">Total Sales</h2>
+          <Chart options={salesData.options} series={salesData.series} type="line" height={260} />
         </div>
         <div className="p-5 rounded-xl bg-transparent border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-700 mb-2">Expenses</h2>

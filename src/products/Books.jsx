@@ -8,67 +8,56 @@ function Books() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
-    // User profile state
-    const [userProfile, setUserProfile] = useState({
-      name: "",
-      email: "",
-      address: "",
-      phone: "",
-    });
+  // User profile state
+  const [userProfile, setUserProfile] = useState({
+    id: "",
+    name: "",
+    email: "",
+    address: "",
+    phone: "",
+  });
 
+  // Watch token login state
   useEffect(() => {
-      const checkToken = () => {
-        const token = localStorage.getItem("token");
-        setIsLoggedIn(!!token);
-      };
-      checkToken();
-      window.addEventListener("auth-change", checkToken);
-      return () => window.removeEventListener("auth-change", checkToken);
-    }, []);
-
-    // Fetch user profile if logged in
-    useEffect(() => {
+    const checkToken = () => {
       const token = localStorage.getItem("token");
-      if (!token) return;
+      setIsLoggedIn(!!token);
+    };
+    checkToken();
+    window.addEventListener("auth-change", checkToken);
+    return () => window.removeEventListener("auth-change", checkToken);
+  }, []);
 
-      fetch("http://localhost:5000/api/profile", {
-        headers: { Authorization: `Bearer ${token}` },
+  // Fetch user profile if logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    fetch("http://localhost:5000/api/profile", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setUserProfile({
+            id: data.data.user_id,
+            name: data.data.name || "",
+            email: data.data.email || "",
+            address: data.data.address || "",
+            phone: data.data.phone || "",
+          });
+        }
       })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && data.data) {
-            setUserProfile({
-              name: data.data.name || "",
-              email: data.data.email || "",
-              address: data.data.address || "",
-              phone: data.data.phone || "",
-            });
-          }
-        })
-        .catch((err) => console.error("Error fetching profile:", err));
-    }, [isLoggedIn]);
+      .catch((err) => console.error("Error fetching profile:", err));
+  }, [isLoggedIn]);
 
-
-  const [quantity, setQuantity] = useState("");
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
-
-  const handlePlaceOrder = (e) => {
-    e.preventDefault();
-    if (!isLoggedIn) {
-      navigate("/login")
-    } else {
-      setShowConfirm(true);
-    }
-  };
-
-    const [visible, setVisible] = useState(true);
-
-   useEffect(() => {
+  // Product visibility
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
     fetch("http://localhost:5000/api/product-status")
       .then((res) => res.json())
       .then((data) => {
-        const product = data.find((p) => p.product_name === "Binding");
+        const product = data.find((p) => p.product_name === "Books");
         if (product && (product.status === "Inactive" || product.status === "Archived")) {
           setVisible(false);
         }
@@ -78,6 +67,78 @@ function Books() {
 
   if (!visible) return null;
 
+  // Form states
+  const [quantity, setQuantity] = useState("");
+  const [pages, setPages] = useState("");
+  const [binding, setBinding] = useState("");
+  const [paperType, setPaperType] = useState("");
+  const [coverFinish, setCoverFinish] = useState("");
+  const [colorPrinting, setColorPrinting] = useState("");
+  const [notes, setNotes] = useState("");
+
+  // Modal states
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+
+  // Handle "Place Order" button
+  const handlePlaceOrder = (e) => {
+    e.preventDefault();
+    if (!isLoggedIn) navigate("/login");
+    else setShowConfirm(true);
+  };
+
+  // ✅ Confirm and send order to backend
+  const handleConfirmOrder = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const customDetails = {
+        "Number of Copies": quantity,
+        "Number of Pages": pages,
+        "Binding Type": binding,
+        "Paper Type": paperType,
+        "Cover Finish": coverFinish,
+        "Color Printing": colorPrinting,
+        "Notes": notes,
+      };
+
+      const response = await fetch("http://localhost:5000/api/orders/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_id: userProfile.id,
+          product_id: 2, // 👈 replace this with your actual Books product_id
+          quantity,
+          urgency: "Normal",
+          status: "Pending",
+          custom_details: customDetails,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert("✅ Order placed successfully!");
+        setShowConfirm(false);
+        // reset form
+        setQuantity("");
+        setPages("");
+        setBinding("");
+        setPaperType("");
+        setCoverFinish("");
+        setColorPrinting("");
+        setNotes("");
+      } else {
+        alert("⚠️ Failed to place order. Please try again.");
+      }
+    } catch (err) {
+      console.error("Error placing order:", err);
+      alert("⚠️ Something went wrong. Please try again later.");
+    }
+  };
+
   return (
     <>
       <Nav />
@@ -86,7 +147,7 @@ function Books() {
           {isLoggedIn ? (
             <>
               {/* Back Button + Title */}
-              <div className="flex items-center gap-3 mb-10">
+              <div className="flex items-center gap-6 mb-10">
                 <button
                   onClick={() => navigate(-1)}
                   className="p-2 hover:bg-gray-200 rounded-full transition"
@@ -98,18 +159,15 @@ function Books() {
                 </h2>
               </div>
 
-              {/* Preview + Form */}
+
+              {/* Form Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 {/* Left: Preview */}
                 <div className="flex flex-col items-center">
-                  <h2 className="text-3xl font-bold mb-4 text-black flex justify-center">
-                    Books
-                  </h2>
-                  <p className="text-lg text-black mb-6 leading-relaxed text-center max-w-xl">
-                    Get your books professionally printed with high-quality
-                    paper, multiple binding options, and durable finishes.
+                  <h2 className="text-3xl font-bold mb-4 text-black">Books</h2>
+                  <p className="text-lg text-black mb-6 text-center max-w-xl">
+                    Get your books professionally printed with high-quality paper, multiple binding options, and durable finishes.
                   </p>
-
                   <div className="relative w-full max-w-3xl rounded-2xl overflow-hidden group">
                     <img
                       src={sampleBook}
@@ -120,150 +178,144 @@ function Books() {
                   </div>
                 </div>
 
-                {/* Right: Form */}
+                {/* Right: Order Form */}
                 <form onSubmit={handlePlaceOrder} className="space-y-6 text-black">
-                 {/* Name, Email, Location, Contact */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-base font-semibold text-black">Name</label>
-                        <input
-                          type="text"
-                          placeholder="Enter your name"
-                          value={userProfile.name}
-                          onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })}
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-base font-semibold text-black">Email</label>
-                        <input
-                          type="email"
-                          placeholder="Enter your email"
-                          value={userProfile.email}
-                          onChange={(e) => setUserProfile({ ...userProfile, email: e.target.value })}
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-base font-semibold text-black">Location</label>
-                        <input
-                          type="text"
-                          placeholder="Enter your location"
-                          value={userProfile.address}
-                          onChange={(e) => setUserProfile({ ...userProfile, address: e.target.value })}
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-base font-semibold text-black">Contact Number</label>
-                        <input
-                          type="text"
-                          placeholder="Enter contact number"
-                          value={userProfile.phone}
-                          onChange={(e) => setUserProfile({ ...userProfile, phone: e.target.value })}
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                        />
-                      </div>
-                    </div>
-
-                  {/* Quantity + Page Count */}
+                  {/* User Info */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-base font-semibold text-black">
-                        Number of Copies <span className="text-sm text-gray-700">(min 50)</span>
-                      </label>
+                      <label className="block text-base font-semibold">Name</label>
                       <input
-                        type="number"
-                        placeholder="Enter quantity"
-                        min="50"
-                        value={quantity}
-                        onChange={(e) => setQuantity(e.target.value)}
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                        type="text"
+                        value={userProfile.name}
+                        onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })}
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-base font-semibold text-black">
-                        Page Count
-                      </label>
+                      <label className="block text-base font-semibold">Email</label>
+                      <input
+                        type="email"
+                        value={userProfile.email}
+                        onChange={(e) => setUserProfile({ ...userProfile, email: e.target.value })}
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Location & Contact */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-base font-semibold">Location</label>
+                      <input
+                        type="text"
+                        value={userProfile.address}
+                        onChange={(e) => setUserProfile({ ...userProfile, address: e.target.value })}
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-base font-semibold">Contact Number</label>
+                      <input
+                        type="text"
+                        value={userProfile.phone}
+                        onChange={(e) => setUserProfile({ ...userProfile, phone: e.target.value })}
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Book Attributes */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-base font-semibold">Number of Copies</label>
                       <input
                         type="number"
-                        placeholder="Enter total pages"
+                        min="1"
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value)}
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-base font-semibold">Number of Pages</label>
+                      <input
+                        type="number"
                         min="4"
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                        value={pages}
+                        onChange={(e) => setPages(e.target.value)}
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl"
                         required
                       />
                     </div>
                   </div>
 
                   {/* Binding Type + Paper Type */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-base font-semibold text-black">
-                        Binding Type
-                      </label>
-                      <select
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                        required
-                      >
-                        <option value="">Select binding</option>
-                        <option>Perfect Binding</option>
-                        <option>Saddle Stitch</option>
-                        <option>Hardcover</option>
-                        <option>Spiral</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-base font-semibold text-black">
-                        Paper Type
-                      </label>
-                      <select
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                        required
-                      >
-                        <option value="">Select paper</option>
-                        <option>Matte</option>
-                        <option>Glossy</option>
-                        <option>Book Paper</option>
-                      </select>
-                    </div>
-                  </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-base font-semibold text-black">
+                            Binding Type
+                          </label>
+                          <select
+                            className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                            required
+                          >
+                            <option value="">Select binding</option>
+                            <option>Perfect Binding</option>
+                            <option>Saddle Stitch</option>
+                            <option>Hardcover</option>
+                            <option>Spiral</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-base font-semibold text-black">
+                            Paper Type
+                          </label>
+                          <select
+                            className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                            required
+                          >
+                            <option value="">Select paper</option>
+                            <option>Matte</option>
+                            <option>Glossy</option>
+                            <option>Book Paper</option>
+                          </select>
+                        </div>
+                      </div>
 
                   {/* Cover Finish + Color */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-base font-semibold text-black">
-                        Cover Finish
-                      </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
-                        <option value="">Select finish</option>
-                        <option>Matte</option>
-                        <option>Glossy</option>
-                        <option>Soft Touch</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-base font-semibold text-black">
-                        Color Printing
-                      </label>
-                      <select
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                        required
-                      >
-                        <option value="">Select option</option>
-                        <option>Full Color</option>
-                        <option>Black & White</option>
-                        <option>Mixed</option>
-                      </select>
-                    </div>
-                  </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-base font-semibold text-black">
+                            Cover Finish
+                          </label>
+                          <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                            <option value="">Select finish</option>
+                            <option>Matte</option>
+                            <option>Glossy</option>
+                            <option>Soft Touch</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-base font-semibold text-black">
+                            Color Printing
+                          </label>
+                          <select
+                            className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                            required
+                          >
+                            <option value="">Select option</option>
+                            <option>Full Color</option>
+                            <option>Black & White</option>
+                            <option>Mixed</option>
+                          </select>
+                        </div>
+                      </div>
 
-                  {/* Upload + Message */}
+
+                 {/* Upload + Message */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="flex flex-col gap-4">
                       <h3 className="block text-base font-semibold text-black">Design Files:</h3>
@@ -286,7 +338,7 @@ function Books() {
                     </div>
                   </div>
 
-                  {/* Price + Contact */}
+                {/* Price + Contact */}
                   <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                     <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex flex-col sm:flex-row sm:items-center sm:gap-4">
                       <p className="text-sm text-black">
@@ -506,24 +558,25 @@ function Books() {
         </div>
       </div>
 
-      {/* Confirmation Modal */}
+      {/* ✅ Confirmation Modal */}
       {showConfirm && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full">
-            <h2 className="text-xl font-bold text-black mb-4">
-              Confirm Your Order
-            </h2>
+            <h2 className="text-xl font-bold text-black mb-4">Confirm Your Order</h2>
             <p className="text-base text-black mb-6">
               Are you sure you want to place this order?
             </p>
             <div className="flex justify-end gap-3">
               <button
-                className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 transition text-black"
                 onClick={() => setShowConfirm(false)}
+                className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 transition text-black"
               >
                 Cancel
               </button>
-              <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition">
+              <button
+                onClick={handleConfirmOrder}
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition"
+              >
                 Confirm
               </button>
             </div>

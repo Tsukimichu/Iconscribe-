@@ -1,59 +1,23 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2, Search, ChevronUp, ChevronDown } from "lucide-react";
 
-const initialOrders = [
-  {
-    enquiryNo: "001",
-    service: "Official Receipts",
-    name: "Aldrin Portento",
-    dateOrdered: "04/11/2025",
-    urgency: { label: "Minor", color: "bg-green-100 text-green-700" },
-    status: { label: "In review", color: "bg-blue-100 text-blue-700" },
-  },
-  {
-    enquiryNo: "002",
-    service: "Official Receipts",
-    name: "Dave Geroleo",
-    dateOrdered: "04/11/2025",
-    urgency: { label: "Moderate", color: "bg-yellow-100 text-yellow-700" },
-    status: { label: "Ongoing", color: "bg-purple-100 text-purple-700" },
-  },
-  {
-    enquiryNo: "003",
-    service: "Books",
-    name: "Carl Madrigal",
-    dateOrdered: "04/11/2025",
-    urgency: { label: "Moderate", color: "bg-yellow-100 text-yellow-700" },
-    status: { label: "Pending", color: "bg-amber-100 text-amber-700" },
-  },
-  {
-    enquiryNo: "004",
-    service: "Official Receipts",
-    name: "Mark Matining",
-    dateOrdered: "04/11/2025",
-    urgency: { label: "--", color: "bg-gray-100 text-gray-700" },
-    status: { label: "Completed", color: "bg-green-100 text-green-700" },
-  },
-  {
-    enquiryNo: "005",
-    service: "Official Receipts",
-    name: "John Portento",
-    dateOrdered: "04/11/2025",
-    urgency: { label: "Critical", color: "bg-red-100 text-red-700" },
-    status: { label: "Out for Delivery", color: "bg-orange-100 text-orange-700" },
-  },
-];
-
 const OrdersSection = () => {
-  const [orders, setOrders] = useState(initialOrders);
+  const [orders, setOrders] = useState([]);
   const [archived, setArchived] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
 
-  // Modal
   const [showModal, setShowModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+
+  // Fetch from backend
+  useEffect(() => {
+    fetch("http://localhost:5000/api/orders")
+      .then((res) => res.json())
+      .then((data) => setOrders(data))
+      .catch((err) => console.error("Error fetching orders:", err));
+  }, []);
 
   const openModal = (order) => {
     setSelectedOrder(order);
@@ -71,21 +35,19 @@ const OrdersSection = () => {
     closeModal();
   };
 
-  // Sorting + Search
+  // Sort + Search
   const sortedOrders = useMemo(() => {
-    let filtered = [...orders].filter(
+    let filtered = orders.filter(
       (o) =>
-        o.enquiryNo.includes(searchTerm) ||
-        o.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        o.service.toLowerCase().includes(searchTerm.toLowerCase())
+        o.enquiryNo.toString().includes(searchTerm) ||
+        o.service?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        o.customer_name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     if (sortConfig.key) {
       filtered.sort((a, b) => {
-        let aVal = a[sortConfig.key];
-        let bVal = b[sortConfig.key];
-        if (typeof aVal === "string") aVal = aVal.toLowerCase();
-        if (typeof bVal === "string") bVal = bVal.toLowerCase();
+        const aVal = a[sortConfig.key];
+        const bVal = b[sortConfig.key];
         if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
         if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
         return 0;
@@ -113,7 +75,6 @@ const OrdersSection = () => {
 
   return (
     <div className="p-8 rounded-3xl bg-white shadow-2xl space-y-8 min-h-screen">
-      {/* Animate only the content */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -122,9 +83,7 @@ const OrdersSection = () => {
       >
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <h1 className="text-4xl font-extrabold text-cyan-700">
-            Orders
-          </h1>
+          <h1 className="text-4xl font-extrabold text-cyan-700">Orders</h1>
           <div className="relative w-full md:w-72">
             <input
               type="text"
@@ -137,36 +96,37 @@ const OrdersSection = () => {
           </div>
         </div>
 
-        {/* Active Orders Table */}
+        {/* Orders Table */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
           className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-x-auto"
         >
-          <table className="w-full text-left border-collapse min-w-[800px] text-sm">
+          <table className="w-full text-left border-collapse min-w-[900px] text-sm">
             <thead className="bg-gray-100">
               <tr>
                 {[
                   { key: "enquiryNo", label: "Enquiry No." },
                   { key: "service", label: "Service" },
-                  { key: "name", label: "Name" },
+                  { key: "customer_name", label: "Name" },
                   { key: "dateOrdered", label: "Date Ordered" },
-                  { key: "urgency", label: "Urgency", sortable: false },
-                  { key: "status", label: "Status", sortable: false },
+                  { key: "urgency", label: "Urgency" },
+                  { key: "status", label: "Status" },
+                  { key: "price", label: "Price" },
                 ].map((col) => (
                   <th
                     key={col.key}
-                    onClick={() => col.sortable !== false && requestSort(col.key)}
-                    className={`py-3 px-6 font-semibold cursor-pointer select-none text-gray-700 ${
-                      col.sortable !== false ? "hover:text-cyan-600" : ""
-                    }`}
+                    onClick={() => requestSort(col.key)}
+                    className="py-3 px-6 font-semibold cursor-pointer text-gray-700 hover:text-cyan-600"
                   >
                     {col.label}
-                    {col.sortable !== false && <SortIcon column={col.key} />}
+                    <SortIcon column={col.key} />
                   </th>
                 ))}
-                <th className="py-3 px-6 font-semibold text-gray-700 text-right">Actions</th>
+                <th className="py-3 px-6 font-semibold text-gray-700 text-right">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -180,18 +140,13 @@ const OrdersSection = () => {
                 >
                   <td className="py-3 px-6">{order.enquiryNo}</td>
                   <td className="py-3 px-6">{order.service}</td>
-                  <td className="py-3 px-6">{order.name}</td>
-                  <td className="py-3 px-6">{order.dateOrdered}</td>
+                  <td className="py-3 px-6">{order.customer_name}</td>
                   <td className="py-3 px-6">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${order.urgency.color}`}>
-                      {order.urgency.label}
-                    </span>
+                    {new Date(order.dateOrdered).toLocaleDateString()}
                   </td>
-                  <td className="py-3 px-6">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${order.status.color}`}>
-                      {order.status.label}
-                    </span>
-                  </td>
+                  <td className="py-3 px-6">{order.urgency || "—"}</td>
+                  <td className="py-3 px-6">{order.status || "Pending"}</td>
+                  <td className="py-3 px-6">{order.price ? `₱${order.price}` : "—"}</td>
                   <td className="py-3 px-6 flex justify-end">
                     <button
                       onClick={() => openModal(order)}
@@ -205,23 +160,6 @@ const OrdersSection = () => {
             </tbody>
           </table>
         </motion.div>
-
-        {/* Archived Orders Section */}
-        {archived.length > 0 && (
-          <div className="bg-gray-50 p-6 rounded-2xl shadow-lg border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">Archived Orders</h2>
-            <ul className="space-y-2 text-sm">
-              {archived.map((order) => (
-                <li key={order.enquiryNo} className="flex justify-between border-b border-gray-200 pb-2">
-                  <span>
-                    <b>{order.enquiryNo}</b> - {order.name} ({order.service})
-                  </span>
-                  <span className="text-gray-500">{order.dateOrdered}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </motion.div>
 
       {/* Confirmation Modal */}

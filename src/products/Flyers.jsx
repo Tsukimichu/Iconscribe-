@@ -8,21 +8,45 @@ import { Contact, MessageCircle, XCircle } from "lucide-react";
 function Flyers() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+  
+    const [userProfile, setUserProfile] = useState({
+    name: "",
+    email: "",
+    address: "",
+    phone: "",
+    });
 
   useEffect(() => {
-    const checkToken = () => {
-      const token = localStorage.getItem("token");
-      setIsLoggedIn(!!token);
-    };
+        const checkToken = () => {
+          const token = localStorage.getItem("token");
+          setIsLoggedIn(!!token);
+        };
+        checkToken();
+        window.addEventListener("auth-change", checkToken);
+        return () => window.removeEventListener("auth-change", checkToken);
+      }, []);
 
-    checkToken();
+      // Fetch user profile if logged in
+      useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
 
-    window.addEventListener("auth-change", checkToken);
-
-    return () => {
-      window.removeEventListener("auth-change", checkToken);
-    };
-  }, []);
+        fetch("http://localhost:5000/api/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success && data.data) {
+              setUserProfile({
+                name: data.data.name || "",
+                email: data.data.email || "",
+                address: data.data.address || "",
+                phone: data.data.phone || "",
+              });
+            }
+          })
+          .catch((err) => console.error("Error fetching profile:", err));
+      }, [isLoggedIn]);
 
 
   const [quantity, setQuantity] = useState("");
@@ -99,26 +123,25 @@ function Flyers() {
                 {/* Right: Form */}
                 <form onSubmit={handlePlaceOrder} className="space-y-6 text-black">
                   {/* Name, Email, Location, Contact */}
-                  <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-base font-semibold text-black">
-                          Name
-                        </label>
+                        <label className="block text-base font-semibold text-black">Name</label>
                         <input
                           type="text"
                           placeholder="Enter your name"
+                          value={userProfile.name}
+                          onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })}
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           required
                         />
                       </div>
                       <div>
-                        <label className="block text-base font-semibold text-black">
-                          Email
-                        </label>
+                        <label className="block text-base font-semibold text-black">Email</label>
                         <input
                           type="email"
                           placeholder="Enter your email"
+                          value={userProfile.email}
+                          onChange={(e) => setUserProfile({ ...userProfile, email: e.target.value })}
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           required
                         />
@@ -127,27 +150,26 @@ function Flyers() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-base font-semibold text-black">
-                          Location
-                        </label>
+                        <label className="block text-base font-semibold text-black">Location</label>
                         <input
                           type="text"
                           placeholder="Enter your location"
+                          value={userProfile.address}
+                          onChange={(e) => setUserProfile({ ...userProfile, address: e.target.value })}
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         />
                       </div>
                       <div>
-                        <label className="block text-base font-semibold text-black">
-                          Contact Number
-                        </label>
+                        <label className="block text-base font-semibold text-black">Contact Number</label>
                         <input
                           type="text"
                           placeholder="Enter contact number"
+                          value={userProfile.phone}
+                          onChange={(e) => setUserProfile({ ...userProfile, phone: e.target.value })}
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         />
                       </div>
                     </div>
-                  </>
 
                   {/* Quantity + Size */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -9,20 +9,44 @@ function Posters() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
+   const [userProfile, setUserProfile] = useState({
+    name: "",
+    email: "",
+    address: "",
+    phone: "",
+    });
+
   useEffect(() => {
-    const checkToken = () => {
-      const token = localStorage.getItem("token");
-      setIsLoggedIn(!!token);
-    };
+        const checkToken = () => {
+          const token = localStorage.getItem("token");
+          setIsLoggedIn(!!token);
+        };
+        checkToken();
+        window.addEventListener("auth-change", checkToken);
+        return () => window.removeEventListener("auth-change", checkToken);
+      }, []);
 
-    checkToken();
+      // Fetch user profile if logged in
+      useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
 
-    window.addEventListener("auth-change", checkToken);
-
-    return () => {
-      window.removeEventListener("auth-change", checkToken);
-    };
-  }, []);
+        fetch("http://localhost:5000/api/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success && data.data) {
+              setUserProfile({
+                name: data.data.name || "",
+                email: data.data.email || "",
+                address: data.data.address || "",
+                phone: data.data.phone || "",
+              });
+            }
+          })
+          .catch((err) => console.error("Error fetching profile:", err));
+      }, [isLoggedIn]);
 
 
   const [quantity, setQuantity] = useState("");
@@ -108,6 +132,8 @@ function Posters() {
                         <input
                           type="text"
                           placeholder="Enter your name"
+                          value={userProfile.name}
+                          onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })}
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           required
                         />
@@ -119,6 +145,8 @@ function Posters() {
                         <input
                           type="email"
                           placeholder="Enter your email"
+                          value={userProfile.email}
+                          onChange={(e) => setUserProfile({ ...userProfile, email: e.target.value })}  
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           required
                         />
@@ -133,6 +161,8 @@ function Posters() {
                         <input
                           type="text"
                           placeholder="Enter your location"
+                          value={userProfile.address}
+                          onChange={(e) => setUserProfile({ ...userProfile, address: e.target.value })}
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         />
                       </div>
@@ -143,6 +173,8 @@ function Posters() {
                         <input
                           type="text"
                           placeholder="Enter contact number"
+                          value={userProfile.phone}
+                          onChange={(e) => setUserProfile({ ...userProfile, phone: e.target.value })}  
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         />
                       </div>

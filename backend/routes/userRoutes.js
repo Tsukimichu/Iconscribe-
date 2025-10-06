@@ -90,19 +90,10 @@ router.post("/login", (req, res) => {
           .json({ success: false, message: "Invalid name or password" });
       }
 
-      let token;
-      try {
-        token = jwt.sign(
-          { id: user.user_id, role: user.role },
-          SECRET_KEY,
-          { expiresIn: "1h" }
-        );
-      } catch (jwtErr) {
-        console.error("JWT signing error:", jwtErr);
-        return res
-          .status(500)
-          .json({ success: false, message: "Token generation failed" });
-      }
+      // ✅ Ensure token payload uses `id` consistently
+      const payload = { id: user.user_id, role: user.role };
+      const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "1h" });
+      console.log("Signed JWT payload:", payload);
 
       return res.json({
         success: true,
@@ -113,6 +104,8 @@ router.post("/login", (req, res) => {
           name: user.name,
           email: user.email,
           phone: user.phone,
+          address: user.address,
+          business: user.business || "",
           role: user.role,
         },
       });
@@ -122,6 +115,64 @@ router.post("/login", (req, res) => {
     }
   });
 });
+
+/* =================== GET LOGGED-IN USER PROFILE =================== */
+router.get("/profile", async (req, res) => {
+  try {
+    const authHeader = req.headers["authorization"];
+    if (!authHeader) {
+      console.log("❌ No authorization header");
+      return res.status(401).json({ success: false, message: "No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+      console.log("❌ Empty token");
+      return res.status(401).json({ success: false, message: "No token provided" });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, SECRET_KEY);
+      console.log("✅ Token decoded:", decoded);
+    } catch (err) {
+      console.log("❌ Token verification failed:", err.message);
+      return res.status(403).json({ success: false, message: "Invalid or expired token" });
+    }
+
+    const userId = decoded.id;
+    if (!userId) {
+      console.log("❌ Decoded token missing `id`");
+      return res.status(403).json({ success: false, message: "Invalid token payload" });
+    }
+
+    const query = `
+      SELECT user_id, name, email, phone, address, business
+      FROM users
+      WHERE user_id = ?
+    `;
+
+    db.query(query, [userId], (err, results) => {
+      if (err) {
+        console.error("❌ Database error:", err);
+        return res.status(500).json({ success: false, message: "Database query failed" });
+      }
+
+      if (results.length === 0) {
+        console.log("⚠️ No user found for ID:", userId);
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+
+      console.log("✅ User profile fetched successfully:", results[0]);
+      return res.json({ success: true, data: results[0] });
+    });
+  } catch (error) {
+    console.error("❌ Server error in /profile:", error);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+});
+
+
 
 /* =================== UPDATE USER STATUS =================== */
 router.put("/users/:id/status", (req, res) => {

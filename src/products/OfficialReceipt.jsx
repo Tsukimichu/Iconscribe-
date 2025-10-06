@@ -55,6 +55,40 @@ function OfficialReceipt() {
 
     if (!visible) return null;
 
+    const [user, setUser] = useState({
+      name: "",
+      email: "",
+      address: "",
+      phone: "",
+      business: "",
+    });
+
+
+
+    useEffect(() => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      fetch("http://localhost:5000/api/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.data) {
+            setUser({
+              name: data.data.name,
+              email: data.data.email,
+              address: data.data.address,
+              phone: data.data.phone,
+              business: data.data.business || "",
+            });
+          }
+        })
+        .catch((err) => console.error("Error fetching user info:", err));
+    }, [isLoggedIn]);
+
+
+
   return (
     <>
       <Nav />
@@ -109,6 +143,8 @@ function OfficialReceipt() {
                         </label>
                         <input
                           type="text"
+                          value={user.name}
+                          onChange={(e) => setUser({ ...user, name: e.target.value })}
                           placeholder="Enter your name"
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           required
@@ -120,6 +156,8 @@ function OfficialReceipt() {
                         </label>
                         <input
                           type="email"
+                          value={user.email}
+                          onChange={(e) => setUser({ ...user, email: e.target.value })}
                           placeholder="Enter your email"
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           required
@@ -134,6 +172,8 @@ function OfficialReceipt() {
                         </label>
                         <input
                           type="text"
+                          value={user.address}
+                          onChange={(e) => setUser({ ...user, address: e.target.value })}
                           placeholder="Enter your location"
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         />
@@ -144,6 +184,8 @@ function OfficialReceipt() {
                         </label>
                         <input
                           type="text"
+                          value={user.phone}
+                          onChange={(e) => setUser({ ...user, phone: e.target.value })}
                           placeholder="Enter contact number"
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         />
@@ -159,6 +201,8 @@ function OfficialReceipt() {
                       </label>
                       <input
                         type="text"
+                        value={user.business}
+                        onChange={(e) => setUser({ ...user, business: e.target.value })} 
                         placeholder="Enter business name"
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                       />
@@ -291,17 +335,6 @@ function OfficialReceipt() {
                 </form>
               </div>
             </>
-
-
-
-
-
-
-
-
-
-
-
           ) : (
 
             // ETO LAMAN NG FALSE

@@ -8,20 +8,45 @@ function Books() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
+    // User profile state
+    const [userProfile, setUserProfile] = useState({
+      name: "",
+      email: "",
+      address: "",
+      phone: "",
+    });
+
   useEffect(() => {
-    const checkToken = () => {
+      const checkToken = () => {
+        const token = localStorage.getItem("token");
+        setIsLoggedIn(!!token);
+      };
+      checkToken();
+      window.addEventListener("auth-change", checkToken);
+      return () => window.removeEventListener("auth-change", checkToken);
+    }, []);
+
+    // Fetch user profile if logged in
+    useEffect(() => {
       const token = localStorage.getItem("token");
-      setIsLoggedIn(!!token);
-    };
+      if (!token) return;
 
-    checkToken();
-
-    window.addEventListener("auth-change", checkToken);
-
-    return () => {
-      window.removeEventListener("auth-change", checkToken);
-    };
-  }, []);
+      fetch("http://localhost:5000/api/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.data) {
+            setUserProfile({
+              name: data.data.name || "",
+              email: data.data.email || "",
+              address: data.data.address || "",
+              phone: data.data.phone || "",
+            });
+          }
+        })
+        .catch((err) => console.error("Error fetching profile:", err));
+    }, [isLoggedIn]);
 
 
   const [quantity, setQuantity] = useState("");
@@ -37,26 +62,21 @@ function Books() {
     }
   };
 
-  const [isActive, setIsActive] = useState(true);
+    const [visible, setVisible] = useState(true);
 
-    useEffect(() => {
-      fetch("http://localhost:5000/api/products")
-        .then((res) => res.json())
-        .then((data) => {
-          const book = data.find((p) => p.product_name === "Books");
-          // Convert status to lowercase so it matches correctly
-          setIsActive(book?.status?.toLowerCase() === "active");
-        })
-        .catch(() => setIsActive(false));
-    }, []);
+   useEffect(() => {
+    fetch("http://localhost:5000/api/product-status")
+      .then((res) => res.json())
+      .then((data) => {
+        const product = data.find((p) => p.product_name === "Binding");
+        if (product && (product.status === "Inactive" || product.status === "Archived")) {
+          setVisible(false);
+        }
+      })
+      .catch((err) => console.error("Error loading product status:", err));
+  }, []);
 
-    if (!isActive) {
-      return (
-        <div className="flex justify-center items-center h-screen text-white">
-          <h1 className="text-black">This product is currently unavailable.</h1>
-        </div>
-      );
-    }
+  if (!visible) return null;
 
   return (
     <>
@@ -102,27 +122,26 @@ function Books() {
 
                 {/* Right: Form */}
                 <form onSubmit={handlePlaceOrder} className="space-y-6 text-black">
-                  {/* Name, Email, Location, Contact */}
-                  <>
+                 {/* Name, Email, Location, Contact */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-base font-semibold text-black">
-                          Name
-                        </label>
+                        <label className="block text-base font-semibold text-black">Name</label>
                         <input
                           type="text"
                           placeholder="Enter your name"
+                          value={userProfile.name}
+                          onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })}
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           required
                         />
                       </div>
                       <div>
-                        <label className="block text-base font-semibold text-black">
-                          Email
-                        </label>
+                        <label className="block text-base font-semibold text-black">Email</label>
                         <input
                           type="email"
                           placeholder="Enter your email"
+                          value={userProfile.email}
+                          onChange={(e) => setUserProfile({ ...userProfile, email: e.target.value })}
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           required
                         />
@@ -131,27 +150,26 @@ function Books() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-base font-semibold text-black">
-                          Location
-                        </label>
+                        <label className="block text-base font-semibold text-black">Location</label>
                         <input
                           type="text"
                           placeholder="Enter your location"
+                          value={userProfile.address}
+                          onChange={(e) => setUserProfile({ ...userProfile, address: e.target.value })}
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         />
                       </div>
                       <div>
-                        <label className="block text-base font-semibold text-black">
-                          Contact Number
-                        </label>
+                        <label className="block text-base font-semibold text-black">Contact Number</label>
                         <input
                           type="text"
                           placeholder="Enter contact number"
+                          value={userProfile.phone}
+                          onChange={(e) => setUserProfile({ ...userProfile, phone: e.target.value })}
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         />
                       </div>
                     </div>
-                  </>
 
                   {/* Quantity + Page Count */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

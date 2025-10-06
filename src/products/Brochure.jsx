@@ -1,95 +1,147 @@
 import Nav from "../component/navigation";
 import or from "../assets/Brochure.png";
-import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
+import { ArrowBigLeft, Upload, Phone, Mail, Contact, MessageCircle, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState,useEffect } from "react";
-import { Contact, MessageCircle, XCircle } from "lucide-react";
+import { useState, useEffect } from "react";
 
 function Brochure() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
-      // User profile state
-      const [userProfile, setUserProfile] = useState({
-        name: "",
-        email: "",
-        address: "",
-        phone: "",
-        business: "",
-      });
-
-    useEffect(() => {
-        const checkToken = () => {
-          const token = localStorage.getItem("token");
-          setIsLoggedIn(!!token);
-        };
-        checkToken();
-        window.addEventListener("auth-change", checkToken);
-        return () => window.removeEventListener("auth-change", checkToken);
-      }, []);
-
-      // Fetch user profile if logged in
-      useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        fetch("http://localhost:5000/api/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.success && data.data) {
-              setUserProfile({
-                name: data.data.name || "",
-                email: data.data.email || "",
-                address: data.data.address || "",
-                phone: data.data.phone || "",
-                business: data.data.business || "",
-              });
-            }
-          })
-          .catch((err) => console.error("Error fetching profile:", err));
-      }, [isLoggedIn]);
-
+  const [userProfile, setUserProfile] = useState({
+    name: "",
+    email: "",
+    address: "",
+    phone: "",
+    business: "",
+  });
 
   const [quantity, setQuantity] = useState("");
+  const [size, setSize] = useState("");
+  const [paperType, setPaperType] = useState("");
+  const [color, setColor] = useState("");
+  const [lamination, setLamination] = useState("");
+  const [backToBack, setBackToBack] = useState(false);
+  const [customization, setCustomization] = useState(false);
+  const [message, setMessage] = useState("");
+
   const [showConfirm, setShowConfirm] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const checkToken = () => {
+      const token = localStorage.getItem("token");
+      setIsLoggedIn(!!token);
+    };
+    checkToken();
+    window.addEventListener("auth-change", checkToken);
+    return () => window.removeEventListener("auth-change", checkToken);
+  }, []);
+
+  // Fetch user profile
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    fetch("http://localhost:5000/api/profile", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setUserProfile({
+            name: data.data.name || "",
+            email: data.data.email || "",
+            address: data.data.address || "",
+            phone: data.data.phone || "",
+            business: data.data.business || "",
+          });
+        }
+      })
+      .catch((err) => console.error("Error fetching profile:", err));
+  }, [isLoggedIn]);
+
+  // Check if product is visible
+  useEffect(() => {
+    fetch("http://localhost:5000/api/product-status")
+      .then((res) => res.json())
+      .then((data) => {
+        const product = data.find((p) => p.product_name === "Brochure");
+        if (product && (product.status === "Inactive" || product.status === "Archived")) {
+          setVisible(false);
+        }
+      })
+      .catch((err) => console.error("Error loading product status:", err));
+  }, []);
+
+  if (!visible) return null;
 
   const handlePlaceOrder = (e) => {
     e.preventDefault();
     if (!isLoggedIn) {
-      navigate("/login")
+      navigate("/login");
     } else {
       setShowConfirm(true);
     }
   };
 
-    const [visible, setVisible] = useState(true);
+  const handleConfirmOrder = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-    useEffect(() => {
-      fetch("http://localhost:5000/api/product-status")
-        .then((res) => res.json())
-        .then((data) => {
-          const product = data.find((p) => p.product_name === "Brochure");
-          if (product && (product.status === "Inactive" || product.status === "Archived")) {
-            setVisible(false);
-          }
-        })
-        .catch((err) => console.error("Error loading product status:", err));
-    }, []);
+    const orderDetails = {
+      user_id: userProfile.id,
+      product_id: 3,
+      quantity,
+      custom_details: {
+        Customization: customization ? "Yes" : "No",
+        "Number of copies": quantity,
+        Size: size,
+        "Type of paper": paperType,
+        Colored: color,
+        Lamination: lamination,
+        Print: backToBack ? "Back to back" : "Single side",
+        Message: message,
+      },
+      urgency: "Normal",
+      status: "Pending",
+    };
 
-    if (!visible) return null;
+    try {
+      const res = await fetch("http://localhost:5000/api/orders/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(orderDetails),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert("Order placed successfully!");
+        setShowConfirm(false);
+        navigate("/orders");
+      } else {
+        alert("Failed to place order. Please try again.");
+      }
+    } catch (error) {
+      console.error("Order error:", error);
+      alert("An error occurred while placing the order.");
+    }
+  };
 
   return (
     <>
       <Nav />
       <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-5">
         <div className="w-full max-w-[120rem] p-2 sm:p-2">
+          {/* Logged In View */}
           {isLoggedIn ? (
             <>
               {/* Back Button + Title */}
-              <div className="flex items-center gap-3 mb-10">
+              <div className="flex items-center gap-32 mb-10">
                 <button
                   onClick={() => navigate(-1)}
                   className="p-2 hover:bg-gray-200 rounded-full transition"
@@ -101,104 +153,48 @@ function Brochure() {
                 </h2>
               </div>
 
-              {/* Preview + Form */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                {/* Left: Preview */}
+                {/* Left Side */}
                 <div className="flex flex-col items-center">
-                  <h2 className="text-3xl font-bold mb-4 text-black flex justify-center">
-                    Brochure
-                  </h2>
-                  <p className="text-lg text-black mb-6 leading-relaxed text-center max-w-xl">
-                    Official receipt, often known as an OR, is a record that
-                    confirms the completion of a service-related sale
-                    transaction.
+                  <h2 className="text-3xl font-bold mb-4 text-black">Brochure</h2>
+                  <p className="text-lg text-black mb-6 text-center max-w-xl">
+                    Professionally print brochures with multiple paper options, finishes, and customizations.
                   </p>
-
-                  <div className="relative w-full max-w-3xl overflow-hidden group">
-                    <img
-                      src={or}
-                      alt="Sample OR"
-                      className="w-full h-full sm:h-[600px] object-contain rounded-2xl transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
-                  </div>
+                  <img src={or} alt="Brochure" className="w-full max-w-3xl rounded-2xl shadow-md object-contain" />
                 </div>
 
-                {/* Right: Form */}
+                {/* Right Side Form */}
                 <form onSubmit={handlePlaceOrder} className="space-y-6 text-black">
-                  {/* Name, Email, Location, Contact */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-base font-semibold text-black">Name</label>
-                        <input
-                          type="text"
-                          placeholder="Enter your name"
-                          value={userProfile.name}
-                          onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })}
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-base font-semibold text-black">Email</label>
-                        <input
-                          type="email"
-                          placeholder="Enter your email"
-                          value={userProfile.email}
-                          onChange={(e) => setUserProfile({ ...userProfile, email: e.target.value })}
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-base font-semibold text-black">Location</label>
-                        <input
-                          type="text"
-                          placeholder="Enter your location"
-                          value={userProfile.address}
-                          onChange={(e) => setUserProfile({ ...userProfile, address: e.target.value })}
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-base font-semibold text-black">Contact Number</label>
-                        <input
-                          type="text"
-                          placeholder="Enter contact number"
-                          value={userProfile.phone}
-                          onChange={(e) => setUserProfile({ ...userProfile, phone: e.target.value })}
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                        />
-                      </div>
-                    </div>
-
-
-                  {/* Business Name + Quantity (Side by Side) */}
+                  {/* Basic Info */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-base font-semibold text-black">
-                        Business Name
-                      </label>
+                      <label className="font-semibold">Name</label>
                       <input
                         type="text"
-                        placeholder="Enter business name"
-                        value={userProfile.business}
-                        onChange={(e) => setUserProfile({ ...userProfile, business: e.target.value })}
+                        value={userProfile.name}
+                        onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                        required
                       />
                     </div>
-
                     <div>
-                      <label className="block text-base font-semibold text-black">
-                        Number of Copies{" "}
-                        <span className="text-sm text-gray-700">(min 1000)</span>
-                      </label>
+                      <label className="font-semibold">Email</label>
+                      <input
+                        type="email"
+                        value={userProfile.email}
+                        onChange={(e) => setUserProfile({ ...userProfile, email: e.target.value })}
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Quantity + Size */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="font-semibold">Number of Copies (min 1000)</label>
                       <input
                         type="number"
-                        placeholder="Enter quantity"
                         min="1000"
                         value={quantity}
                         onChange={(e) => setQuantity(e.target.value)}
@@ -206,59 +202,47 @@ function Brochure() {
                         required
                       />
                     </div>
+                    <div>
+                      <label className="font-semibold">Size</label>
+                      <select value={size} onChange={(e) => setSize(e.target.value)} className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black" required>
+                        <option value="">Select size</option>
+                        <option>11”x17”</option>
+                        <option>17”x22”</option>
+                        <option>22”x34”</option>
+                        <option>8.5”x14”</option>
+                      </select>
+                    </div>
                   </div>
 
-                  {/* Paper Type + size */}
+                  {/* Paper Type + Color */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-base font-semibold text-black">
-                          Size
-                        </label>
-                        <select
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                          required
-                        >
-                          <option value="">Select size</option>
-                          <option>11”x17”</option>
-                          <option>17”x22”</option>
-                          <option>22”x34”</option>
-                          <option>81/2”x14”</option>
-                        </select>
-                      </div>
                     <div>
-                      <label className="block text-base font-semibold text-black">
-                        Type of Paper
-                      </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
-                        <option value="">Select Calendar type</option>
-                        <option>Single Month (12 pages)</option>
-                        <option>Double Month (6 pages)</option>
+                      <label className="font-semibold">Type of Paper</label>
+                      <select value={paperType} onChange={(e) => setPaperType(e.target.value)} className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black" required>
+                        <option value="">Select type</option>
+                        <option>Matte</option>
+                        <option>Glossy</option>
+                        <option>Book Paper</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="font-semibold">Colored</label>
+                      <select value={color} onChange={(e) => setColor(e.target.value)} className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black" required>
+                        <option value="">Yes/No</option>
+                        <option>Yes</option>
+                        <option>No</option>
                       </select>
                     </div>
                   </div>
 
                   {/* color + lamination */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-base font-semibold text-black">
-                          Color
-                        </label>
-                        <select
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                          required
-                        >
-                          <option value="">Select size</option>
-                          <option>11”x17”</option>
-                          <option>17”x22”</option>
-                          <option>22”x34”</option>
-                          <option>81/2”x14”</option>
-                        </select>
-                      </div>
+
                     <div>
                       <label className="block text-base font-semibold text-black">
                         Lamination
                       </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                       <select value={lamination} onChange={(e) => setLamination(e.target.value)} className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black" required>
                         <option value="">Select Lamination type</option>
                         <option>Single Month (12 pages)</option>
                         <option>Double Month (6 pages)</option>
@@ -328,6 +312,8 @@ function Brochure() {
                       </div>
                     </div>
                   </div>
+
+
 
                   {/* Price + Contact */}
                   <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
@@ -549,22 +535,15 @@ function Brochure() {
 
       {/* Confirmation Modal */}
       {showConfirm && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full">
-            <h2 className="text-xl font-bold text-black mb-4">
-              Confirm Your Order
-            </h2>
-            <p className="text-base text-black mb-6">
-              Are you sure you want to place this order?
-            </p>
+            <h2 className="text-xl font-bold mb-4 text-black">Confirm Your Order</h2>
+            <p className="text-gray-700 mb-6">Are you sure you want to place this order?</p>
             <div className="flex justify-end gap-3">
-              <button
-                className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 transition text-black"
-                onClick={() => setShowConfirm(false)}
-              >
+              <button onClick={() => setShowConfirm(false)} className="px-4 py-2 rounded-xl border border-gray-300">
                 Cancel
               </button>
-              <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition">
+              <button onClick={handleConfirmOrder} className="px-4 py-2 rounded-xl bg-blue-600 text-white">
                 Confirm
               </button>
             </div>

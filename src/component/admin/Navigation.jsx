@@ -40,7 +40,7 @@ const Navigation = ({ selectedSection, setSelectedSection, handleLogout }) => {
       <nav className="space-y-3 w-full px-6">
         <NavItem
           icon={<Home size={18} />}
-          label="Overview"
+          label="Dashboard"
           active={selectedSection === 'overview'}
           onClick={() => setSelectedSection('overview')}
         />

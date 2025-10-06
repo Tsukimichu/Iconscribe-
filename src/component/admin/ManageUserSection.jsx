@@ -148,16 +148,18 @@ useEffect(() => {
     return `${m}m ${s}s`;
   };
 
-  const UserRow = ({ user }) => (
-    <tr className="hover:bg-gray-50 transition">
-      <td className="px-4 py-3 font-medium">{user.user_id}</td>
-      <td className="px-4 py-3">{user.name}</td>
-      <td className="px-4 py-3">{user.email}</td>
-      <td className="px-4 py-3">{user.phone}</td>
-      <td className="px-4 py-3">
-        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusStyle[user.status]}`}>
-          {user.status}
-        </span>
+    const UserRow = ({ user }) => (
+      <tr className="hover:bg-gray-50 transition">
+          <td className="px-4 py-3">{user.user_id}</td>
+          <td className="px-4 py-3">{user.name}</td>
+          <td className="px-4 py-3">{user.email}</td>
+          <td className="px-4 py-3">{user.phone}</td>
+          <td className="px-4 py-3">{user.address || "—"}</td>
+          <td className="px-4 py-3">{user.business || "—"}</td>
+        <td className="px-4 py-3">
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusStyle[user.status]}`}>
+            {user.status}
+          </span>
         {countdowns[user.user_id] > 0 && (
           <div className="text-xs text-gray-500 mt-1">⏱ {formatTime(countdowns[user.user_id])}</div>
         )}
@@ -228,14 +230,16 @@ useEffect(() => {
       <div className="rounded-xl overflow-hidden">
         <table className="min-w-full text-sm text-left">
           <thead className="bg-gray-100 text-gray-600">
-            <tr>
-              <th className="px-4 py-3">User ID</th>
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Contact</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Action</th>
-            </tr>
+              <tr>
+                <th className="px-4 py-3">User ID</th>
+                <th className="px-4 py-3">Name</th>
+                <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">Contact</th>
+                <th className="px-4 py-3">Address</th>
+                <th className="px-4 py-3">Business</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Action</th>
+              </tr>
           </thead>
           <tbody>
             {(showArchives ? archived : users).map(user => (

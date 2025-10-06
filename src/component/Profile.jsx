@@ -35,8 +35,8 @@ function Profile() {
     name: "",
     email: "",
     business: "",
-    contact: "",
-    location: "",
+    phone: "",
+    address: "",
   });
 
   useEffect(() => {
@@ -44,20 +44,48 @@ function Profile() {
     if (storedUser) {
       const user = JSON.parse(storedUser);
       setProfile({
-        user_id: user.user_id || "",
+        user_id: user.user_id || user.id || "",
         name: user.name || "",
         email: user.email || "",
         business: user.business || "",
-        contact: user.phone || "",
-        location: user.address || "",
+        phone: user.phone || "",
+        address: user.address || "",
       });
     }
   }, []);
 
-  const handleSaveProfile = () => {
-    localStorage.setItem("user", JSON.stringify(profile));
-    setIsEditing(false);
-    setShowSaveModal(true);
+  const handleSaveProfile = async () => {
+    try {
+      const payload = {
+        name: profile.name,
+        email: profile.email,
+        business: profile.business,
+        phone: profile.phone,
+        address: profile.address,
+      };
+
+      console.log("Saving profile payload:", payload);
+
+      const response = await fetch(`http://localhost:5000/api/users/${profile.user_id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+      console.log("Server response:", result);
+
+      if (result.success) {
+        localStorage.setItem("user", JSON.stringify(profile));
+        setIsEditing(false);
+        setShowSaveModal(true);
+      } else {
+        alert("Failed to update profile: " + result.message);
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Something went wrong while saving.");
+    }
   };
 
   const handleLogout = () => {
@@ -123,7 +151,7 @@ function Profile() {
         <div className="md:col-span-2 bg-white shadow-md rounded-2xl p-6 border border-gray-200">
           <h3 className="text-lg font-bold mb-4">Account Details</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {["name", "email", "business", "contact", "location"].map((field, idx) => (
+            {["name", "email", "business", "phone", "address"].map((field, idx) => (
               <input
                 key={idx}
                 type="text"
@@ -133,7 +161,7 @@ function Profile() {
                 placeholder={field}
                 disabled={!isEditing}
                 className={`px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 outline-none ${
-                  field === "location" ? "md:col-span-2" : ""
+                  field === "address" ? "md:col-span-2" : ""
                 } ${!isEditing && "opacity-70 cursor-not-allowed"}`}
               />
             ))}
@@ -180,7 +208,7 @@ function Profile() {
         </div>
       </div>
 
-      {/* Modals Section */}
+      {/* Modals */}
       <Modal
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}

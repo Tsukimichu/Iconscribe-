@@ -7,7 +7,7 @@ const bcrypt = require("bcrypt");
 const SECRET_KEY = process.env.JWT_SECRET || "your-secret-key";
 const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS, 10) || 12;
 
-// =================== SIGNUP ===================
+/* =================== SIGNUP =================== */
 router.post("/signup", async (req, res) => {
   const { name, phone, email, address, password, role } = req.body;
 
@@ -53,7 +53,7 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-// =================== LOGIN ===================
+/* =================== LOGIN =================== */
 router.post("/login", (req, res) => {
   const { name, password } = req.body;
 
@@ -99,7 +99,9 @@ router.post("/login", (req, res) => {
         );
       } catch (jwtErr) {
         console.error("JWT signing error:", jwtErr);
-        return res.status(500).json({ success: false, message: "Token generation failed" });
+        return res
+          .status(500)
+          .json({ success: false, message: "Token generation failed" });
       }
 
       return res.json({
@@ -121,9 +123,7 @@ router.post("/login", (req, res) => {
   });
 });
 
-
-
-// =================== UPDATE USER STATUS ===================
+/* =================== UPDATE USER STATUS =================== */
 router.put("/users/:id/status", (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -143,66 +143,100 @@ router.put("/users/:id/status", (req, res) => {
   });
 });
 
-// =================== ARCHIVE / RESTORE ===================
-router.put("/users/:id/archive", (req, res) => {
+/* =================== UPDATE USER INFO (Profile Edit) =================== */
+router.put("/users/:id", (req, res) => {
   const { id } = req.params;
-  const query = "UPDATE users SET archived = 1 WHERE user_id = ?";
-  db.query(query, [id], (err) => {
+  const { name, email, phone, address, business } = req.body;
+
+  if (!name || !email || !phone || !address) {
+    return res
+      .status(400)
+      .json({ success: false, message: "All fields are required" });
+  }
+
+  const query = `
+    UPDATE users 
+    SET name = ?, email = ?, phone = ?, address = ?, business = ?
+    WHERE user_id = ?
+  `;
+
+  db.query(query, [name, email, phone, address, business || null, id], (err) => {
     if (err) {
+      console.error("Error updating user:", err);
       return res
         .status(500)
         .json({ success: false, message: "Database update failed" });
     }
-    res.json({ success: true, message: "User archived", data: { id } });
+
+    res.json({ success: true, message: "User profile updated successfully" });
   });
 });
 
-router.put("/users/:id/restore", (req, res) => {
+/* =================== ARCHIVE / RESTORE =================== */
+router.put("/users/:id/archive", (req, res) => {
   const { id } = req.params;
-  const query = "UPDATE users SET archived = 0 WHERE user_id = ?";
+  const query = `UPDATE users SET is_archived = 1 WHERE user_id = ?`;
+
   db.query(query, [id], (err) => {
     if (err) {
+      console.error("❌ Error archiving user:", err);
+      return res.status(500).json({ success: false, message: "Database update failed" });
+    }
+    res.json({ success: true, message: "User archived successfully" });
+  });
+});
+
+
+router.put("/users/:id/restore", (req, res) => {
+  const { id } = req.params;
+  const query = "UPDATE users SET is_archived = 0 WHERE user_id = ?";
+
+  db.query(query, [id], (err, result) => {
+    if (err) {
+      console.error("❌ Restore user error:", err); // 👈 Add this
       return res
         .status(500)
         .json({ success: false, message: "Database update failed" });
     }
+
+    console.log("✅ Restore result:", result); // Optional: to check what MySQL returns
     res.json({ success: true, message: "User restored", data: { id } });
   });
 });
 
-// =================== GET USERS (SAFE FIELDS ONLY) ===================
+
+/* =================== GET USERS (Active) =================== */
 router.get("/users", (req, res) => {
-  const query =
-    "SELECT user_id, name, email, phone, role, status, archived FROM users WHERE archived = 0";
+  const query = `
+    SELECT user_id, name, email, phone, role, status, address, business, is_archived
+    FROM users
+    WHERE role NOT IN ('admin', 'manager') AND is_archived = 0
+  `;
   db.query(query, (err, results) => {
     if (err) {
-      return res
-        .status(500)
-        .json({ success: false, message: "Database query failed" });
+      console.error("❌ Error fetching users:", err);
+      return res.status(500).json({ success: false, message: "Database query failed" });
     }
-    res.json({
-      success: true,
-      message: "Active users fetched",
-      data: results,
-    });
+    res.json({ success: true, message: "Active users fetched", data: results });
   });
 });
 
+
+/* =================== GET USERS (Archived) =================== */
 router.get("/users/archived", (req, res) => {
-  const query =
-    "SELECT user_id, name, email, phone, role, status, archived FROM users WHERE archived = 1";
+  const query = `
+    SELECT user_id, name, email, phone, role, status, address, business, is_archived
+    FROM users
+    WHERE is_archived = 1
+  `;
   db.query(query, (err, results) => {
     if (err) {
-      return res
-        .status(500)
-        .json({ success: false, message: "Database query failed" });
+      console.error("❌ Error fetching archived users:", err);
+      return res.status(500).json({ success: false, message: err.message });
     }
-    res.json({
-      success: true,
-      message: "Archived users fetched",
-      data: results,
-    });
+    res.json({ success: true, message: "Archived users fetched", data: results });
   });
 });
+
 
 module.exports = router;

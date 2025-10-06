@@ -13,7 +13,6 @@ const OverviewSection = () => {
     { label: "Completed", count: 7, color: "from-green-500 to-emerald-400" },
   ];
 
-  // Dummy detailed data for popup (replace with your actual data)
   const statusDetails = {
     "In Review": [
       { id: "OR-1001", customer: "John Doe", product: "Yearbook", date: "2025-08-01", status: "Checking Files" },
@@ -34,7 +33,6 @@ const OverviewSection = () => {
     ],
   };
 
-  // Chart Data (kept as is)
   const orderData = {
     series: [
       { name: "Jan", data: [120, 90, 70, 50, 30] },
@@ -106,8 +104,8 @@ const OverviewSection = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
           <div>
-            <h1 className="text-4xl font-extrabold text-[#243b7d]">Overview</h1>
-            <p className="text-gray-600 text-lg">Hello, Manager 🚀</p>
+            <h1 className="text-4xl font-extrabold text-[#243b7d]">Dashboard</h1>
+            <p className="text-gray-600 text-lg">Hello, Manager</p>
           </div>
         </div>
 

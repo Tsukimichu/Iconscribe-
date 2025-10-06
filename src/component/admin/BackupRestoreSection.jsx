@@ -62,7 +62,7 @@ const BackupRestoreSection = () => {
     >
       {/* Header */}
       <div>
-        <h1 className="text-4xl font-extrabold text-[#243b7d] flex items-center gap-3">
+        <h1 className="text-4xl font-extrabold text-cyan-700 flex items-center gap-3">
           <Database size={36} />
           Backup & Restore
         </h1>

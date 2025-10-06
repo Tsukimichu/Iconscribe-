@@ -77,7 +77,7 @@ const Maintenance = () => {
       animate={{ opacity: 1, y: 0 }}
       className="min-h-screen w-full bg-white text-gray-900 p-10"
     >
-      <h1 className="text-4xl font-extrabold mb-10">⚙️ Maintenance Settings</h1>
+      <h1 className="text-4xl font-extrabold text-cyan-700">Maintenance Settings</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left section */}

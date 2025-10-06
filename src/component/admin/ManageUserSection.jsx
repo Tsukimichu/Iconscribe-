@@ -218,7 +218,7 @@ useEffect(() => {
       className="rounded-3xl bg-white p-6 shadow-sm"
     >
       <div className="flex justify-between mb-6">
-        <h1 className="text-3xl font-extrabold text-[#243b7d]">Manage Users</h1>
+        <h1 className="text-3xl font-extrabold text-cyan-700">Manage Users</h1>
         <button
           onClick={() => setShowArchives(!showArchives)}
           className="bg-[#243b7d] text-white px-4 py-2 rounded-xl hover:opacity-90 transition"

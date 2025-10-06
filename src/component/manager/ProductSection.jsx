@@ -119,7 +119,7 @@ const ProductSection = () => {
     <div className="p-6 min-h-screen bg-white text-gray-900 rounded-3xl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-6">
-        <h1 className="text-3xl font-extrabold"> Product Management</h1>
+        <h1 className="text-4xl font-extrabold text-cyan-700"> Product Management</h1>
         <div className="relative w-full sm:w-auto">
           <input
             type="text"

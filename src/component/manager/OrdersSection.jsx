@@ -122,7 +122,7 @@ const OrdersSection = () => {
       >
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <h1 className="text-4xl font-extrabold text-gray-900">
+          <h1 className="text-4xl font-extrabold text-cyan-700">
             Orders
           </h1>
           <div className="relative w-full md:w-72">

@@ -104,7 +104,7 @@ const OverviewSection = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
           <div>
-            <h1 className="text-4xl font-extrabold text-[#243b7d]">Dashboard</h1>
+            <h1 className="text-4xl font-extrabold text-cyan-700">Dashboard</h1>
             <p className="text-gray-600 text-lg">Hello, Manager</p>
           </div>
         </div>

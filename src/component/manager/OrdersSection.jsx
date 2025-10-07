@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trash2, Search, ChevronUp, ChevronDown } from "lucide-react";
+import {
+  Trash2,
+  Search,
+  ChevronUp,
+  ChevronDown,
+  PlusCircle,
+  Truck,
+} from "lucide-react";
 
 const OrdersSection = () => {
   const [orders, setOrders] = useState([]);
@@ -8,34 +15,96 @@ const OrdersSection = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
 
-  const [showModal, setShowModal] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [showPriceModal, setShowPriceModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
 
-  // Fetch from backend
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [newPrice, setNewPrice] = useState("");
+  const [newStatus, setNewStatus] = useState("");
+
+  // --- Fetch from backend ---
   useEffect(() => {
     fetch("http://localhost:5000/api/orders")
       .then((res) => res.json())
-      .then((data) => setOrders(data))
+      .then((data) => setOrders(Array.isArray(data) ? data : []))
       .catch((err) => console.error("Error fetching orders:", err));
   }, []);
 
-  const openModal = (order) => {
+  // --- Archive Logic ---
+  const openArchiveModal = (order) => {
     setSelectedOrder(order);
-    setShowModal(true);
+    setShowArchiveModal(true);
   };
-
-  const closeModal = () => {
-    setShowModal(false);
+  const closeArchiveModal = () => {
+    setShowArchiveModal(false);
     setSelectedOrder(null);
   };
-
-  const confirmDelete = () => {
+  const confirmArchive = () => {
     setOrders(orders.filter((o) => o.enquiryNo !== selectedOrder.enquiryNo));
     setArchived([...archived, selectedOrder]);
-    closeModal();
+    closeArchiveModal();
   };
 
-  // Sort + Search
+  // --- Add Price Logic ---
+  const openPriceModal = (order) => {
+    setSelectedOrder(order);
+    setNewPrice(order.price || "");
+    setShowPriceModal(true);
+  };
+  const closePriceModal = () => {
+    setShowPriceModal(false);
+    setSelectedOrder(null);
+    setNewPrice("");
+  };
+  const confirmAddPrice = () => {
+    if (!newPrice || isNaN(newPrice)) return alert("Please enter a valid number.");
+
+    const updatedOrders = orders.map((o) =>
+      o.enquiryNo === selectedOrder.enquiryNo ? { ...o, price: Number(newPrice) } : o
+    );
+    setOrders(updatedOrders);
+    closePriceModal();
+
+    // Optionally send to backend:
+    /*
+    fetch(`http://localhost:5000/api/orders/${selectedOrder.enquiryNo}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ price: Number(newPrice) }),
+    });
+    */
+  };
+
+  // --- Set Status Logic ---
+  const openStatusModal = (order) => {
+    setSelectedOrder(order);
+    setNewStatus(order.status || "Pending");
+    setShowStatusModal(true);
+  };
+  const closeStatusModal = () => {
+    setShowStatusModal(false);
+    setSelectedOrder(null);
+    setNewStatus("");
+  };
+  const confirmSetStatus = () => {
+    const updatedOrders = orders.map((o) =>
+      o.enquiryNo === selectedOrder.enquiryNo ? { ...o, status: newStatus } : o
+    );
+    setOrders(updatedOrders);
+    closeStatusModal();
+
+    // Optionally send to backend:
+    /*
+    fetch(`http://localhost:5000/api/orders/${selectedOrder.enquiryNo}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    */
+  };
+
+  // --- Search + Sort ---
   const sortedOrders = useMemo(() => {
     let filtered = orders.filter(
       (o) =>
@@ -58,9 +127,7 @@ const OrdersSection = () => {
 
   const requestSort = (key) => {
     let direction = "asc";
-    if (sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
-    }
+    if (sortConfig.key === key && sortConfig.direction === "asc") direction = "desc";
     setSortConfig({ key, direction });
   };
 
@@ -146,10 +213,24 @@ const OrdersSection = () => {
                   </td>
                   <td className="py-3 px-6">{order.urgency || "—"}</td>
                   <td className="py-3 px-6">{order.status || "Pending"}</td>
-                  <td className="py-3 px-6">{order.price ? `₱${order.price}` : "—"}</td>
-                  <td className="py-3 px-6 flex justify-end">
+                  <td className="py-3 px-6">
+                    {order.price ? `₱${order.price}` : <span className="text-gray-400 italic">No Price</span>}
+                  </td>
+                  <td className="py-3 px-6 flex justify-end gap-2">
                     <button
-                      onClick={() => openModal(order)}
+                      onClick={() => openStatusModal(order)}
+                      className="flex items-center gap-1 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-lg hover:bg-yellow-200 transition"
+                    >
+                      <Truck size={16} /> Set Status
+                    </button>
+                    <button
+                      onClick={() => openPriceModal(order)}
+                      className="flex items-center gap-1 bg-cyan-100 text-cyan-700 px-3 py-1 rounded-lg hover:bg-cyan-200 transition"
+                    >
+                      <PlusCircle size={16} /> Add Price
+                    </button>
+                    <button
+                      onClick={() => openArchiveModal(order)}
                       className="flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-lg hover:bg-red-200 transition"
                     >
                       <Trash2 size={16} /> Archive
@@ -162,9 +243,102 @@ const OrdersSection = () => {
         </motion.div>
       </motion.div>
 
-      {/* Confirmation Modal */}
+      {/* --- Status Modal --- */}
       <AnimatePresence>
-        {showModal && (
+        {showStatusModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 flex items-center justify-center bg-black/60 z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-lg p-6 max-w-sm w-full text-center"
+            >
+              <h2 className="text-xl font-bold mb-3 text-gray-900">Set Order Status</h2>
+              <p className="text-gray-600 mb-4">
+                Choose new status for <b>{selectedOrder?.enquiryNo}</b>
+              </p>
+              <select
+                value={newStatus}
+                onChange={(e) => setNewStatus(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:ring-2 focus:ring-yellow-500 outline-none"
+              >
+                <option>Pending</option>
+                <option>Out for Delivery</option>
+                <option>Delivered</option>
+              </select>
+              <div className="flex justify-center gap-3">
+                <button
+                  onClick={closeStatusModal}
+                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmSetStatus}
+                  className="px-4 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white transition"
+                >
+                  Save
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- Price Modal --- */}
+      <AnimatePresence>
+        {showPriceModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 flex items-center justify-center bg-black/60 z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-lg p-6 max-w-sm w-full text-center"
+            >
+              <h2 className="text-xl font-bold mb-3 text-gray-900">Add / Update Price</h2>
+              <p className="text-gray-600 mb-4">
+                Enter price for order <b>{selectedOrder?.enquiryNo}</b>
+              </p>
+              <input
+                type="number"
+                min="0"
+                value={newPrice}
+                onChange={(e) => setNewPrice(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:ring-2 focus:ring-cyan-500 outline-none"
+                placeholder="Enter price..."
+              />
+              <div className="flex justify-center gap-3">
+                <button
+                  onClick={closePriceModal}
+                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmAddPrice}
+                  className="px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white transition"
+                >
+                  Save
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- Archive Modal --- */}
+      <AnimatePresence>
+        {showArchiveModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -183,13 +357,13 @@ const OrdersSection = () => {
               </p>
               <div className="flex justify-center gap-3">
                 <button
-                  onClick={closeModal}
+                  onClick={closeArchiveModal}
                   className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={confirmDelete}
+                  onClick={confirmArchive}
                   className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition"
                 >
                   Confirm

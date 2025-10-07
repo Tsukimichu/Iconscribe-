@@ -10,12 +10,22 @@ function Newsletters() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
    const [userProfile, setUserProfile] = useState({
+    id: "",
     name: "",
     email: "",
     address: "",
     phone: "",
     business: "",
     });
+
+      const [quantity, setQuantity] = useState("");
+      const [showConfirm, setShowConfirm] = useState(false);
+      const [showContactModal, setShowContactModal] = useState(false);
+
+      const [paperType, setPaperType] = useState(""); 
+      const [layout, setLayout] = useState("");
+      const [size, setSize] = useState("");
+      const [message, setMessage] = useState("");
 
   useEffect(() => {
         const checkToken = () => {
@@ -27,7 +37,6 @@ function Newsletters() {
         return () => window.removeEventListener("auth-change", checkToken);
       }, []);
 
-      // Fetch user profile if logged in
       useEffect(() => {
         const token = localStorage.getItem("token");
         if (!token) return;
@@ -39,21 +48,17 @@ function Newsletters() {
           .then((data) => {
             if (data.success && data.data) {
               setUserProfile({
+                id: data.data.user_id || "",
                 name: data.data.name || "",
                 email: data.data.email || "",
                 address: data.data.address || "",
                 phone: data.data.phone || "",
-                business: data.data.business || "",
+                business: data.data.business_name || "",
               });
             }
           })
           .catch((err) => console.error("Error fetching profile:", err));
       }, [isLoggedIn]);
-
-
-  const [quantity, setQuantity] = useState("");
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
 
   const handlePlaceOrder = (e) => {
     e.preventDefault();
@@ -79,6 +84,67 @@ function Newsletters() {
     }, []);
 
     if (!visible) return null;
+
+  const handleConfirmOrder = async () => { 
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {   
+        alert("Please log in to place an order.");
+        navigate("/login");
+        return;
+      }
+
+      const custom_details = {
+        Name: userProfile.name,
+        Email: userProfile.email,
+        Address: userProfile.address,
+        Phone: userProfile.phone,
+        BusinessName: userProfile.business,
+        Quantity: quantity,
+        Size: size,
+        "Paper Type": paperType,
+        Layout: layout,
+        Message: message,
+      };
+
+      const response = await fetch("http://localhost:5000/api/orders/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_id: userProfile.id,   
+          product_id: 9,
+          quantity,
+          urgency: "Normal",
+          status: "Pending",
+          custom_details,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        alert("✅ Order placed successfully!");
+        setShowConfirm(false);
+
+        // Reset all inputs
+        setQuantity("");
+        setPaperType("");
+        setLayout("");
+        setSize("");
+        setMessage("");
+
+        navigate("/dashboard");
+      } else { 
+        alert("⚠️ Failed to place order. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error placing order:", error);
+      alert("❌ An error occurred while placing your order. Please try again.");
+    } 
+  };
+
 
   return (
     <>
@@ -197,7 +263,7 @@ function Newsletters() {
                         type="text"
                         placeholder="Enter business name"
                         value={userProfile.business}
-                        onChange={(e) => setUserProfile({ ...userProfile, business: e.target.value })}  
+                        onChange={(e) => setUserProfile({ ...userProfile, business: e.target.value })}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                       />
                     </div>
@@ -225,7 +291,10 @@ function Newsletters() {
                       <label className="block text-base font-semibold text-black">
                         Print Type
                       </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                      <select 
+                      value={paperType}
+                        onChange={(e) => setPapertype(e.target.value)}
+                      className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
                         <option value="">Select print type</option>
                         <option>Black & White</option>
                         <option>Full Color</option>
@@ -235,7 +304,10 @@ function Newsletters() {
                       <label className="block text-base font-semibold text-black">
                         Layout
                       </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                      <select
+                      value={layout}
+                      onChange={(e) => setLayout(e.target.value)}
+                      className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
                         <option value="">Select layout</option>
                         <option>Single Page</option>
                         <option>Multi-Page</option>
@@ -291,6 +363,8 @@ function Newsletters() {
                           Size
                         </label>
                         <select
+                          value={size}
+                          onChange={(e) => setSize(e.target.value)}
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           required
                         >
@@ -309,6 +383,8 @@ function Newsletters() {
                           </span>
                         </label>
                         <textarea
+                          value={message}
+                          onChange={(e) => setMessage(e.target.value)}
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-23 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           placeholder="Enter message"
                         ></textarea>
@@ -531,7 +607,9 @@ function Newsletters() {
               >
                 Cancel
               </button>
-              <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition">
+              <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition"
+                onClick={handleConfirmOrder}
+              >
                 Confirm
               </button>
             </div>

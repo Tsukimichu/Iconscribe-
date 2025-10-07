@@ -10,11 +10,24 @@ function Flyers() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
   
     const [userProfile, setUserProfile] = useState({
+    id: "",
     name: "",
     email: "",
     address: "",
     phone: "",
     });
+
+    const [quantity, setQuantity] = useState("");
+    const [size, setSize] = useState("");
+    const [paperType, setPaperType] = useState(""); 
+    const [color, setColor] = useState("");
+    const [lamination, setLamination] = useState("");
+    const [backToBack, setBackToBack] = useState(false);
+    const [message, setMessage] = useState("");
+
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [showContactModal, setShowContactModal] = useState(false);
+    
 
   useEffect(() => {
         const checkToken = () => {
@@ -38,6 +51,7 @@ function Flyers() {
           .then((data) => {
             if (data.success && data.data) {
               setUserProfile({
+                id: data.data.id || data.data.user_id || "",
                 name: data.data.name || "",
                 email: data.data.email || "",
                 address: data.data.address || "",
@@ -49,9 +63,7 @@ function Flyers() {
       }, [isLoggedIn]);
 
 
-  const [quantity, setQuantity] = useState("");
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
+
 
   const handlePlaceOrder = (e) => {
     e.preventDefault();
@@ -77,6 +89,64 @@ function Flyers() {
     }, []);
 
     if (!visible) return null;
+
+    const handleConfirmOrder = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("Please log in to place an order.");
+          return;
+        }
+        const customDetails = {
+          Name: userProfile.name,
+          Email: userProfile.email,
+          Address: userProfile.address,
+          Phone: userProfile.phone,
+          "Number of Copies": quantity,
+          Size: size,
+          "Paper Type": paperType,
+          Color: color,
+          Lamination: lamination,
+          "Print": backToBack ? "Back to back" : "Single side",
+          Message: message,
+        };
+        const response = await fetch("http://localhost:5000/api/orders/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            user_id: userProfile.id,
+            product_id: 6, // Flyers product_id
+            quantity,
+            urgency: "Normal",
+            status: "Pending",
+            custom_details: customDetails,
+          }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          alert("✅ Order placed successfully!");
+          setShowConfirm(false);
+          // Reset form fields
+          setQuantity("");
+          setSize("");
+          setPaperType("");
+          setColor("");
+          setLamination("");
+          setBackToBack(false);
+          setMessage("");
+        } else {
+          alert("⚠️ Failed to place order. Please try again.");
+        }
+      } catch (error) {
+        console.error("Order error:", error);
+        alert("⚠️ Something went wrong. Please try again later.");
+      }
+    };
+    
+          
 
   return (
     <>
@@ -192,6 +262,8 @@ function Flyers() {
                         Flyer Size
                       </label>
                       <select
+                        value={size}
+                        onChange={(e) => setSize(e.target.value)}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       >
@@ -211,6 +283,8 @@ function Flyers() {
                         Paper Type
                       </label>
                       <select
+                        value={paperType}
+                        onChange={(e) => setPaperType(e.target.value)}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       >
@@ -221,15 +295,18 @@ function Flyers() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-base font-semibold text-black">
-                        Lamination
-                      </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
-                        <option value="">Select Lamination</option>
-                        <option>Gloss</option>
-                        <option>Matte</option>
-                        <option>UV Coated</option>
-                      </select>
+                        <label className="block text-base font-semibold text-black">
+                          Lamination
+                        </label>
+                        <select
+                          value={lamination}
+                          onChange={(e) => setLamination(e.target.value)} 
+                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                            <option value="">Select Lamination</option>
+                            <option>Gloss</option>
+                            <option>Matte</option>
+                            <option>UV Coated</option>
+                        </select>
                     </div>
                   </div>
 
@@ -240,13 +317,14 @@ function Flyers() {
                         Color
                       </label>
                       <select
+                        value={color}
+                        onChange={(e) => setColor(e.target.value)}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       >
-                        <option value="">Select paper</option>
-                        <option>Glossy</option>
-                        <option>Matte</option>
-                        <option>Premium Card</option>
+                        <option value="">Yes/No</option>
+                        <option>Yes</option>
+                        <option>No</option>
                       </select>
                     </div>
                     <div className="mt-4 flex items-center gap-3 p-3">
@@ -541,7 +619,8 @@ function Flyers() {
               >
                 Cancel
               </button>
-              <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition">
+              <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition" onClick={handleConfirmOrder}>
+                
                 Confirm
               </button>
             </div>

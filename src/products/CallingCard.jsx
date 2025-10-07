@@ -11,12 +11,24 @@ function CallingCard() {
 
 
    const [userProfile, setUserProfile] = useState({
+    id: "",
     name: "",
     email: "",
     address: "",
     phone: "",
     business: "",
     });
+
+      const [size, setSize] = useState("");
+      const [paperType, setPaperType] = useState("");
+      const [color, setColor] = useState("");
+      const [lamination, setLamination] = useState("");
+      const [backToBack, setBackToBack] = useState(false);
+      const [message, setMessage] = useState("");
+ 
+      const [quantity, setQuantity] = useState("");
+      const [showConfirm, setShowConfirm] = useState(false);
+      const [showContactModal, setShowContactModal] = useState(false);
 
   useEffect(() => {
         const checkToken = () => {
@@ -40,6 +52,7 @@ function CallingCard() {
           .then((data) => {
             if (data.success && data.data) {
               setUserProfile({
+                id: data.data.id || data.data.user_id || "",
                 name: data.data.name || "",
                 email: data.data.email || "",
                 address: data.data.address || "",
@@ -50,11 +63,6 @@ function CallingCard() {
           })
           .catch((err) => console.error("Error fetching profile:", err));
       }, [isLoggedIn]);
-
-
-  const [quantity, setQuantity] = useState("");
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
 
   const handlePlaceOrder = (e) => {
     e.preventDefault();
@@ -80,6 +88,65 @@ function CallingCard() {
     }, []);
 
     if (!visible) return null;
+
+  const handleConfirmOrder = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Please log in to place an order.");
+        return;
+      }
+      const customDetails = {
+        Name: userProfile.name,
+        Email: userProfile.email,
+        Address: userProfile.address,
+        Phone: userProfile.phone,
+        Business: userProfile.business,
+        "Number of Cards": quantity,
+        Size: size,
+        "Type of Paper": paperType,
+        Color: color,
+        Lamination: lamination,
+        Print: backToBack ? "Back to back" : "Single side",
+        Message: message,
+      };
+      const response = await fetch("http://localhost:5000/api/orders/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_id: userProfile.id,
+          product_id: 5,
+          quantity,
+          urgency: "Normal",
+          status: "Pending",
+          custom_details: customDetails,
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert("✅ Order placed successfully!");
+        setShowConfirm(false);
+        // Reset form fields
+        setQuantity("");
+        setSize("");
+        setPaperType("");
+        setColor("");
+        setLamination("");
+        setBackToBack(false);
+        setMessage("");
+        // Optionally navigate to orders page
+        navigate("/dashboard");
+      } else {
+        alert("⚠️ Failed to place order. Please try again.");
+      }
+    } catch (error) {
+      console.error("Order error:", error);
+      alert("⚠️ Something went wrong. Please try again later.");
+    }
+  };
 
   return (
     <>
@@ -216,6 +283,8 @@ function CallingCard() {
                         Size
                       </label>
                       <select
+                        value={size}
+                        onChange={e => setSize(e.target.value)}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       >
@@ -228,7 +297,11 @@ function CallingCard() {
                       <label className="block text-base font-semibold text-black">
                         Type of Paper
                       </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                      <select
+                        value={paperType}
+                        onChange={e => setPaperType(e.target.value)}
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                      >
                         <option value="">Select type</option>
                         <option>Matte</option>
                         <option>Glossy</option>
@@ -289,6 +362,8 @@ function CallingCard() {
                           </span>
                         </label>
                         <textarea
+                          value={message}
+                          onChange={e => setMessage(e.target.value)}
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-41 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           placeholder="Enter message"
                         ></textarea>
@@ -391,6 +466,8 @@ function CallingCard() {
                         Size
                       </label>
                       <select
+                        value={size}
+                        onChange={e => setSize(e.target.value)}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       >
@@ -407,7 +484,11 @@ function CallingCard() {
                       <label className="block text-base font-semibold text-black">
                         Type of Paper
                       </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                      <select
+                        value={paperType}
+                        onChange={e => setPaperType(e.target.value)}
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                      >
                         <option value="">Select type</option>
                         <option>Matte</option>
                         <option>Glossy</option>
@@ -419,6 +500,8 @@ function CallingCard() {
                         Color
                       </label>
                       <select
+                        value={color}
+                        onChange={e => setColor(e.target.value)}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       >
@@ -432,7 +515,11 @@ function CallingCard() {
                       <label className="block text-base font-semibold text-black">
                         Lamination
                       </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                      <select
+                        value={lamination}
+                        onChange={e => setLamination(e.target.value)}
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                      >
                         <option value="">Select option</option>
                         <option>Gloss Lamination</option>
                         <option>Matte Lamination</option>
@@ -443,6 +530,8 @@ function CallingCard() {
                     <div className="mt-4 flex items-center gap-3 p-3">
                       <input
                         type="checkbox"
+                        checked={backToBack}
+                        onChange={e => setBackToBack(e.target.checked)}
                         id="backToBack"
                         className="w-6 h-6 scale-125 cursor-pointer"
                       />
@@ -538,7 +627,10 @@ function CallingCard() {
               >
                 Cancel
               </button>
-              <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition">
+              <button
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition"
+                onClick={handleConfirmOrder}
+              >
                 Confirm
               </button>
             </div>

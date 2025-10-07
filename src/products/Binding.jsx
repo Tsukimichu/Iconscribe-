@@ -206,7 +206,7 @@ function Binding() {
                         onChange={(e) =>
                           setUserProfile({ ...userProfile, name: e.target.value })
                         }
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl text-black"
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       />
                     </div>
@@ -220,7 +220,7 @@ function Binding() {
                         onChange={(e) =>
                           setUserProfile({ ...userProfile, email: e.target.value })
                         }
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl text-black"
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       />
                     </div>
@@ -241,7 +241,7 @@ function Binding() {
                             address: e.target.value,
                           })
                         }
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl text-black"
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                       />
                     </div>
                     <div>
@@ -254,7 +254,7 @@ function Binding() {
                         onChange={(e) =>
                           setUserProfile({ ...userProfile, phone: e.target.value })
                         }
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl text-black"
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                       />
                     </div>
                   </div>
@@ -270,7 +270,7 @@ function Binding() {
                         min="1"
                         value={quantity}
                         onChange={(e) => setQuantity(e.target.value)}
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl text-black"
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       />
                     </div>
@@ -283,7 +283,7 @@ function Binding() {
                         min="4"
                         value={pageCount}
                         onChange={(e) => setPageCount(e.target.value)}
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl text-black"
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       />
                     </div>
@@ -298,7 +298,7 @@ function Binding() {
                       <select
                         value={bindingType}
                         onChange={(e) => setBindingType(e.target.value)}
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl text-black"
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       >
                         <option value="">Select binding</option>
@@ -316,7 +316,7 @@ function Binding() {
                       <select
                         value={paperType}
                         onChange={(e) => setPaperType(e.target.value)}
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl text-black"
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       >
                         <option value="">Select paper</option>

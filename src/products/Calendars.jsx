@@ -2,14 +2,15 @@ import Nav from "../component/navigation";
 import or from "../assets/calendar.png";
 import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Contact, MessageCircle, XCircle } from "lucide-react";
 
 function Calendars() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
- const [userProfile, setUserProfile] = useState({
+  const [userProfile, setUserProfile] = useState({
+    id: "",
     name: "",
     email: "",
     address: "",
@@ -17,67 +18,115 @@ function Calendars() {
     business: "",
   });
 
-  useEffect(() => {
-        const checkToken = () => {
-          const token = localStorage.getItem("token");
-          setIsLoggedIn(!!token);
-        };
-        checkToken();
-        window.addEventListener("auth-change", checkToken);
-        return () => window.removeEventListener("auth-change", checkToken);
-      }, []);
-
-      // Fetch user profile if logged in
-      useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        fetch("http://localhost:5000/api/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.success && data.data) {
-              setUserProfile({
-                name: data.data.name || "",
-                email: data.data.email || "",
-                address: data.data.address || "",
-                phone: data.data.phone || "",
-                business: data.data.business || "",
-              });
-            }
-          })
-          .catch((err) => console.error("Error fetching profile:", err));
-      }, [isLoggedIn]);
-
+  const [color, setColor] = useState("");
+  const [calendarType, setCalendarType] = useState("");
+  const [size, setSize] = useState("");
   const [quantity, setQuantity] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const checkToken = () => {
+      const token = localStorage.getItem("token");
+      setIsLoggedIn(!!token);
+    };
+    checkToken();
+    window.addEventListener("auth-change", checkToken);
+    return () => window.removeEventListener("auth-change", checkToken);
+  }, []);
+
+  // Fetch user profile if logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    fetch("http://localhost:5000/api/profile", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setUserProfile({
+            id: data.data.id || data.data.user_id || "",
+            name: data.data.name || "",
+            email: data.data.email || "",
+            address: data.data.address || "",
+            phone: data.data.phone || "",
+            business: data.data.business || "",
+          });
+        }
+      })
+      .catch((err) => console.error("Error fetching profile:", err));
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/product-status")
+      .then((res) => res.json())
+      .then((data) => {
+        const product = data.find((p) => p.product_name === "Calendars");
+        if (product && (product.status === "Inactive" || product.status === "Archived")) {
+          setVisible(false);
+        }
+      })
+      .catch((err) => console.error("Error loading product status:", err));
+  }, []);
+
+  if (!visible) return null;
 
   const handlePlaceOrder = (e) => {
     e.preventDefault();
     if (!isLoggedIn) {
-      navigate("/login")
+      navigate("/login");
     } else {
       setShowConfirm(true);
     }
   };
 
-    const [visible, setVisible] = useState(true);
-
-    useEffect(() => {
-      fetch("http://localhost:5000/api/product-status")
-        .then((res) => res.json())
-        .then((data) => {
-          const product = data.find((p) => p.product_name === "Calendars");
-          if (product && (product.status === "Inactive" || product.status === "Archived")) {
-            setVisible(false);
-          }
-        })
-        .catch((err) => console.error("Error loading product status:", err));
-    }, []);
-
-    if (!visible) return null;
+  const handleConfirmOrder = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Please log in to place an order.");
+        return;
+      }
+      const customDetails = {
+        Color: color,
+        "Calendar Type": calendarType,
+        Size: size,
+      };
+      const response = await fetch("http://localhost:5000/api/orders/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_id: userProfile.id,
+          product_id: 4,
+          quantity,
+          urgency: "Normal",
+          status: "Pending",
+          custom_details: customDetails,
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert("✅ Order placed successfully!");
+        setShowConfirm(false);
+        setColor("");
+        setCalendarType("");
+        setSize("");
+        setQuantity("");
+        navigate("/dashboard");
+      } else {
+        alert("⚠️ Failed to place order. Please try again.");
+      }
+    } catch (error) {
+      console.error("Order error:", error);
+      alert("⚠️ Something went wrong. Please try again later.");
+    }
+  };
 
   return (
     <>
@@ -124,54 +173,62 @@ function Calendars() {
 
                 {/* Right: Form */}
                 <form onSubmit={handlePlaceOrder} className="space-y-6 text-black">
-                    {/* Name, Email, Location, Contact */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-base font-semibold text-black">Name</label>
-                        <input
-                          type="text"
-                          placeholder="Enter your name"
-                          value={userProfile.name}
-                          onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })}
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-base font-semibold text-black">Email</label>
-                        <input
-                          type="email"
-                          placeholder="Enter your email"
-                          value={userProfile.email}
-                          onChange={(e) => setUserProfile({ ...userProfile, email: e.target.value })}
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                          required
-                        />
-                      </div>
+                  {/* Name, Email, Location, Contact */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-base font-semibold text-black">
+                        Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Enter your name"
+                        value={userProfile.name}
+                        onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })}
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                        required
+                      />
                     </div>
+                    <div>
+                      <label className="block text-base font-semibold text-black">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="Enter your email"
+                        value={userProfile.email}
+                        onChange={(e) => setUserProfile({ ...userProfile, email: e.target.value })}
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                        required
+                      />
+                    </div>
+                  </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-base font-semibold text-black">Location</label>
-                        <input
-                          type="text"
-                          placeholder="Enter your location"
-                          value={userProfile.address}
-                          onChange={(e) => setUserProfile({ ...userProfile, address: e.target.value })}
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-base font-semibold text-black">Contact Number</label>
-                        <input
-                          type="text"
-                          placeholder="Enter contact number"
-                          value={userProfile.phone}
-                          onChange={(e) => setUserProfile({ ...userProfile, phone: e.target.value })}
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                        />
-                      </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-base font-semibold text-black">
+                        Location
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Enter your location"
+                        value={userProfile.address}
+                        onChange={(e) => setUserProfile({ ...userProfile, address: e.target.value })}
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                      />
                     </div>
+                    <div>
+                      <label className="block text-base font-semibold text-black">
+                        Contact Number
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Enter contact number"
+                        value={userProfile.phone}
+                        onChange={(e) => setUserProfile({ ...userProfile, phone: e.target.value })}
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                      />
+                    </div>
+                  </div>
 
                   {/* Business Name + Quantity (Side by Side) */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -211,7 +268,11 @@ function Calendars() {
                       <label className="block text-base font-semibold text-black">
                         Color
                       </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                      <select
+                        value={color}
+                        onChange={(e) => setColor(e.target.value)}
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                      >
                         <option value="">Select Color</option>
                         <option>Single Colored</option>
                         <option>More Than 1 Color</option>
@@ -221,7 +282,11 @@ function Calendars() {
                       <label className="block text-base font-semibold text-black">
                         Calendar Type
                       </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                      <select
+                        value={calendarType}
+                        onChange={(e) => setCalendarType(e.target.value)}
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                      >
                         <option value="">Select Calendar type</option>
                         <option>Single Month (12 pages)</option>
                         <option>Double Month (6 pages)</option>
@@ -229,42 +294,46 @@ function Calendars() {
                     </div>
                   </div>
 
-
                   {/* Upload + Size + Message */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="flex flex-col gap-4">
-
-                    {/* Customize Button */}
-                    <h3 className="block text-base font-semibold text-black">Design Options:</h3>
-                    <button
-                      type="button"
-                      onClick={() => navigate("/customize")}
-                      className="flex items-center justify-center gap-2 border-2 border-blue-400 bg-blue-50 rounded-xl p-4 shadow-sm hover:border-blue-600 hover:bg-blue-100 transition"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"  
-                        className="w-5 h-10 text-blue-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
+                      {/* Customize Button */}
+                      <h3 className="block text-base font-semibold text-black">
+                        Design Options:
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => navigate("/customize")}
+                        className="flex items-center justify-center gap-2 border-2 border-blue-400 bg-blue-50 rounded-xl p-4 shadow-sm hover:border-blue-600 hover:bg-blue-100 transition"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M15.232 5.232l3.536 3.536m-2.036-5.036A2.5 2.5 0 1121.5 8.5L12 18l-4 1 1-4 9.5-9.5z"
-                        />
-                      </svg>
-                      <span className="text-base font-medium text-black">Customize Design</span>
-                    </button>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-5 h-10 text-blue-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M15.232 5.232l3.536 3.536m-2.036-5.036A2.5 2.5 0 1121.5 8.5L12 18l-4 1 1-4 9.5-9.5z"
+                          />
+                        </svg>
+                        <span className="text-base font-medium text-black">
+                          Customize Design
+                        </span>
+                      </button>
 
-                    {/* Upload Design Button */}
-                    <label className="flex items-center justify-center gap-2 border-2 border-yellow-400 bg-yellow-50 rounded-xl p-4 shadow-sm hover:border-yellow-600 hover:bg-yellow-100 transition cursor-pointer">
-                      <Upload className="w-5 h-10 text-yellow-500" />
-                      <span className="text-base font-medium text-black">Upload Your Design</span>
-                      <input type="file" className="hidden" />
-                    </label>
-                  </div>
+                      {/* Upload Design Button */}
+                      <label className="flex items-center justify-center gap-2 border-2 border-yellow-400 bg-yellow-50 rounded-xl p-4 shadow-sm hover:border-yellow-600 hover:bg-yellow-100 transition cursor-pointer">
+                        <Upload className="w-5 h-10 text-yellow-500" />
+                        <span className="text-base font-medium text-black">
+                          Upload Your Design
+                        </span>
+                        <input type="file" className="hidden" />
+                      </label>
+                    </div>
 
                     {/* Size + Message */}
                     <div className="flex flex-col gap-3">
@@ -273,6 +342,8 @@ function Calendars() {
                           Size
                         </label>
                         <select
+                          value={size}
+                          onChange={(e) => setSize(e.target.value)}
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           required
                         >
@@ -317,16 +388,14 @@ function Calendars() {
                       </div>
                     </div>
                     <div className="flex justify-end">
-                    <button
-                      type="submit"
-                      className="bg-gradient-to-r from-blue-600 to-blue-800 hover:shadow-lg hover:scale-105 transition text-white px-10 py-3 rounded-xl font-semibold text-lg"
-                    >
-                      Place Order
-                    </button>
+                      <button
+                        type="submit"
+                        className="bg-gradient-to-r from-blue-600 to-blue-800 hover:shadow-lg hover:scale-105 transition text-white px-10 py-3 rounded-xl font-semibold text-lg"
+                      >
+                        Place Order
+                      </button>
+                    </div>
                   </div>
-
-                  </div>
-
                 </form>
               </div>
             </>
@@ -513,7 +582,7 @@ function Calendars() {
               >
                 Cancel
               </button>
-              <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition">
+              <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition" onClick={handleConfirmOrder}>
                 Confirm
               </button>
             </div>

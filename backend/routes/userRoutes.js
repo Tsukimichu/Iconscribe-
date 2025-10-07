@@ -244,13 +244,13 @@ router.put("/users/:id/restore", (req, res) => {
 
   db.query(query, [id], (err, result) => {
     if (err) {
-      console.error("❌ Restore user error:", err); // 👈 Add this
+      console.error("❌ Restore user error:", err);
       return res
         .status(500)
         .json({ success: false, message: "Database update failed" });
     }
 
-    console.log("✅ Restore result:", result); // Optional: to check what MySQL returns
+    console.log("✅ Restore result:", result);
     res.json({ success: true, message: "User restored", data: { id } });
   });
 });

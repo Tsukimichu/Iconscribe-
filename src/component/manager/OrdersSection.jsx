@@ -191,7 +191,7 @@ const OrdersSection = () => {
                     <SortIcon column={col.key} />
                   </th>
                 ))}
-                <th className="py-3 px-6 font-semibold text-gray-700 text-right">
+                <th className="py-3 px-6 font-semibold text-center text-gray-700">
                   Actions
                 </th>
               </tr>
@@ -219,21 +219,21 @@ const OrdersSection = () => {
                   <td className="py-3 px-6 flex justify-end gap-2">
                     <button
                       onClick={() => openStatusModal(order)}
-                      className="flex items-center gap-1 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-lg hover:bg-yellow-200 transition"
+                      className="flex items-center justify-center gap-1 bg-yellow-100 text-yellow-700 px-2 py-2 rounded-lg hover:bg-yellow-200 transition text-sm font-medium"
                     >
-                      <Truck size={16} /> Set Status
+                      <Truck size={16} />
                     </button>
                     <button
                       onClick={() => openPriceModal(order)}
-                      className="flex items-center gap-1 bg-cyan-100 text-cyan-700 px-3 py-1 rounded-lg hover:bg-cyan-200 transition"
+                      className="flex items-center justify-center gap-1 bg-cyan-100 text-cyan-700 px-2 py-2 rounded-lg hover:bg-cyan-200 transition text-sm font-medium"
                     >
-                      <PlusCircle size={16} /> Add Price
+                      <PlusCircle size={16} />
                     </button>
                     <button
                       onClick={() => openArchiveModal(order)}
-                      className="flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-lg hover:bg-red-200 transition"
+                      className="flex items-center justify-center gap-1 bg-red-100 text-red-700 px-2 py-2 rounded-lg hover:bg-red-200 transition text-sm font-medium"
                     >
-                      <Trash2 size={16} /> Archive
+                      <Trash2 size={16} />
                     </button>
                   </td>
                 </motion.tr>
@@ -268,8 +268,8 @@ const OrdersSection = () => {
                 className="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:ring-2 focus:ring-yellow-500 outline-none"
               >
                 <option>Pending</option>
-                <option>Out for Delivery</option>
-                <option>Delivered</option>
+                <option>Ongoing</option>
+                <option>To be delivered</option>
               </select>
               <div className="flex justify-center gap-3">
                 <button

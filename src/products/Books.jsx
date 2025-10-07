@@ -109,7 +109,7 @@ function Books() {
         },
         body: JSON.stringify({
           user_id: userProfile.id,
-          product_id: 2, // 👈 replace this with your actual Books product_id
+          product_id: 2,
           quantity,
           urgency: "Normal",
           status: "Pending",
@@ -188,7 +188,7 @@ function Books() {
                         type="text"
                         value={userProfile.name}
                         onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })}
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl"
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       />
                     </div>
@@ -198,7 +198,7 @@ function Books() {
                         type="email"
                         value={userProfile.email}
                         onChange={(e) => setUserProfile({ ...userProfile, email: e.target.value })}
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl"
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       />
                     </div>
@@ -212,7 +212,7 @@ function Books() {
                         type="text"
                         value={userProfile.address}
                         onChange={(e) => setUserProfile({ ...userProfile, address: e.target.value })}
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl"
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                       />
                     </div>
                     <div>
@@ -221,7 +221,7 @@ function Books() {
                         type="text"
                         value={userProfile.phone}
                         onChange={(e) => setUserProfile({ ...userProfile, phone: e.target.value })}
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl"
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                       />
                     </div>
                   </div>
@@ -235,7 +235,7 @@ function Books() {
                         min="1"
                         value={quantity}
                         onChange={(e) => setQuantity(e.target.value)}
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl"
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       />
                     </div>
@@ -246,7 +246,7 @@ function Books() {
                         min="4"
                         value={pages}
                         onChange={(e) => setPages(e.target.value)}
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl"
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       />
                     </div>

@@ -1,13 +1,29 @@
 import Nav from "../component/navigation";
 import label from "../assets/ICONS.png";
-import { ArrowBigLeft, Upload, Paintbrush } from "lucide-react";
+import { ArrowBigLeft, Upload, Paintbrush, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 
 function Label() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
+  const [userProfile, setUserProfile] = useState({
+    id: "",
+    name: "",
+    email: "",
+    address: "",
+    phone: "",
+  });
+
+  const [quantity, setQuantity] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [size, setSize] = useState("2” x 2”");
+  const [paperType, setPaperType] = useState("Matte");
+  const [message, setMessage] = useState("");
+
+  // --- Auth Check ---
   useEffect(() => {
     const checkToken = () => {
       const token = localStorage.getItem("token");
@@ -15,47 +31,109 @@ function Label() {
     };
 
     checkToken();
-
     window.addEventListener("auth-change", checkToken);
-
-    return () => {
-      window.removeEventListener("auth-change", checkToken);
-    };
+    return () => window.removeEventListener("auth-change", checkToken);
   }, []);
 
+  // --- Fetch User Profile ---
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-  const [quantity, setQuantity] = useState("");
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
-  const [size, setSize] = useState("2” x 2”"); 
-  const [customWidth, setCustomWidth] = useState(""); 
-  const [customHeight, setCustomHeight] = useState(""); 
+    fetch("http://localhost:5000/api/profile", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setUserProfile({
+            id: data.data.user_id || "",
+            name: data.data.name || "",
+            email: data.data.email || "",
+            address: data.data.address || "",
+            phone: data.data.phone || "",
+          });
+        }
+      })
+      .catch((err) => console.error("Error fetching profile:", err));
+  }, [isLoggedIn]);
 
-
+  // --- Place Order (open confirm modal) ---
   const handlePlaceOrder = (e) => {
     e.preventDefault();
     if (!isLoggedIn) {
-      navigate("/login")
+      navigate("/login");
     } else {
       setShowConfirm(true);
     }
   };
 
-    const [visible, setVisible] = useState(true);
+  // --- Confirm Order (send to backend) ---
+  const handleConfirmOrder = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Please log in to place an order.");
+        return;
+      }
 
-    useEffect(() => {
-      fetch("http://localhost:5000/api/product-status")
-        .then((res) => res.json())
-        .then((data) => {
-          const product = data.find((p) => p.product_name === "Label");
-          if (product && (product.status === "Inactive" || product.status === "Archived")) {
-            setVisible(false);
-          }
-        })
-        .catch((err) => console.error("Error loading product status:", err));
-    }, []);
+      const custom_details = {
+        Name: userProfile.name,
+        Email: userProfile.email,
+        Address: userProfile.address,
+        Phone: userProfile.phone,
+        Size: size,
+        "Paper Type": paperType,
+        Message: message,
+      };
 
-    if (!visible) return null;
+      const response = await fetch("http://localhost:5000/api/orders/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_id: userProfile.id,
+          product_id: 8,
+          quantity,
+          urgency: "Normal",
+          status: "Pending",
+          custom_details,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        alert("✅ Order placed successfully!");
+        setShowConfirm(false);
+        setQuantity("");
+        setSize("");
+        setPaperType("");
+        setMessage("");
+      } else {
+        alert("⚠️ Failed to place order. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error placing order:", error);
+      alert("❌ An error occurred while placing your order. Please try again.");
+    }
+  };
+
+  // --- Visibility (check if product is active) ---
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    fetch("http://localhost:5000/api/product-status")
+      .then((res) => res.json())
+      .then((data) => {
+        const product = data.find((p) => p.product_name === "Label");
+        if (product && (product.status === "Inactive" || product.status === "Archived")) {
+          setVisible(false);
+        }
+      })
+      .catch((err) => console.error("Error loading product status:", err));
+  }, []);
+  if (!visible) return null;
 
   return (
     <>
@@ -93,7 +171,8 @@ function Label() {
             </div>
 
             {/* Right: Form */}
-            <form className="space-y-8">
+            <form className="space-y-8"
+              onSubmit={handlePlaceOrder}>
               {/* Upload + Customize */}
               {isLoggedIn && (
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -120,6 +199,8 @@ function Label() {
                   <input
                     type="number"
                     min="100"
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
                     defaultValue="100"
                     className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition"
                   />
@@ -140,44 +221,15 @@ function Label() {
                 </div>
               </div>
 
-              {/* Show custom size fields if selected */}
-              {size === "Custom Size" && (
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Width (inches)
-                    </label>
-                    <input
-                      type="number"
-                      min="0.5"
-                      step="0.1"
-                      value={customWidth}
-                      onChange={(e) => setCustomWidth(e.target.value)}
-                      className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Height (inches)
-                    </label>
-                    <input
-                      type="number"
-                      min="0.5"
-                      step="0.1"
-                      value={customHeight}
-                      onChange={(e) => setCustomHeight(e.target.value)}
-                      className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition"
-                    />
-                  </div>
-                </div>
-              )}
-
               {/* Paper Type */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700">
                   Paper Type
                 </label>
-                <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition">
+                <select 
+                value={paperType}
+                onChange={(e) => setPaperType(e.target.value)}
+                className="mt-1 w-[320px] border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition">
                   <option>Matte</option>
                   <option>Glossy</option>
                   <option>Transparent</option>
@@ -192,15 +244,11 @@ function Label() {
                     Message <span className="text-xs text-gray-500">(optional)</span>
                   </label>
                   <textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
                     className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-28 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition"
                     placeholder="Add special instructions..."
                   ></textarea>
-                </div>
-                <div className="flex flex-col justify-between bg-white border border-gray-200 rounded-2xl shadow-md p-6">
-                  <span className="text-sm text-gray-500">Estimated Cost</span>
-                  <p className="text-2xl font-extrabold text-gray-900">
-                    ₱2,000.00
-                  </p>
                 </div>
               </div>
 
@@ -214,7 +262,7 @@ function Label() {
                 <button
                   type="submit"
                   className="bg-gradient-to-r from-blue-600 to-blue-800 hover:shadow-lg hover:scale-105 transition text-white px-12 py-4 text-lg rounded-xl font-semibold"
-                >
+               >
                   Place Order
                 </button>
               </div>
@@ -222,6 +270,33 @@ function Label() {
           </div>
         </div>
       </div>
+
+        {/* Confirmation Modal */}
+        {showConfirm && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+            <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full">
+              <h2 className="text-xl font-bold text-black mb-4">
+                Confirm Your Order
+              </h2>
+              <p className="text-base text-black mb-6">
+                Are you sure you want to place this order?
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 transition text-black"
+                  onClick={() => setShowConfirm(false)}
+                >
+                  Cancel
+                </button>
+                <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition"
+                onClick={handleConfirmOrder}
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </>
   );
 }

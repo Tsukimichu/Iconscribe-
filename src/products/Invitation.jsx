@@ -10,11 +10,22 @@ function Invitation() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
     const [userProfile, setUserProfile] = useState({
+    id: "",
     name: "",
     email: "",
     address: "",
     phone: "",
     });
+
+  const [quantity, setQuantity] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+
+  const [size, setSize] = useState("");
+  const [paperType, setPaperType] = useState("");
+  const [printMethod, setPrintMethod] = useState("");
+  const [eventName, setEventName] = useState("");
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
         const checkToken = () => {
@@ -38,6 +49,7 @@ function Invitation() {
           .then((data) => {
             if (data.success && data.data) {
               setUserProfile({
+                id: data.data.user_id || "",
                 name: data.data.name || "",
                 email: data.data.email || "",
                 address: data.data.address || "",
@@ -48,10 +60,6 @@ function Invitation() {
           .catch((err) => console.error("Error fetching profile:", err));
       }, [isLoggedIn]);
 
-
-  const [quantity, setQuantity] = useState("");
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
 
   const handlePlaceOrder = (e) => {
     e.preventDefault();
@@ -77,6 +85,60 @@ function Invitation() {
     }, []);
 
     if (!visible) return null;
+
+    const handleConfirmOrder = async () => { 
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {   
+          alert("Please log in to place an order.");
+          return;
+        }
+        const custom_details = {
+          Name: userProfile.name,
+          Email: userProfile.email,
+          Address: userProfile.address,
+          Phone: userProfile.phone,
+          "Event Name": eventName,
+          Size: size,
+          "Paper Type": paperType,
+          "Print Method": printMethod,
+          Message: message,
+        };
+        const response = await fetch("http://localhost:5000/api/orders/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            user_id: userProfile.id,
+            product_id: 7,
+            quantity,
+            urgency: "Normal",
+            status: "Pending",
+            custom_details,
+          }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          alert("✅ Order placed successfully!");
+          setShowConfirm(false);
+          setQuantity("");
+          setSize("");
+          setPaperType("");
+          setPrintMethod("");
+          setEventName("");
+          setMessage("");
+          navigate("/dashboard");
+        } else { 
+          alert("⚠️ Failed to place order. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error placing order:", error);
+        alert("❌ An error occurred while placing your order. Please try again.");
+      } 
+    };
+      
 
   return (
     <>
@@ -183,6 +245,8 @@ function Invitation() {
                       <input
                         type="text"
                         placeholder="Enter event name"
+                        value={eventName}
+                        onChange={(e) => setEventName(e.target.value)}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                       />
                     </div>
@@ -211,6 +275,8 @@ function Invitation() {
                         Size
                       </label>
                       <select
+                        value={size}
+                        onChange={(e) => setSize(e.target.value)}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       >
@@ -225,6 +291,8 @@ function Invitation() {
                         Type of Paper
                       </label>
                       <select
+                        value={paperType}
+                        onChange={(e) => setPaperType(e.target.value)}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       >
@@ -242,6 +310,8 @@ function Invitation() {
                       Print Method
                     </label>
                     <select
+                      value={printMethod}
+                      onChange={(e) => setPrintMethod(e.target.value)}
                       className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                       required
                     >
@@ -297,6 +367,8 @@ function Invitation() {
                           <span className="text-sm text-gray-700">(optional)</span>
                         </label>
                         <textarea
+                          value={message}
+                          onChange={(e) => setMessage(e.target.value)}
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-42 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           placeholder="Enter message"
                         ></textarea>
@@ -505,7 +577,9 @@ function Invitation() {
               >
                 Cancel
               </button>
-              <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition">
+              <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition"
+              onClick={handleConfirmOrder}
+              >
                 Confirm
               </button>
             </div>

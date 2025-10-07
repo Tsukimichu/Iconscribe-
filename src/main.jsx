@@ -14,7 +14,6 @@ import ProtectedRoute from './component/ProtectedRoute.jsx';
 import AdminPage from './component/admin/AdminPage.jsx';  
 import Books from './products/Books.jsx';
 import Brochure from './products/Brochure.jsx';
-import BusinessCard from './products/BusinessCard.jsx';
 import CallingCard from './products/CallingCard.jsx';
 import Calendars from './products/Calendars.jsx';
 import OfficialReceipt from './products/OfficialReceipt.jsx';
@@ -45,7 +44,6 @@ const router = createBrowserRouter([
   // Products
   { path: '/books', element: <Books /> },
   { path: '/brochure', element: <Brochure/>},
-  { path: '/business-card', element: <BusinessCard/>},
   { path: '/calling-card', element: <CallingCard/>},
   { path: '/official-receipt', element: <OfficialReceipt/>},
   { path: '/calendars', element: <Calendars/>},

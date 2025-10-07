@@ -10,7 +10,6 @@ import "swiper/css/navigation";
 // Assets
 import Officialreceipt from "../assets/atp.png";
 import calendar from "../assets/calendar.png";
-import businesscard from "../assets/BusinessCard.png";
 import card from "../assets/CallingCard.png";
 import label from "../assets/Label.png";
 import posters from "../assets/Flyers.png";
@@ -33,7 +32,6 @@ function ProductSection() {
     { title: "Books", description: "Book printing for self-published novels, manuals, and more.", image: books, alt: "Books", link: "/books" },
     { title: "Flyers", description: "Promote your business with vibrant, full-color flyers.", image: flyers, alt: "Flyers", link: "/flyers" },
     { title: "Posters", description: "Large-format posters ideal for advertising or décor.", image: posters, alt: "Posters", link: "/posters" },
-    { title: "BusinessCard", description: "High-quality business cards with various finishes.", image: businesscard, alt: "Business Cards", link: "/business-card" },
     { title: "Label", description: "Custom labels for packaging in waterproof or adhesive options.", image: label, alt: "Labels", link: "/labels" },
     { title: "CallingCard", description: "Print high-quality calling cards with sharp details.", image: card, alt: "Calling Card", link: "/calling-card" },
     { title: "Binding", description: "Binding", image: Binding, alt: "Binding", link: "/binding" },

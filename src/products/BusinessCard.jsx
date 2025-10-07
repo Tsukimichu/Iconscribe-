@@ -9,14 +9,14 @@ function BusinessCard() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
-        // User profile state
-        const [userProfile, setUserProfile] = useState({
-          name: "",
-          email: "",
-          address: "",
-          phone: "",
-          business: "",
-        });
+  const [userProfile, setUserProfile] = useState({
+    id: "",
+    name: "",
+    email: "",
+    address: "",
+    phone: "",
+    business: "",
+  });
 
   useEffect(() => {
         const checkToken = () => {

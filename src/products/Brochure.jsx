@@ -9,6 +9,7 @@ function Brochure() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
   const [userProfile, setUserProfile] = useState({
+    id: "",
     name: "",
     email: "",
     address: "",
@@ -51,6 +52,7 @@ function Brochure() {
       .then((data) => {
         if (data.success && data.data) {
           setUserProfile({
+            id: data.data.id || data.data.user_id || "",
             name: data.data.name || "",
             email: data.data.email || "",
             address: data.data.address || "",
@@ -77,6 +79,7 @@ function Brochure() {
 
   if (!visible) return null;
 
+  // Place Order button handler
   const handlePlaceOrder = (e) => {
     e.preventDefault();
     if (!isLoggedIn) {
@@ -86,15 +89,13 @@ function Brochure() {
     }
   };
 
+  // Confirm and send order to backend
   const handleConfirmOrder = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
 
-    const orderDetails = {
-      user_id: userProfile.id,
-      product_id: 3,
-      quantity,
-      custom_details: {
+      const customDetails = {
         Customization: customization ? "Yes" : "No",
         "Number of copies": quantity,
         Size: size,
@@ -103,32 +104,44 @@ function Brochure() {
         Lamination: lamination,
         Print: backToBack ? "Back to back" : "Single side",
         Message: message,
-      },
-      urgency: "Normal",
-      status: "Pending",
-    };
+      };
 
-    try {
-      const res = await fetch("http://localhost:5000/api/orders/create", {
+      const response = await fetch("http://localhost:5000/api/orders/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(orderDetails),
+        body: JSON.stringify({
+          user_id: userProfile.id,
+          product_id: 3, // Brochure product_id
+          quantity,
+          urgency: "Normal",
+          status: "Pending",
+          custom_details: customDetails,
+        }),
       });
 
-      const data = await res.json();
+      const data = await response.json();
+
       if (data.success) {
-        alert("Order placed successfully!");
+        alert("✅ Order placed successfully!");
         setShowConfirm(false);
-        navigate("/orders");
+        // Reset form fields
+        setQuantity("");
+        setSize("");
+        setPaperType("");
+        setColor("");
+        setLamination("");
+        setBackToBack(false);
+        setCustomization(false);
+        setMessage("");
       } else {
-        alert("Failed to place order. Please try again.");
+        alert("⚠️ Failed to place order. Please try again.");
       }
-    } catch (error) {
-      console.error("Order error:", error);
-      alert("An error occurred while placing the order.");
+    } catch (err) {
+      console.error("Order error:", err);
+      alert("⚠️ Something went wrong. Please try again later.");
     }
   };
 
@@ -293,6 +306,8 @@ function Brochure() {
                           type="checkbox"
                           id="backToBack"
                           className="w-6 h-6 scale-125 cursor-pointer"
+                          checked={backToBack}
+                          onChange={(e) => setBackToBack(e.target.checked)}
                         />
                         <label htmlFor="backToBack" className="text-lg font-bold cursor-pointer">
                           Print Back-to-Back
@@ -308,6 +323,8 @@ function Brochure() {
                         <textarea
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-19 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           placeholder="Enter message"
+                          value={message}
+                          onChange={(e) => setMessage(e.target.value)}
                         ></textarea>
                       </div>
                     </div>

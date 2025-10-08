@@ -170,8 +170,10 @@ const OrdersSection = () => {
           transition={{ duration: 0.4 }}
           className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-x-auto"
         >
-          <table className="w-full text-left border-collapse min-w-[900px] text-sm">
-            <thead className="bg-gray-100">
+     <div className="max-h-[500px] overflow-y-auto">
+     <table className="w-full text-left border-collapse min-w-[900px] text-sm">
+
+            <thead className="bg-gray-100 sticky top-0 z-10">
               <tr>
                 {[
                   { key: "enquiryNo", label: "Enquiry No." },
@@ -240,6 +242,7 @@ const OrdersSection = () => {
               ))}
             </tbody>
           </table>
+          </div>
         </motion.div>
       </motion.div>
 

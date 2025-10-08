@@ -75,7 +75,6 @@ const SupplyMonitoring = () => {
           status: getStockStatus(newSupply.quantity),
         };
         const res = await axios.post("http://localhost:5000/api/supplies", newItem);
-        // Use the returned supply object (with supply_id)
         setSupplies((prev) => [...prev, res.data]);
       } 
       else if (popupType === "edit") {
@@ -87,7 +86,6 @@ const SupplyMonitoring = () => {
           `http://localhost:5000/api/supplies/${selectedSupply.supply_id}`,
           updatedItem
         );
-        // Use the returned updated supply object
         setSupplies((prev) =>
           prev.map((s) =>
             s.supply_id === selectedSupply.supply_id
@@ -149,7 +147,6 @@ const SupplyMonitoring = () => {
 
   return (
     <div className="p-6 min-h-screen bg-white text-gray-800 rounded-3xl">
-      {/* ✅ Same design - header, charts, and table untouched */}
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-6">
         <h1 className="text-4xl font-extrabold text-cyan-700">Supply Monitoring</h1>
@@ -167,7 +164,6 @@ const SupplyMonitoring = () => {
         </div>
       </div>
 
-      {/* ✅ Same charts and table layout — no design changes */}
       <div className="flex justify-end gap-3 mb-6">
         <button
           type="button"

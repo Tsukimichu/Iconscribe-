@@ -86,4 +86,29 @@ router.get("/", async (req, res) => {
   }
 });
 
+// 📊 Get order count per product for dashboard chart
+router.get("/product-order-counts", async (req, res) => {
+  try {
+    const [rows] = await db
+      .promise()
+      .query(
+        `SELECT 
+          p.product_name, 
+          SUM(oi.quantity) AS total_orders
+        FROM orderitems oi
+        JOIN products p ON oi.product_id = p.product_id
+        GROUP BY oi.product_id
+        ORDER BY total_orders DESC`
+      );
+    res.json(rows);
+  } catch (error) {
+    console.error("❌ Error fetching product order counts:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to load product order counts",
+      error: error.message,
+    });
+  }
+});
+
 module.exports = router;

@@ -1,54 +1,78 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Chart from "react-apexcharts";
+import axios from "axios";
 
 const OverviewSection = () => {
   const [activeFilter, setActiveFilter] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [orderChartData, setOrderChartData] = useState({
+    categories: [],
+    data: [],
+  });
 
-  const statusCards = [
-    { label: "In Review", count: 6, color: "from-blue-500 to-cyan-400" },
-    { label: "Ongoing", count: 1, color: "from-purple-500 to-pink-400" },
-    { label: "Pending", count: 1, color: "from-yellow-500 to-amber-400" },
-    { label: "Out for Delivery", count: 1, color: "from-orange-500 to-red-400" },
-    { label: "Completed", count: 7, color: "from-green-500 to-emerald-400" },
-  ];
+  // Fetch all orders from backend
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/orders");
+        setOrders(res.data);
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+      }
+    };
+    fetchOrders();
+  }, []);
 
-  const statusDetails = {
-    "In Review": [
-      { id: "OR-1001", customer: "John Doe", product: "Yearbook", date: "2025-08-01", status: "Checking Files" },
-      { id: "OR-1002", customer: "Jane Smith", product: "Book", date: "2025-08-03", status: "Awaiting Approval" },
-    ],
-    Ongoing: [
-      { id: "OR-1003", customer: "Mark Lee", product: "Calendar", date: "2025-08-10", status: "Printing" },
-    ],
-    Pending: [
-      { id: "OR-1004", customer: "Anna Cruz", product: "Mug", date: "2025-08-12", status: "Waiting for Payment" },
-    ],
-    "Out for Delivery": [
-      { id: "OR-1005", customer: "Carlos Diaz", product: "Official Receipt", date: "2025-08-15", status: "Courier Assigned" },
-    ],
-    Completed: [
-      { id: "OR-1006", customer: "Sophia Reyes", product: "Book", date: "2025-08-05", status: "Delivered" },
-      { id: "OR-1007", customer: "James Tan", product: "Yearbook", date: "2025-08-08", status: "Delivered" },
-    ],
+  // Fetch product order counts for chart
+  useEffect(() => {
+    const fetchOrderChartData = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/orders/product-order-counts");
+        setOrderChartData({
+          categories: res.data.map((item) => item.product_name),
+          data: res.data.map((item) => Number(item.total_orders)),
+        });
+      } catch (err) {
+        console.error("Error fetching order chart data:", err);
+      }
+    };
+    fetchOrderChartData();
+  }, []);
+
+  // Group orders by status for popup display
+  const groupByStatus = (status) =>
+    orders.filter((order) => order.status === status);
+
+  // Count orders per status for dashboard cards (copied from admin)
+  const statusCounts = {
+    Pending: groupByStatus("Pending").length,
+    Ongoing: groupByStatus("Ongoing").length,
+    "Out for Delivery": groupByStatus("Out for Delivery").length,
+    Completed: groupByStatus("Completed").length,
   };
 
+  const statusCards = [
+    { label: "Pending", count: statusCounts["Pending"], color: "from-blue-600 to-cyan-400" },
+    { label: "Ongoing", count: statusCounts["Ongoing"], color: "from-yellow-500 to-amber-400" },
+    { label: "Out for Delivery", count: statusCounts["Out for Delivery"], color: "from-orange-500 to-red-400" },
+    { label: "Completed", count: statusCounts["Completed"], color: "from-green-500 to-emerald-400" },
+  ];
+
+  // ✅ Chart Data (now dynamic)
   const orderData = {
     series: [
-      { name: "Jan", data: [120, 90, 70, 50, 30] },
-      { name: "Feb", data: [100, 80, 60, 40, 25] },
-      { name: "Mar", data: [140, 110, 90, 60, 45] },
-      { name: "Apr", data: [160, 130, 100, 80, 55] },
+      { name: "Orders", data: orderChartData.data },
     ],
     options: {
       chart: { type: "area", stacked: false, toolbar: { show: false }, background: "transparent" },
-      xaxis: { categories: ["Official Receipt", "Calendar", "Yearbook", "Book", "Mug"] },
+      xaxis: { categories: orderChartData.categories },
       stroke: { curve: "smooth", width: 3 },
       dataLabels: { enabled: false },
       legend: { position: "top", horizontalAlign: "left" },
       fill: { opacity: 0.25, gradient: { shade: "light", type: "vertical" } },
       grid: { borderColor: "#e5e7eb" },
-      colors: ["#6366f1", "#f97316", "#10b981", "#22d3ee"],
+      colors: ["#6366f1"],
     },
   };
 
@@ -110,14 +134,14 @@ const OverviewSection = () => {
         </div>
 
         {/* Status Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           {statusCards.map((card, i) => (
             <motion.div
               key={i}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => setActiveFilter(card.label)}
-              className={`cursor-pointer rounded-2xl px-5 py-6 text-center bg-gradient-to-br ${card.color} shadow-lg text-white`}
+              className={`cursor-pointer flex flex-col justify-center items-center rounded-2xl px-5 py-6 text-center bg-gradient-to-br ${card.color} shadow-lg text-white min-h-[110px]`}
             >
               <p className="text-4xl font-extrabold">{card.count.toString().padStart(2, "0")}</p>
               <p className="text-sm font-medium tracking-wide">{card.label}</p>
@@ -150,7 +174,7 @@ const OverviewSection = () => {
         </div>
       </motion.div>
 
-      {/* Pop-up Modal with Details (No Charts) */}
+      {/* ✅ Orders Popup (Dynamic from Database) */}
       <AnimatePresence>
         {activeFilter && (
           <motion.div
@@ -168,7 +192,6 @@ const OverviewSection = () => {
             >
               <h2 className="text-2xl font-bold text-[#243b7d]">{activeFilter} Orders</h2>
 
-              {/* Details Table */}
               <div className="overflow-x-auto">
                 <table className="w-full border border-gray-200 rounded-xl overflow-hidden">
                   <thead className="bg-gray-100 text-gray-700 text-sm">
@@ -181,12 +204,12 @@ const OverviewSection = () => {
                     </tr>
                   </thead>
                   <tbody className="text-sm text-gray-600">
-                    {statusDetails[activeFilter].map((order, idx) => (
+                    {groupByStatus(activeFilter).map((order, idx) => (
                       <tr key={idx} className="border-t">
-                        <td className="p-3 font-medium">{order.id}</td>
-                        <td className="p-3">{order.customer}</td>
-                        <td className="p-3">{order.product}</td>
-                        <td className="p-3">{order.date}</td>
+                        <td className="p-3 font-medium">{order.order_id}</td>
+                        <td className="p-3">{order.customer_name}</td>
+                        <td className="p-3">{order.product_name}</td>
+                        <td className="p-3">{new Date(order.created_at).toLocaleDateString()}</td>
                         <td className="p-3">{order.status}</td>
                       </tr>
                     ))}
@@ -194,7 +217,6 @@ const OverviewSection = () => {
                 </table>
               </div>
 
-              {/* Close Button */}
               <div className="flex justify-end">
                 <button
                   onClick={() => setActiveFilter(null)}

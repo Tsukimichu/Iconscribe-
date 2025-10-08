@@ -1,10 +1,10 @@
-// server.js
 const express = require("express");
 const cors = require("cors");
 const userRoutes = require("./routes/userRoutes");
 const maintenanceRoutes = require("./routes/maintenanceRoutes");
 const productRoutes = require("./routes/products");
 const orderRoutes = require("./routes/orderRoutes");
+const supplyRoutes = require("./routes/supplyRoutes");
 
 const app = express();
 
@@ -17,6 +17,7 @@ app.use("/api", userRoutes);
 app.use("/api", maintenanceRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/supplies", supplyRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {

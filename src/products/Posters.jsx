@@ -1,5 +1,5 @@
 import Nav from "../component/navigation";
-import samplePoster from "../assets/Posters.png"; // Replace with your poster preview image
+import samplePoster from "../assets/Flyers.png"; 
 import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState,useEffect} from "react";
@@ -10,11 +10,22 @@ function Posters() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
    const [userProfile, setUserProfile] = useState({
+    id: "",
     name: "",
     email: "",
     address: "",
     phone: "",
     });
+
+      const [quantity, setQuantity] = useState("");
+      const [size, setSize] = useState("");
+      const [paperType, setPaperType] = useState("");
+      const [lamination, setLamination]= useState("");
+      const [color, setColor]= useState("");
+      const [message, setMessage]= useState("");
+
+      const [showConfirm, setShowConfirm] = useState(false);
+      const [showContactModal, setShowContactModal] = useState(false);
 
   useEffect(() => {
         const checkToken = () => {
@@ -38,6 +49,7 @@ function Posters() {
           .then((data) => {
             if (data.success && data.data) {
               setUserProfile({
+                id: data.data.user_id || "",
                 name: data.data.name || "",
                 email: data.data.email || "",
                 address: data.data.address || "",
@@ -49,9 +61,7 @@ function Posters() {
       }, [isLoggedIn]);
 
 
-  const [quantity, setQuantity] = useState("");
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
+
 
   const handlePlaceOrder = (e) => {
     e.preventDefault();
@@ -77,6 +87,64 @@ function Posters() {
     }, []);
 
     if (!visible) return null;
+
+    const handleConfirmOrder = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("⚠️ You must be logged in to place an order.");
+          navigate("/login");
+          return;
+        }
+        const customDetails = {
+          Name: userProfile.name,
+          Email: userProfile.email,
+          Address: userProfile.address,
+          Phone: userProfile.phone,
+          "Number of Posters (min)": quantity,
+          Size: size,
+          "Paper Type": paperType,
+          Lamination: lamination,
+          Color: color,
+          Message: message,
+        };
+        const response = await fetch("http://localhost:5000/api/orders/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            user_id: userProfile.id,
+            product_id: 11,
+            quantity,
+            urgency: "Normal",
+            status: "Pending",
+            custom_details: customDetails,
+          }),
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          alert("✅ Order placed successfully!");
+          setShowConfirm(false);
+
+          setColor("");
+          setLamination("");
+          setMessage("");
+          setPaperType("");
+          setQuantity("");
+          setSize("");
+
+          navigate("/dashboard");
+        } else {
+          alert("⚠️ Failed to place order. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error placing order:", error);
+        alert("⚠️ An error occurred. Please try again.");
+      }   
+    };
 
   return (
     <>
@@ -185,12 +253,12 @@ function Posters() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-base font-semibold text-black">
-                        Number of Posters <span className="text-sm text-gray-700">(min 1000)</span>
+                        Number of Posters <span className="text-sm text-gray-700">(min 100)</span>
                       </label>
                       <input
                         type="number"
                         placeholder="Enter quantity"
-                        min="1000"
+                        min="100"
                         value={quantity}
                         onChange={(e) => setQuantity(e.target.value)}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
@@ -202,6 +270,8 @@ function Posters() {
                         Poster Size
                       </label>
                       <select
+                      value={size}
+                      onChange={(e) => setSize(e.target.value)}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       >
@@ -221,6 +291,8 @@ function Posters() {
                         Paper Type
                       </label>
                       <select
+                        value={paperType}
+                        onChange={(e) => setPaperType(e.target.value)}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       >
@@ -234,7 +306,10 @@ function Posters() {
                       <label className="block text-base font-semibold text-black">
                         Lamination
                       </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                      <select
+                      value={lamination}
+                      onChange={(e) => setLamination(e.target.value)}
+                      className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
                         <option value="">Select Lamination</option>
                         <option>Gloss</option>
                         <option>Matte</option>
@@ -250,6 +325,8 @@ function Posters() {
                         Color
                       </label>
                       <select
+                        value={color}
+                        onChange={(e) => setColor(e.target.value)}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       >
@@ -298,6 +375,8 @@ function Posters() {
                         Additional Notes <span className="text-sm text-gray-700">(optional)</span>
                       </label>
                       <textarea
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-41 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         placeholder="Enter a Message"
                       ></textarea>
@@ -524,7 +603,8 @@ function Posters() {
               >
                 Cancel
               </button>
-              <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition">
+              <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition"
+              onClick={handleConfirmOrder}>
                 Confirm
               </button>
             </div>

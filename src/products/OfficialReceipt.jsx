@@ -10,6 +10,16 @@ function OfficialReceipt() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
+  const [quantity, setQuantity] = useState("");
+  const [paperType, setPaperType] = useState("");
+  const [bookletFinish, setBookletFinish] = useState("");
+  const [size, setSize] = useState("");
+  const [message, setMessage] = useState("");
+
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+
+
   useEffect(() => {
     const checkToken = () => {
       const token = localStorage.getItem("token");
@@ -24,11 +34,6 @@ function OfficialReceipt() {
       window.removeEventListener("auth-change", checkToken);
     };
   }, []);
-
-
-  const [quantity, setQuantity] = useState("");
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
 
   const handlePlaceOrder = (e) => {
     e.preventDefault();
@@ -55,7 +60,8 @@ function OfficialReceipt() {
 
     if (!visible) return null;
 
-    const [user, setUser] = useState({
+    const [userProfile, setUserProfile] = useState({
+      id: "",
       name: "",
       email: "",
       address: "",
@@ -75,17 +81,80 @@ function OfficialReceipt() {
         .then((res) => res.json())
         .then((data) => {
           if (data.success && data.data) {
-            setUser({
-              name: data.data.name,
-              email: data.data.email,
-              address: data.data.address,
-              phone: data.data.phone,
-              business: data.data.business || "",
+            setUserProfile({
+                id: data.data.user_id || "",
+                name: data.data.name || "",
+                email: data.data.email || "",
+                address: data.data.address || "",
+                phone: data.data.phone || "",
+                business: data.data.business || "",
             });
           }
         })
         .catch((err) => console.error("Error fetching user info:", err));
     }, [isLoggedIn]);
+
+ const handleConfirmOrder = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("⚠️ You must be logged in to place an order.");
+      return;
+    }
+
+    const customDetails = {
+      Name: userProfile.name,
+      Email: userProfile.email,
+      Address: userProfile.address,
+      Phone: userProfile.phone,
+      Business: userProfile.business,
+      "Number of copies (min)": quantity,
+      "Paper Type": paperType,
+      "Booklet Finish": bookletFinish,
+      Size: size,
+      Message: message,
+    };
+
+    const res = await fetch("http://localhost:5000/api/orders/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        user_id: userProfile.id,
+        product_id: 10,
+        quantity,
+        urgency: "Normal",
+        status: "Pending",
+        custom_details: customDetails,
+      }),
+    });
+
+    const data = await res.json();
+    console.log("Order response:", data);
+
+    if (data.success) {
+      alert("✅ Order placed successfully!");
+      setShowConfirm(false);
+
+      setQuantity("");
+      setPaperType("");
+      setBookletFinish("");
+      setSize("");
+      setMessage("");
+      
+      navigate("/dashboard");
+    } else {
+      alert("⚠️ Failed to place order: Unknown error");
+    }
+  } catch (err) {
+    console.error("Error placing order:", err);
+    alert("⚠️ Something went wrong while placing the order.");
+  }
+};
+
+
 
 
 
@@ -143,8 +212,8 @@ function OfficialReceipt() {
                         </label>
                         <input
                           type="text"
-                          value={user.name}
-                          onChange={(e) => setUser({ ...user, name: e.target.value })}
+                          value={userProfile.name}
+                          onChange={(e) =>setUserProfile({...userProfile, email: e.target.value })}
                           placeholder="Enter your name"
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           required
@@ -156,8 +225,8 @@ function OfficialReceipt() {
                         </label>
                         <input
                           type="email"
-                          value={user.email}
-                          onChange={(e) => setUser({ ...user, email: e.target.value })}
+                          value={userProfile.email}
+                          onChange={(e) => setUserProfile({ ...userProfile, email: e.target.value })}
                           placeholder="Enter your email"
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           required
@@ -172,8 +241,8 @@ function OfficialReceipt() {
                         </label>
                         <input
                           type="text"
-                          value={user.address}
-                          onChange={(e) => setUser({ ...user, address: e.target.value })}
+                          value={userProfile.address}
+                          onChange={(e) => setUserProfile({ ...userProfile, address: e.target.value })}
                           placeholder="Enter your location"
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         />
@@ -184,8 +253,8 @@ function OfficialReceipt() {
                         </label>
                         <input
                           type="text"
-                          value={user.phone}
-                          onChange={(e) => setUser({ ...user, phone: e.target.value })}
+                          value={userProfile.phone}
+                          onChange={(e) => setUserProfile({ ...userProfile, phone: e.target.value })}
                           placeholder="Enter contact number"
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         />
@@ -201,8 +270,8 @@ function OfficialReceipt() {
                       </label>
                       <input
                         type="text"
-                        value={user.business}
-                        onChange={(e) => setUser({ ...user, business: e.target.value })} 
+                        value={userProfile.business}
+                        onChange={(e) => setUserProfile({ ...userProfile, business: e.target.value })} 
                         placeholder="Enter business name"
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                       />
@@ -231,7 +300,10 @@ function OfficialReceipt() {
                       <label className="block text-base font-semibold text-black">
                         Paper Type
                       </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                      <select
+                      value={paperType}
+                      onChange={(e) => setPaperType(e.target.value)}
+                      className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
                         <option value="">Select paper type</option>
                         <option>Carbonized</option>
                         <option>Colored Bondpaper</option>
@@ -241,7 +313,10 @@ function OfficialReceipt() {
                       <label className="block text-base font-semibold text-black">
                         Booklet Finish
                       </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                      <select 
+                      value={bookletFinish}
+                      onChange={(e) => setBookletFinish(e.target.value)}
+                      className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
                         <option value="">Select pack type</option>
                         <option>Padded</option>
                         <option>Stapled</option>
@@ -280,6 +355,8 @@ function OfficialReceipt() {
                           Size
                         </label>
                         <select
+                        value={size}
+                        onChange={(e) => setSize(e.target.value)}
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           required
                         >
@@ -298,6 +375,8 @@ function OfficialReceipt() {
                           </span>
                         </label>
                         <textarea
+                          value={message}
+                          onChange={(e) => setMessage(e.target.value)}
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-23 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           placeholder="Enter message"
                         ></textarea>
@@ -336,8 +415,6 @@ function OfficialReceipt() {
               </div>
             </>
           ) : (
-
-            // ETO LAMAN NG FALSE
             <>
               {/* Back Button + Title */}
               <div className="flex items-center gap-3 mb-10">
@@ -389,8 +466,6 @@ function OfficialReceipt() {
                         type="number"
                         placeholder="Enter quantity"
                         min="100"
-                        value={quantity}
-                        onChange={(e) => setQuantity(e.target.value)}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       />
@@ -418,7 +493,8 @@ function OfficialReceipt() {
                       <label className="block text-base font-semibold text-black">
                         Paper Type
                       </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                      <select
+                      className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
                         <option value="">Select paper type</option>
                         <option>Carbonized</option>
                         <option>Colored Bondpaper</option>
@@ -428,7 +504,8 @@ function OfficialReceipt() {
                       <label className="block text-base font-semibold text-black">
                         Booklet Finish
                       </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                      <select
+                      className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
                         <option value="">Select pack type</option>
                         <option>Padded</option>
                         <option>Stapled</option>
@@ -496,17 +573,12 @@ function OfficialReceipt() {
                   )}
                 </div>
               </div>
-            </>// empty content when not logged in
+            </>
 
             
           )}
         </div>
       </div>
-
-
-
-
-
 
 
 
@@ -527,7 +599,9 @@ function OfficialReceipt() {
               >
                 Cancel
               </button>
-              <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition">
+              <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition"
+                onClick={handleConfirmOrder}
+              >
                 Confirm
               </button>
             </div>

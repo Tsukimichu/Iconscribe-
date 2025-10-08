@@ -1,6 +1,6 @@
 import Nav from "../component/navigation";
 import or from "../assets/RaffleTicket.png";
-import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
+import { ArrowBigLeft, Upload, Phone, Mail, Bus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState,useEffect } from "react";
 import { Contact, MessageCircle, XCircle } from "lucide-react";
@@ -10,11 +10,21 @@ function RaffleTicket() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
    const [userProfile, setUserProfile] = useState({
+    id: "",
     name: "",
     email: "",
     address: "",
     phone: "",
+    business: "",
     });
+
+      const [quantity, setQuantity] = useState("");
+      const [size, setSize] = useState("");
+      const [withStub, setWithStub] = useState("");
+      const [message, setMessage] = useState("");
+
+      const [showConfirm, setShowConfirm] = useState(false);
+      const [showContactModal, setShowContactModal] = useState(false);  
 
   useEffect(() => {
         const checkToken = () => {
@@ -38,21 +48,18 @@ function RaffleTicket() {
           .then((data) => {
             if (data.success && data.data) {
               setUserProfile({
+                id: data.data.user_id || "",
                 name: data.data.name || "",
                 email: data.data.email || "",
                 address: data.data.address || "",
                 phone: data.data.phone || "",
+                business: data.data.business || "",
               });
             }
           })
           .catch((err) => console.error("Error fetching profile:", err));
       }, [isLoggedIn]);
 
-
-
-  const [quantity, setQuantity] = useState("");
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
 
   const handlePlaceOrder = (e) => {
     e.preventDefault();
@@ -78,6 +85,67 @@ function RaffleTicket() {
     }, []);
 
     if (!visible) return null;
+
+    const handleConfirmOrder = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("⚠️ You must be logged in to place an order.");
+          navigate("/login");
+          return;
+        }
+
+        const customDetails = {
+          Name: userProfile.name,
+          Email: userProfile.email,
+          Address: userProfile.address,
+          Phone: userProfile.phone,
+          Businessname: userProfile.business,
+          "Number of Tickets (min)": quantity,
+          Size: size,
+          "With Stub": withStub,
+          Message: message,
+        };
+
+        const response = await fetch("http://localhost:5000/api/orders/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            user_id: userProfile.id,
+            product_id: 12,
+            quantity,
+            urgency: "Normal",
+            status: "Pending",
+            custom_details: customDetails,
+          }),
+        });
+
+        const data = await response.json();
+        console.log("Order response:", data);
+
+        if (data.success) {
+          alert("✅ Order placed successfully!");
+          setShowConfirm(false);
+          // Reset form fields
+          setQuantity("");
+          setSize("");
+          setWithStub("");
+          setMessage("");
+
+          navigate("/dashboard");
+        } else {
+          alert("⚠️ Failed to place order. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error placing order:", error);
+        alert("⚠️ An error occurred. Please try again.");
+      }
+    };
+
+
 
   return (
     <>
@@ -186,15 +254,17 @@ function RaffleTicket() {
                     </div>
                   </>
 
-                  {/* Event Title + Quantity */}
+                  {/* Business Name + Quantity */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-base font-semibold text-black">
-                        Event Name
+                        Business Name
                       </label>
                       <input
                         type="text"
-                        placeholder="Enter event name"
+                        value={userProfile.business}
+                        onChange={(e) => setUserProfile({ ...userProfile, business: e.target.value })} 
+                        placeholder="Enter business name"
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                       />
                     </div>
@@ -223,6 +293,8 @@ function RaffleTicket() {
                         Size
                       </label>
                       <select
+                        value={size}
+                        onChange={(e) => setSize(e.target.value)}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       >
@@ -235,7 +307,10 @@ function RaffleTicket() {
                       <label className="block text-base font-semibold text-black">
                         With Stub
                       </label>
-                      <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
+                      <select
+                      value={withStub}
+                      onChange={(e) => setWithStub(e.target.value)}
+                      className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
                         <option value="">Select option</option>
                         <option>Yes</option>
                         <option>No</option>
@@ -270,6 +345,8 @@ function RaffleTicket() {
                           </span>
                         </label>
                         <textarea
+                          value={message}
+                          onChange={(e) => setMessage(e.target.value)}
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-19 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           placeholder="Enter special instructions"
                         ></textarea>
@@ -382,7 +459,7 @@ function RaffleTicket() {
                     </div>
                   </div>
 
-                  {/* Stub Option + Color */}
+                  {/* Stub Option */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-base font-semibold text-black">
@@ -392,19 +469,6 @@ function RaffleTicket() {
                         <option value="">Select option</option>
                         <option>Yes</option>
                         <option>No</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-base font-semibold text-black">
-                        Color
-                      </label>
-                      <select
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                        required
-                      >
-                        <option value="">Select Color</option>
-                        <option>Full Color</option>
-                        <option>Black & White</option>
                       </select>
                     </div>
                   </div>
@@ -492,7 +556,9 @@ function RaffleTicket() {
               >
                 Cancel
               </button>
-              <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition">
+              <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition" 
+              onClick={handleConfirmOrder}
+              >
                 Confirm
               </button>
             </div>

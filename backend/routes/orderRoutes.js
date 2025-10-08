@@ -111,4 +111,31 @@ router.get("/product-order-counts", async (req, res) => {
   }
 });
 
+// Get all orders for a specific user
+router.get("/user/:id", async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const [rows] = await db
+      .promise()
+      .query(
+        `SELECT 
+          oi.order_item_id AS enquiryNo,
+          p.product_name AS service,
+          o.order_date AS dateOrdered,
+          oi.urgency,
+          oi.status
+        FROM orderitems oi
+        JOIN orders o ON oi.order_id = o.order_id
+        JOIN products p ON oi.product_id = p.product_id
+        WHERE o.user_id = ?
+        ORDER BY o.order_date DESC`,
+        [userId]
+      );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+});
+
 module.exports = router;

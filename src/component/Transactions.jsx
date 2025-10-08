@@ -1,21 +1,43 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { PhoneCall, Trash2, Eye, CheckCircle, Clock, Truck } from "lucide-react";
-
-const mockData = [
-  { service: "Official Receipts", date: "04/11/2025", urgency: "Minor", urgencyColor: "text-green-600", status: "In review", statusColor: "text-blue-600", actions: ["call", "view"] },
-  { service: "Official Receipts", date: "04/11/2025", urgency: "Moderate", urgencyColor: "text-yellow-500", status: "Ongoing", statusColor: "text-purple-600", actions: ["call", "view"] },
-  { service: "Book", date: "04/11/2025", urgency: "Moderate", urgencyColor: "text-yellow-500", status: "Pending", statusColor: "text-gray-500", actions: ["call", "view"] },
-  { service: "Official Receipts", date: "04/11/2025", urgency: "--", urgencyColor: "text-gray-400", status: "Completed", statusColor: "text-green-700", actions: ["delete", "view"] },
-  { service: "Official Receipts", date: "04/11/2025", urgency: "Critical", urgencyColor: "text-red-600", status: "Out for Delivery", statusColor: "text-yellow-700", actions: ["call", "received"] }
-];
+import { Eye, CheckCircle, Clock, Truck } from "lucide-react";
 
 function Transactions() {
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  const userId = localStorage.getItem("user_id");
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  console.log("isLoggedIn:", isLoggedIn);
+  console.log("userId:", userId);
+
+useEffect(() => {
+  if (isLoggedIn && userId) {
+    fetch(`http://localhost:5000/api/orders/user/${userId}`)
+      .then((res) => {
+        console.log("API response status:", res.status);
+        return res.json();
+      })
+      .then((data) => {
+        console.log("Fetched orders in UI:", data);
+        const ordersArray = Array.isArray(data) ? data : [];
+        setOrders(ordersArray);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Fetch error:", err);
+        setLoading(false);
+      });
+  } else {
+    setLoading(false);
+  }
+}, [isLoggedIn, userId]);
+
+
   if (!isLoggedIn) return null;
 
   return (
-    <section className="relative w-full px-6 py-25 bg-white text-gray-800">
+    <section className="relative w-full px-6 py-30 bg-white text-gray-800">
       <motion.h2
         className="text-4xl font-extrabold text-center mb-10"
         initial={{ opacity: 0, y: -20 }}
@@ -43,49 +65,45 @@ function Transactions() {
                 </tr>
               </thead>
               <tbody>
-                {mockData.map((item, index) => (
-                  <motion.tr
-                    key={index}
-                    className="transition-all hover:bg-gray-100 rounded-lg"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <td className="py-2 px-2 font-medium">{item.service}</td>
-                    <td>{item.date}</td>
-                    <td className={`${item.urgencyColor} font-semibold`}>{item.urgency}</td>
-                    <td className={`${item.statusColor} font-semibold flex items-center gap-2`}>
-                      {getStatusIcon(item.status)}
-                      {item.status}
+                {loading ? (
+                  <tr>
+                    <td colSpan={5} className="text-center py-4">
+                      Loading...
                     </td>
-                    <td>
-                      <div className="flex items-center gap-2">
-                        {item.actions.includes("call") && (
-                          <button className="p-2 bg-green-600 hover:bg-green-700 text-white rounded-full shadow transition">
-                            <PhoneCall size={16} />
-                          </button>
-                        )}
-                        {item.actions.includes("view") && (
+                  </tr>
+                ) : orders.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="text-center py-4">
+                      No orders found.
+                    </td>
+                  </tr>
+                ) : (
+                  orders.map((item, index) => (
+                    <motion.tr
+                      key={item.enquiryNo}
+                      className="transition-all hover:bg-gray-100 rounded-lg"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <td className="py-2 px-2 font-medium">{item.service}</td>
+                      <td>{item.dateOrdered?.slice(0, 10)}</td>
+                      <td className="font-semibold">{item.urgency}</td>
+                      <td className="font-semibold flex items-center gap-2">
+                        {getStatusIcon(item.status)}
+                        {item.status}
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-2">
                           <button className="flex items-center bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-lg shadow transition">
                             <Eye size={14} className="mr-1" />
                             View
                           </button>
-                        )}
-                        {item.actions.includes("delete") && (
-                          <button className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow transition">
-                            <Trash2 size={16} />
-                          </button>
-                        )}
-                        {item.actions.includes("received") && (
-                          <button className="flex items-center bg-yellow-600 hover:bg-yellow-700 text-white text-xs px-3 py-1 rounded-lg shadow transition">
-                            <CheckCircle size={14} className="mr-1" />
-                            Received
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -98,11 +116,21 @@ function Transactions() {
         >
           <h3 className="text-2xl font-semibold mb-6">Notifications</h3>
           <ul className="space-y-3 text-sm flex-1">
-            <li className="flex justify-between bg-white/40 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-100 transition">Official Receipts <span>04/11/2025</span></li>
-            <li className="flex justify-between bg-white/40 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-100 transition">Book <span>04/11/2025</span></li>
-            <li className="flex justify-between bg-white/40 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-100 transition">Service Approved <span>04/11/2025</span></li>
-            <li className="flex justify-between bg-white/40 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-100 transition">Completed <span>04/11/2025</span></li>
-            <li className="flex justify-between bg-white/40 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-100 transition">Out for Delivery <span>04/11/2025</span></li>
+            <li className="flex justify-between bg-white/40 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-100 transition">
+              Official Receipts <span>04/11/2025</span>
+            </li>
+            <li className="flex justify-between bg-white/40 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-100 transition">
+              Book <span>04/11/2025</span>
+            </li>
+            <li className="flex justify-between bg-white/40 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-100 transition">
+              Service Approved <span>04/11/2025</span>
+            </li>
+            <li className="flex justify-between bg-white/40 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-100 transition">
+              Completed <span>04/11/2025</span>
+            </li>
+            <li className="flex justify-between bg-white/40 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-100 transition">
+              Out for Delivery <span>04/11/2025</span>
+            </li>
           </ul>
         </motion.div>
       </div>

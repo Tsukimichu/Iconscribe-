@@ -5,9 +5,11 @@ import logo from "../assets/ICONS.png";
 import orgImage from "../assets/org.jpg";
 import { Eye, EyeOff, ArrowBigLeft, CheckCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "./ui/ToastProvider.jsx"; // ✅ added import
 
 function Signup() {
   const navigate = useNavigate();
+  const { showToast } = useToast(); // ✅ use toast hook
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -34,7 +36,7 @@ function Signup() {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!");
+      showToast("Passwords do not match!", "error"); // ✅ replaced alert
       return;
     }
 
@@ -52,11 +54,11 @@ function Signup() {
         setGeneratedOtp(randomOtp);
         console.log("Generated OTP:", randomOtp);
         setOtpSent(true);
-        alert(`OTP sent to ${formData.email} and ${formData.phone}: ${randomOtp}`);
+        showToast(`OTP sent to ${formData.email} and ${formData.phone}`, "success"); // ✅ replaced alert
       }
     } catch (err) {
       console.error("Signup error:", err);
-      alert("Signup failed. Check console for details.");
+      showToast("Signup failed. Please check the console.", "error"); // ✅ replaced alert
     }
   };
 
@@ -65,8 +67,10 @@ function Signup() {
     e.preventDefault();
     if (otp === String(generatedOtp)) {
       setSuccess(true);
+      showToast("Your account has been verified successfully!", "success"); // ✅ success toast
     } else {
       setShake(true);
+      showToast("Incorrect OTP. Please try again.", "error"); // ✅ error toast
       setTimeout(() => setShake(false), 500);
     }
   };

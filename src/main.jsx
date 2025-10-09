@@ -32,6 +32,9 @@ import Customization from './component/Customization.jsx';
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
+// ADDED: Toast provider (only addition)
+import { ToastProvider } from './component/ui/ToastProvider.jsx';
+
 const router = createBrowserRouter([
   { path: '/', element: <Splash /> },
   { path: '/dashboard', element: <Userpage /> },
@@ -59,7 +62,7 @@ const router = createBrowserRouter([
   { path: '/customize', element: <Customization /> },
   { path: '/maintenance', element: <MaintenanceUser/>},
 
- 
+
   // Admin role 
    { path: '/mainteance', element: <Maintenance/> },
 
@@ -71,6 +74,8 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <ToastProvider>
+      <RouterProvider router={router} />
+    </ToastProvider>
   </StrictMode>
 );

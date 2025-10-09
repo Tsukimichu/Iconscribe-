@@ -211,6 +211,14 @@ const openViewModal = async (order) => {
       )
     ) : null;
 
+    const formatLabel = (key) => {
+      return key
+        .replace(/([A-Z])/g, " $1")     
+        .replace(/_/g, " ")              
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+    };
+
+
   return (
     <div className="p-8 rounded-3xl bg-white shadow-2xl space-y-8 min-h-screen">
       <motion.div
@@ -361,22 +369,47 @@ const openViewModal = async (order) => {
                   selectedOrder.items.map((item, idx) => (
                     <div key={idx} className="mt-6 border-t border-gray-200 pt-5">
                       <h3 className="text-lg font-semibold text-cyan-700 mb-3">{item.service}</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
-                        <p><span className="font-bold text-gray-800">Enquiry No:</span> {item.enquiryNo}</p>
-                        <p><span className="font-bold text-gray-800">Urgency:</span> {item.urgency || "—"}</p>
-                        <p><span className="font-bold text-gray-800">Number of Copies:</span> {item.details?.numberOfCopies ?? "—"}</p>
-                        <p><span className="font-bold text-gray-800">Number of Pages:</span> {item.details?.numberOfPages ?? "—"}</p>
-                        <p><span className="font-bold text-gray-800">Binding Type:</span> {item.details?.bindingType || "—"}</p>
-                        <p><span className="font-bold text-gray-800">Paper Type:</span> {item.details?.paperType || "—"}</p>
-                        <p><span className="font-bold text-gray-800">Cover Finish:</span> {item.details?.coverFinish || "—"}</p>
-                        <p><span className="font-bold text-gray-800">Color Finish:</span> {item.details?.colorFinish || "—"}</p>
-                        <p><span className="font-bold text-gray-800">Uploaded Design:</span> 
-                          <a href={item.details?.designFile || "#"} target="_blank" rel="noopener noreferrer" className="text-cyan-600 hover:underline ml-1 text-sm">View</a>
-                        </p>
-                        <p><span className="font-bold text-gray-800">Uploaded File:</span> 
-                          <a href={item.details?.uploadedFile || "#"} target="_blank" rel="noopener noreferrer" className="text-cyan-600 hover:underline ml-1 text-sm">View</a>
-                        </p>
-                      </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                          <p>
+                            <span className="font-bold text-gray-800">Enquiry No:</span> {item.enquiryNo}
+                          </p>
+                          <p>
+                            <span className="font-bold text-gray-800">Urgency:</span> {item.urgency || "—"}
+                          </p>
+
+                          {/* Dynamically show all product-specific details */}
+                          {item.details && Object.keys(item.details).map((key) => {
+                            const value = item.details[key];
+                            if (!value) return null;
+                            // Handle special case for files or links
+                            if (key.toLowerCase().includes("file") || key.toLowerCase().includes("design")) {
+                              return (
+                                <p key={key}>
+                                  <span className="font-bold text-gray-800">
+                                    {formatLabel(key)}:
+                                  </span>
+                                  <a
+                                    href={value}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-cyan-600 hover:underline ml-1 text-sm"
+                                  >
+                                    View
+                                  </a>
+                                </p>
+                              );
+                            }
+                            // Normal text field
+                            return (
+                              <p key={key}>
+                                <span className="font-bold text-gray-800">
+                                  {formatLabel(key)}:
+                                </span>{" "}
+                                {value}
+                              </p>
+                            );
+                          })}
+                        </div>
                     </div>
                   ))
                 ) : (

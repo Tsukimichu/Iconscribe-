@@ -1,5 +1,5 @@
 import Nav from "../component/navigation";
-import sampleFlyer from "../assets/Flyers.png"; // Replace with your flyer preview image
+import sampleFlyer from "../assets/Posters.png"; 
 import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState,useEffect } from "react";

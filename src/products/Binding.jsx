@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useToast } from "../component/ui/ToastProvider";
 
 function Binding() {
   const navigate = useNavigate();
@@ -33,6 +34,37 @@ function Binding() {
   const [paperType, setPaperType] = useState("");
   const [notes, setNotes] = useState("");
   const [file, setFile] = useState(null);
+  const { showToast } = useToast();
+
+
+  // handle file input
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };
+
+  // upload image after order placed
+  const handleUpload = async (productId) => {
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("image1", file);
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/products/upload/single/${productId}`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        console.log(" Image uploaded:", data.imagePath);
+      } else {
+        console.error(" Failed to upload image");
+      }
+    } catch (err) {
+      console.error("Error uploading image:", err);
+    }
+  };
+
 
   // modals
   const [showConfirm, setShowConfirm] = useState(false);
@@ -99,7 +131,7 @@ function Binding() {
     }
   };
 
-  // ✅ handle confirm order
+  // handle confirm order
   const handleConfirmOrder = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -111,7 +143,7 @@ function Binding() {
         Notes: notes,
       };
 
-      // send to backend
+      // send order first
       const res = await fetch("http://localhost:5000/api/orders/create", {
         method: "POST",
         headers: {
@@ -120,7 +152,7 @@ function Binding() {
         },
         body: JSON.stringify({
           user_id: userProfile.id,
-          product_id: 1, // product_id for Binding
+          product_id: 1, 
           quantity,
           urgency: "Normal",
           status: "Pending",
@@ -131,23 +163,28 @@ function Binding() {
       const data = await res.json();
 
       if (data.success) {
-        alert("✅ Order placed successfully!");
+        showToast(" Order placed successfully!", "success");
         setShowConfirm(false);
-        // reset
+
+        // Upload file
+        await handleUpload(1);
+
+        // Reset form
         setQuantity("");
         setPageCount("");
         setBindingType("");
         setPaperType("");
         setNotes("");
         setFile(null);
-      } else {
-        alert("⚠️ Failed to place order.");
-      }
+    } else {
+      showToast(" Failed to place order.", "error");
+    }
     } catch (err) {
       console.error("Error placing order:", err);
-      alert("⚠️ Something went wrong while placing the order.");
+      showToast(" Something went wrong while placing the order.", "error");
     }
   };
+
 
   if (!visible) return null;
 
@@ -340,11 +377,17 @@ function Binding() {
                           Upload Your File
                         </span>
                         <input
-                          type="file"
+                          input type="file" 
+                          name="image1"
                           className="hidden"
                           onChange={(e) => setFile(e.target.files[0])}
                         />
                       </label>
+                      {file && (
+                        <p className="text-sm text-green-600 mt-2">
+                         Selected File: <span className="font-medium">{file.name}</span>
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex flex-col gap-3 mt-0">

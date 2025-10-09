@@ -74,11 +74,41 @@ function Books() {
   const [paperType, setPaperType] = useState("");
   const [coverFinish, setCoverFinish] = useState("");
   const [colorPrinting, setColorPrinting] = useState("");
+  const [file, setFile] = useState(null);
   const [notes, setNotes] = useState("");
 
   // Modal states
   const [showConfirm, setShowConfirm] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+
+    // handle file input
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };
+
+  // upload image after order placed
+  const handleUpload = async (productId) => {
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("image1", file);
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/products/upload/single/${productId}`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        console.log("✅ Image uploaded:", data.imagePath);
+      } else {
+        console.error("⚠️ Failed to upload image");
+      }
+    } catch (err) {
+      console.error("Error uploading image:", err);
+    }
+  };
+
 
   // Handle "Place Order" button
   const handlePlaceOrder = (e) => {
@@ -87,21 +117,20 @@ function Books() {
     else setShowConfirm(true);
   };
 
-  // ✅ Confirm and send order to backend
+  // Confirm and send order to backend
   const handleConfirmOrder = async () => {
     try {
       const token = localStorage.getItem("token");
+
       const customDetails = {
-        "Number of Copies": quantity,
-        "Number of Pages": pages,
-        "Binding Type": binding,
-        "Paper Type": paperType,
-        "Cover Finish": coverFinish,
-        "Color Printing": colorPrinting,
-        "Notes": notes,
+        PageCount: pageCount,
+        BindingType: bindingType,
+        PaperType: paperType,
+        Notes: notes,
       };
 
-      const response = await fetch("http://localhost:5000/api/orders/create", {
+      // send order first
+      const res = await fetch("http://localhost:5000/api/orders/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -117,27 +146,31 @@ function Books() {
         }),
       });
 
-      const data = await response.json();
+      const data = await res.json();
 
       if (data.success) {
         alert("✅ Order placed successfully!");
         setShowConfirm(false);
+
+        // 🖼️ Upload the file
+        await handleUpload(1); 
+
         // reset form
         setQuantity("");
-        setPages("");
-        setBinding("");
+        setPageCount("");
+        setBindingType("");
         setPaperType("");
-        setCoverFinish("");
-        setColorPrinting("");
         setNotes("");
+        setFile(null);
       } else {
-        alert("⚠️ Failed to place order. Please try again.");
+        alert("⚠️ Failed to place order.");
       }
     } catch (err) {
       console.error("Error placing order:", err);
-      alert("⚠️ Something went wrong. Please try again later.");
+      alert("⚠️ Something went wrong while placing the order.");
     }
   };
+
 
   return (
     <>
@@ -322,8 +355,20 @@ function Books() {
                       <label className="flex items-center justify-center gap-2 border-2 border-yellow-400 bg-yellow-50 rounded-xl p-4 shadow-sm hover:border-yellow-600 hover:bg-yellow-100 transition cursor-pointer">
                         <Upload className="w-5 h-10 text-yellow-500" />
                         <span className="text-base font-medium text-black">Upload Your Manuscript</span>
-                        <input type="file" className="hidden" />
+                        <input
+                          type="file"
+                          name="image1"
+                          className="hidden"
+                          onChange={handleFileChange}
+                        />
                       </label>
+
+                      {file && (
+                        <p className="text-sm text-green-600 mt-2">
+                        {file.name}
+                        </p>
+                      )}
+
                     </div>
 
                     {/* Notes */}

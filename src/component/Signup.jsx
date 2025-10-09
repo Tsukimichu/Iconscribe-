@@ -11,6 +11,10 @@ function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [generatedOtp, setGeneratedOtp] = useState(null);
+  const [shake, setShake] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -25,6 +29,7 @@ function Signup() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Step 1: Handle signup and "send" OTP
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -43,11 +48,26 @@ function Signup() {
       });
 
       if (res.data.success) {
-        setSuccess(true);
+        const randomOtp = Math.floor(100000 + Math.random() * 900000);
+        setGeneratedOtp(randomOtp);
+        console.log("Generated OTP:", randomOtp);
+        setOtpSent(true);
+        alert(`OTP sent to ${formData.email} and ${formData.phone}: ${randomOtp}`);
       }
     } catch (err) {
       console.error("Signup error:", err);
       alert("Signup failed. Check console for details.");
+    }
+  };
+
+  // Step 2: Verify OTP with shake animation on wrong entry
+  const handleVerifyOtp = (e) => {
+    e.preventDefault();
+    if (otp === String(generatedOtp)) {
+      setSuccess(true);
+    } else {
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
     }
   };
 
@@ -84,6 +104,7 @@ function Signup() {
 
             <AnimatePresence mode="wait">
               {success ? (
+                // ✅ Success screen
                 <motion.div
                   key="success"
                   initial={{ opacity: 0, y: 40 }}
@@ -100,7 +121,7 @@ function Signup() {
                     Registration Successful
                   </h2>
                   <p className="text-gray-700 mb-6">
-                    You have successfully signed up.
+                    Your account has been successfully verified.
                   </p>
                   <button
                     onClick={() => navigate("/login")}
@@ -109,20 +130,91 @@ function Signup() {
                     Continue to Login
                   </button>
                 </motion.div>
+              ) : otpSent ? (
+                // 🔐 OTP verification form
+                <motion.div
+                  key="otp"
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -40 }}
+                  transition={{ duration: 0.5 }}
+                  className="text-center"
+                >
+                  <h2 className="text-2xl font-extrabold mb-4 text-gray-900">
+                    Verify Your Account
+                  </h2>
+                  <p className="text-gray-700 mb-4">
+                    Enter the 6-digit OTP sent to your phone and email.
+                  </p>
+
+                  <form onSubmit={handleVerifyOtp} className="space-y-6">
+                    {/* OTP Boxes with shake animation */}
+                    <motion.div
+                      animate={
+                        shake
+                          ? { x: [-10, 10, -10, 10, 0] }
+                          : { x: 0 }
+                      }
+                      transition={{ duration: 0.4 }}
+                      className="flex justify-center gap-3 mb-2"
+                    >
+                      {[...Array(6)].map((_, i) => (
+                        <input
+                          key={i}
+                          type="text"
+                          maxLength="1"
+                          value={otp[i] || ""}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/, "");
+                            const otpArray = otp.split("");
+                            otpArray[i] = value;
+                            setOtp(otpArray.join(""));
+                            if (value && e.target.nextSibling) {
+                              e.target.nextSibling.focus();
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (
+                              e.key === "Backspace" &&
+                              !otp[i] &&
+                              e.target.previousSibling
+                            ) {
+                              e.target.previousSibling.focus();
+                            }
+                          }}
+                          className="w-12 h-12 text-center text-xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+                        />
+                      ))}
+                    </motion.div>
+
+                    <p className="text-xs text-gray-500">
+                      (For testing: OTP is {generatedOtp})
+                    </p>
+
+                    <motion.button
+                      type="submit"
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-black py-2.5 rounded-xl shadow-lg font-semibold hover:shadow-xl transition-all"
+                    >
+                      Verify OTP
+                    </motion.button>
+                  </form>
+                </motion.div>
               ) : (
+                // 📝 Signup form
                 <motion.div
                   key="form"
                   initial={{ opacity: 0, y: 40 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -40 }}
                   transition={{ duration: 0.5 }}
-                  className="flex flex-col flex-grow"
                 >
                   <h2 className="text-2xl font-extrabold mb-4 text-gray-900 text-center">
                     Sign Up
                   </h2>
 
-                  <form className="space-y-3 flex-grow" onSubmit={handleSubmit}>
+                  <form className="space-y-3" onSubmit={handleSubmit}>
                     <input
                       type="text"
                       name="name"
@@ -198,7 +290,7 @@ function Signup() {
                       </button>
                     </div>
 
-                  <motion.button
+                    <motion.button
                       type="submit"
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
@@ -211,27 +303,28 @@ function Signup() {
               )}
             </AnimatePresence>
           </div>
-                      <div className="text-sm text-center text-gray-800 mt-2">
-              Already have an account?{" "}
-              <span
-                onClick={() => navigate("/login")}
-                className="text-yellow-500 font-medium cursor-pointer hover:underline"
-              >
-                Login
-              </span>
-            </div>
 
-            <p className="mt-2 text-xs text-gray-700 text-center">
-              By signing up, you agree to Icons’{" "}
-              <a href="/terms" className="text-yellow-500 hover:underline">
-                Terms of Service
-              </a>{" "}
-              and{" "}
-              <a href="/privacy" className="text-yellow-500 hover:underline">
-                Privacy Policy
-              </a>
-              .
-            </p>
+          <div className="text-sm text-center text-gray-800 mt-2">
+            Already have an account?{" "}
+            <span
+              onClick={() => navigate("/login")}
+              className="text-yellow-500 font-medium cursor-pointer hover:underline"
+            >
+              Login
+            </span>
+          </div>
+
+          <p className="mt-2 text-xs text-gray-700 text-center">
+            By signing up, you agree to Icons’{" "}
+            <a href="/terms" className="text-yellow-500 hover:underline">
+              Terms of Service
+            </a>{" "}
+            and{" "}
+            <a href="/privacy" className="text-yellow-500 hover:underline">
+              Privacy Policy
+            </a>
+            .
+          </p>
         </div>
 
         <div className="w-1/2 h-full">

@@ -41,10 +41,28 @@ const OrdersSection = () => {
     setShowArchiveModal(false);
     setSelectedOrder(null);
   };
-  const confirmArchive = () => {
-    setOrders(orders.filter((o) => o.enquiryNo !== selectedOrder.enquiryNo));
-    setArchived([...archived, selectedOrder]);
-    closeArchiveModal();
+  const confirmArchive = async () => {
+    if (!selectedOrder) return;
+    const orderId = selectedOrder.order_id;
+    if (!orderId) return alert("Invalid order ID.");
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/orders/${orderId}/archive`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setOrders((prev) => prev.filter((o) => o.order_id !== orderId));
+        setArchived((prev) => [...prev, selectedOrder]);
+        closeArchiveModal();
+      } else {
+        alert(data.message || "Failed to archive order");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Server error");
+    }
   };
 
   // --- Add Price Logic ---
@@ -58,44 +76,104 @@ const OrdersSection = () => {
     setSelectedOrder(null);
     setNewPrice("");
   };
-  const confirmAddPrice = () => {
-    if (!newPrice || isNaN(newPrice)) return alert("Please enter a valid number.");
+  const confirmAddPrice = async () => {
+    if (!selectedOrder || newPrice === "" || isNaN(newPrice)) return alert("Enter a valid price");
 
-    const updatedOrders = orders.map((o) =>
-      o.enquiryNo === selectedOrder.enquiryNo ? { ...o, price: Number(newPrice) } : o
-    );
-    setOrders(updatedOrders);
-    closePriceModal();
+    const orderId = selectedOrder.order_id;
+    if (!orderId) return alert("Invalid order ID.");
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/orders/${orderId}/price`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ price: Number(newPrice) }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setOrders((prev) =>
+          prev.map((o) => (o.order_id === orderId ? { ...o, price: Number(newPrice) } : o))
+        );
+        closePriceModal();
+      } else {
+        alert(data.message || "Failed to update price");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Server error");
+    }
   };
+
 
   // --- Set Status Logic ---
-  const openStatusModal = (order) => {
-    setSelectedOrder(order);
-    setNewStatus(order.status || "Pending");
-    setShowStatusModal(true);
-  };
+ const openStatusModal = (order) => {
+  if (!order?.enquiryNo) return alert("Invalid order selected.");
+  setSelectedOrder(order);
+  setNewStatus(order.status || "Pending");
+  setShowStatusModal(true);
+};
   const closeStatusModal = () => {
     setShowStatusModal(false);
     setSelectedOrder(null);
     setNewStatus("");
   };
-  const confirmSetStatus = () => {
-    const updatedOrders = orders.map((o) =>
-      o.enquiryNo === selectedOrder.enquiryNo ? { ...o, status: newStatus } : o
-    );
-    setOrders(updatedOrders);
-    closeStatusModal();
+  const confirmSetStatus = async () => {
+    if (!selectedOrder) return;
+
+    const orderId = selectedOrder.order_id;
+    if (!orderId) return alert("Invalid order ID.");
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setOrders((prev) =>
+          prev.map((o) => (o.order_id === orderId ? { ...o, status: newStatus } : o))
+        );
+        closeStatusModal();
+      } else {
+        alert(data.message || "Failed to update status");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Server error");
+    }
   };
 
-  // --- View Logic ---
-  const openViewModal = (order) => {
-    setSelectedOrder(order);
-    setShowViewModal(true);
-  };
+
+
+
+  // --- Open View Modal ---
+const openViewModal = async (order) => {
+  const orderId = order.order_id;
+  if (!orderId) return alert("Invalid order ID.");
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/orders/${orderId}`);
+    const data = await res.json();
+    console.log("Fetched order:", data);
+
+    if (res.ok && data.success) {
+      setSelectedOrder(data.order);
+      setShowViewModal(true);
+    } else {
+      alert(data.message || "Failed to fetch order details.");
+    }
+  } catch (err) {
+    console.error("Error fetching order details:", err);
+    alert("Server error while fetching order details.");
+  }
+};
+
+
   const closeViewModal = () => {
     setShowViewModal(false);
     setSelectedOrder(null);
   };
+  
 
   // --- Search + Sort ---
   const sortedOrders = useMemo(() => {
@@ -247,12 +325,14 @@ const OrdersSection = () => {
       {/* --- View Modal --- */}
       <AnimatePresence>
         {showViewModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 flex items-center justify-center bg-black/60 z-50"
-          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+              className="fixed inset-0 flex items-center justify-center z-50"
+            >
+
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -263,86 +343,50 @@ const OrdersSection = () => {
                 Order Details
               </h2>
 
-              {selectedOrder ? (
-                <div className="space-y-6">
-                  {/* Basic Order Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
-                    <p><span className="font-bold text-gray-800">Enquiry No:</span> {selectedOrder.enquiryNo}</p>
-                    <p><span className="font-bold text-gray-800">Customer Name:</span> {selectedOrder.customer_name || "Aaron Santos"}</p>
-                    <p><span className="font-bold text-gray-800">Email:</span> {selectedOrder.email || "aaron.santos@example.com"}</p>
-                    <p><span className="font-bold text-gray-800">Contact Number:</span> {selectedOrder.contact_number || "0917-123-4567"}</p>
-                    <p><span className="font-bold text-gray-800">Location:</span> {selectedOrder.location || "Cebu City, Philippines"}</p>
-                    <p><span className="font-bold text-gray-800">Service:</span> {selectedOrder.service || "Book Printing"}</p>
-                    <p><span className="font-bold text-gray-800">Date Ordered:</span> {selectedOrder.dateOrdered ? new Date(selectedOrder.dateOrdered).toLocaleDateString() : "10/08/2025"}</p>
-                    <p><span className="font-bold text-gray-800">Urgency:</span> {selectedOrder.urgency || "Normal"}</p>
-                    <p>
-                      <span className="font-bold text-gray-800">Status:</span>
-                      <span className="ml-2 px-2 py-1 bg-cyan-100 text-cyan-700 rounded-md text-xs font-semibold">
-                        {selectedOrder.status || "Pending"}
-                      </span>
-                    </p>
-                    <p><span className="font-bold text-gray-800">Price:</span> {selectedOrder.price ? `₱${selectedOrder.price}` : "₱350.00"}</p>
-                  </div>
-
-                  {/* Product Details */}
-                  <div className="mt-6 border-t border-gray-200 pt-5">
-                    <h3 className="text-lg font-semibold text-cyan-700 mb-3">
-                      Product Details
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
-                      <p><span className="font-bold text-gray-800">Number of Copies:</span> {selectedOrder.details?.numberOfCopies || 5}</p>
-                      <p><span className="font-bold text-gray-800">Number of Pages:</span> {selectedOrder.details?.numberOfPages || 120}</p>
-                      <p><span className="font-bold text-gray-800">Binding Type:</span> {selectedOrder.details?.bindingType || "Perfect Bind"}</p>
-                      <p><span className="font-bold text-gray-800">Paper Type:</span> {selectedOrder.details?.paperType || "Matte"}</p>
-                      <p><span className="font-bold text-gray-800">Cover Finish:</span> {selectedOrder.details?.coverFinish || "Glossy"}</p>
-                      <p><span className="font-bold text-gray-800">Color Finish:</span> {selectedOrder.details?.colorFinish || "Full Color"}</p>
-                    </div>
-
-                    {/* Uploaded Design */}
-                    <div className="mt-5">
-                      <p className="font-bold text-gray-800 mb-1">Uploaded Design:</p>
-                      <a
-                        href={selectedOrder.details?.designFile || "https://via.placeholder.com/600x400.png?text=Design+Preview"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-cyan-600 hover:underline text-sm"
-                      >
-                        View Uploaded Design
-                      </a>
-                      <img
-                        src={selectedOrder.details?.designFile || "https://via.placeholder.com/600x400.png?text=Design+Preview"}
-                        alt="Uploaded Design Preview"
-                        className="mt-3 rounded-xl border border-gray-300 max-h-56 w-full object-contain shadow-sm"
-                      />
-                    </div>
-
-                    {/* Uploaded File */}
-                    <div className="mt-6">
-                      <p className="font-bold text-gray-800 mb-1">Uploaded File:</p>
-                      <a
-                        href={selectedOrder.details?.uploadedFile || "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-cyan-600 hover:underline text-sm"
-                      >
-                        View Uploaded File
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* Notes Section */}
-                  <div className="mt-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                    <p className="font-bold text-cyan-700 mb-1">Notes:</p>
-                    <p className="text-gray-700 text-sm leading-relaxed">
-                      {selectedOrder.notes || "Please ensure the colors are vibrant and the binding is durable."}
-                    </p>
-                  </div>
+            {selectedOrder ? (
+              <div className="space-y-6">
+                {/* Basic Order Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                  <p><span className="font-bold text-gray-800">Customer Name:</span> {selectedOrder.customer_name || "—"}</p>
+                  <p><span className="font-bold text-gray-800">Email:</span> {selectedOrder.email || "—"}</p>
+                  <p><span className="font-bold text-gray-800">Contact Number:</span> {selectedOrder.contact_number || "—"}</p>
+                  <p><span className="font-bold text-gray-800">Location:</span> {selectedOrder.location || "—"}</p>
+                  <p><span className="font-bold text-gray-800">Date Ordered:</span> {selectedOrder.dateOrdered ? new Date(selectedOrder.dateOrdered).toLocaleDateString() : "—"}</p>
+                  <p><span className="font-bold text-gray-800">Status:</span> {selectedOrder.status || "Pending"}</p>
+                  <p><span className="font-bold text-gray-800">Price:</span> {selectedOrder.price != null ? `₱${selectedOrder.price}` : "₱350.00"}</p>
                 </div>
-              ) : (
-                <p className="text-gray-500 italic">No order selected.</p>
-              )}
 
+                {/* Loop through all items safely */}
+                {selectedOrder.items?.length > 0 ? (
+                  selectedOrder.items.map((item, idx) => (
+                    <div key={idx} className="mt-6 border-t border-gray-200 pt-5">
+                      <h3 className="text-lg font-semibold text-cyan-700 mb-3">{item.service}</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                        <p><span className="font-bold text-gray-800">Enquiry No:</span> {item.enquiryNo}</p>
+                        <p><span className="font-bold text-gray-800">Urgency:</span> {item.urgency || "—"}</p>
+                        <p><span className="font-bold text-gray-800">Number of Copies:</span> {item.details?.numberOfCopies ?? "—"}</p>
+                        <p><span className="font-bold text-gray-800">Number of Pages:</span> {item.details?.numberOfPages ?? "—"}</p>
+                        <p><span className="font-bold text-gray-800">Binding Type:</span> {item.details?.bindingType || "—"}</p>
+                        <p><span className="font-bold text-gray-800">Paper Type:</span> {item.details?.paperType || "—"}</p>
+                        <p><span className="font-bold text-gray-800">Cover Finish:</span> {item.details?.coverFinish || "—"}</p>
+                        <p><span className="font-bold text-gray-800">Color Finish:</span> {item.details?.colorFinish || "—"}</p>
+                        <p><span className="font-bold text-gray-800">Uploaded Design:</span> 
+                          <a href={item.details?.designFile || "#"} target="_blank" rel="noopener noreferrer" className="text-cyan-600 hover:underline ml-1 text-sm">View</a>
+                        </p>
+                        <p><span className="font-bold text-gray-800">Uploaded File:</span> 
+                          <a href={item.details?.uploadedFile || "#"} target="_blank" rel="noopener noreferrer" className="text-cyan-600 hover:underline ml-1 text-sm">View</a>
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 italic mt-3">No items found for this order.</p>
+                )}
+
+              </div>
+            ) : (
+              <p className="text-gray-500 italic">No order selected.</p>
+            )}
               {/* Close Button */}
               <div className="flex justify-center mt-8">
                 <button

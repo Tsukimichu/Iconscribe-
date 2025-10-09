@@ -4,7 +4,8 @@ import { Eye, CheckCircle, Clock, Truck } from "lucide-react";
 
 function Transactions() {
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-  const userId = localStorage.getItem("user_id");
+  const user = JSON.parse(localStorage.getItem("user"));
+  const userId = user?.id;
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -12,26 +13,52 @@ function Transactions() {
   console.log("userId:", userId);
 
 useEffect(() => {
-  if (isLoggedIn && userId) {
-    fetch(`http://localhost:5000/api/orders/user/${userId}`)
-      .then((res) => {
-        console.log("API response status:", res.status);
-        return res.json();
-      })
-      .then((data) => {
-        console.log("Fetched orders in UI:", data);
-        const ordersArray = Array.isArray(data) ? data : [];
-        setOrders(ordersArray);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Fetch error:", err);
-        setLoading(false);
-      });
-  } else {
+  console.log("🔍 useEffect triggered");
+  console.log("isLoggedIn:", isLoggedIn);
+  console.log("userId:", userId);
+
+  if (!isLoggedIn || !userId) {
+    console.warn("⚠️ Not logged in or missing userId — skipping fetch");
     setLoading(false);
+    return;
   }
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      console.log(`📡 Fetching: http://localhost:5000/api/orders/user/${userId}`);
+
+      const res = await fetch(`http://localhost:5000/api/orders/user/${userId}`);
+
+      console.log("🧾 Response status:", res.status);
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("❌ Bad response:", text);
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      console.log("✅ Fetched user orders:", data);
+
+      if (Array.isArray(data)) {
+        setOrders(data);
+      } else {
+        console.warn("⚠️ Response not array:", data);
+        setOrders([]);
+      }
+    } catch (err) {
+      console.error("🔥 Error fetching user orders:", err);
+    } finally {
+      console.log("✅ Done loading orders");
+      setLoading(false);
+    }
+  };
+
+  fetchOrders();
 }, [isLoggedIn, userId]);
+
+
 
 
   if (!isLoggedIn) return null;
@@ -48,7 +75,7 @@ useEffect(() => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <motion.div
-          className="md:col-span-2 rounded-2xl backdrop-blur-xl bg-white/50 shadow-lg border border-gray-200 p-6 flex flex-col "
+          className="md:col-span-2 h-[350px] rounded-2xl backdrop-blur-xl bg-white/50 shadow-lg border border-gray-200 p-6 flex flex-col "
           initial={{ opacity: 0, x: -40 }}
           animate={{ opacity: 1, x: 0 }}
         >
@@ -56,7 +83,7 @@ useEffect(() => {
           <div className="overflow-x-auto">
             <table className="w-full text-sm md:text-base">
               <thead>
-                <tr className="text-left text-gray-600 border-b border-gray-300">
+                <tr className="text-left text-gray-600 border-b border-gray-300 sticky top-0 bg-white">
                   <th className="py-2">Service</th>
                   <th>Date Ordered</th>
                   <th>Urgency</th>

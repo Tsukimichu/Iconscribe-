@@ -1,14 +1,10 @@
 import Nav from "../component/navigation";
 import sampleBook from "../assets/Binding.png";
-import {
-  ArrowBigLeft,
-  Upload,
-  Phone,
-  Mail,
-} from "lucide-react";
+import { ArrowBigLeft, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "../component/ui/ToastProvider";
+import UploadSection from "../component/UploadSection"; // ✅ Import upload section
 
 function Binding() {
   const navigate = useNavigate();
@@ -30,7 +26,7 @@ function Binding() {
   const [bindingType, setBindingType] = useState("");
   const [paperType, setPaperType] = useState("");
   const [notes, setNotes] = useState("");
-  const [file, setFile] = useState(null);
+  const [file, setFile] = useState(null); // ✅ Track uploaded file
   const { showToast } = useToast();
 
   // modals
@@ -84,11 +80,6 @@ function Binding() {
       .catch((err) => console.error("Error loading product status:", err));
   }, []);
 
-  // handle file input
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
-  };
-
   // place order button click
   const handlePlaceOrder = (e) => {
     e.preventDefault();
@@ -99,7 +90,7 @@ function Binding() {
     }
   };
 
-  // ✅ confirm and send order
+  // confirm and send order (with upload)
   const handleConfirmOrder = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -110,6 +101,7 @@ function Binding() {
         Notes: notes,
       };
 
+      // 1️⃣ Create the order first
       const res = await fetch("http://localhost:5000/api/orders/create", {
         method: "POST",
         headers: {
@@ -118,7 +110,7 @@ function Binding() {
         },
         body: JSON.stringify({
           user_id: userProfile.id,
-          product_id: 1, // Binding product ID
+          product_id: 1,
           quantity,
           urgency: "Normal",
           status: "Pending",
@@ -128,51 +120,49 @@ function Binding() {
 
       const data = await res.json();
 
-      if (data.success) {
-        showToast("Order placed successfully!", "success");
-        setShowConfirm(false);
-
-        // 🟩 Upload image after order is created
-        if (file && data.order_item_id) {
-          await handleUpload(data.order_item_id);
-        }
-
-        // Reset form
-        setQuantity("");
-        setPageCount("");
-        setBindingType("");
-        setPaperType("");
-        setNotes("");
-        setFile(null);
-      } else {
+      if (!data.success) {
         showToast("Failed to place order.", "error");
+        return;
       }
+
+      const orderItemId = data.order_item_id;
+
+      // 2️⃣ Upload file (if user selected one)
+      if (file) {
+        const formData = new FormData();
+        formData.append("image1", file);
+
+        const uploadRes = await fetch(
+          `http://localhost:5000/api/orders/upload/single/${orderItemId}`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        const uploadData = await uploadRes.json();
+
+        if (uploadData.success) {
+          showToast("File uploaded successfully!", "success");
+        } else {
+          showToast("Order placed, but file upload failed.", "warning");
+        }
+      }
+
+      // 3️⃣ Success
+      showToast("Order placed successfully!", "success");
+      setShowConfirm(false);
+
+      // Reset form
+      setQuantity("");
+      setPageCount("");
+      setBindingType("");
+      setPaperType("");
+      setNotes("");
+      setFile(null);
     } catch (err) {
       console.error("Error placing order:", err);
       showToast("Something went wrong while placing the order.", "error");
-    }
-  };
-
-  // 🟩 upload image after order created
-  const handleUpload = async (orderItemId) => {
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("image1", file);
-
-    try {
-      const res = await fetch(`http://localhost:5000/api/products/upload/single/${orderItemId}`, {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.success) {
-        console.log("✅ Image uploaded:", data.imagePath);
-      } else {
-        console.error("❌ Failed to upload image");
-      }
-    } catch (err) {
-      console.error("⚠️ Error uploading image:", err);
     }
   };
 
@@ -221,7 +211,7 @@ function Binding() {
 
                 {/* Right: Form */}
                 <form onSubmit={handlePlaceOrder} className="space-y-6 text-black">
-                  {/* Name + Email */}
+                  {/* User Info */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-base font-semibold text-black">
@@ -253,7 +243,7 @@ function Binding() {
                     </div>
                   </div>
 
-                  {/* Location + Contact */}
+                  {/* Contact Info */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-base font-semibold text-black">
@@ -286,7 +276,7 @@ function Binding() {
                     </div>
                   </div>
 
-                  {/* Quantity + Page Count */}
+                  {/* Order Details */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-base font-semibold text-black">
@@ -357,29 +347,13 @@ function Binding() {
 
                   {/* Upload + Notes */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-4">
-                      <h3 className="block text-base font-semibold text-black">
-                        Files:
-                      </h3>
-                      <label className="flex items-center justify-center gap-2 border-2 border-yellow-400 bg-yellow-50 rounded-xl p-4 shadow-sm hover:border-yellow-600 hover:bg-yellow-100 transition cursor-pointer">
-                        <Upload className="w-5 h-10 text-yellow-500" />
-                        <span className="text-base font-medium text-black">
-                          Upload Your File
-                        </span>
-                        <input
-                          input type="file" 
-                          name="image1"
-                          className="hidden"
-                          onChange={(e) => setFile(e.target.files[0])}
-                        />
-                      </label>
-                      {file && (
-                        <p className="text-sm text-green-600 mt-2">
-                         Selected File: <span className="font-medium">{file.name}</span>
-                        </p>
-                      )}
-                    </div>
-
+                    {/* Always visible upload section */}
+                    <UploadSection
+                      uploadCount={1}
+                      onUploadComplete={(res) => {
+                        if (res?.files?.[0]) setFile(res.files[0]);
+                      }}
+                    />
                     <div className="flex flex-col gap-3 mt-0">
                       <label className="block text-base font-semibold text-black">
                         Additional Notes (optional)
@@ -387,7 +361,7 @@ function Binding() {
                       <textarea
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-19 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 text-black"
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-41 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 text-black"
                         placeholder="Enter a message"
                       ></textarea>
                     </div>
@@ -396,9 +370,7 @@ function Binding() {
                   {/* Contact + Submit */}
                   <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                     <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex flex-col sm:flex-row sm:items-center sm:gap-4">
-                      <p className="text-sm text-black">
-                        If you have any questions:
-                      </p>
+                      <p className="text-sm text-black">If you have any questions:</p>
                       <div className="flex flex-col sm:flex-row sm:gap-4 text-sm">
                         <span className="flex items-center gap-1 font-medium text-blue-700">
                           <Phone size={16} /> #09123456789
@@ -423,7 +395,7 @@ function Binding() {
                 </form>
               </div>
 
-              {/* ✅ Confirmation Modal */}
+              {/* Confirmation Modal */}
               {showConfirm && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
                   <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full">

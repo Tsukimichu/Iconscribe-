@@ -73,7 +73,6 @@ const UploadSection = ({ orderItemId, uploadCount = 1, onUploadComplete }) => {
 
       {/* Upload File 1 */}
       <div className="flex flex-col gap-4 mb-6">
-        <h3 className="block text-base font-semibold text-black">File 1:</h3>
 
         <label className="flex items-center justify-center gap-2 border-2 border-yellow-400 bg-yellow-50 rounded-xl p-4 shadow-sm hover:border-yellow-600 hover:bg-yellow-100 transition cursor-pointer">
           <Upload className="w-6 h-6 text-yellow-500" />
@@ -146,21 +145,6 @@ const UploadSection = ({ orderItemId, uploadCount = 1, onUploadComplete }) => {
           )}
         </div>
       )}
-
-      {/* Upload Button */}
-      <div className="flex justify-end mt-6">
-        <button
-          onClick={handleUpload}
-          disabled={loading}
-          className={`px-8 py-3 rounded-xl font-semibold text-white transition shadow-md ${
-            loading
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-gradient-to-r from-yellow-500 to-yellow-600 hover:scale-105"
-          }`}
-        >
-          {loading ? "Uploading..." : "Upload"}
-        </button>
-      </div>
 
       {/* Upload Success Message */}
       {uploaded && (

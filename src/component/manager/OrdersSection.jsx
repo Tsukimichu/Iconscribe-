@@ -26,6 +26,16 @@ const OrdersSection = () => {
   const [newPrice, setNewPrice] = useState("");
   const [newStatus, setNewStatus] = useState("");
 
+  // --- Walk-in order modal ---
+  const [showAddOrderModal, setShowAddOrderModal] = useState(false);
+  const [newOrder, setNewOrder] = useState({
+    customer_name: "",
+    service: "",
+    price: "",
+    urgency: "Normal",
+  });
+  const [orderFiles, setOrderFiles] = useState([]);
+
   // --- Fetch from backend ---
   useEffect(() => {
     fetch("http://localhost:5000/api/orders")
@@ -146,6 +156,43 @@ const OrdersSection = () => {
   };
 
 
+  // --- Add Walk-In Order Logic ---
+  const handleAddOrder = async () => {
+    const { customer_name, service, price, urgency } = newOrder;
+    if (!customer_name || !service || !price)
+      return alert("Please fill all required fields.");
+
+    try {
+      const formData = new FormData();
+      formData.append("customer_name", customer_name);
+      formData.append("service", service);
+      formData.append("price", price);
+      formData.append("urgency", urgency);
+      formData.append("source", "walk-in");
+      orderFiles.forEach((file) => formData.append("files", file));
+
+      const res = await fetch("http://localhost:5000/api/orders", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setOrders((prev) => [...prev, data.order]);
+        setShowAddOrderModal(false);
+        setNewOrder({ customer_name: "", service: "", price: "", urgency: "Normal" });
+        setOrderFiles([]);
+      } else {
+        alert(data.message || "Failed to add order");
+      }
+    } catch (err) {
+      console.error("Error adding walk-in order:", err);
+      alert("Server error while adding order.");
+    }
+  };
+
+
+
 
 
   // --- Open View Modal ---
@@ -242,6 +289,16 @@ const openViewModal = async (order) => {
             />
             <Search className="absolute left-3 top-2.5 text-gray-500" size={18} />
           </div>
+        </div>
+
+        <div className="flex justify-end mt-2">
+          <button
+            onClick={() => setShowAddOrderModal(true)}
+            className="flex items-center gap-2 bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 transition shadow-md"
+          >
+            <PlusCircle size={18} />
+            Add Walk-In Order
+          </button>
         </div>
 
         {/* Orders Table */}
@@ -582,6 +639,106 @@ const openViewModal = async (order) => {
                   className="px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white transition"
                 >
                   Save
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- Add Walk-In Order Modal --- */}
+      <AnimatePresence>
+        {showAddOrderModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 flex items-center justify-center bg-black/60 z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-lg p-6 max-w-md w-full text-center"
+            >
+              <h2 className="text-xl font-bold mb-4 text-cyan-700">Add Walk-In Order</h2>
+
+              <div className="space-y-3 text-left">
+                <input
+                  type="text"
+                  placeholder="Customer Name"
+                  value={newOrder.customer_name}
+                  onChange={(e) =>
+                    setNewOrder({ ...newOrder, customer_name: e.target.value })
+                  }
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                />
+                <input
+                  type="text"
+                  placeholder="Service"
+                  value={newOrder.service}
+                  onChange={(e) =>
+                    setNewOrder({ ...newOrder, service: e.target.value })
+                  }
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                />
+                <input
+                  type="number"
+                  placeholder="Price (₱)"
+                  value={newOrder.price}
+                  onChange={(e) =>
+                    setNewOrder({ ...newOrder, price: e.target.value })
+                  }
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                />
+                <select
+                  value={newOrder.urgency}
+                  onChange={(e) =>
+                    setNewOrder({ ...newOrder, urgency: e.target.value })
+                  }
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                >
+                  <option>Normal</option>
+                  <option>Urgent</option>
+                  <option>Rush</option>
+                </select>
+
+                {/* File upload */}
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">
+                    Attach Files (Images or PDFs)
+                  </label>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*,.pdf"
+                    onChange={(e) => setOrderFiles([...e.target.files])}
+                    className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                  />
+                  {orderFiles.length > 0 && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      {orderFiles.length} file(s) selected
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-center gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowAddOrderModal(false);
+                    setNewOrder({ customer_name: "", service: "", price: "", urgency: "Normal" });
+                    setOrderFiles([]);
+                  }}
+                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddOrder}
+                  className="px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white transition"
+                >
+                  Save Order
                 </button>
               </div>
             </motion.div>

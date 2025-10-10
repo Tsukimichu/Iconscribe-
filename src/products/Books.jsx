@@ -121,15 +121,18 @@ function Books() {
   const handleConfirmOrder = async () => {
     try {
       const token = localStorage.getItem("token");
+      if (!token) return;
 
       const customDetails = {
-        PageCount: pageCount,
-        BindingType: bindingType,
-        PaperType: paperType,
-        Notes: notes,
+        "Number of Pages": pages,
+        "Binding Type": binding,
+        "Paper Type": paperType,
+        "Cover Finish": coverFinish,
+        "Color Printing": colorPrinting,
+        "Additional Notes": notes,
       };
 
-      // send order first
+      // Send order to backend first
       const res = await fetch("http://localhost:5000/api/orders/create", {
         method: "POST",
         headers: {
@@ -152,24 +155,27 @@ function Books() {
         alert("✅ Order placed successfully!");
         setShowConfirm(false);
 
-        // 🖼️ Upload the file
-        await handleUpload(1); 
+        // Upload the file right after order success
+        await handleUpload(data.order_id || 2);
 
-        // reset form
+        // Reset form fields
         setQuantity("");
-        setPageCount("");
-        setBindingType("");
+        setPages("");
+        setBinding("");
         setPaperType("");
+        setCoverFinish("");
+        setColorPrinting("");
         setNotes("");
         setFile(null);
       } else {
-        alert("⚠️ Failed to place order.");
+        alert("❌ Failed to place order.");
       }
     } catch (err) {
       console.error("Error placing order:", err);
       alert("⚠️ Something went wrong while placing the order.");
     }
   };
+
 
 
   return (

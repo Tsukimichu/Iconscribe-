@@ -5,9 +5,6 @@ import {
   Upload,
   Phone,
   Mail,
-  Contact,
-  MessageCircle,
-  XCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -36,39 +33,8 @@ function Binding() {
   const [file, setFile] = useState(null);
   const { showToast } = useToast();
 
-
-  // handle file input
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
-  };
-
-  // upload image after order placed
-  const handleUpload = async (productId) => {
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("image1", file);
-
-    try {
-      const res = await fetch(`http://localhost:5000/api/products/upload/single/${productId}`, {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.success) {
-        console.log(" Image uploaded:", data.imagePath);
-      } else {
-        console.error(" Failed to upload image");
-      }
-    } catch (err) {
-      console.error("Error uploading image:", err);
-    }
-  };
-
-
   // modals
   const [showConfirm, setShowConfirm] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
   const [visible, setVisible] = useState(true);
 
   // check login
@@ -105,23 +71,25 @@ function Binding() {
       .catch((err) => console.error("Error fetching profile:", err));
   }, [isLoggedIn]);
 
-  // check product status (visibility)
+  // check product visibility
   useEffect(() => {
     fetch("http://localhost:5000/api/product-status")
       .then((res) => res.json())
       .then((data) => {
         const product = data.find((p) => p.product_name === "Binding");
-        if (
-          product &&
-          (product.status === "Inactive" || product.status === "Archived")
-        ) {
+        if (product && (product.status === "Inactive" || product.status === "Archived")) {
           setVisible(false);
         }
       })
       .catch((err) => console.error("Error loading product status:", err));
   }, []);
 
-  // handle form submit
+  // handle file input
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };
+
+  // place order button click
   const handlePlaceOrder = (e) => {
     e.preventDefault();
     if (!isLoggedIn) {
@@ -131,11 +99,10 @@ function Binding() {
     }
   };
 
-  // handle confirm order
+  // ✅ confirm and send order
   const handleConfirmOrder = async () => {
     try {
       const token = localStorage.getItem("token");
-
       const customDetails = {
         PageCount: pageCount,
         BindingType: bindingType,
@@ -143,7 +110,6 @@ function Binding() {
         Notes: notes,
       };
 
-      // send order first
       const res = await fetch("http://localhost:5000/api/orders/create", {
         method: "POST",
         headers: {
@@ -152,7 +118,7 @@ function Binding() {
         },
         body: JSON.stringify({
           user_id: userProfile.id,
-          product_id: 1, 
+          product_id: 1, // Binding product ID
           quantity,
           urgency: "Normal",
           status: "Pending",
@@ -163,11 +129,13 @@ function Binding() {
       const data = await res.json();
 
       if (data.success) {
-        showToast(" Order placed successfully!", "success");
+        showToast("Order placed successfully!", "success");
         setShowConfirm(false);
 
-        // Upload file
-        await handleUpload(1);
+        // 🟩 Upload image after order is created
+        if (file && data.order_item_id) {
+          await handleUpload(data.order_item_id);
+        }
 
         // Reset form
         setQuantity("");
@@ -176,15 +144,37 @@ function Binding() {
         setPaperType("");
         setNotes("");
         setFile(null);
-    } else {
-      showToast(" Failed to place order.", "error");
-    }
+      } else {
+        showToast("Failed to place order.", "error");
+      }
     } catch (err) {
       console.error("Error placing order:", err);
-      showToast(" Something went wrong while placing the order.", "error");
+      showToast("Something went wrong while placing the order.", "error");
     }
   };
 
+  // 🟩 upload image after order created
+  const handleUpload = async (orderItemId) => {
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("image1", file);
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/products/upload/single/${orderItemId}`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        console.log("✅ Image uploaded:", data.imagePath);
+      } else {
+        console.error("❌ Failed to upload image");
+      }
+    } catch (err) {
+      console.error("⚠️ Error uploading image:", err);
+    }
+  };
 
   if (!visible) return null;
 

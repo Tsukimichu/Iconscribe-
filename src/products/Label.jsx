@@ -3,6 +3,7 @@ import label from "../assets/ICONS.png";
 import { ArrowBigLeft, Upload, Paintbrush, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useToast } from "../component/ui/ToastProvider.jsx";
 
 function Label() {
   const navigate = useNavigate();
@@ -22,6 +23,8 @@ function Label() {
   const [size, setSize] = useState("2” x 2”");
   const [paperType, setPaperType] = useState("Matte");
   const [message, setMessage] = useState("");
+
+  const { showToast } = useToast();
 
   // --- Auth Check ---
   useEffect(() => {
@@ -73,7 +76,8 @@ function Label() {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        alert("Please log in to place an order.");
+        showToast("⚠️ Please log in to place an order.", "error");
+        navigate("/login");
         return;
       }
 
@@ -105,18 +109,18 @@ function Label() {
 
       const data = await response.json();
       if (data.success) {
-        alert("✅ Order placed successfully!");
+        showToast("✅ Order placed successfully!", "success");
         setShowConfirm(false);
         setQuantity("");
         setSize("");
         setPaperType("");
         setMessage("");
       } else {
-        alert("⚠️ Failed to place order. Please try again.");
+        showToast("⚠️ Failed to place order. Please try again.", "error");
       }
     } catch (error) {
       console.error("Error placing order:", error);
-      alert("❌ An error occurred while placing your order. Please try again.");
+      showToast("❌ An error occurred while placing your order.", "error");
     }
   };
 

@@ -4,6 +4,7 @@ import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState,useEffect } from "react";
 import { Contact, MessageCircle, XCircle } from "lucide-react";
+import { useToast } from "../component/ui/ToastProvider.jsx";
 
 function Newsletters() {
   const navigate = useNavigate();
@@ -26,6 +27,8 @@ function Newsletters() {
       const [layout, setLayout] = useState("");
       const [size, setSize] = useState("");
       const [message, setMessage] = useState("");
+
+      const { showToast } = useToast();
 
   useEffect(() => {
         const checkToken = () => {
@@ -88,18 +91,18 @@ function Newsletters() {
   const handleConfirmOrder = async () => { 
     try {
       const token = localStorage.getItem("token");
-      if (!token) {   
-        alert("Please log in to place an order.");
+      if (!token) {
+        showToast("⚠️ You must be logged in to place an order.", "error");
         navigate("/login");
         return;
       }
 
-      const custom_details = {
+      const customDetails = {
         Name: userProfile.name,
         Email: userProfile.email,
         Address: userProfile.address,
         Phone: userProfile.phone,
-        BusinessName: userProfile.business,
+        Business: userProfile.business,
         Quantity: quantity,
         Size: size,
         "Paper Type": paperType,
@@ -114,18 +117,18 @@ function Newsletters() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          user_id: userProfile.id,   
+          user_id: userProfile.id,
           product_id: 9,
           quantity,
           urgency: "Normal",
           status: "Pending",
-          custom_details,
+          custom_details: customDetails,
         }),
       });
 
       const data = await response.json();
       if (data.success) {
-        alert("✅ Order placed successfully!");
+        showToast("✅ Order placed successfully!", "success");
         setShowConfirm(false);
 
         // Reset all inputs
@@ -136,12 +139,12 @@ function Newsletters() {
         setMessage("");
 
         navigate("/dashboard");
-      } else { 
-        alert("⚠️ Failed to place order. Please try again.");
+      } else {
+        showToast("⚠️ Failed to place order. Please try again.", "error");
       }
     } catch (error) {
       console.error("Error placing order:", error);
-      alert("❌ An error occurred while placing your order. Please try again.");
+      showToast("❌ Something went wrong while placing your order.", "error");
     } 
   };
 

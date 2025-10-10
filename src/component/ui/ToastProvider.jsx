@@ -67,34 +67,33 @@ export const ToastProvider = ({ children }) => {
 
       {/* Toast container */}
       <div
-        className="fixed top-6 right-6 z-[9999] flex flex-col items-end gap-3"
+        className="fixed top-10 right-10 z-[9999] flex flex-col items-end gap-5"
         aria-live="polite"
         aria-atomic="true"
       >
-
         {toasts.map((t) => (
           <div
             key={t.id}
             onMouseEnter={() => pauseTimer(t.id)}
             onMouseLeave={() => resumeTimer(t.id, 2000)}
             className={
-                "max-w-md w-full px-5 py-4 rounded-2xl backdrop-blur-md bg-white/10 border border-white/20 text-white shadow-xl flex items-start gap-4 text-[15px] " +
-                (t.exiting ? "animate-toast-out" : "animate-toast-in")
+              "max-w-xl w-full px-8 py-6 rounded-3xl backdrop-blur-lg bg-white/20 border border-white/30 text-white shadow-2xl flex items-start gap-6 text-[18px] " +
+              (t.exiting ? "animate-toast-out" : "animate-toast-in")
             }
             role="status"
           >
-            <div className="mt-0.5">{renderIcon(t.type)}</div>
+            <div className="mt-1.5">{renderIcon(t.type)}</div>
 
             <div className="flex-1">
-              <div className="text-sm font-medium">{t.message}</div>
+              <div className="text-lg font-semibold leading-snug">{t.message}</div>
             </div>
 
             <button
               aria-label="Close notification"
               onClick={() => removeToast(t.id)}
-              className="opacity-70 hover:opacity-100"
+              className="opacity-80 hover:opacity-100"
             >
-              <X size={16} />
+              <X size={20} />
             </button>
           </div>
         ))}

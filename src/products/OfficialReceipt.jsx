@@ -4,6 +4,7 @@ import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState,useEffect } from "react";
 import { Contact, MessageCircle, XCircle } from "lucide-react";
+import { useToast } from "../component/ui/ToastProvider.jsx";
 
 
 function OfficialReceipt() {
@@ -18,6 +19,8 @@ function OfficialReceipt() {
 
   const [showConfirm, setShowConfirm] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+
+  const { showToast } = useToast();
 
 
   useEffect(() => {
@@ -98,7 +101,7 @@ function OfficialReceipt() {
   try {
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("⚠️ You must be logged in to place an order.");
+      showToast("⚠️ You must be logged in to place an order.", "error");
       return;
     }
 
@@ -135,22 +138,23 @@ function OfficialReceipt() {
     console.log("Order response:", data);
 
     if (data.success) {
-      alert("✅ Order placed successfully!");
+      showToast("✅ Order placed successfully!", "success");
       setShowConfirm(false);
 
+      // reset input fields
       setQuantity("");
       setPaperType("");
       setBookletFinish("");
       setSize("");
       setMessage("");
-      
+
       navigate("/dashboard");
     } else {
-      alert("⚠️ Failed to place order: Unknown error");
+      showToast("⚠️ Failed to place order: Unknown error", "error");
     }
   } catch (err) {
     console.error("Error placing order:", err);
-    alert("⚠️ Something went wrong while placing the order.");
+    showToast("⚠️ Something went wrong while placing the order.", "error");
   }
 };
 

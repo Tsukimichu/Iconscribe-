@@ -4,6 +4,7 @@ import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState,useEffect } from "react";
 import { Contact, MessageCircle, XCircle } from "lucide-react";
+import { useToast } from "../component/ui/ToastProvider.jsx";
 
 function Flyers() {
   const navigate = useNavigate();
@@ -27,6 +28,8 @@ function Flyers() {
 
     const [showConfirm, setShowConfirm] = useState(false);
     const [showContactModal, setShowContactModal] = useState(false);
+
+    const { showToast } = useToast();
     
 
   useEffect(() => {
@@ -94,9 +97,10 @@ function Flyers() {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          alert("Please log in to place an order.");
+          showToast("⚠️ Please log in to place an order.", "error");
           return;
         }
+
         const customDetails = {
           Name: userProfile.name,
           Email: userProfile.email,
@@ -110,6 +114,7 @@ function Flyers() {
           "Print": backToBack ? "Back to back" : "Single side",
           Message: message,
         };
+
         const response = await fetch("http://localhost:5000/api/orders/create", {
           method: "POST",
           headers: {
@@ -118,18 +123,21 @@ function Flyers() {
           },
           body: JSON.stringify({
             user_id: userProfile.id,
-            product_id: 6, // Flyers product_id
+            product_id: 6,
             quantity,
             urgency: "Normal",
             status: "Pending",
             custom_details: customDetails,
           }),
         });
+
         const data = await response.json();
+
         if (data.success) {
-          alert("✅ Order placed successfully!");
+          showToast("✅ Order placed successfully!", "success");
           setShowConfirm(false);
-          // Reset form fields
+
+          // reset form
           setQuantity("");
           setSize("");
           setPaperType("");
@@ -138,11 +146,11 @@ function Flyers() {
           setBackToBack(false);
           setMessage("");
         } else {
-          alert("⚠️ Failed to place order. Please try again.");
+          showToast("⚠️ Failed to place order. Please try again.", "error");
         }
       } catch (error) {
         console.error("Order error:", error);
-        alert("⚠️ Something went wrong. Please try again later.");
+        showToast("⚠️ Something went wrong. Please try again later.", "error");
       }
     };
     

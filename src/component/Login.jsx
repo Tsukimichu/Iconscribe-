@@ -5,11 +5,17 @@ import orgImage from "../assets/org.jpg";
 import { User, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 
+// 🟡 ADD: import useToast hook
+import { useToast } from "./ui/ToastProvider.jsx"; // adjust the path if needed
+
 function Login({ onLogin }) {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // 🟡 ADD: initialize toast
+  const { showToast } = useToast();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -31,6 +37,9 @@ function Login({ onLogin }) {
 
         if (onLogin) onLogin();
 
+        // 🟡 ADD: show success toast
+        showToast("✅ Login successful!", "success");
+
         if (data.user.role === "admin") {
           navigate("/admin");
         } else if (data.user.role === "manager") {
@@ -39,11 +48,13 @@ function Login({ onLogin }) {
           navigate("/dashboard");
         }
       } else {
-        alert(data.message || "❌ Invalid credentials");
+        // 🟡 ADD: show error toast instead of alert
+        showToast(data.message || "❌ Invalid credentials", "error");
       }
     } catch (error) {
       console.error("❌ Login error:", error);
-      alert("Something went wrong. Please try again.");
+      // 🟡 ADD: show toast on fetch error
+      showToast("Something went wrong. Please try again.", "error");
     } finally {
       setLoading(false);
     }

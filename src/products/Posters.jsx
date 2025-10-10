@@ -4,6 +4,8 @@ import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState,useEffect} from "react";
 import { Contact, MessageCircle, XCircle } from "lucide-react";
+import { useToast } from "../component/ui/ToastProvider.jsx";
+
 
 function Posters() {
   const navigate = useNavigate();
@@ -26,6 +28,8 @@ function Posters() {
 
       const [showConfirm, setShowConfirm] = useState(false);
       const [showContactModal, setShowContactModal] = useState(false);
+
+      const { showToast } = useToast();
 
   useEffect(() => {
         const checkToken = () => {
@@ -92,10 +96,11 @@ function Posters() {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          alert("⚠️ You must be logged in to place an order.");
+          showToast("⚠️ You must be logged in to place an order.", "error");
           navigate("/login");
           return;
         }
+
         const customDetails = {
           Name: userProfile.name,
           Email: userProfile.email,
@@ -108,6 +113,7 @@ function Posters() {
           Color: color,
           Message: message,
         };
+
         const response = await fetch("http://localhost:5000/api/orders/create", {
           method: "POST",
           headers: {
@@ -125,10 +131,12 @@ function Posters() {
         });
 
         const data = await response.json();
+
         if (data.success) {
-          alert("✅ Order placed successfully!");
+          showToast("✅ Order placed successfully!", "success");
           setShowConfirm(false);
 
+          // reset fields
           setColor("");
           setLamination("");
           setMessage("");
@@ -138,12 +146,12 @@ function Posters() {
 
           navigate("/dashboard");
         } else {
-          alert("⚠️ Failed to place order. Please try again.");
+          showToast("⚠️ Failed to place order. Please try again.", "error");
         }
       } catch (error) {
         console.error("Error placing order:", error);
-        alert("⚠️ An error occurred. Please try again.");
-      }   
+        showToast("⚠️ An error occurred. Please try again.", "error");
+      }  
     };
 
   return (

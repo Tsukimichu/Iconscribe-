@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
+
 const userRoutes = require("./routes/userRoutes");
 const maintenanceRoutes = require("./routes/maintenanceRoutes");
 const productRoutes = require("./routes/products");
@@ -11,6 +13,9 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Serve uploaded files publicly
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
 app.use("/api", userRoutes);

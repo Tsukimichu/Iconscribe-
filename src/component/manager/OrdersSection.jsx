@@ -19,6 +19,8 @@ const OrdersSection = () => {
   const [showPriceModal, setShowPriceModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
 
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [newPrice, setNewPrice] = useState("");
@@ -369,47 +371,72 @@ const openViewModal = async (order) => {
                   selectedOrder.items.map((item, idx) => (
                     <div key={idx} className="mt-6 border-t border-gray-200 pt-5">
                       <h3 className="text-lg font-semibold text-cyan-700 mb-3">{item.service}</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
-                          <p>
-                            <span className="font-bold text-gray-800">Enquiry No:</span> {item.enquiryNo}
-                          </p>
-                          <p>
-                            <span className="font-bold text-gray-800">Urgency:</span> {item.urgency || "—"}
-                          </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                        <p>
+                          <span className="font-bold text-gray-800">Enquiry No:</span> {item.enquiryNo}
+                        </p>
+                        <p>
+                          <span className="font-bold text-gray-800">Urgency:</span> {item.urgency || "—"}
+                        </p>
 
-                          {/* Dynamically show all product-specific details */}
-                          {item.details && Object.keys(item.details).map((key) => {
-                            const value = item.details[key];
-                            if (!value) return null;
-                            // Handle special case for files or links
-                            if (key.toLowerCase().includes("file") || key.toLowerCase().includes("design")) {
-                              return (
-                                <p key={key}>
-                                  <span className="font-bold text-gray-800">
-                                    {formatLabel(key)}:
-                                  </span>
-                                  <a
-                                    href={value}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-cyan-600 hover:underline ml-1 text-sm"
-                                  >
-                                    View
-                                  </a>
-                                </p>
-                              );
-                            }
-                            // Normal text field
-                            return (
-                              <p key={key}>
-                                <span className="font-bold text-gray-800">
-                                  {formatLabel(key)}:
-                                </span>{" "}
-                                {value}
-                              </p>
-                            );
-                          })}
-                        </div>
+                        {/* Product-specific details */}
+                        {item.details && Object.keys(item.details).map((key) => {
+                          const value = item.details[key];
+                          if (!value) return null;
+                          return (
+                            <p key={key}>
+                              <span className="font-bold text-gray-800">{formatLabel(key)}:</span>{" "}
+                              {value}
+                            </p>
+                          );
+                        })}
+
+                        {/* Display uploaded files */}
+                        {item.files?.length > 0 && (
+                          <div className="mt-3">
+                            <h4 className="font-semibold text-gray-800 mb-2">Uploaded Files:</h4>
+                            <div className="flex flex-wrap gap-3">
+                              {item.files.map((file, idx) => {
+                                const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(file);
+                                const isPDF = /\.pdf$/i.test(file);
+                                return (
+                                  <div key={idx} className="flex flex-col items-center">
+                                 {isImage && (
+                                      <button
+                                        onClick={() => {
+                                          setPreviewImage(`http://localhost:5000${file}`);
+                                          setShowImageModal(true);
+                                        }}
+                                        className="px-2 py-1 border border-gray-300 rounded bg-gray-100 hover:bg-gray-200 text-sm"
+                                      >
+                                        View Image
+                                      </button>
+                                    )}
+                                    {isPDF && (
+                                      <a
+                                        href={`http://localhost:5000${file}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-2 py-1 border border-gray-300 rounded bg-gray-100 hover:bg-gray-200 text-sm"
+                                      >
+                                        View PDF
+                                      </a>
+                                    )}
+                                    {/* Optionally, add download */}
+                                    <a
+                                      href={`http://localhost:5000${file}`}
+                                      download
+                                      className="text-xs text-cyan-600 mt-1 hover:underline"
+                                    >
+                                      Download
+                                    </a>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))
                 ) : (
@@ -435,9 +462,38 @@ const openViewModal = async (order) => {
       </AnimatePresence>
 
 
-
-
-
+        {/* --- Image Preview Modal --- */}
+        <AnimatePresence>
+          {showImageModal && previewImage && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 flex items-center justify-center bg-black/70 z-[100]"
+              onClick={() => setShowImageModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.9 }}
+                className="relative bg-white p-4 rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] flex justify-center items-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <img
+                  src={previewImage}
+                  alt="Preview"
+                  className="max-w-full max-h-[80vh] rounded-xl object-contain"
+                />
+                <button
+                  onClick={() => setShowImageModal(false)}
+                  className="absolute top-3 right-3 bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600"
+                >
+                  Close
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
 
       {/* --- Status Modal --- */}

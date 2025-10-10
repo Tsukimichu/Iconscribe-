@@ -3,20 +3,50 @@ const router = express.Router();
 const db = require("../models/db");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
+
+// ===================================================
+// Ensure uploads folder exists
+// ===================================================
+const uploadDir = path.join(__dirname, "../uploads/orderfiles");
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 // ===================================================
 // Multer Configuration for Order Uploads
 // ===================================================
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/orderfiles/"); // Store inside uploads/orderfiles/
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // unique filename
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
+});
+
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("File type not allowed"));
+    }
   },
 });
 
-const upload = multer({ storage });
+// ===================================================
+// Serve uploads folder so images are accessible
+// ===================================================
+router.use("/uploads", express.static(uploadDir));
+
+// ===================================================
+// Serve uploads folder so images are accessible
+// ===================================================
+router.use("/uploads", express.static(uploadDir));
 
 // ===================================================
 // CREATE NEW ORDER
@@ -32,7 +62,6 @@ router.post("/create", async (req, res) => {
       });
     }
 
-    // Insert into `orders`
     const [orderResult] = await db
       .promise()
       .execute(
@@ -42,7 +71,6 @@ router.post("/create", async (req, res) => {
 
     const order_id = orderResult.insertId;
 
-    // Insert into `orderitems`
     const [orderItemResult] = await db
       .promise()
       .execute(
@@ -80,67 +108,57 @@ router.post("/create", async (req, res) => {
 });
 
 // ===================================================
-// Upload SINGLE Image (Binding, Book, Raffle Ticket)
+// Upload SINGLE File
 // ===================================================
-router.post("/upload/single/:orderItemId", upload.single("image1"), async (req, res) => {
+router.post("/upload/single/:orderItemId", upload.single("file1"), async (req, res) => {
   const { orderItemId } = req.params;
-  const imagePath = req.file ? `/uploads/orderfiles/${req.file.filename}` : null;
 
-  if (!imagePath) {
-    return res.status(400).json({ success: false, message: "No image uploaded" });
-  }
+  if (!req.file) return res.status(400).json({ success: false, message: "No file uploaded" });
+
+  const filePath = `/uploads/orderfiles/${req.file.filename}`;
 
   try {
-    await db
+    // updated column name to file1
+    const [result] = await db
       .promise()
-      .execute("UPDATE orderitems SET image1 = ? WHERE order_item_id = ?", [
-        imagePath,
-        orderItemId,
-      ]);
+      .execute("UPDATE orderitems SET file1 = ? WHERE order_item_id = ?", [filePath, orderItemId]);
 
-    res.json({
-      success: true,
-      message: "Single image uploaded successfully!",
-      imagePath,
-    });
+    if (result.affectedRows === 0) return res.status(404).json({ success: false, message: "Order item not found" });
+
+    res.json({ success: true, message: "File uploaded successfully!", filePath });
   } catch (err) {
-    console.error("❌ Error updating order item image:", err);
+    console.error("❌ Error updating order item:", err);
     res.status(500).json({ success: false, message: "Database error" });
   }
 });
 
 // ===================================================
-// Upload DOUBLE Images (Brochure, Flyers, etc.)
+// Upload DOUBLE Files
 // ===================================================
 router.post(
   "/upload/double/:orderItemId",
-  upload.fields([{ name: "image1" }, { name: "image2" }]),
+  upload.fields([{ name: "file1" }, { name: "file2" }]),
   async (req, res) => {
     const { orderItemId } = req.params;
 
-    const image1Path = req.files["image1"]
-      ? `/uploads/orderfiles/${req.files["image1"][0].filename}`
-      : null;
-    const image2Path = req.files["image2"]
-      ? `/uploads/orderfiles/${req.files["image2"][0].filename}`
-      : null;
+    const file1Path = req.files["file1"] ? `/uploads/orderfiles/${req.files["file1"][0].filename}` : null;
+    const file2Path = req.files["file2"] ? `/uploads/orderfiles/${req.files["file2"][0].filename}` : null;
 
     try {
-      await db
+      // updated column names to file1, file2
+      const [result] = await db
         .promise()
-        .execute(
-          "UPDATE orderitems SET image1 = ?, image2 = ? WHERE order_item_id = ?",
-          [image1Path, image2Path, orderItemId]
-        );
+        .execute("UPDATE orderitems SET file1 = ?, file2 = ? WHERE order_item_id = ?", [
+          file1Path,
+          file2Path,
+          orderItemId,
+        ]);
 
-      res.json({
-        success: true,
-        message: "Double images uploaded successfully!",
-        image1Path,
-        image2Path,
-      });
+      if (result.affectedRows === 0) return res.status(404).json({ success: false, message: "Order item not found" });
+
+      res.json({ success: true, message: "Files uploaded successfully!", file1Path, file2Path });
     } catch (err) {
-      console.error("❌ Error updating double images:", err);
+      console.error("❌ Error updating order item:", err);
       res.status(500).json({ success: false, message: "Database error" });
     }
   }
@@ -214,8 +232,8 @@ router.get("/user/:id", async (req, res) => {
         oi.status,
         o.total AS price,
         oi.custom_details,
-        oi.image1,
-        oi.image2
+        oi.file1,
+        oi.file2
       FROM orderitems oi
       JOIN orders o ON oi.order_id = o.order_id
       JOIN products p ON oi.product_id = p.product_id
@@ -276,45 +294,52 @@ router.put("/:id/archive", (req, res) => {
 // Get a Single Order by ID
 // ===================================================
 router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+
   try {
-    const { id } = req.params;
+    // Fetch order info
     const [orderRows] = await db.promise().query(
       `SELECT 
         o.order_id,
+        o.order_date AS dateOrdered,
+        o.total AS price,
+        o.status,
         u.name AS customer_name,
         u.email,
         u.phone AS contact_number,
-        u.address AS location,
-        o.order_date AS dateOrdered,
-        o.total AS price,
-        o.status
+        u.address AS location
       FROM orders o
       JOIN users u ON o.user_id = u.user_id
       WHERE o.order_id = ?`,
       [id]
     );
 
-    if (orderRows.length === 0)
+    if (orderRows.length === 0) {
       return res.status(404).json({ success: false, message: "Order not found" });
+    }
 
+    // Fetch order items
     const [itemRows] = await db.promise().query(
       `SELECT 
         oi.order_item_id AS enquiryNo,
         p.product_name AS service,
+        oi.quantity,
         oi.urgency,
         oi.status,
         oi.custom_details,
-        oi.image1,
-        oi.image2
+        oi.file1,
+        oi.file2
       FROM orderitems oi
       JOIN products p ON oi.product_id = p.product_id
       WHERE oi.order_id = ?`,
       [id]
     );
 
+    // Format details and file paths
     const items = itemRows.map((item) => ({
       ...item,
       details: item.custom_details ? JSON.parse(item.custom_details) : {},
+      files: [item.file1, item.file2].filter(Boolean),
     }));
 
     res.json({
@@ -326,7 +351,7 @@ router.get("/:id", async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error fetching order details:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 

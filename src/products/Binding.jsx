@@ -4,7 +4,7 @@ import { ArrowBigLeft, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "../component/ui/ToastProvider";
-import UploadSection from "../component/UploadSection"; // ✅ Import upload section
+import UploadSection from "../component/UploadSection";
 
 function Binding() {
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ function Binding() {
   const [bindingType, setBindingType] = useState("");
   const [paperType, setPaperType] = useState("");
   const [notes, setNotes] = useState("");
-  const [file, setFile] = useState(null); // ✅ Track uploaded file
+  const [file, setFile] = useState(null);
   const { showToast } = useToast();
 
   // modals
@@ -91,80 +91,85 @@ function Binding() {
   };
 
   // confirm and send order (with upload)
-  const handleConfirmOrder = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const customDetails = {
-        PageCount: pageCount,
-        BindingType: bindingType,
-        PaperType: paperType,
-        Notes: notes,
-      };
-
-      // 1️⃣ Create the order first
-      const res = await fetch("http://localhost:5000/api/orders/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          user_id: userProfile.id,
-          product_id: 1,
-          quantity,
-          urgency: "Normal",
-          status: "Pending",
-          custom_details: customDetails,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!data.success) {
-        showToast("Failed to place order.", "error");
-        return;
-      }
-
-      const orderItemId = data.order_item_id;
-
-      // 2️⃣ Upload file (if user selected one)
-      if (file) {
-        const formData = new FormData();
-        formData.append("image1", file);
-
-        const uploadRes = await fetch(
-          `http://localhost:5000/api/orders/upload/single/${orderItemId}`,
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-
-        const uploadData = await uploadRes.json();
-
-        if (uploadData.success) {
-          showToast("File uploaded successfully!", "success");
-        } else {
-          showToast("Order placed, but file upload failed.", "warning");
-        }
-      }
-
-      // 3️⃣ Success
-      showToast("Order placed successfully!", "success");
-      setShowConfirm(false);
-
-      // Reset form
-      setQuantity("");
-      setPageCount("");
-      setBindingType("");
-      setPaperType("");
-      setNotes("");
-      setFile(null);
-    } catch (err) {
-      console.error("Error placing order:", err);
-      showToast("Something went wrong while placing the order.", "error");
+const handleConfirmOrder = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      showToast("You must be logged in to place an order.", "error");
+      return;
     }
-  };
+
+    const customDetails = {
+      PageCount: pageCount,
+      BindingType: bindingType,
+      PaperType: paperType,
+      Notes: notes,
+    };
+
+    // Create the order
+    const res = await fetch("http://localhost:5000/api/orders/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        user_id: userProfile.id,
+        product_id: 1,
+        quantity,
+        urgency: "Normal",
+        status: "Pending",
+        custom_details: customDetails,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      showToast("Failed to place order.", "error");
+      return;
+    }
+
+    const orderItemId = data.order_item_id;
+
+    // Upload the selected file (if any)
+    if (file) {
+      const formData = new FormData();
+      formData.append("file1", file);
+
+      const uploadRes = await fetch(
+        `http://localhost:5000/api/orders/upload/single/${orderItemId}`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const uploadData = await uploadRes.json();
+
+      if (uploadData.success) {
+        showToast("File uploaded successfully!", "success");
+      } else {
+        showToast("Order placed, but file upload failed.", "warning");
+      }
+    }
+
+    showToast("Order placed successfully!", "success");
+    setShowConfirm(false);
+
+    // Reset form fields
+    setQuantity("");
+    setPageCount("");
+    setBindingType("");
+    setPaperType("");
+    setNotes("");
+    setFile(null);
+  } catch (err) {
+    console.error("Error placing order:", err);
+    showToast("Something went wrong while placing the order.", "error");
+  }
+};
+
 
   if (!visible) return null;
 
@@ -176,7 +181,7 @@ function Binding() {
           {isLoggedIn ? (
             <>
               {/* Back Button + Title */}
-              <div className="flex items-center gap-3 mb-10">
+              <div className="flex items-center gap-1 mb-10">
                 <button
                   onClick={() => navigate(-1)}
                   className="p-2 hover:bg-gray-200 rounded-full transition"

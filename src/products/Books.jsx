@@ -2,7 +2,9 @@ import Nav from "../component/navigation";
 import sampleBook from "../assets/Book.png"; 
 import { ArrowBigLeft, Upload, Phone, Mail, Contact, MessageCircle, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
+import UploadSection from "../component/UploadSection";
+import { useToast } from "../component/ui/ToastProvider";
 
 function Books() {
   const navigate = useNavigate();
@@ -67,7 +69,6 @@ function Books() {
 
   if (!visible) return null;
 
-  // Form states
   const [quantity, setQuantity] = useState("");
   const [pages, setPages] = useState("");
   const [binding, setBinding] = useState("");
@@ -77,40 +78,11 @@ function Books() {
   const [file, setFile] = useState(null);
   const [notes, setNotes] = useState("");
 
-  // Modal states
   const [showConfirm, setShowConfirm] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+  const { showToast } = useToast();
 
-    // handle file input
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
-  };
-
-  // upload image after order placed
-  const handleUpload = async (productId) => {
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("image1", file);
-
-    try {
-      const res = await fetch(`http://localhost:5000/api/products/upload/single/${productId}`, {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.success) {
-        console.log("✅ Image uploaded:", data.imagePath);
-      } else {
-        console.error("⚠️ Failed to upload image");
-      }
-    } catch (err) {
-      console.error("Error uploading image:", err);
-    }
-  };
-
-
-  // Handle "Place Order" button
+  // Handle Place Order button
   const handlePlaceOrder = (e) => {
     e.preventDefault();
     if (!isLoggedIn) navigate("/login");
@@ -121,7 +93,10 @@ function Books() {
   const handleConfirmOrder = async () => {
     try {
       const token = localStorage.getItem("token");
-      if (!token) return;
+      if (!token) {
+        showToast("You must be logged in to place an order.", "error");
+        return;
+      }
 
       const customDetails = {
         "Number of Pages": pages,
@@ -132,7 +107,6 @@ function Books() {
         "Additional Notes": notes,
       };
 
-      // Send order to backend first
       const res = await fetch("http://localhost:5000/api/orders/create", {
         method: "POST",
         headers: {
@@ -151,30 +125,60 @@ function Books() {
 
       const data = await res.json();
 
-      if (data.success) {
-        alert("✅ Order placed successfully!");
-        setShowConfirm(false);
-
-        // Upload the file right after order success
-        await handleUpload(data.order_id || 2);
-
-        // Reset form fields
-        setQuantity("");
-        setPages("");
-        setBinding("");
-        setPaperType("");
-        setCoverFinish("");
-        setColorPrinting("");
-        setNotes("");
-        setFile(null);
-      } else {
-        alert("❌ Failed to place order.");
+      if (!data.success) {
+        showToast("Failed to place order.", "error");
+        return;
       }
+
+      // Ensure correct ID from backend
+      const orderItemId =
+        data.order_item_id || data.orderItemId || data.id || data.order_id;
+
+      if (!orderItemId) {
+        showToast("Order created, but missing ID from server.", "error");
+        return;
+      }
+
+      // Upload file
+      if (file) {
+        const formData = new FormData();
+        formData.append("file1", file);
+
+        const uploadRes = await fetch(
+          `http://localhost:5000/api/orders/upload/single/${orderItemId}`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        const uploadData = await uploadRes.json();
+
+        if (uploadData.success) {
+          showToast("Order placed and file uploaded successfully!", "success");
+        } else {
+          showToast("Order placed, but file upload failed.", "warning");
+        }
+      } else {
+        showToast("Order placed successfully!", "success");
+      }
+
+      // Reset and close
+      setShowConfirm(false);
+      setQuantity("");
+      setPages("");
+      setBinding("");
+      setPaperType("");
+      setCoverFinish("");
+      setColorPrinting("");
+      setNotes("");
+      setFile(null);
     } catch (err) {
       console.error("Error placing order:", err);
-      alert("⚠️ Something went wrong while placing the order.");
+      showToast("Something went wrong while placing the order.", "error");
     }
   };
+
 
 
 
@@ -297,30 +301,34 @@ function Books() {
                           <label className="block text-base font-semibold text-black">
                             Binding Type
                           </label>
-                          <select
-                            className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                            required
-                          >
-                            <option value="">Select binding</option>
-                            <option>Perfect Binding</option>
-                            <option>Saddle Stitch</option>
-                            <option>Hardcover</option>
-                            <option>Spiral</option>
-                          </select>
+                            <select
+                              value={binding}
+                              onChange={(e) => setBinding(e.target.value)}
+                              className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                              required
+                            >
+                              <option value="">Select binding</option>
+                              <option>Perfect Binding</option>
+                              <option>Saddle Stitch</option>
+                              <option>Hardcover</option>
+                              <option>Spiral</option>
+                            </select>
                         </div>
                         <div>
                           <label className="block text-base font-semibold text-black">
                             Paper Type
                           </label>
-                          <select
-                            className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                            required
-                          >
-                            <option value="">Select paper</option>
-                            <option>Matte</option>
-                            <option>Glossy</option>
-                            <option>Book Paper</option>
-                          </select>
+                            <select
+                              value={paperType}
+                              onChange={(e) => setPaperType(e.target.value)}
+                              className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                              required
+                            >
+                              <option value="">Select paper</option>
+                              <option>Matte</option>
+                              <option>Glossy</option>
+                              <option>Book Paper</option>
+                            </select>
                         </div>
                       </div>
 
@@ -330,62 +338,55 @@ function Books() {
                           <label className="block text-base font-semibold text-black">
                             Cover Finish
                           </label>
-                          <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
-                            <option value="">Select finish</option>
-                            <option>Matte</option>
-                            <option>Glossy</option>
-                            <option>Soft Touch</option>
-                          </select>
+                            <select
+                              value={coverFinish}
+                              onChange={(e) => setCoverFinish(e.target.value)}
+                              className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                            >
+                              <option value="">Select finish</option>
+                              <option>Matte</option>
+                              <option>Glossy</option>
+                              <option>Soft Touch</option>
+                            </select>
                         </div>
                         <div>
                           <label className="block text-base font-semibold text-black">
                             Color Printing
                           </label>
-                          <select
-                            className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                            required
-                          >
-                            <option value="">Select option</option>
-                            <option>Full Color</option>
-                            <option>Black & White</option>
-                            <option>Mixed</option>
-                          </select>
+                            <select
+                              value={colorPrinting}
+                              onChange={(e) => setColorPrinting(e.target.value)}
+                              className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                              required
+                            >
+                              <option value="">Select option</option>
+                              <option>Full Color</option>
+                              <option>Black & White</option>
+                              <option>Mixed</option>
+                            </select>
                         </div>
                       </div>
 
 
                  {/* Upload + Message */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-4">
-                      <h3 className="block text-base font-semibold text-black">Design Files:</h3>
-                      <label className="flex items-center justify-center gap-2 border-2 border-yellow-400 bg-yellow-50 rounded-xl p-4 shadow-sm hover:border-yellow-600 hover:bg-yellow-100 transition cursor-pointer">
-                        <Upload className="w-5 h-10 text-yellow-500" />
-                        <span className="text-base font-medium text-black">Upload Your Manuscript</span>
-                        <input
-                          type="file"
-                          name="image1"
-                          className="hidden"
-                          onChange={handleFileChange}
-                        />
-                      </label>
-
-                      {file && (
-                        <p className="text-sm text-green-600 mt-2">
-                        {file.name}
-                        </p>
-                      )}
-
-                    </div>
-
+                      <UploadSection
+                        uploadCount={1}
+                        onUploadComplete={(res) => {
+                          if (res?.files?.[0]) setFile(res.files[0]);
+                        }}
+                      />
                     {/* Notes */}
                     <div className="flex flex-col gap-3 mt-0">
                       <label className="block text-base font-semibold text-black">
                         Additional Notes <span className="text-sm text-gray-700">(optional)</span>
                       </label>
-                      <textarea
-                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-19 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                        placeholder="Enter a Message"
-                      ></textarea>
+                        <textarea
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
+                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-45 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                          placeholder="Enter a Message"
+                        ></textarea>
                     </div>
                   </div>
 

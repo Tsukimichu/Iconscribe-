@@ -3,6 +3,9 @@ import or from "../assets/Brochure.png";
 import { ArrowBigLeft, Upload, Phone, Mail, Contact, MessageCircle, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import UploadSection from "../component/UploadSection";
+import { useToast } from "../component/ui/ToastProvider";
+
 
 function Brochure() {
   const navigate = useNavigate();
@@ -25,7 +28,10 @@ function Brochure() {
   const [backToBack, setBackToBack] = useState(false);
   const [customization, setCustomization] = useState(false);
   const [message, setMessage] = useState("");
+  const [file, setFile] = useState(null);
 
+
+  const { showToast } = useToast();
   const [showConfirm, setShowConfirm] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [visible, setVisible] = useState(true);
@@ -89,61 +95,97 @@ function Brochure() {
     }
   };
 
-  // Confirm and send order to backend
-  const handleConfirmOrder = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const customDetails = {
-        Customization: customization ? "Yes" : "No",
-        "Number of copies": quantity,
-        Size: size,
-        "Type of paper": paperType,
-        Colored: color,
-        Lamination: lamination,
-        Print: backToBack ? "Back to back" : "Single side",
-        Message: message,
-      };
-
-      const response = await fetch("http://localhost:5000/api/orders/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          user_id: userProfile.id,
-          product_id: 3, // Brochure product_id
-          quantity,
-          urgency: "Normal",
-          status: "Pending",
-          custom_details: customDetails,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        alert("✅ Order placed successfully!");
-        setShowConfirm(false);
-        // Reset form fields
-        setQuantity("");
-        setSize("");
-        setPaperType("");
-        setColor("");
-        setLamination("");
-        setBackToBack(false);
-        setCustomization(false);
-        setMessage("");
-      } else {
-        alert("⚠️ Failed to place order. Please try again.");
-      }
-    } catch (err) {
-      console.error("Order error:", err);
-      alert("⚠️ Something went wrong. Please try again later.");
+ // Confirm and send order to backend (with file upload)
+const handleConfirmOrder = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("⚠️ You must be logged in to place an order.");
+      return;
     }
-  };
+
+    const customDetails = {
+      Customization: customization ? "Yes" : "No",
+      "Number of copies": quantity,
+      Size: size,
+      "Type of paper": paperType,
+      Colored: color,
+      Lamination: lamination,
+      Print: backToBack ? "Back to back" : "Single side",
+      Message: message,
+    };
+
+    // 1️⃣ Create the order
+    const res = await fetch("http://localhost:5000/api/orders/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        user_id: userProfile.id,
+        product_id: 3,
+        quantity,
+        urgency: "Normal",
+        status: "Pending",
+        custom_details: customDetails,
+      }),
+    });
+
+    const data = await res.json();
+    if (!data.success) {
+      alert("⚠️ Failed to place order.");
+      return;
+    }
+
+    // 2️⃣ Get order item ID
+    const orderItemId =
+      data.order_item_id || data.orderItemId || data.id || data.order_id;
+    if (!orderItemId) {
+      alert("⚠️ Order created, but missing ID from server.");
+      return;
+    }
+
+    // 3️⃣ Upload file (if any)
+    if (file) {
+      const formData = new FormData();
+      formData.append("file1", file);
+
+      const uploadRes = await fetch(
+        `http://localhost:5000/api/orders/upload/single/${orderItemId}`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const uploadData = await uploadRes.json();
+
+      if (uploadData.success) {
+        showToast(" Order placed and file uploaded successfully!");
+      } else {
+        showToast(" Order placed, but file upload failed.");
+      }
+    } else {
+      showToast("Order placed successfully!");
+    }
+
+    // 4️⃣ Reset and close
+    setShowConfirm(false);
+    setQuantity("");
+    setSize("");
+    setPaperType("");
+    setColor("");
+    setLamination("");
+    setBackToBack(false);
+    setCustomization(false);
+    setMessage("");
+    setFile(null);
+  } catch (err) {
+    console.error("Error placing order:", err);
+    alert("⚠️ Something went wrong while placing the order.");
+  }
+};
 
   return (
     <>
@@ -265,39 +307,13 @@ function Brochure() {
 
                   {/* Upload + Message */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-4">
-                      {/* Customize Button */}
-                      <h3 className="block text-base font-semibold text-black">Design Options:</h3>
-                      <button
-                        type="button"
-                        onClick={() => navigate("/customize")}
-                        className="flex items-center justify-center gap-2 border-2 border-blue-400 bg-blue-50 rounded-xl p-4 shadow-sm hover:border-blue-600 hover:bg-blue-100 transition"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="w-5 h-10 text-blue-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M15.232 5.232l3.536 3.536m-2.036-5.036A2.5 2.5 0 1121.5 8.5L12 18l-4 1 1-4 9.5-9.5z"
-                          />
-                        </svg>
-                        <span className="text-base font-medium text-black">Customize Design</span>
-                      </button>
-
-                      {/* Upload Design Button */}
-                      <label className="flex items-center justify-center gap-2 border-2 border-yellow-400 bg-yellow-50 rounded-xl p-4 shadow-sm hover:border-yellow-600 hover:bg-yellow-100 transition cursor-pointer">
-                        <Upload className="w-5 h-10 text-yellow-500" />
-                        <span className="text-base font-medium text-black">Upload Your Design</span>
-                        <input type="file" className="hidden" />
-                      </label>
-                    </div>
-
+                      <UploadSection
+                        uploadCount={1}          
+                        hasCustomization={true} 
+                        onUploadComplete={(res) => {
+                          if (res?.files?.[0]) setFile(res.files[0]);
+                        }}
+                      />
                     {/* Size + Message */}
                     <div className="flex flex-col gap-3 mt-9  ">
               
@@ -321,7 +337,7 @@ function Brochure() {
                           </span>
                         </label>
                         <textarea
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-19 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-48 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           placeholder="Enter message"
                           value={message}
                           onChange={(e) => setMessage(e.target.value)}

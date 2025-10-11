@@ -173,6 +173,7 @@ function Books() {
       setColorPrinting("");
       setNotes("");
       setFile(null);
+      navigate("/dashboard");
     } catch (err) {
       console.error("Error placing order:", err);
       showToast("Something went wrong while placing the order.", "error");

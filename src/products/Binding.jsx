@@ -132,7 +132,7 @@ const handleConfirmOrder = async () => {
 
     const orderItemId = data.order_item_id;
 
-    // Upload the selected file (if any)
+    // Upload the selected file
     if (file) {
       const formData = new FormData();
       formData.append("file1", file);
@@ -147,12 +147,14 @@ const handleConfirmOrder = async () => {
 
       const uploadData = await uploadRes.json();
 
-      if (uploadData.success) {
-        showToast("File uploaded successfully!", "success");
+        if (uploadData.success) {
+          showToast("Order placed and file uploaded successfully!", "success");
+        } else {
+          showToast("Order placed, but file upload failed.", "warning");
+        }
       } else {
-        showToast("Order placed, but file upload failed.", "warning");
+        showToast("Order placed successfully!", "success");
       }
-    }
 
     showToast("Order placed successfully!", "success");
     setShowConfirm(false);

@@ -4,6 +4,8 @@ import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState,useEffect } from "react";
 import { Contact, MessageCircle, XCircle } from "lucide-react";
+import UploadSection from "../component/UploadSection";
+import { useToast } from "../component/ui/ToastProvider";
 
 function CallingCard() {
   const navigate = useNavigate();
@@ -23,9 +25,12 @@ function CallingCard() {
       const [paperType, setPaperType] = useState("");
       const [color, setColor] = useState("");
       const [lamination, setLamination] = useState("");
+      const [customization, setCustomization] = useState(false);
       const [backToBack, setBackToBack] = useState(false);
       const [message, setMessage] = useState("");
+      const [file, setFile] = useState("");
  
+      const {showToast} = useToast();
       const [quantity, setQuantity] = useState("");
       const [showConfirm, setShowConfirm] = useState(false);
       const [showContactModal, setShowContactModal] = useState(false);
@@ -89,64 +94,108 @@ function CallingCard() {
 
     if (!visible) return null;
 
-  const handleConfirmOrder = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Please log in to place an order.");
-        return;
-      }
-      const customDetails = {
-        Name: userProfile.name,
-        Email: userProfile.email,
-        Address: userProfile.address,
-        Phone: userProfile.phone,
-        Business: userProfile.business,
-        "Number of Cards": quantity,
-        Size: size,
-        "Type of Paper": paperType,
-        Color: color,
-        Lamination: lamination,
-        Print: backToBack ? "Back to back" : "Single side",
-        Message: message,
-      };
-      const response = await fetch("http://localhost:5000/api/orders/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          user_id: userProfile.id,
-          product_id: 5,
-          quantity,
-          urgency: "Normal",
-          status: "Pending",
-          custom_details: customDetails,
-        }),
-      });
-      const data = await response.json();
-      if (data.success) {
-        alert("✅ Order placed successfully!");
-        setShowConfirm(false);
-        // Reset form fields
-        setQuantity("");
-        setSize("");
-        setPaperType("");
-        setColor("");
-        setLamination("");
-        setBackToBack(false);
-        setMessage("");
-        // Optionally navigate to orders page
-        navigate("/dashboard");
-      } else {
-        alert("⚠️ Failed to place order. Please try again.");
-      }
-    } catch (error) {
-      console.error("Order error:", error);
-      alert("⚠️ Something went wrong. Please try again later.");
+ const handleConfirmOrder = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("⚠️ Please log in to place an order.");
+      return;
     }
-  };
+
+
+    const customDetails = {
+      Customization: customization ? "Yes" : "NO",
+      Name: userProfile.name,
+      Email: userProfile.email,
+      Address: userProfile.address,
+      Phone: userProfile.phone,
+      Business: userProfile.business,
+      "Number of Cards": quantity,
+      Size: size,
+      "Type of Paper": paperType,
+      Color: color,
+      Lamination: lamination,
+      Print: backToBack ? "Back to back" : "Single side",
+      Message: message,
+    };
+
+    // Create order first
+    const response = await fetch("http://localhost:5000/api/orders/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        user_id: userProfile.id,
+        product_id: 5,
+        quantity,
+        urgency: "Normal",
+        status: "Pending",
+        custom_details: customDetails,
+      }),
+    });
+
+    const data = await response.json();
+    if (!data.success) {
+      alert(" Failed to place order. Please try again.");
+      return;
+    }
+
+    // Get the created order item ID
+    const orderItemId =
+      data.order_item_id || data.orderItemId || data.id || data.order_id;
+
+    if (!orderItemId) {
+      alert(" Order created but missing ID from server.");
+      return;
+    }
+
+    // Upload file if available
+    if (file) {
+      const formData = new FormData();
+      formData.append("file1", file);
+
+      const uploadRes = await fetch(
+        `http://localhost:5000/api/orders/upload/single/${orderItemId}`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const uploadData = await uploadRes.json();
+
+      if (uploadData.success) {
+        showToast(" Order placed and file uploaded successfully!");
+      } else {
+        alert(" Order placed, but file upload failed.");
+      }
+    } else {
+      alert(" Order placed successfully!");
+    }
+
+    // Reset form fields
+    setShowConfirm(false);
+    setQuantity("");
+    setSize("");
+    setPaperType("");
+    setColor("");
+    setLamination("");
+    setBackToBack(false);
+    setMessage("");
+    setFile(null);
+    setCustomization(false);
+
+    // Redirect to dashboard
+    navigate("/dashboard");
+  } catch (error) {
+    console.error("Order error:", error);
+    alert("⚠️ Something went wrong. Please try again later.");
+  }
+};
+
+
 
   return (
     <>
@@ -313,45 +362,13 @@ function CallingCard() {
 
                   {/* Upload + Message */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-4">
-                      {/* Customize Button */}
-                      <h3 className="block text-base font-semibold text-black">
-                        Design Options:
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={() => navigate("/customize")}
-                        className="flex items-center justify-center gap-2 border-2 border-blue-400 bg-blue-50 rounded-xl p-4 shadow-sm hover:border-blue-600 hover:bg-blue-100 transition"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="w-5 h-10 text-blue-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M15.232 5.232l3.536 3.536m-2.036-5.036A2.5 2.5 0 1121.5 8.5L12 18l-4 1 1-4 9.5-9.5z"
-                          />
-                        </svg>
-                        <span className="text-base font-medium text-black">
-                          Customize Design
-                        </span>
-                      </button>
-
-                      {/* Upload Design Button */}
-                      <label className="flex items-center justify-center gap-2 border-2 border-yellow-400 bg-yellow-50 rounded-xl p-4 shadow-sm hover:border-yellow-600 hover:bg-yellow-100 transition cursor-pointer">
-                        <Upload className="w-5 h-10 text-yellow-500" />
-                        <span className="text-base font-medium text-black">
-                          Upload Your Design
-                        </span>
-                        <input type="file" className="hidden" />
-                      </label>
-                    </div>
-
+                     <UploadSection
+                        uploadCount={1}          
+                        hasCustomization={true} 
+                        onUploadComplete={(res) => {
+                          if (res?.files?.[0]) setFile(res.files[0]);
+                        }}
+                      />
                     {/* Options + Message */}
                     <div className="flex flex-col gap-3">
                       <div>

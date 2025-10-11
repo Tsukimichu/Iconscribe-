@@ -1,13 +1,16 @@
 import Nav from "../component/navigation";
 import or from "../assets/calendar.png";
-import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
+import { ArrowBigLeft, Phone, Mail, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Contact, MessageCircle, XCircle } from "lucide-react";
+import { Contact, MessageCircle } from "lucide-react";
+import UploadSection from "../component/UploadSection";
+import { useToast } from "../component/ui/ToastProvider";
 
 function Calendars() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+  const [file, setFile] = useState(null); // ✅ added for file upload
 
   const [userProfile, setUserProfile] = useState({
     id: "",
@@ -22,9 +25,11 @@ function Calendars() {
   const [calendarType, setCalendarType] = useState("");
   const [size, setSize] = useState("");
   const [quantity, setQuantity] = useState("");
+  const [customization, setCustomization] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [visible, setVisible] = useState(true);
+  const {showToast} = useToast();
 
   useEffect(() => {
     const checkToken = () => {
@@ -60,6 +65,7 @@ function Calendars() {
       .catch((err) => console.error("Error fetching profile:", err));
   }, [isLoggedIn]);
 
+  // Check product status
   useEffect(() => {
     fetch("http://localhost:5000/api/product-status")
       .then((res) => res.json())
@@ -83,18 +89,23 @@ function Calendars() {
     }
   };
 
+  // Updated to include file upload 
   const handleConfirmOrder = async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        alert("Please log in to place an order.");
+        alert("⚠️ Please log in to place an order.");
         return;
       }
+
       const customDetails = {
+        Customization: customization ? "Yes" : "No",
         Color: color,
         "Calendar Type": calendarType,
         Size: size,
       };
+
+      // Create order
       const response = await fetch("http://localhost:5000/api/orders/create", {
         method: "POST",
         headers: {
@@ -110,18 +121,54 @@ function Calendars() {
           custom_details: customDetails,
         }),
       });
+
       const data = await response.json();
-      if (data.success) {
-        alert("✅ Order placed successfully!");
-        setShowConfirm(false);
-        setColor("");
-        setCalendarType("");
-        setSize("");
-        setQuantity("");
-        navigate("/dashboard");
-      } else {
+      if (!data.success) {
         alert("⚠️ Failed to place order. Please try again.");
+        return;
       }
+
+      // Get order item ID
+      const orderItemId =
+        data.order_item_id || data.orderItemId || data.id || data.order_id;
+      if (!orderItemId) {
+        showToast(" Order created, but missing ID from server.");
+        return;
+      }
+
+      // Upload file if provided
+      if (file) {
+        const formData = new FormData();
+        formData.append("file1", file);
+
+        const uploadRes = await fetch(
+          `http://localhost:5000/api/orders/upload/single/${orderItemId}`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        const uploadData = await uploadRes.json();
+
+        if (uploadData.success) {
+          showToast(" Order placed and file uploaded successfully!");
+        } else {
+          showToast(" Order placed, but file upload failed.");
+        }
+      } else {
+        showToast(" Order placed successfully!");
+      }
+
+      // Reset fields
+      setShowConfirm(false);
+      setColor("");
+      setCalendarType("");
+      setSize("");
+      setQuantity("");
+      setFile(null);
+      setCustomization(false);
+      navigate("/dashboard");
     } catch (error) {
       console.error("Order error:", error);
       alert("⚠️ Something went wrong. Please try again later.");
@@ -296,45 +343,13 @@ function Calendars() {
 
                   {/* Upload + Size + Message */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-4">
-                      {/* Customize Button */}
-                      <h3 className="block text-base font-semibold text-black">
-                        Design Options:
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={() => navigate("/customize")}
-                        className="flex items-center justify-center gap-2 border-2 border-blue-400 bg-blue-50 rounded-xl p-4 shadow-sm hover:border-blue-600 hover:bg-blue-100 transition"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="w-5 h-10 text-blue-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M15.232 5.232l3.536 3.536m-2.036-5.036A2.5 2.5 0 1121.5 8.5L12 18l-4 1 1-4 9.5-9.5z"
-                          />
-                        </svg>
-                        <span className="text-base font-medium text-black">
-                          Customize Design
-                        </span>
-                      </button>
-
-                      {/* Upload Design Button */}
-                      <label className="flex items-center justify-center gap-2 border-2 border-yellow-400 bg-yellow-50 rounded-xl p-4 shadow-sm hover:border-yellow-600 hover:bg-yellow-100 transition cursor-pointer">
-                        <Upload className="w-5 h-10 text-yellow-500" />
-                        <span className="text-base font-medium text-black">
-                          Upload Your Design
-                        </span>
-                        <input type="file" className="hidden" />
-                      </label>
-                    </div>
-
+                      <UploadSection
+                        uploadCount={1}          
+                        hasCustomization={true} 
+                        onUploadComplete={(res) => {
+                          if (res?.files?.[0]) setFile(res.files[0]);
+                        }}
+                      />
                     {/* Size + Message */}
                     <div className="flex flex-col gap-3">
                       <div>

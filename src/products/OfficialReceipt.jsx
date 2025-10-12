@@ -7,6 +7,7 @@ import { Contact, MessageCircle, XCircle } from "lucide-react";
 import { useToast } from "../component/ui/ToastProvider.jsx";
 
 
+
 function OfficialReceipt() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));

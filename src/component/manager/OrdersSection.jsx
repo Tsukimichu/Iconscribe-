@@ -28,13 +28,70 @@ const OrdersSection = () => {
 
   // --- Walk-in order modal ---
   const [showAddOrderModal, setShowAddOrderModal] = useState(false);
+
+  // Define available services (for dropdown)
+  const serviceOptions = [
+    "Official Receipt",
+    "Binding",
+    "Book",
+    "Brochure",
+    "Calendar",
+    "Calling Card",
+    "Flyers",
+    "Invitation",
+    "News Letter",
+    "Poster",
+    "Raffle Ticket",
+  ];
+
+  // Optional: if you want auto-pricing per service, define here
+  const servicePrices = {
+    "Official Receipt": 150,
+    Binding: 50,
+    Book: 300,
+    Brochure: 120,
+    Calendar: 200,
+    "Calling Card": 100,
+    Flyers: 80,
+    Invitation: 90,
+    "News Letter": 150,
+    Poster: 180,
+    "Raffle Ticket": 130,
+  };
+
+  // Form state for new walk-in order
   const [newOrder, setNewOrder] = useState({
     customer_name: "",
+    email: "",
+    contact_number: "",
+    location: "",
+    date_ordered: "",
+    status: "Pending",
     service: "",
+    enquiry_no: "",
     price: "",
     urgency: "Normal",
+    number_of_pages: "",
+    binding_type: "",
+    paper_type: "",
+    cover_finish: "",
+    color_printing: "",
   });
+
+  // Handle file uploads
   const [orderFiles, setOrderFiles] = useState([]);
+
+  // When the user selects a service from the dropdown
+  const handleServiceChange = (e) => {
+    const selectedService = e.target.value;
+
+    // Automatically fill the price if a service is selected
+    setNewOrder((prev) => ({
+      ...prev,
+      service: selectedService,
+      price: servicePrices[selectedService] || "",
+    }));
+  };
 
   // --- Fetch from backend ---
   useEffect(() => {
@@ -158,17 +215,22 @@ const OrdersSection = () => {
 
   // --- Add Walk-In Order Logic ---
   const handleAddOrder = async () => {
-    const { customer_name, service, price, urgency } = newOrder;
-    if (!customer_name || !service || !price)
-      return alert("Please fill all required fields.");
+  const { customer_name, service, price, urgency } = newOrder;
+
+  // Validate required fields
+    if (!customer_name.trim() || !service || !price) {
+      alert("Please fill in all required fields (Customer, Service, and Price).");
+      return;
+    }
 
     try {
       const formData = new FormData();
-      formData.append("customer_name", customer_name);
+      formData.append("customer_name", customer_name.trim());
       formData.append("service", service);
-      formData.append("price", price);
+      formData.append("price", Number(price)); // ensure numeric
       formData.append("urgency", urgency);
       formData.append("source", "walk-in");
+
       orderFiles.forEach((file) => formData.append("files", file));
 
       const res = await fetch("http://localhost:5000/api/orders", {
@@ -177,19 +239,31 @@ const OrdersSection = () => {
       });
 
       const data = await res.json();
-      if (res.ok && data.success) {
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to add order");
+      }
+
+      // ✅ Success handling
+      if (data.success) {
         setOrders((prev) => [...prev, data.order]);
         setShowAddOrderModal(false);
-        setNewOrder({ customer_name: "", service: "", price: "", urgency: "Normal" });
+        setNewOrder({
+          customer_name: "",
+          service: "",
+          price: "",
+          urgency: "Normal",
+        });
         setOrderFiles([]);
       } else {
-        alert(data.message || "Failed to add order");
+        alert(data.message || "Unexpected response from server.");
       }
     } catch (err) {
       console.error("Error adding walk-in order:", err);
-      alert("Server error while adding order.");
+      alert("Server error while adding order. Please try again later.");
     }
   };
+
 
 
 
@@ -659,11 +733,15 @@ const openViewModal = async (order) => {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-lg p-6 max-w-md w-full text-center"
+              className="bg-white rounded-2xl shadow-lg p-8 max-w-4xl w-full text-center overflow-y-auto max-h-[90vh]"
             >
-              <h2 className="text-xl font-bold mb-4 text-cyan-700">Add Walk-In Order</h2>
+              <h2 className="text-2xl font-bold mb-6 text-cyan-700">
+                Add Walk-In Order
+              </h2>
 
-              <div className="space-y-3 text-left">
+              {/* Two-column layout for inputs */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                {/* Customer Information */}
                 <input
                   type="text"
                   placeholder="Customer Name"
@@ -671,17 +749,86 @@ const openViewModal = async (order) => {
                   onChange={(e) =>
                     setNewOrder({ ...newOrder, customer_name: e.target.value })
                   }
-                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                />
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={newOrder.email || ""}
+                  onChange={(e) =>
+                    setNewOrder({ ...newOrder, email: e.target.value })
+                  }
+                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
                 />
                 <input
                   type="text"
-                  placeholder="Service"
-                  value={newOrder.service}
+                  placeholder="Contact Number"
+                  value={newOrder.contact_number || ""}
                   onChange={(e) =>
-                    setNewOrder({ ...newOrder, service: e.target.value })
+                    setNewOrder({ ...newOrder, contact_number: e.target.value })
                   }
-                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
                 />
+                <input
+                  type="text"
+                  placeholder="Location"
+                  value={newOrder.location || ""}
+                  onChange={(e) =>
+                    setNewOrder({ ...newOrder, location: e.target.value })
+                  }
+                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                />
+
+                {/* Date Ordered */}
+                <input
+                  type="date"
+                  value={newOrder.date_ordered || ""}
+                  onChange={(e) =>
+                    setNewOrder({ ...newOrder, date_ordered: e.target.value })
+                  }
+                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                />
+
+                {/* Status */}
+                <select
+                  value={newOrder.status || "Pending"}
+                  onChange={(e) =>
+                    setNewOrder({ ...newOrder, status: e.target.value })
+                  }
+                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                >
+                  <option>Pending</option>
+                  <option>In Progress</option>
+                  <option>Completed</option>
+                  <option>Cancelled</option>
+                </select>
+
+                {/* Service */}
+                <select
+                  value={newOrder.service}
+                  onChange={handleServiceChange}
+                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                >
+                  <option value="">Select a service...</option>
+                  {serviceOptions.map((service, index) => (
+                    <option key={index} value={service}>
+                      {service}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Enquiry Number */}
+                <input
+                  type="text"
+                  placeholder="Enquiry No."
+                  value={newOrder.enquiry_no || ""}
+                  onChange={(e) =>
+                    setNewOrder({ ...newOrder, enquiry_no: e.target.value })
+                  }
+                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                />
+
+                {/* Price */}
                 <input
                   type="number"
                   placeholder="Price (₱)"
@@ -689,62 +836,132 @@ const openViewModal = async (order) => {
                   onChange={(e) =>
                     setNewOrder({ ...newOrder, price: e.target.value })
                   }
-                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
                 />
+
+                {/* Urgency */}
                 <select
                   value={newOrder.urgency}
                   onChange={(e) =>
                     setNewOrder({ ...newOrder, urgency: e.target.value })
                   }
-                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
                 >
                   <option>Normal</option>
                   <option>Urgent</option>
                   <option>Rush</option>
                 </select>
 
-                {/* File upload */}
-                <div>
-                  <label className="block font-semibold text-gray-700 mb-1">
-                    Attach Files (Images or PDFs)
-                  </label>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*,.pdf"
-                    onChange={(e) => setOrderFiles([...e.target.files])}
-                    className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
-                  />
-                  {orderFiles.length > 0 && (
-                    <p className="text-sm text-gray-500 mt-1">
-                      {orderFiles.length} file(s) selected
-                    </p>
-                  )}
-                </div>
+                {/* Book Details */}
+                <input
+                  type="number"
+                  placeholder="Number of Pages"
+                  value={newOrder.number_of_pages || ""}
+                  onChange={(e) =>
+                    setNewOrder({ ...newOrder, number_of_pages: e.target.value })
+                  }
+                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                />
+                <input
+                  type="text"
+                  placeholder="Binding Type (e.g. Perfect Binding)"
+                  value={newOrder.binding_type || ""}
+                  onChange={(e) =>
+                    setNewOrder({ ...newOrder, binding_type: e.target.value })
+                  }
+                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                />
+                <input
+                  type="text"
+                  placeholder="Paper Type (e.g. Matte)"
+                  value={newOrder.paper_type || ""}
+                  onChange={(e) =>
+                    setNewOrder({ ...newOrder, paper_type: e.target.value })
+                  }
+                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                />
+                <input
+                  type="text"
+                  placeholder="Cover Finish (e.g. Glossy)"
+                  value={newOrder.cover_finish || ""}
+                  onChange={(e) =>
+                    setNewOrder({ ...newOrder, cover_finish: e.target.value })
+                  }
+                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                />
+                <input
+                  type="text"
+                  placeholder="Color Printing (e.g. Full Color)"
+                  value={newOrder.color_printing || ""}
+                  onChange={(e) =>
+                    setNewOrder({ ...newOrder, color_printing: e.target.value })
+                  }
+                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                />
               </div>
 
+              {/* File Upload */}
+              <div className="mt-4 text-left">
+                <label className="block font-semibold text-gray-700 mb-1">
+                  Upload Files (Images or PDFs)
+                </label>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf"
+                  onChange={(e) => setOrderFiles([...e.target.files])}
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                />
+                {orderFiles.length > 0 && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    {orderFiles.length} file(s) selected
+                  </p>
+                )}
+              </div>
+
+              {/* Buttons */}
               <div className="flex justify-center gap-3 mt-6">
                 <button
+                  type="button"
                   onClick={() => {
                     setShowAddOrderModal(false);
-                    setNewOrder({ customer_name: "", service: "", price: "", urgency: "Normal" });
+                    setNewOrder({
+                      customer_name: "",
+                      email: "",
+                      contact_number: "",
+                      location: "",
+                      date_ordered: "",
+                      status: "Pending",
+                      service: "",
+                      enquiry_no: "",
+                      price: "",
+                      urgency: "Normal",
+                      number_of_pages: "",
+                      binding_type: "",
+                      paper_type: "",
+                      cover_finish: "",
+                      color_printing: "",
+                    });
                     setOrderFiles([]);
                   }}
-                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
+                  className="px-5 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition-colors duration-200"
                 >
                   Cancel
                 </button>
+
                 <button
+                  type="button"
                   onClick={handleAddOrder}
-                  className="px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white transition"
+                  className="px-5 py-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold shadow-sm transition-colors duration-200"
                 >
-                  Save Order
+                  Add Order
                 </button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
 
       {/* --- Archive Modal --- */}
       <AnimatePresence>

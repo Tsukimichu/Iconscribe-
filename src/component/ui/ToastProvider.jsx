@@ -77,7 +77,13 @@ export const ToastProvider = ({ children }) => {
             onMouseEnter={() => pauseTimer(t.id)}
             onMouseLeave={() => resumeTimer(t.id, 2000)}
             className={
-              "max-w-xl w-full px-8 py-6 rounded-3xl backdrop-blur-lg bg-white/20 border border-white/30 text-white shadow-2xl flex items-start gap-6 text-[18px] " +
+              "max-w-xl w-full px-6 py-4 rounded-2xl shadow-lg flex items-start gap-4 text-[16px] transition-all " +
+              (t.type === "success"
+                ? "bg-green-600 text-white"
+                : t.type === "error"
+                ? "bg-red-600 text-white"
+                : "bg-blue-600 text-white") +
+              " " +
               (t.exiting ? "animate-toast-out" : "animate-toast-in")
             }
             role="status"

@@ -230,7 +230,7 @@ const OrdersSection = () => {
       const formData = new FormData();
       formData.append("customer_name", customer_name.trim());
       formData.append("service", service);
-      formData.append("price", Number(price)); // ensure numeric
+      formData.append("price", Number(price)); 
       formData.append("urgency", urgency);
       formData.append("source", "walk-in");
 
@@ -266,11 +266,6 @@ const OrdersSection = () => {
       alert("Server error while adding order. Please try again later.");
     }
   };
-
-
-
-
-
 
   // --- Open View Modal ---
 const openViewModal = async (order) => {
@@ -385,7 +380,7 @@ const openViewModal = async (order) => {
           transition={{ duration: 0.4 }}
           className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-x-auto"
         >
-          <div className="max-h-[500px] overflow-y-auto">
+          <div className="max-h-[550px] overflow-y-auto">
             <table className="w-full text-left border-collapse min-w-[900px] text-sm">
               <thead className="bg-gray-100 sticky top-0 z-10">
                 <tr>

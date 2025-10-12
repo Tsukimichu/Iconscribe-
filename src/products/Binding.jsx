@@ -124,6 +124,7 @@ const handleConfirmOrder = async () => {
     });
 
     const data = await res.json();
+    
 
     if (!data.success) {
       showToast("Failed to place order.", "error");
@@ -355,12 +356,12 @@ const handleConfirmOrder = async () => {
                   {/* Upload + Notes */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Always visible upload section */}
-                    <UploadSection
-                      uploadCount={1}
-                      onUploadComplete={(res) => {
-                        if (res?.files?.[0]) setFile(res.files[0]);
-                      }}
-                    />
+                      <UploadSection
+                        uploadCount={1}
+                        onUploadComplete={(res) => {
+                          if (res?.files?.[0]) setFile(res.files[0]);
+                        }}
+                      />
                     <div className="flex flex-col gap-3 mt-0">
                       <label className="block text-base font-semibold text-black">
                         Additional Notes (optional)

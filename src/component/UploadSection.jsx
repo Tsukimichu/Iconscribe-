@@ -7,7 +7,7 @@ const UploadSection = ({
   onUploadComplete,
   hasCustomization = false,
   customLabels = [],
-  placeholders = [], // ✅ New prop for placeholder text
+  placeholders = [], 
 }) => {
   const [files, setFiles] = useState({});
   const navigate = useNavigate();
@@ -42,7 +42,7 @@ const handleFileChange = (e, key, index) => {
         Upload Your File{uploadKeys.length > 1 ? "s" : ""}
       </h2>
 
-      {/* ✅ Customize button */}
+      {/* Customize button */}
       {hasCustomization && (
         <button
           type="button"
@@ -56,7 +56,7 @@ const handleFileChange = (e, key, index) => {
         </button>
       )}
 
-      {/* ✅ Upload buttons */}
+      {/* Upload buttons */}
       {uploadKeys.map((label, i) => (
         <div key={i} className="flex flex-col gap-3 mb-6">
           <label className="flex items-center justify-center gap-2 border-2 border-yellow-400 bg-yellow-50 rounded-xl p-4 shadow-sm hover:border-yellow-600 hover:bg-yellow-100 transition cursor-pointer">
@@ -69,11 +69,11 @@ const handleFileChange = (e, key, index) => {
               className="hidden"
               accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
              onChange={(e) => handleFileChange(e, label, i)}
-              title={placeholders[i] || "Choose a file"} //browser tooltip
+              title={placeholders[i] || "Choose a file"}
             />
           </label>
 
-          {/* ✅ File info or placeholder text */}
+          {/* File info or placeholder text */}
           <div className="min-h-[1rem] flex items-center justify-between">
             {files[label] ? (
               <>

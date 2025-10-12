@@ -65,8 +65,8 @@ router.post("/create", async (req, res) => {
     const [orderResult] = await db
       .promise()
       .execute(
-        "INSERT INTO orders (user_id, order_date, total, status) VALUES (?, NOW(), ?, ?)",
-        [user_id, 0, status || "Pending"]
+        "INSERT INTO orders (user_id, order_date, total) VALUES (?, NOW(), ?)",
+        [user_id, 0]
       );
 
     const order_id = orderResult.insertId;
@@ -89,21 +89,15 @@ router.post("/create", async (req, res) => {
 
     const order_item_id = orderItemResult.insertId;
 
-    console.log(`✅ Order created: order_id=${order_id}, item_id=${order_item_id}`);
-
     res.json({
       success: true,
       message: "Order placed successfully!",
       order_id,
-      order_item_id,
+      order_item_id,  
     });
   } catch (error) {
     console.error("❌ Error placing order:", error);
-    res.status(500).json({
-      success: false,
-      message: "Database error",
-      error: error.message,
-    });
+    res.status(500).json({ success: false, message: "Database error", error: error.message });
   }
 });
 
@@ -256,28 +250,67 @@ router.get("/user/:id", async (req, res) => {
 });
 
 // ===================================================
-// Update Price
+// UPDATE PRICE
 // ===================================================
-router.put("/:id/price", (req, res) => {
-  const { id } = req.params;
+router.put("/:orderId/price", async (req, res) => {
+  const { orderId } = req.params;
   const { price } = req.body;
-  db.query("UPDATE orders SET total = ? WHERE order_id = ?", [price, id], (err) => {
-    if (err) return res.status(500).json({ success: false, message: "Database error" });
+
+  if (price == null || isNaN(price)) {
+    return res.status(400).json({ success: false, message: "Invalid price" });
+  }
+
+  try {
+    const [result] = await db
+      .promise()
+      .execute("UPDATE orders SET total = ? WHERE order_id = ?", [price, orderId]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
     res.json({ success: true, message: "Price updated successfully" });
-  });
+  } catch (error) {
+    console.error("❌ Error updating price:", error);
+    res.status(500).json({ success: false, message: "Database error" });
+  }
 });
 
+
+
 // ===================================================
-// Update Status
+// Update Status (only affects orderitems)
 // ===================================================
-router.put("/:id/status", (req, res) => {
+router.put("/:id/status", async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
-  db.query("UPDATE orders SET status = ? WHERE order_id = ?", [status, id], (err) => {
-    if (err) return res.status(500).json({ success: false, message: "Database error" });
+
+  if (!status) {
+    return res.status(400).json({ success: false, message: "Status is required" });
+  }
+
+  try {
+    const [result] = await db
+      .promise()
+      .execute("UPDATE orderitems SET status = ? WHERE order_id = ?", [status, id]);
+
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No matching order items found for this order_id",
+      });
+    }
+
     res.json({ success: true, message: "Status updated successfully" });
-  });
+  } catch (err) {
+    console.error("❌ Error updating status:", err);
+    res.status(500).json({ success: false, message: "Database error" });
+  }
 });
+
+
+
 
 // ===================================================
 // Archive Order
@@ -303,14 +336,16 @@ router.get("/:id", async (req, res) => {
         o.order_id,
         o.order_date AS dateOrdered,
         o.total AS price,
-        o.status,
+        oi.status,
         u.name AS customer_name,
         u.email,
         u.phone AS contact_number,
         u.address AS location
       FROM orders o
       JOIN users u ON o.user_id = u.user_id
-      WHERE o.order_id = ?`,
+      JOIN orderitems oi ON o.order_id = oi.order_id
+      WHERE o.order_id = ?
+      `,
       [id]
     );
 
@@ -350,7 +385,7 @@ router.get("/:id", async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("❌ Error fetching order details:", error);
+    console.error(" Error fetching order details:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });

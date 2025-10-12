@@ -1,153 +1,198 @@
 import Nav from "../component/navigation";
 import or from "../assets/RaffleTicket.png";
-import { ArrowBigLeft, Upload, Phone, Mail, Bus } from "lucide-react";
+import {
+  ArrowBigLeft,
+  Upload,
+  Phone,
+  Mail,
+  Contact,
+  MessageCircle,
+  XCircle,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState,useEffect } from "react";
-import { Contact, MessageCircle, XCircle } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useToast } from "../component/ui/ToastProvider.jsx";
+import UploadSection from "../component/UploadSection.jsx";
 
 function RaffleTicket() {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+  const { showToast } = useToast();
 
-   const [userProfile, setUserProfile] = useState({
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+  const [visible, setVisible] = useState(true);
+
+  const [userProfile, setUserProfile] = useState({
     id: "",
     name: "",
     email: "",
     address: "",
     phone: "",
     business: "",
-    });
+  });
 
-      const [quantity, setQuantity] = useState("");
-      const [size, setSize] = useState("");
-      const [withStub, setWithStub] = useState("");
-      const [message, setMessage] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [size, setSize] = useState("");
+  const [withStub, setWithStub] = useState("");
+  const [message, setMessage] = useState("");
+  const [file, setFile] = useState(null);
 
-      const [showConfirm, setShowConfirm] = useState(false);
-      const [showContactModal, setShowContactModal] = useState(false);
-      const { showToast } = useToast();
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
 
-
+  // Check login state
   useEffect(() => {
-        const checkToken = () => {
-          const token = localStorage.getItem("token");
-          setIsLoggedIn(!!token);
-        };
-        checkToken();
-        window.addEventListener("auth-change", checkToken);
-        return () => window.removeEventListener("auth-change", checkToken);
-      }, []);
+    const checkToken = () => {
+      const token = localStorage.getItem("token");
+      setIsLoggedIn(!!token);
+    };
+    checkToken();
+    window.addEventListener("auth-change", checkToken);
+    return () => window.removeEventListener("auth-change", checkToken);
+  }, []);
 
-      // Fetch user profile if logged in
-      useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
+  // Fetch user profile
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-        fetch("http://localhost:5000/api/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.success && data.data) {
-              setUserProfile({
-                id: data.data.user_id || "",
-                name: data.data.name || "",
-                email: data.data.email || "",
-                address: data.data.address || "",
-                phone: data.data.phone || "",
-                business: data.data.business || "",
-              });
-            }
-          })
-          .catch((err) => console.error("Error fetching profile:", err));
-      }, [isLoggedIn]);
+    fetch("http://localhost:5000/api/profile", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setUserProfile({
+            id: data.data.user_id || "",
+            name: data.data.name || "",
+            email: data.data.email || "",
+            address: data.data.address || "",
+            phone: data.data.phone || "",
+            business: data.data.business || "",
+          });
+        }
+      })
+      .catch((err) => console.error("Error fetching profile:", err));
+  }, [isLoggedIn]);
 
+  // Check product visibility
+  useEffect(() => {
+    fetch("http://localhost:5000/api/product-status")
+      .then((res) => res.json())
+      .then((data) => {
+        const product = data.find((p) => p.product_name === "Raffle Ticket");
+        if (
+          product &&
+          (product.status === "Inactive" || product.status === "Archived")
+        ) {
+          setVisible(false);
+        }
+      })
+      .catch((err) => console.error("Error loading product status:", err));
+  }, []);
 
+  if (!visible) return null;
+
+  // Handle form submit
   const handlePlaceOrder = (e) => {
     e.preventDefault();
     if (!isLoggedIn) {
-      navigate("/login")
+      navigate("/login");
     } else {
       setShowConfirm(true);
     }
   };
 
-    const [visible, setVisible] = useState(true);
-
-    useEffect(() => {
-      fetch("http://localhost:5000/api/product-status")
-        .then((res) => res.json())
-        .then((data) => {
-          const product = data.find((p) => p.product_name === "Raffle Ticket");
-          if (product && (product.status === "Inactive" || product.status === "Archived")) {
-            setVisible(false);
-          }
-        })
-        .catch((err) => console.error("Error loading product status:", err));
-    }, []);
-
-    if (!visible) return null;
-
-    const handleConfirmOrder = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          showToast("⚠️ You must be logged in to place an order.", "error");
-          navigate("/login");
-          return;
-        }
-
-        const customDetails = {
-          Name: userProfile.name,
-          Email: userProfile.email,
-          Address: userProfile.address,
-          Phone: userProfile.phone,
-          Businessname: userProfile.business,
-          "Number of Tickets (min)": quantity,
-          Size: size,
-          "With Stub": withStub,
-          Message: message,
-        };
-
-        const response = await fetch("http://localhost:5000/api/orders/create", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            user_id: userProfile.id,
-            product_id: 12,
-            quantity,
-            urgency: "Normal",
-            status: "Pending",
-            custom_details: customDetails,
-          }),
-        });
-
-        const data = await response.json();
-        console.log("Order response:", data);
-
-        if (data.success) {
-          showToast("✅ Order placed successfully!", "success");
-          setShowConfirm(false);
-
-          // Reset form fields
-          setQuantity("");
-          setSize("");
-          setWithStub("");
-          setMessage("");
-
-          navigate("/dashboard");
-        } else {
-          showToast("⚠️ Failed to place order. Please try again.", "error");
-        }
-      } catch (error) {
-        console.error("Error placing order:", error);
-        showToast("⚠️ An error occurred. Please try again.", "error");
+  // Confirm and send order (based on your guide)
+  const handleConfirmOrder = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        showToast("You must be logged in to place an order.", "error");
+        return;
       }
-    };
+
+      const customDetails = {
+        Name: userProfile.name,
+        Email: userProfile.email,
+        Address: userProfile.address,
+        Phone: userProfile.phone,
+        Businessname: userProfile.business,
+        "Number of Tickets": quantity,
+        Size: size,
+        "With Stub": withStub,
+        Message: message,
+      };
+
+      // Create the order
+      const res = await fetch("http://localhost:5000/api/orders/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_id: userProfile.id,
+          product_id: 12,
+          quantity,
+          urgency: "Normal",
+          status: "Pending",
+          custom_details: customDetails,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        showToast("Failed to place order.", "error");
+        return;
+      }
+
+      // Ensure correct ID from backend
+      const orderItemId =
+        data.order_item_id || data.orderItemId || data.id || data.order_id;
+
+      if (!orderItemId) {
+        showToast("Order created, but missing ID from server.", "error");
+        return;
+      }
+
+      // Upload file (if any)
+      if (file) {
+        const formData = new FormData();
+        formData.append("file1", file);
+
+        const uploadRes = await fetch(
+          `http://localhost:5000/api/orders/upload/single/${orderItemId}`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        const uploadData = await uploadRes.json();
+
+        if (uploadData.success) {
+          showToast("Order placed and file uploaded successfully!", "success");
+        } else {
+          showToast("Order placed, but file upload failed.", "warning");
+        }
+      } else {
+        showToast("Order placed successfully!", "success");
+      }
+
+      // Reset and close modal
+      setShowConfirm(false);
+      setQuantity("");
+      setSize("");
+      setWithStub("");
+      setMessage("");
+      setFile(null);
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Error placing order:", err);
+      showToast("Something went wrong while placing the order.", "error");
+    }
+  };
 
 
 
@@ -324,20 +369,12 @@ function RaffleTicket() {
 
                   {/* Upload + Message */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-4">
-                      <h3 className="block text-base font-semibold text-black">
-                        Design Options:
-                      </h3>
-
-                      {/* Upload Design Button */}
-                      <label className="flex items-center justify-center gap-2 border-2 border-yellow-400 bg-yellow-50 rounded-xl p-4 shadow-sm hover:border-yellow-600 hover:bg-yellow-100 transition cursor-pointer">
-                        <Upload className="w-5 h-10 text-yellow-500" />
-                        <span className="text-base font-medium text-black">
-                          Upload Your Design
-                        </span>
-                        <input type="file" className="hidden" />
-                      </label>
-                    </div>
+                      <UploadSection
+                        uploadCount={1}
+                        onUploadComplete={(res) => {
+                          if (res?.files?.[0]) setFile(res.files[0]);
+                        }}
+                      />
 
                     {/* Options + Message */}
                     <div className="flex flex-col gap-3">

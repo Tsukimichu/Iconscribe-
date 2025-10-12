@@ -1,151 +1,180 @@
 import Nav from "../component/navigation";
 import or from "../assets/Invitation.png";
-import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
+import { ArrowBigLeft, Upload, Phone, Mail, Contact, MessageCircle, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState,useEffect } from "react";
-import { Contact, MessageCircle, XCircle } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useToast } from "../component/ui/ToastProvider.jsx";
+import UploadSection from "../component/UploadSection"; // ✅ Added
 
 function Invitation() {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+  const { showToast } = useToast();
 
-    const [userProfile, setUserProfile] = useState({
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+  const [userProfile, setUserProfile] = useState({
     id: "",
     name: "",
     email: "",
     address: "",
     phone: "",
-    });
+  });
 
   const [quantity, setQuantity] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [visible, setVisible] = useState(true);
 
+  // Form fields
   const [size, setSize] = useState("");
   const [paperType, setPaperType] = useState("");
   const [printMethod, setPrintMethod] = useState("");
   const [eventName, setEventName] = useState("");
   const [message, setMessage] = useState("");
-  
-  const { showToast } = useToast();
+  const [file, setFile] = useState(null);
 
   useEffect(() => {
-        const checkToken = () => {
-          const token = localStorage.getItem("token");
-          setIsLoggedIn(!!token);
-        };
-        checkToken();
-        window.addEventListener("auth-change", checkToken);
-        return () => window.removeEventListener("auth-change", checkToken);
-      }, []);
+    const checkToken = () => {
+      const token = localStorage.getItem("token");
+      setIsLoggedIn(!!token);
+    };
+    checkToken();
+    window.addEventListener("auth-change", checkToken);
+    return () => window.removeEventListener("auth-change", checkToken);
+  }, []);
 
-      // Fetch user profile if logged in
-      useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
+  // Fetch user profile if logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-        fetch("http://localhost:5000/api/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.success && data.data) {
-              setUserProfile({
-                id: data.data.user_id || "",
-                name: data.data.name || "",
-                email: data.data.email || "",
-                address: data.data.address || "",
-                phone: data.data.phone || "",
-              });
-            }
-          })
-          .catch((err) => console.error("Error fetching profile:", err));
-      }, [isLoggedIn]);
+    fetch("http://localhost:5000/api/profile", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setUserProfile({
+            id: data.data.user_id || "",
+            name: data.data.name || "",
+            email: data.data.email || "",
+            address: data.data.address || "",
+            phone: data.data.phone || "",
+          });
+        }
+      })
+      .catch((err) => console.error("Error fetching profile:", err));
+  }, [isLoggedIn]);
 
+  // Check if product is visible
+  useEffect(() => {
+    fetch("http://localhost:5000/api/product-status")
+      .then((res) => res.json())
+      .then((data) => {
+        const product = data.find((p) => p.product_name === "Invitation");
+        if (product && (product.status === "Inactive" || product.status === "Archived")) {
+          setVisible(false);
+        }
+      })
+      .catch((err) => console.error("Error loading product status:", err));
+  }, []);
+
+  if (!visible) return null;
 
   const handlePlaceOrder = (e) => {
     e.preventDefault();
     if (!isLoggedIn) {
-      navigate("/login")
+      navigate("/login");
     } else {
       setShowConfirm(true);
     }
   };
 
-    const [visible, setVisible] = useState(true);
+  // Updated to include file upload
+  const handleConfirmOrder = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        showToast("⚠️ Please log in to place an order.", "error");
+        return;
+      }
 
-    useEffect(() => {
-      fetch("http://localhost:5000/api/product-status")
-        .then((res) => res.json())
-        .then((data) => {
-          const product = data.find((p) => p.product_name === "Invitation");
-          if (product && (product.status === "Inactive" || product.status === "Archived")) {
-            setVisible(false);
+      const custom_details = {
+        Name: userProfile.name,
+        Email: userProfile.email,
+        Address: userProfile.address,
+        Phone: userProfile.phone,
+        "Event Name": eventName,
+        Size: size,
+        "Paper Type": paperType,
+        "Print Method": printMethod,
+        Message: message,
+      };
+
+      // Create order
+      const response = await fetch("http://localhost:5000/api/orders/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_id: userProfile.id,
+          product_id: 7,
+          quantity,
+          urgency: "Normal",
+          status: "Pending",
+          custom_details,
+        }),
+      });
+
+      const data = await response.json();
+      if (!data.success) {
+        showToast("⚠️ Failed to place order. Please try again.", "error");
+        return;
+      }
+
+      // Upload file after order creation
+      const orderItemId =
+        data.order_item_id || data.orderItemId || data.id || data.order_id;
+
+      if (orderItemId && file) {
+        const formData = new FormData();
+        formData.append("file1", file);
+
+        const uploadRes = await fetch(
+          `http://localhost:5000/api/orders/upload/single/${orderItemId}`,
+          {
+            method: "POST",
+            body: formData,
           }
-        })
-        .catch((err) => console.error("Error loading product status:", err));
-    }, []);
+        );
 
-    if (!visible) return null;
+        const uploadData = await uploadRes.json();
 
-    const handleConfirmOrder = async () => { 
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {   
-          showToast("⚠️ Please log in to place an order.", "error"); // ✅ UPDATED
-          return;
+        if (uploadData.success) {
+          showToast(" Order placed and file uploaded successfully!", "success");
+        } else {
+          showToast(" Order placed, but file upload failed.", "warning");
         }
+      } else {
+        showToast(" Order placed successfully!", "success");
+      }
 
-        const custom_details = {
-          Name: userProfile.name,
-          Email: userProfile.email,
-          Address: userProfile.address,
-          Phone: userProfile.phone,
-          "Event Name": eventName,
-          Size: size,
-          "Paper Type": paperType,
-          "Print Method": printMethod,
-          Message: message,
-        };
-
-        const response = await fetch("http://localhost:5000/api/orders/create", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            user_id: userProfile.id,
-            product_id: 7,
-            quantity,
-            urgency: "Normal",
-            status: "Pending",
-            custom_details,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          showToast("✅ Order placed successfully!", "success"); // ✅ UPDATED
-          setShowConfirm(false);
-          setQuantity("");
-          setSize("");
-          setPaperType("");
-          setPrintMethod("");
-          setEventName("");
-          setMessage("");
-          navigate("/dashboard");
-        } else { 
-          showToast("⚠️ Failed to place order. Please try again.", "error"); // ✅ UPDATED
-        }
-      } catch (error) {
-        console.error("Error placing order:", error);
-        showToast("❌ An error occurred while placing your order.", "error"); // ✅ UPDATED
-      } 
-    };
-      
+      // Reset all fields
+      setShowConfirm(false);
+      setQuantity("");
+      setSize("");
+      setPaperType("");
+      setPrintMethod("");
+      setEventName("");
+      setMessage("");
+      setFile(null);
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Order error:", error);
+      showToast("❌ Something went wrong. Please try again later.", "error");
+    }
+  }; 
 
   return (
     <>
@@ -330,43 +359,13 @@ function Invitation() {
 
                   {/* Upload + Message */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-4">
-                      <h3 className="block text-base font-semibold text-black">
-                        Design Options:
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={() => navigate("/customize")}
-                        className="flex items-center justify-center gap-2 border-2 border-blue-400 bg-blue-50 rounded-xl p-4 shadow-sm hover:border-blue-600 hover:bg-blue-100 transition"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="w-5 h-10 text-blue-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M15.232 5.232l3.536 3.536m-2.036-5.036A2.5 2.5 0 1121.5 8.5L12 18l-4 1 1-4 9.5-9.5z"
-                          />
-                        </svg>
-                        <span className="text-base font-medium text-black">
-                          Customize Design
-                        </span>
-                      </button>
-
-                      <label className="flex items-center justify-center gap-2 border-2 border-yellow-400 bg-yellow-50 rounded-xl p-4 shadow-sm hover:border-yellow-600 hover:bg-yellow-100 transition cursor-pointer">
-                        <Upload className="w-5 h-10 text-yellow-500" />
-                        <span className="text-base font-medium text-black">
-                          Upload Your Design
-                        </span>
-                        <input type="file" className="hidden" />
-                      </label>
-                    </div>
-
+                     <UploadSection
+                        uploadCount={1}          
+                        hasCustomization={true} 
+                        onUploadComplete={(res) => {
+                          if (res?.files?.[0]) setFile(res.files[0]);
+                        }}
+                      />
                     <div className="flex flex-col gap-3">
                       <div>
                         <label className="block text-base font-semibold text-black mb-2">

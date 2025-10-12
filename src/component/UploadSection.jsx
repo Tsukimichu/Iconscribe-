@@ -7,17 +7,20 @@ const UploadSection = ({
   onUploadComplete,
   hasCustomization = false,
   customLabels = [],
+  placeholders = [], // ✅ New prop for placeholder text
 }) => {
   const [files, setFiles] = useState({});
   const navigate = useNavigate();
 
-  const handleFileChange = (e, key) => {
-    const file = e.target.files[0];
-    if (!file) return;
+const handleFileChange = (e, key, index) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-    setFiles((prev) => ({ ...prev, [key]: file }));
-    onUploadComplete && onUploadComplete({ files: [file] });
-  };
+  setFiles((prev) => ({ ...prev, [key]: file }));
+  // Send file AND index to parent
+  onUploadComplete && onUploadComplete({ files: [file] }, index);
+};
+
 
   const handleRemove = (key) => {
     setFiles((prev) => ({ ...prev, [key]: null }));
@@ -28,7 +31,7 @@ const UploadSection = ({
     navigate("/customize");
   };
 
-  // Decide how many upload slots to show
+  // Determine upload labels
   const uploadKeys = customLabels.length
     ? customLabels
     : ["File 1", "File 2"].slice(0, uploadCount);
@@ -39,7 +42,7 @@ const UploadSection = ({
         Upload Your File{uploadKeys.length > 1 ? "s" : ""}
       </h2>
 
-      {/* ✅ Show Customize Design button if customization allowed */}
+      {/* ✅ Customize button */}
       {hasCustomization && (
         <button
           type="button"
@@ -53,7 +56,7 @@ const UploadSection = ({
         </button>
       )}
 
-      {/* ✅ Upload Buttons */}
+      {/* ✅ Upload buttons */}
       {uploadKeys.map((label, i) => (
         <div key={i} className="flex flex-col gap-3 mb-6">
           <label className="flex items-center justify-center gap-2 border-2 border-yellow-400 bg-yellow-50 rounded-xl p-4 shadow-sm hover:border-yellow-600 hover:bg-yellow-100 transition cursor-pointer">
@@ -65,19 +68,18 @@ const UploadSection = ({
               type="file"
               className="hidden"
               accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              onChange={(e) => handleFileChange(e, label)}
+             onChange={(e) => handleFileChange(e, label, i)}
+              title={placeholders[i] || "Choose a file"} //browser tooltip
             />
           </label>
 
-          {/* File info */}
+          {/* ✅ File info or placeholder text */}
           <div className="min-h-[1rem] flex items-center justify-between">
             {files[label] ? (
               <>
                 <p className="text-sm text-green-600 truncate">
                   File Selected:{" "}
-                  <span className="font-s text-black">
-                    {files[label].name}
-                  </span>
+                  <span className="font-s text-black">{files[label].name}</span>
                 </p>
                 <button
                   type="button"
@@ -88,8 +90,8 @@ const UploadSection = ({
                 </button>
               </>
             ) : (
-              <span className="text-cs text-gray-400 italic">
-                No file selected
+              <span className="text-sm text-gray-400 italic">
+                {placeholders[i] || "No file selected"}
               </span>
             )}
           </div>

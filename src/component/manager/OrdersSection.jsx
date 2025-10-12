@@ -14,6 +14,9 @@ const OrdersSection = () => {
   const [archived, setArchived] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+  const [imageGallery, setImageGallery] = useState([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
 
   const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [showPriceModal, setShowPriceModal] = useState(false);
@@ -535,6 +538,10 @@ const openViewModal = async (order) => {
                                  {isImage && (
                                       <button
                                         onClick={() => {
+                                          const allImages = item.files.filter((f) => /\.(jpg|jpeg|png|gif|webp)$/i.test(f));
+                                          const startIndex = allImages.findIndex((img) => img === file);
+                                          setImageGallery(allImages);
+                                          setCurrentImageIndex(startIndex >= 0 ? startIndex : 0);
                                           setPreviewImage(`http://localhost:5000${file}`);
                                           setShowImageModal(true);
                                         }}
@@ -593,9 +600,9 @@ const openViewModal = async (order) => {
       </AnimatePresence>
 
 
-        {/* --- Image Preview Modal --- */}
+        {/* --- Image Gallery Preview Modal --- */}
         <AnimatePresence>
-          {showImageModal && previewImage && (
+          {showImageModal && imageGallery.length > 0 && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -607,14 +614,46 @@ const openViewModal = async (order) => {
                 initial={{ scale: 0.9 }}
                 animate={{ scale: 1 }}
                 exit={{ scale: 0.9 }}
-                className="relative bg-white p-4 rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] flex justify-center items-center"
+                className="relative bg-white p-4 rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center"
                 onClick={(e) => e.stopPropagation()}
               >
                 <img
-                  src={previewImage}
-                  alt="Preview"
+                  src={`http://localhost:5000${imageGallery[currentImageIndex]}`}
+                  alt={`Preview ${currentImageIndex + 1}`}
                   className="max-w-full max-h-[80vh] rounded-xl object-contain"
                 />
+
+                {/* Navigation buttons */}
+                {imageGallery.length > 1 && (
+                  <>
+                    <button
+                      onClick={() =>
+                        setCurrentImageIndex(
+                          (prev) => (prev - 1 + imageGallery.length) % imageGallery.length
+                        )
+                      }
+                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-gray-800/70 text-white px-3 py-2 rounded-full hover:bg-gray-700 transition"
+                    >
+                      ‹
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        setCurrentImageIndex((prev) => (prev + 1) % imageGallery.length)
+                      }
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-gray-800/70 text-white px-3 py-2 rounded-full hover:bg-gray-700 transition"
+                    >
+                      ›
+                    </button>
+                  </>
+                )}
+
+                {/* Image counter */}
+                <p className="mt-3 text-sm text-gray-600">
+                  Image {currentImageIndex + 1} of {imageGallery.length}
+                </p>
+
+                {/* Close button */}
                 <button
                   onClick={() => setShowImageModal(false)}
                   className="absolute top-3 right-3 bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600"
@@ -625,6 +664,7 @@ const openViewModal = async (order) => {
             </motion.div>
           )}
         </AnimatePresence>
+
 
 
       {/* --- Status Modal --- */}

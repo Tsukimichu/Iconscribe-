@@ -1,14 +1,16 @@
 import Nav from "../component/navigation";
 import label from "../assets/ICONS.png";
-import { ArrowBigLeft, Upload, Paintbrush, XCircle } from "lucide-react";
+import { ArrowBigLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import UploadSection from "../component/UploadSection.jsx";
 import { useToast } from "../component/ui/ToastProvider.jsx";
 
 function Label() {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+  const { showToast } = useToast();
 
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
   const [userProfile, setUserProfile] = useState({
     id: "",
     name: "",
@@ -19,12 +21,11 @@ function Label() {
 
   const [quantity, setQuantity] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
   const [size, setSize] = useState("2” x 2”");
   const [paperType, setPaperType] = useState("Matte");
   const [message, setMessage] = useState("");
-
-  const { showToast } = useToast();
+  const [file, setFile] = useState(null); // ✅ added file state
+  const [visible, setVisible] = useState(true);
 
   // --- Auth Check ---
   useEffect(() => {
@@ -32,7 +33,6 @@ function Label() {
       const token = localStorage.getItem("token");
       setIsLoggedIn(!!token);
     };
-
     checkToken();
     window.addEventListener("auth-change", checkToken);
     return () => window.removeEventListener("auth-change", checkToken);
@@ -61,6 +61,20 @@ function Label() {
       .catch((err) => console.error("Error fetching profile:", err));
   }, [isLoggedIn]);
 
+  // --- Product visibility ---
+  useEffect(() => {
+    fetch("http://localhost:5000/api/product-status")
+      .then((res) => res.json())
+      .then((data) => {
+        const product = data.find((p) => p.product_name === "Label");
+        if (product && (product.status === "Inactive" || product.status === "Archived")) {
+          setVisible(false);
+        }
+      })
+      .catch((err) => console.error("Error loading product status:", err));
+  }, []);
+  if (!visible) return null;
+
   // --- Place Order (open confirm modal) ---
   const handlePlaceOrder = (e) => {
     e.preventDefault();
@@ -71,7 +85,7 @@ function Label() {
     }
   };
 
-  // --- Confirm Order (send to backend) ---
+  // --- Confirm Order ---
   const handleConfirmOrder = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -99,7 +113,7 @@ function Label() {
         },
         body: JSON.stringify({
           user_id: userProfile.id,
-          product_id: 8,
+          product_id: 8, // ✅ product id for Label
           quantity,
           urgency: "Normal",
           status: "Pending",
@@ -108,36 +122,51 @@ function Label() {
       });
 
       const data = await response.json();
-      if (data.success) {
-        showToast("✅ Order placed successfully!", "success");
-        setShowConfirm(false);
-        setQuantity("");
-        setSize("");
-        setPaperType("");
-        setMessage("");
-      } else {
+      if (!data.success) {
         showToast("⚠️ Failed to place order. Please try again.", "error");
+        return;
       }
+
+      // ✅ Upload file if provided
+      const orderItemId =
+        data.order_item_id || data.orderItemId || data.id || data.order_id;
+
+      if (orderItemId && file) {
+        const formData = new FormData();
+        formData.append("file1", file);
+
+        const uploadRes = await fetch(
+          `http://localhost:5000/api/orders/upload/single/${orderItemId}`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        const uploadData = await uploadRes.json();
+
+        if (uploadData.success) {
+          showToast("✅ Order placed and file uploaded successfully!", "success");
+        } else {
+          showToast("⚠️ Order placed, but file upload failed.", "warning");
+        }
+      } else {
+        showToast("✅ Order placed successfully!", "success");
+      }
+
+      // ✅ Reset fields
+      setShowConfirm(false);
+      setQuantity("");
+      setSize("2” x 2”");
+      setPaperType("Matte");
+      setMessage("");
+      setFile(null);
+      navigate("/dashboard");
     } catch (error) {
       console.error("Error placing order:", error);
       showToast("❌ An error occurred while placing your order.", "error");
     }
   };
-
-  // --- Visibility (check if product is active) ---
-  const [visible, setVisible] = useState(true);
-  useEffect(() => {
-    fetch("http://localhost:5000/api/product-status")
-      .then((res) => res.json())
-      .then((data) => {
-        const product = data.find((p) => p.product_name === "Label");
-        if (product && (product.status === "Inactive" || product.status === "Archived")) {
-          setVisible(false);
-        }
-      })
-      .catch((err) => console.error("Error loading product status:", err));
-  }, []);
-  if (!visible) return null;
 
   return (
     <>
@@ -175,37 +204,30 @@ function Label() {
             </div>
 
             {/* Right: Form */}
-            <form className="space-y-8"
-              onSubmit={handlePlaceOrder}>
+            <form className="space-y-8" onSubmit={handlePlaceOrder}>
               {/* Upload + Customize */}
               {isLoggedIn && (
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <label className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl w-full cursor-pointer transition hover:scale-105 hover:shadow-lg">
-                    <Upload size={18} /> Upload Design
-                    <input type="file" className="hidden" />
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => navigate("/customize")}
-                    className="flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-3 rounded-xl w-full transition hover:scale-105 hover:shadow-lg"
-                  >
-                    <Paintbrush size={18} /> Customize Design
-                  </button>
-                </div>
+                <UploadSection
+                  uploadCount={1}
+                  hasCustomization={true} 
+                  onUploadComplete={(res) => {
+                    if (res?.files?.[0]) setFile(res.files[0]);
+                  }}
+                />
               )}
 
-              {/* Number of Copies + Size */}
+              {/* Quantity + Size */}
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700">
-                    Number of Copies
+                    Number of Copies  
+                    <span> (100)</span>
                   </label>
                   <input
                     type="number"
                     min="100"
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
-                    defaultValue="100"
                     className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition"
                   />
                 </div>
@@ -230,10 +252,11 @@ function Label() {
                 <label className="block text-sm font-semibold text-gray-700">
                   Paper Type
                 </label>
-                <select 
-                value={paperType}
-                onChange={(e) => setPaperType(e.target.value)}
-                className="mt-1 w-[320px] border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition">
+                <select
+                  value={paperType}
+                  onChange={(e) => setPaperType(e.target.value)}
+                  className="mt-1 w-[320px] border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition"
+                >
                   <option>Matte</option>
                   <option>Glossy</option>
                   <option>Transparent</option>
@@ -241,19 +264,17 @@ function Label() {
                 </select>
               </div>
 
-              {/* Message + Price */}
-              <div className="grid grid-cols-3 gap-6">
-                <div className="col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    Message <span className="text-xs text-gray-500">(optional)</span>
-                  </label>
-                  <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-28 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition"
-                    placeholder="Add special instructions..."
-                  ></textarea>
-                </div>
+              {/* Message */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700">
+                  Message <span className="text-xs text-gray-500">(optional)</span>
+                </label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-28 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition"
+                  placeholder="Add special instructions..."
+                ></textarea>
               </div>
 
               {!isLoggedIn && (
@@ -266,7 +287,7 @@ function Label() {
                 <button
                   type="submit"
                   className="bg-gradient-to-r from-blue-600 to-blue-800 hover:shadow-lg hover:scale-105 transition text-white px-12 py-4 text-lg rounded-xl font-semibold"
-               >
+                >
                   Place Order
                 </button>
               </div>
@@ -275,32 +296,33 @@ function Label() {
         </div>
       </div>
 
-        {/* Confirmation Modal */}
-        {showConfirm && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-            <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full">
-              <h2 className="text-xl font-bold text-black mb-4">
-                Confirm Your Order
-              </h2>
-              <p className="text-base text-black mb-6">
-                Are you sure you want to place this order?
-              </p>
-              <div className="flex justify-end gap-3">
-                <button
-                  className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 transition text-black"
-                  onClick={() => setShowConfirm(false)}
-                >
-                  Cancel
-                </button>
-                <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition"
+      {/* Confirmation Modal */}
+      {showConfirm && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full">
+            <h2 className="text-xl font-bold text-black mb-4">
+              Confirm Your Order
+            </h2>
+            <p className="text-base text-black mb-6">
+              Are you sure you want to place this order?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 transition text-black"
+                onClick={() => setShowConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition"
                 onClick={handleConfirmOrder}
-                >
-                  Confirm
-                </button>
-              </div>
+              >
+                Confirm
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
     </>
   );
 }

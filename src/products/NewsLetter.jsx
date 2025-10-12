@@ -2,93 +2,100 @@ import Nav from "../component/navigation";
 import newsletterImg from "../assets/NewsLetter.png";
 import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Contact, MessageCircle, XCircle } from "lucide-react";
+import UploadSection from "../component/UploadSection.jsx";
 import { useToast } from "../component/ui/ToastProvider.jsx";
 
 function Newsletters() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
-   const [userProfile, setUserProfile] = useState({
+  const [userProfile, setUserProfile] = useState({
     id: "",
     name: "",
     email: "",
     address: "",
     phone: "",
     business: "",
-    });
+  });
 
-      const [quantity, setQuantity] = useState("");
-      const [showConfirm, setShowConfirm] = useState(false);
-      const [showContactModal, setShowContactModal] = useState(false);
+  const [quantity, setQuantity] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [file, setFile] = useState(null);
 
-      const [paperType, setPaperType] = useState(""); 
-      const [layout, setLayout] = useState("");
-      const [size, setSize] = useState("");
-      const [message, setMessage] = useState("");
+  const [paperType, setPaperType] = useState("");
+  const [layout, setLayout] = useState("");
+  const [size, setSize] = useState("");
+  const [message, setMessage] = useState("");
 
-      const { showToast } = useToast();
+  const { showToast } = useToast();
 
+  // Check login status
   useEffect(() => {
-        const checkToken = () => {
-          const token = localStorage.getItem("token");
-          setIsLoggedIn(!!token);
-        };
-        checkToken();
-        window.addEventListener("auth-change", checkToken);
-        return () => window.removeEventListener("auth-change", checkToken);
-      }, []);
+    const checkToken = () => {
+      const token = localStorage.getItem("token");
+      setIsLoggedIn(!!token);
+    };
+    checkToken();
+    window.addEventListener("auth-change", checkToken);
+    return () => window.removeEventListener("auth-change", checkToken);
+  }, []);
 
-      useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
+  // Fetch user profile if logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-        fetch("http://localhost:5000/api/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.success && data.data) {
-              setUserProfile({
-                id: data.data.user_id || "",
-                name: data.data.name || "",
-                email: data.data.email || "",
-                address: data.data.address || "",
-                phone: data.data.phone || "",
-                business: data.data.business_name || "",
-              });
-            }
-          })
-          .catch((err) => console.error("Error fetching profile:", err));
-      }, [isLoggedIn]);
+    fetch("http://localhost:5000/api/profile", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setUserProfile({
+            id: data.data.user_id || "",
+            name: data.data.name || "",
+            email: data.data.email || "",
+            address: data.data.address || "",
+            phone: data.data.phone || "",
+            business: data.data.business_name || "",
+          });
+        }
+      })
+      .catch((err) => console.error("Error fetching profile:", err));
+  }, [isLoggedIn]);
 
+  // Handle place order button
   const handlePlaceOrder = (e) => {
     e.preventDefault();
     if (!isLoggedIn) {
-      navigate("/login")
+      navigate("/login");
     } else {
       setShowConfirm(true);
     }
   };
 
-    const [visible, setVisible] = useState(true);
+  // Check product visibility
+  const [visible, setVisible] = useState(true);
 
-    useEffect(() => {
-      fetch("http://localhost:5000/api/product-status")
-        .then((res) => res.json())
-        .then((data) => {
-          const product = data.find((p) => p.product_name === "Newsletter");
-          if (product && (product.status === "Inactive" || product.status === "Archived")) {
-            setVisible(false);
-          }
-        })
-        .catch((err) => console.error("Error loading product status:", err));
-    }, []);
+  useEffect(() => {
+    fetch("http://localhost:5000/api/product-status")
+      .then((res) => res.json())
+      .then((data) => {
+        const product = data.find((p) => p.product_name === "Newsletter");
+        if (product && (product.status === "Inactive" || product.status === "Archived")) {
+          setVisible(false);
+        }
+      })
+      .catch((err) => console.error("Error loading product status:", err));
+  }, []);
 
-    if (!visible) return null;
+  if (!visible) return null;
 
-  const handleConfirmOrder = async () => { 
+  // Full order + upload logic
+  const handleConfirmOrder = async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -110,6 +117,7 @@ function Newsletters() {
         Message: message,
       };
 
+      // Create the order first
       const response = await fetch("http://localhost:5000/api/orders/create", {
         method: "POST",
         headers: {
@@ -127,25 +135,56 @@ function Newsletters() {
       });
 
       const data = await response.json();
-      if (data.success) {
-        showToast("✅ Order placed successfully!", "success");
-        setShowConfirm(false);
-
-        // Reset all inputs
-        setQuantity("");
-        setPaperType("");
-        setLayout("");
-        setSize("");
-        setMessage("");
-
-        navigate("/dashboard");
-      } else {
+      if (!data.success) {
         showToast("⚠️ Failed to place order. Please try again.", "error");
+        return;
       }
+
+      // Get the order item ID from response
+      const orderItemId = data.order_item_id || data.orderItemId || data.id || data.order_id;
+      if (!orderItemId) {
+        showToast("⚠️ Order created, but missing ID from server.", "error");
+        return;
+      }
+
+      // If file is uploaded, send it to backend
+      if (file) {
+        const formData = new FormData();
+        formData.append("file1", file);
+
+        const uploadRes = await fetch(
+          `http://localhost:5000/api/orders/upload/single/${orderItemId}`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        const uploadData = await uploadRes.json();
+
+        if (uploadData.success) {
+          showToast(" Order placed and file uploaded successfully!", "success");
+        } else {
+          showToast(" Order placed, but file upload failed.", "error");
+        }
+      } else {
+        showToast(" Order placed successfully!", "success");
+      }
+
+      // Reset all inputs
+      setShowConfirm(false);
+      setQuantity("");
+      setPaperType("");
+      setLayout("");
+      setSize("");
+      setMessage("");
+      setFile(null);
+
+      navigate("/dashboard");
     } catch (error) {
       console.error("Error placing order:", error);
       showToast("❌ Something went wrong while placing your order.", "error");
-    } 
+    }
   };
 
 
@@ -296,7 +335,7 @@ function Newsletters() {
                       </label>
                       <select 
                       value={paperType}
-                        onChange={(e) => setPapertype(e.target.value)}
+                      onChange={(e) => setPaperType(e.target.value)}  
                       className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
                         <option value="">Select print type</option>
                         <option>Black & White</option>
@@ -320,45 +359,13 @@ function Newsletters() {
 
                   {/* Upload + Size + Message */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-4">
-                      {/* Customize Button */}
-                      <h3 className="block text-base font-semibold text-black">
-                        Design Options:
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={() => navigate("/customize")}
-                        className="flex items-center justify-center gap-2 border-2 border-blue-400 bg-blue-50 rounded-xl p-4 shadow-sm hover:border-blue-600 hover:bg-blue-100 transition"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="w-5 h-10 text-blue-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M15.232 5.232l3.536 3.536m-2.036-5.036A2.5 2.5 0 1121.5 8.5L12 18l-4 1 1-4 9.5-9.5z"
-                          />
-                        </svg>
-                        <span className="text-base font-medium text-black">
-                          Customize Design
-                        </span>
-                      </button>
-
-                      {/* Upload Design Button */}
-                      <label className="flex items-center justify-center gap-2 border-2 border-yellow-400 bg-yellow-50 rounded-xl p-4 shadow-sm hover:border-yellow-600 hover:bg-yellow-100 transition cursor-pointer">
-                        <Upload className="w-5 h-10 text-yellow-500" />
-                        <span className="text-base font-medium text-black">
-                          Upload Your Design
-                        </span>
-                        <input type="file" className="hidden" />
-                      </label>
-                    </div>
-
+                      <UploadSection
+                        uploadCount={1}
+                        hasCustomization={true} 
+                        onUploadComplete={(res) => {
+                          if (res?.files?.[0]) setFile(res.files[0]);
+                        }}
+                      />
                     {/* Size + Message */}
                     <div className="flex flex-col gap-3">
                       <div>

@@ -66,7 +66,7 @@ useEffect(() => {
   return (
     <section className="relative w-full px-6 py-30 bg-white text-gray-800">
       <motion.h2
-        className="text-4xl font-extrabold text-center mb-10"
+        className="text-3xl md:text-5xl font-extrabold text-center mb-10"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >

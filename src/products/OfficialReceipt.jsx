@@ -2,15 +2,17 @@ import Nav from "../component/navigation";
 import or from "../assets/atp.png";
 import { ArrowBigLeft, Upload, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Contact, MessageCircle, XCircle } from "lucide-react";
+import UploadSection from "../component/UploadSection.jsx";
 import { useToast } from "../component/ui/ToastProvider.jsx";
-
-
 
 function OfficialReceipt() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
+
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+  const [visible, setVisible] = useState(true);
 
   const [quantity, setQuantity] = useState("");
   const [paperType, setPaperType] = useState("");
@@ -18,12 +20,22 @@ function OfficialReceipt() {
   const [size, setSize] = useState("");
   const [message, setMessage] = useState("");
 
+  const [fileCOR, setFileCOR] = useState(null);
+  const [fileLastReceipt, setFileLastReceipt] = useState(null);
+
   const [showConfirm, setShowConfirm] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
 
-  const { showToast } = useToast();
+  const [userProfile, setUserProfile] = useState({
+    id: "",
+    name: "",
+    email: "",
+    address: "",
+    phone: "",
+    business: "",
+  });
 
-
+  // Check login state
   useEffect(() => {
     const checkToken = () => {
       const token = localStorage.getItem("token");
@@ -31,136 +43,153 @@ function OfficialReceipt() {
     };
 
     checkToken();
-
     window.addEventListener("auth-change", checkToken);
-
-    return () => {
-      window.removeEventListener("auth-change", checkToken);
-    };
+    return () => window.removeEventListener("auth-change", checkToken);
   }, []);
 
-  const handlePlaceOrder = (e) => {
-    e.preventDefault();
-    if (!isLoggedIn) {
-      navigate("/login")
-    } else {
-      setShowConfirm(true);
-    }
-  };
-
-    const [visible, setVisible] = useState(true);
-
-    useEffect(() => {
-      fetch("http://localhost:5000/api/product-status")
-        .then((res) => res.json())
-        .then((data) => {
-          const product = data.find((p) => p.product_name === "Official Receipt");
-          if (product && (product.status === "Inactive" || product.status === "Archived")) {
-            setVisible(false);
-          }
-        })
-        .catch((err) => console.error("Error loading product status:", err));
-    }, []);
-
-    if (!visible) return null;
-
-    const [userProfile, setUserProfile] = useState({
-      id: "",
-      name: "",
-      email: "",
-      address: "",
-      phone: "",
-      business: "",
-    });
-
-
-
-    useEffect(() => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      fetch("http://localhost:5000/api/profile", {
-        headers: { Authorization: `Bearer ${token}` },
+  // Check product visibility
+  useEffect(() => {
+    fetch("http://localhost:5000/api/product-status")
+      .then((res) => res.json())
+      .then((data) => {
+        const product = data.find((p) => p.product_name === "Official Receipt");
+        if (product && (product.status === "Inactive" || product.status === "Archived")) {
+          setVisible(false);
+        }
       })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && data.data) {
-            setUserProfile({
-                id: data.data.user_id || "",
-                name: data.data.name || "",
-                email: data.data.email || "",
-                address: data.data.address || "",
-                phone: data.data.phone || "",
-                business: data.data.business || "",
-            });
-          }
-        })
-        .catch((err) => console.error("Error fetching user info:", err));
-    }, [isLoggedIn]);
+      .catch((err) => console.error("Error loading product status:", err));
+  }, []);
 
- const handleConfirmOrder = async () => {
-  try {
+  if (!visible) return null;
+
+  // Fetch profile details
+  useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) {
-      showToast("⚠️ You must be logged in to place an order.", "error");
-      return;
-    }
+    if (!token) return;
 
-    const customDetails = {
-      Name: userProfile.name,
-      Email: userProfile.email,
-      Address: userProfile.address,
-      Phone: userProfile.phone,
-      Business: userProfile.business,
-      "Number of copies (min)": quantity,
-      "Paper Type": paperType,
-      "Booklet Finish": bookletFinish,
-      Size: size,
-      Message: message,
-    };
+    fetch("http://localhost:5000/api/profile", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setUserProfile({
+            id: data.data.user_id || "",
+            name: data.data.name || "",
+            email: data.data.email || "",
+            address: data.data.address || "",
+            phone: data.data.phone || "",
+            business: data.data.business_name || "",
+          });
+        }
+      })
+      .catch((err) => console.error("Error fetching user info:", err));
+  }, [isLoggedIn]);
 
-    const res = await fetch("http://localhost:5000/api/orders/create", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        user_id: userProfile.id,
-        product_id: 10,
-        quantity,
-        urgency: "Normal",
-        status: "Pending",
-        custom_details: customDetails,
-      }),
-    });
+  // Handle order confirmation
+  const handleConfirmOrder = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        showToast(" You must be logged in to place an order.", "error");
+        return;
+      }
 
-    const data = await res.json();
-    console.log("Order response:", data);
+      const customDetails = {
+        Name: userProfile.name,
+        Email: userProfile.email,
+        Address: userProfile.address,
+        Phone: userProfile.phone,
+        Business: userProfile.business,
+        "Number of copies (min)": quantity,
+        "Paper Type": paperType,
+        "Booklet Finish": bookletFinish,
+        Size: size,
+        Message: message,
+      };
 
-    if (data.success) {
-      showToast("✅ Order placed successfully!", "success");
+      // Create the order
+      const res = await fetch("http://localhost:5000/api/orders/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_id: userProfile.id,
+          product_id: 10,
+          quantity,
+          urgency: "Normal",
+          status: "Pending",
+          custom_details: customDetails,
+        }),
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        showToast(" Failed to place order.", "error");
+        return;
+      }
+
+      const orderItemId = data.order_item_id || data.id || data.order_id;
+      if (!orderItemId) {
+        showToast(" Order created, but missing order ID.", "warning");
+        return;
+      }
+
+      // Upload both files (Copy of COR + Last Receipt) together
+      if (fileCOR || fileLastReceipt) {
+        const formData = new FormData();
+        if (fileCOR) formData.append("file1", fileCOR);
+        if (fileLastReceipt) formData.append("file2", fileLastReceipt);
+
+        const uploadRes = await fetch(
+          `http://localhost:5000/api/orders/upload/double/${orderItemId}`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        const uploadData = await uploadRes.json();
+        if (!uploadData.success) {
+          showToast("⚠️ File upload failed.", "error");
+        } else {
+          showToast("✅ Files uploaded successfully!", "success");
+        }
+      } else {
+        showToast("✅ Order placed successfully (no files uploaded).", "success");
+      }
+
+      showToast(" Order placed and files uploaded successfully!", "success");
+
+      // Reset form fields
       setShowConfirm(false);
-
-      // reset input fields
       setQuantity("");
       setPaperType("");
       setBookletFinish("");
       setSize("");
       setMessage("");
+      setFileCOR(null);
+      setFileLastReceipt(null);
 
       navigate("/dashboard");
-    } else {
-      showToast("⚠️ Failed to place order: Unknown error", "error");
+    } catch (err) {
+      console.error("Error placing order:", err);
+      showToast(" Something went wrong while placing the order.", "error");
     }
-  } catch (err) {
-    console.error("Error placing order:", err);
-    showToast("⚠️ Something went wrong while placing the order.", "error");
-  }
-};
+  };
 
 
-
+  // Handle "Place Order" button
+  const handlePlaceOrder = (e) => {
+    e.preventDefault();
+    if (!isLoggedIn) {
+      navigate("/login");
+    } else {
+      setShowConfirm(true);
+    }
+  };
 
 
   return (
@@ -332,27 +361,15 @@ function OfficialReceipt() {
 
                   {/* Upload + Size + Message */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-3">
-                      <h3 className="text-lg font-semibold text-black">
-                        Required Documents
-                      </h3>
-                      {[
-                        { label: "Copy of COR" },
-                        { label: "Copy of Last Receipt" },
-                      ].map((file, idx) => (
-                        <label
-                          key={idx}
-                          className="flex flex-col items-center justify-center border-2 border-blue-400 bg-blue-50 rounded-xl p-4 shadow-sm hover:border-blue-600 hover:bg-blue-100 transition cursor-pointer"
-                        >
-                          <Upload className="w-5 h-5 text-blue-500 mb-1" />
-                          <span className="text-sm font-medium text-black text-center">
-                            {file.label}
-                          </span>
-                          <input type="file" className="hidden" />
-                        </label>
-                      ))}
-                    </div>
-
+                    <UploadSection
+                      uploadCount={2}
+                      customLabels={["Copy of COR", "Copy of Last Receipt"]}
+                      placeholders={["Upload COR file...", "Upload Last Receipt file..."]}
+                      onUploadComplete={(res, index) => {
+                        if (index === 0 && res?.files?.[0]) setFileCOR(res.files[0]);
+                        if (index === 1 && res?.files?.[0]) setFileLastReceipt(res.files[0]);
+                      }}
+                    />
                     {/* Size + Message */}
                     <div className="flex flex-col gap-3">
                       <div>

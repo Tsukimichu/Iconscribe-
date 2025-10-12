@@ -1,65 +1,45 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Eye, CheckCircle, Clock, Truck } from "lucide-react";
+import { Eye, CheckCircle, Clock, Truck, X } from "lucide-react";
 
 function Transactions() {
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
   const user = JSON.parse(localStorage.getItem("user"));
   const userId = user?.id;
+
+
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [imageGallery, setImageGallery] = useState([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  console.log("isLoggedIn:", isLoggedIn);
-  console.log("userId:", userId);
 
-useEffect(() => {
-  console.log("🔍 useEffect triggered");
-  console.log("isLoggedIn:", isLoggedIn);
-  console.log("userId:", userId);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
-  if (!isLoggedIn || !userId) {
-    console.warn("⚠️ Not logged in or missing userId — skipping fetch");
-    setLoading(false);
-    return;
-  }
-
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      console.log(`📡 Fetching: http://localhost:5000/api/orders/user/${userId}`);
-
-      const res = await fetch(`http://localhost:5000/api/orders/user/${userId}`);
-
-      console.log("🧾 Response status:", res.status);
-
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("❌ Bad response:", text);
-        throw new Error(`HTTP ${res.status}`);
-      }
-
-      const data = await res.json();
-      console.log("✅ Fetched user orders:", data);
-
-      if (Array.isArray(data)) {
-        setOrders(data);
-      } else {
-        console.warn("⚠️ Response not array:", data);
-        setOrders([]);
-      }
-    } catch (err) {
-      console.error("🔥 Error fetching user orders:", err);
-    } finally {
-      console.log("✅ Done loading orders");
+  useEffect(() => {
+    if (!isLoggedIn || !userId) {
       setLoading(false);
+      return;
     }
-  };
 
-  fetchOrders();
-}, [isLoggedIn, userId]);
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`http://localhost:5000/api/orders/user/${userId}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setOrders(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Error fetching user orders:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-
-
+    fetchOrders();
+  }, [isLoggedIn, userId]);
 
   if (!isLoggedIn) return null;
 
@@ -74,8 +54,9 @@ useEffect(() => {
       </motion.h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* 📋 Orders Table */}
         <motion.div
-          className="md:col-span-2 h-[350px] rounded-2xl backdrop-blur-xl bg-white/50 shadow-lg border border-gray-200 p-6 flex flex-col "
+          className="md:col-span-2 h-[350px] rounded-2xl backdrop-blur-xl bg-white/50 shadow-lg border border-gray-200 p-6 flex flex-col"
           initial={{ opacity: 0, x: -40 }}
           animate={{ opacity: 1, x: 0 }}
         >
@@ -107,26 +88,27 @@ useEffect(() => {
                 ) : (
                   orders.map((item, index) => (
                     <motion.tr
-                      key={item.enquiryNo}
+                      key={item.id || index}
                       className="transition-all hover:bg-gray-100 rounded-lg"
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
+                      transition={{ delay: index * 0.05 }}
                     >
-                      <td className="py-2 px-2 font-medium">{item.service}</td>
-                      <td>{item.dateOrdered?.slice(0, 10)}</td>
+                      <td className="py-2 px-2 font-medium">{item.service || item.product_name}</td>
+                      <td>{item.dateOrdered?.slice(0, 10) || item.created_at?.slice(0, 10)}</td>
                       <td className="font-semibold">{item.urgency}</td>
                       <td className="font-semibold flex items-center gap-2">
                         {getStatusIcon(item.status)}
                         {item.status}
                       </td>
                       <td>
-                        <div className="flex items-center gap-2">
-                          <button className="flex items-center bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-lg shadow transition">
-                            <Eye size={14} className="mr-1" />
-                            View
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => setSelectedOrder(item)} // 👈 Opens modal
+                          className="flex items-center bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-lg shadow transition"
+                        >
+                          <Eye size={14} className="mr-1" />
+                          View
+                        </button>
                       </td>
                     </motion.tr>
                   ))
@@ -136,8 +118,9 @@ useEffect(() => {
           </div>
         </motion.div>
 
+        {/* 🔔 Notifications */}
         <motion.div
-          className="rounded-2xl backdrop-blur-xl bg-white/50 shadow-lg border border-gray-200 p-6 flex flex-col "
+          className="rounded-2xl backdrop-blur-xl bg-white/50 shadow-lg border border-gray-200 p-6 flex flex-col"
           initial={{ opacity: 0, x: 40 }}
           animate={{ opacity: 1, x: 0 }}
         >
@@ -161,9 +144,158 @@ useEffect(() => {
           </ul>
         </motion.div>
       </div>
+
+      {/* 🪟 Order View Modal */}
+      {selectedOrder && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
+          <motion.div
+            className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-gray-800">
+                Order Details
+              </h3>
+              <button
+                onClick={() => setSelectedOrder(null)}
+                className="text-gray-500 hover:text-gray-800"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-gray-700">
+              <p><strong>Service:</strong> {selectedOrder.service || selectedOrder.product_name}</p>
+              <p><strong>Date Ordered:</strong> {selectedOrder.dateOrdered?.slice(0,10) || selectedOrder.created_at?.slice(0,10)}</p>
+              <p><strong>Urgency:</strong> {selectedOrder.urgency}</p>
+              <p><strong>Status:</strong> {selectedOrder.status}</p>
+              <p><strong>Quantity:</strong> {selectedOrder.quantity}</p>
+
+              {/* Custom Details */}
+              {selectedOrder.custom_details && (
+                <div className="mt-4">
+                  <h4 className="font-semibold text-gray-800 mb-2">Custom Details</h4>
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    {(() => {
+                      let details;
+
+                      // Try to parse JSON if it's a string
+                      try {
+                        details =
+                          typeof selectedOrder.custom_details === "string"
+                            ? JSON.parse(selectedOrder.custom_details)
+                            : selectedOrder.custom_details;
+                      } catch {
+                        // Fallback if parsing fails
+                        details = { Info: selectedOrder.custom_details };
+                      }
+
+                      // Render details properly
+                      return Object.entries(details).map(([key, value]) => (
+                        <p key={key}>
+                          <strong>{key}:</strong> {String(value)}
+                        </p>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* Uploaded Files */}
+              {selectedOrder.files?.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="font-semibold text-gray-800 mb-2">Uploaded Files:</h4>
+                  <div className="flex flex-wrap gap-3">
+                    {selectedOrder.files.map((file, idx) => {
+                      // Handle both absolute and relative paths
+                      const fileUrl = file.startsWith("http")
+                        ? file
+                        : `http://localhost:5000${file}`;
+                      const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(file);
+                      const isPDF = /\.pdf$/i.test(file);
+
+                      return (
+                        <div key={idx} className="flex flex-col items-center">
+                          {/* View Image */}
+                          {isImage && (
+                            <button
+                              onClick={() => {
+                                const allImages = selectedOrder.files.filter((f) =>
+                                  /\.(jpg|jpeg|png|gif|webp)$/i.test(f)
+                                );
+                                const startIndex = allImages.findIndex((img) => img === file);
+                                setImageGallery(allImages);
+                                setCurrentImageIndex(startIndex >= 0 ? startIndex : 0);
+                                setPreviewImage(fileUrl);
+                                setShowImageModal(true);
+                              }}
+                              className="px-2 py-1 border border-gray-300 rounded bg-gray-100 hover:bg-gray-200 text-sm"
+                            >
+                              View Image
+                            </button>
+                          )}
+
+                          {/* View PDF */}
+                          {isPDF && (
+                            <a
+                              href={fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2 py-1 border border-gray-300 rounded bg-gray-100 hover:bg-gray-200 text-sm"
+                            >
+                              View PDF
+                            </a>
+                          )}
+
+                          {/* Download Link */}
+                          <a
+                            href={fileUrl}
+                            download
+                            className="text-xs text-cyan-600 mt-1 hover:underline"
+                          >
+                            Download
+                          </a>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {showImageModal && (
+                <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
+                  <img
+                    src={previewImage}
+                    alt="Preview"
+                    className="max-w-[90%] max-h-[85vh] rounded-lg shadow-lg"
+                  />
+                  <button
+                    onClick={() => setShowImageModal(false)}
+                    className="absolute top-6 right-6 text-white bg-gray-800 rounded-full p-2 hover:bg-gray-700"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              )}
+
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setSelectedOrder(null)}
+                className="bg-blue-600 text-white px-5 py-2 rounded-xl hover:bg-blue-700 transition"
+              >
+                Close
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </section>
   );
 }
+
 
 function getStatusIcon(status) {
   switch (status) {

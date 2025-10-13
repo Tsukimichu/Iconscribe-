@@ -59,7 +59,7 @@ const OverviewSection = () => {
     { label: "Completed", count: statusCounts["Completed"], color: "from-green-500 to-emerald-400" },
   ];
 
-  // ✅ Chart Data (now dynamic)
+  // Chart Data (now dynamic)
   const orderData = {
     series: [
       { name: "Orders", data: orderChartData.data },
@@ -152,11 +152,11 @@ const OverviewSection = () => {
         {/* Orders & Sales */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <motion.div className="bg-gray-50 p-6 rounded-2xl shadow-md border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-700 mb-3">📦 Total Orders</h2>
+            <h2 className="text-lg font-semibold text-gray-700 mb-3"> Total Orders</h2>
             <Chart options={orderData.options} series={orderData.series} type="area" height={260} />
           </motion.div>
           <motion.div className="bg-gray-50 p-6 rounded-2xl shadow-md border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-700 mb-3">💰 Total Sales</h2>
+            <h2 className="text-lg font-semibold text-gray-700 mb-3"> Total Sales</h2>
             <Chart options={salesData.options} series={salesData.series} type="line" height={260} />
           </motion.div>
         </div>
@@ -164,17 +164,17 @@ const OverviewSection = () => {
         {/* Reports & Expenses */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <motion.div className="bg-gray-50 p-6 rounded-2xl shadow-md border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-700 mb-2">📊 Reports</h2>
+            <h2 className="text-lg font-semibold text-gray-700 mb-2"> Reports</h2>
             <Chart options={reportData.options} series={reportData.series} type="donut" height={300} />
           </motion.div>
           <motion.div className="bg-gray-50 p-6 rounded-2xl shadow-md border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-700 mb-2">💸 Expenses</h2>
+            <h2 className="text-lg font-semibold text-gray-700 mb-2"> Expenses</h2>
             <Chart options={expenseData.options} series={expenseData.series} type="bar" height={300} />
           </motion.div>
         </div>
       </motion.div>
 
-      {/* ✅ Orders Popup (Dynamic from Database) */}
+      {/* Orders Popup (Dynamic from Database) */}
       <AnimatePresence>
         {activeFilter && (
           <motion.div

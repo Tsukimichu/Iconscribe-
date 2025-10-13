@@ -188,32 +188,97 @@ const OrdersSection = () => {
     setSelectedOrder(null);
     setNewStatus("");
   };
+
+  // If status is changed to "Completed", add to sales table
   const confirmSetStatus = async () => {
     if (!selectedOrder) return;
 
-    const orderId = selectedOrder.order_id;
-    if (!orderId) return alert("Invalid order ID.");
+    const newStatusValue = newStatus;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setOrders((prev) =>
-          prev.map((o) => (o.order_id === orderId ? { ...o, status: newStatus } : o))
+      // Update main order status
+      const resOrder = await fetch(
+        `http://localhost:5000/api/orders/${selectedOrder.order_id}/status`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatusValue }),
+        }
+      );
+      const orderData = await resOrder.json();
+      if (!resOrder.ok || !orderData.success)
+        throw new Error(orderData.message || "Failed to update order status");
+
+      // Update each order item
+      if (selectedOrder.items?.length > 0) {
+        await Promise.all(
+          selectedOrder.items.map(async (item) => {
+            // Update item status
+            const resItem = await fetch(
+              `http://localhost:5000/api/orders/${item.order_item_id}/status`,
+              {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: newStatusValue }),
+              }
+            );
+            const itemData = await resItem.json();
+            if (!resItem.ok || !itemData.success)
+              throw new Error(itemData.message || `Failed to update item ${item.order_item_id}`);
+
+            // Add to sales only if Completed AND not already added
+            if (newStatusValue === "Completed") {
+              const existingSale = sales.find(
+                (s) => s.order_item_id === item.order_item_id
+              );
+              if (!existingSale) {
+                try {
+                  await fetch(`http://localhost:5000/api/sales`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      order_id: selectedOrder.order_id,
+                      order_item_id: item.order_item_id,
+                      service: item.service,
+                      price: item.price,
+                      customer_name: selectedOrder.customer_name,
+                      date_completed: new Date().toISOString(),
+                    }),
+                  });
+                } catch (err) {
+                  console.error("Failed to add to sales:", err);
+                }
+              }
+            }
+          })
         );
-        closeStatusModal();
-      } else {
-        alert(data.message || "Failed to update status");
       }
+
+      // Update local state for orders
+      setOrders((prev) =>
+        (prev || []).map((o) =>
+          o.order_id === selectedOrder.order_id
+            ? {
+                ...o,
+                status: newStatusValue,
+                items: (o.items || []).map((i) => ({ ...i, status: newStatusValue })),
+              }
+            : o
+        )
+      );
+
+      // Close modal
+      setShowStatusModal(false);
+      setSelectedOrder(null);
+      setNewStatus("");
     } catch (err) {
       console.error(err);
-      alert("Server error");
+      alert(err.message || "Server error");
     }
   };
+
+
+
 
 
   // --- Add Walk-In Order Logic ---
@@ -247,7 +312,7 @@ const OrdersSection = () => {
         throw new Error(data.message || "Failed to add order");
       }
 
-      // ✅ Success handling
+      // Success handling
       if (data.success) {
         setOrders((prev) => [...prev, data.order]);
         setShowAddOrderModal(false);
@@ -464,14 +529,13 @@ const openViewModal = async (order) => {
       {/* --- View Modal --- */}
       <AnimatePresence>
         {showViewModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
-              className="fixed inset-0 flex items-center justify-center z-50"
-            >
-
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+            className="fixed inset-0 flex items-center justify-center z-50"
+          >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -482,104 +546,141 @@ const openViewModal = async (order) => {
                 Order Details
               </h2>
 
-            {selectedOrder ? (
-              <div className="space-y-6">
-                {/* Basic Order Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
-                  <p><span className="font-bold text-gray-800">Customer Name:</span> {selectedOrder.customer_name || "—"}</p>
-                  <p><span className="font-bold text-gray-800">Email:</span> {selectedOrder.email || "—"}</p>
-                  <p><span className="font-bold text-gray-800">Contact Number:</span> {selectedOrder.contact_number || "—"}</p>
-                  <p><span className="font-bold text-gray-800">Location:</span> {selectedOrder.location || "—"}</p>
-                  <p><span className="font-bold text-gray-800">Date Ordered:</span> {selectedOrder.dateOrdered ? new Date(selectedOrder.dateOrdered).toLocaleDateString() : "—"}</p>
-                  <p><span className="font-bold text-gray-800">Status:</span> {selectedOrder.status || "Pending"}</p>
-                  <p><span className="font-bold text-gray-800">Price:</span> {selectedOrder.price != null ? `₱${selectedOrder.price}` : "₱350.00"}</p>
-                </div>
+              {selectedOrder ? (
+                <div className="space-y-6">
+                  {/* Basic Order Info */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                    <p>
+                      <span className="font-bold text-gray-800">Customer Name:</span>{" "}
+                      {selectedOrder.customer_name || "—"}
+                    </p>
+                    <p>
+                      <span className="font-bold text-gray-800">Email:</span>{" "}
+                      {selectedOrder.email || "—"}
+                    </p>
+                    <p>
+                      <span className="font-bold text-gray-800">Contact Number:</span>{" "}
+                      {selectedOrder.contact_number || "—"}
+                    </p>
+                    <p>
+                      <span className="font-bold text-gray-800">Location:</span>{" "}
+                      {selectedOrder.location || "—"}
+                    </p>
+                    <p>
+                      <span className="font-bold text-gray-800">Date Ordered:</span>{" "}
+                      {selectedOrder.dateOrdered
+                        ? new Date(selectedOrder.dateOrdered).toLocaleDateString()
+                        : "—"}
+                    </p>
+                    <p>
+                      <span className="font-bold text-gray-800">Status:</span>{" "}
+                      {selectedOrder.status || "Pending"}
+                    </p>
+                    <p>
+                      <span className="font-bold text-gray-800">Price:</span>{" "}
+                      {selectedOrder.price != null
+                        ? `₱${selectedOrder.price}`
+                        : "₱350.00"}
+                    </p>
+                  </div>
 
-                {/* Loop through all items safely */}
-                {selectedOrder.items?.length > 0 ? (
-                  selectedOrder.items.map((item, idx) => (
-                    <div key={idx} className="mt-6 border-t border-gray-200 pt-5">
-                      <h3 className="text-lg font-semibold text-cyan-700 mb-3">{item.service}</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
-                        <p>
-                          <span className="font-bold text-gray-800">Enquiry No:</span> {item.enquiryNo}
-                        </p>
-                        <p>
-                          <span className="font-bold text-gray-800">Urgency:</span> {item.urgency || "—"}
-                        </p>
+                  {/* Loop through items safely */}
+                  {(selectedOrder.items || []).length > 0 ? (
+                    (selectedOrder.items || []).map((item, idx) => (
+                      <div key={idx} className="mt-6 border-t border-gray-200 pt-5">
+                        <h3 className="text-lg font-semibold text-cyan-700 mb-3">
+                          {item.service || "Service"}
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                          <p>
+                            <span className="font-bold text-gray-800">Enquiry No:</span>{" "}
+                            {item.enquiryNo || "—"}
+                          </p>
+                          <p>
+                            <span className="font-bold text-gray-800">Urgency:</span>{" "}
+                            {item.urgency || "—"}
+                          </p>
 
-                        {/* Product-specific details */}
-                        {item.details && Object.keys(item.details).map((key) => {
-                          const value = item.details[key];
-                          if (!value) return null;
-                          return (
-                            <p key={key}>
-                              <span className="font-bold text-gray-800">{formatLabel(key)}:</span>{" "}
-                              {value}
-                            </p>
-                          );
-                        })}
+                          {/* Product-specific details */}
+                          {item.details &&
+                            Object.keys(item.details).map((key) => {
+                              const value = item.details[key];
+                              if (!value) return null;
+                              return (
+                                <p key={key}>
+                                  <span className="font-bold text-gray-800">
+                                    {formatLabel(key)}:
+                                  </span>{" "}
+                                  {value}
+                                </p>
+                              );
+                            })}
 
-                        {/* Display uploaded files */}
-                        {item.files?.length > 0 && (
-                          <div className="mt-3">
-                            <h4 className="font-semibold text-gray-800 mb-2">Uploaded Files:</h4>
-                            <div className="flex flex-wrap gap-3">
-                              {item.files.map((file, idx) => {
-                                const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(file);
-                                const isPDF = /\.pdf$/i.test(file);
-                                return (
-                                  <div key={idx} className="flex flex-col items-center">
-                                 {isImage && (
-                                      <button
-                                        onClick={() => {
-                                          const allImages = item.files.filter((f) => /\.(jpg|jpeg|png|gif|webp)$/i.test(f));
-                                          const startIndex = allImages.findIndex((img) => img === file);
-                                          setImageGallery(allImages);
-                                          setCurrentImageIndex(startIndex >= 0 ? startIndex : 0);
-                                          setPreviewImage(`http://localhost:5000${file}`);
-                                          setShowImageModal(true);
-                                        }}
-                                        className="px-2 py-1 border border-gray-300 rounded bg-gray-100 hover:bg-gray-200 text-sm"
-                                      >
-                                        View Image
-                                      </button>
-                                    )}
-                                    {isPDF && (
+                          {/* Uploaded files */}
+                          {(item.files || []).length > 0 && (
+                            <div className="mt-3">
+                              <h4 className="font-semibold text-gray-800 mb-2">
+                                Uploaded Files:
+                              </h4>
+                              <div className="flex flex-wrap gap-3">
+                                {(item.files || []).map((file, fIdx) => {
+                                  const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(file);
+                                  const isPDF = /\.pdf$/i.test(file);
+                                  return (
+                                    <div key={fIdx} className="flex flex-col items-center">
+                                      {isImage && (
+                                        <button
+                                          onClick={() => {
+                                            const allImages = (item.files || []).filter((f) =>
+                                              /\.(jpg|jpeg|png|gif|webp)$/i.test(f)
+                                            );
+                                            const startIndex = allImages.findIndex(
+                                              (img) => img === file
+                                            );
+                                            setImageGallery(allImages);
+                                            setCurrentImageIndex(startIndex >= 0 ? startIndex : 0);
+                                            setPreviewImage(`http://localhost:5000${file}`);
+                                            setShowImageModal(true);
+                                          }}
+                                          className="px-2 py-1 border border-gray-300 rounded bg-gray-100 hover:bg-gray-200 text-sm"
+                                        >
+                                          View Image
+                                        </button>
+                                      )}
+                                      {isPDF && (
+                                        <a
+                                          href={`http://localhost:5000${file}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="px-2 py-1 border border-gray-300 rounded bg-gray-100 hover:bg-gray-200 text-sm"
+                                        >
+                                          View PDF
+                                        </a>
+                                      )}
                                       <a
                                         href={`http://localhost:5000${file}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="px-2 py-1 border border-gray-300 rounded bg-gray-100 hover:bg-gray-200 text-sm"
+                                        download
+                                        className="text-xs text-cyan-600 mt-1 hover:underline"
                                       >
-                                        View PDF
+                                        Download
                                       </a>
-                                    )}
-                                    {/* Optionally, add download */}
-                                    <a
-                                      href={`http://localhost:5000${file}`}
-                                      download
-                                      className="text-xs text-cyan-600 mt-1 hover:underline"
-                                    >
-                                      Download
-                                    </a>
-                                  </div>
-                                );
-                              })}
+                                    </div>
+                                  );
+                                })}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-500 italic mt-3">No items found for this order.</p>
-                )}
+                    ))
+                  ) : (
+                    <p className="text-gray-500 italic mt-3">No items found for this order.</p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-gray-500 italic">No order selected.</p>
+              )}
 
-              </div>
-            ) : (
-              <p className="text-gray-500 italic">No order selected.</p>
-            )}
               {/* Close Button */}
               <div className="flex justify-center mt-8">
                 <button
@@ -593,6 +694,7 @@ const openViewModal = async (order) => {
           </motion.div>
         )}
       </AnimatePresence>
+
 
 
         {/* --- Image Gallery Preview Modal --- */}
@@ -681,15 +783,16 @@ const openViewModal = async (order) => {
               <p className="text-gray-600 mb-4">
                 Choose new status for <b>{selectedOrder?.enquiryNo}</b>
               </p>
-              <select
-                value={newStatus}
-                onChange={(e) => setNewStatus(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:ring-2 focus:ring-yellow-500 outline-none"
-              >
-                <option>Pending</option>
-                <option>Ongoing</option>
-                <option>To be delivered</option>
-              </select>
+                <select
+                  value={newStatus}
+                  onChange={(e) => setNewStatus(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:ring-2 focus:ring-yellow-500 outline-none"
+                >
+                  <option>Pending</option>
+                  <option>Ongoing</option>
+                  <option>Out for delivery</option>
+                  <option>Completed</option>
+                </select>
               <div className="flex justify-center gap-3">
                 <button
                   onClick={closeStatusModal}

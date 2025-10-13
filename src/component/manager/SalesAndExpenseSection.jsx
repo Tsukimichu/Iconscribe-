@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import axios from "axios";
 import {
   X,
   Edit2,
@@ -11,34 +12,64 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const SalesAndExpenseSection = () => {
-  const [sales, setSales] = useState([
-    { id: 1, item: "Service A", amount: 2500, date: "2025-04-10" },
-    { id: 2, item: "Service B", amount: 1800, date: "2025-04-12" },
-  ]);
-  const [expenses, setExpenses] = useState([
-    { id: 1, item: "Rent", amount: 1200, date: "2025-04-08" },
-    { id: 2, item: "Supplies", amount: 600, date: "2025-04-11" },
-  ]);
+const API_URL = "http://localhost:5000/api/sales";
 
+const SalesAndExpenseSection = () => {
+  const [sales, setSales] = useState([]);
+  const [expenses, setExpenses] = useState([]); 
+  const [orders, setOrders] = useState([]);
   const [archivedSales, setArchivedSales] = useState([]);
   const [archivedExpenses, setArchivedExpenses] = useState([]);
 
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("date");
-
   const [selected, setSelected] = useState(null);
   const [formData, setFormData] = useState({ id: null, item: "", amount: "", date: "" });
   const [isNew, setIsNew] = useState(false);
-
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
   const [archiveType, setArchiveType] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
+  // =====================================================
+  // 🧾 Fetch sales data from backend
+  // =====================================================
+  const fetchSales = async () => {
+    try {
+      const res = await axios.get(API_URL);
+      if (res.data.success) setSales(res.data.data);
+    } catch (err) {
+      console.error("Error fetching sales:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchSales();
+  }, []);
+
+      // Fetch orders from backend for dropdown
+    useEffect(() => {
+      const fetchOrders = async () => {
+        try {
+          const res = await axios.get("http://localhost:5000/api/orders");
+          if (res.data) setOrders(res.data);
+        } catch (err) {
+          console.error("Error fetching orders:", err);
+        }
+      };
+      fetchOrders();
+    }, []);
+
+
+  // =====================================================
+  // 📊 Computed totals
+  // =====================================================
   const totalSales = useMemo(() => sales.reduce((sum, s) => sum + Number(s.amount), 0), [sales]);
   const totalExpenses = useMemo(() => expenses.reduce((sum, e) => sum + Number(e.amount), 0), [expenses]);
   const profit = totalSales - totalExpenses;
 
+  // =====================================================
+  // ✏️ Add or Edit
+  // =====================================================
   const openEdit = (source, record) => {
     setSelected({ source, id: record.id });
     setIsNew(false);
@@ -62,47 +93,61 @@ const SalesAndExpenseSection = () => {
     setFormData((p) => ({ ...p, [name]: name === "amount" ? Number(value) : value }));
   };
 
-  const handleSave = () => {
-    if (!formData.item.trim() || !formData.amount || !formData.date) return alert("All fields are required");
-
-    if (selected.source === "sale") {
-      if (isNew) setSales((prev) => [...prev, { ...formData, id: Date.now() }]);
-      else setSales((prev) => prev.map((r) => (r.id === formData.id ? { ...formData } : r)));
-    } else {
-      if (isNew) setExpenses((prev) => [...prev, { ...formData, id: Date.now() }]);
-      else setExpenses((prev) => prev.map((r) => (r.id === formData.id ? { ...formData } : r)));
+  const handleSave = async () => {
+    if (!formData.item.trim() || !formData.amount || !formData.date) {
+      return alert("All fields are required");
     }
-    closeEdit();
+
+    try {
+      if (isNew) {
+        // Add new sale
+        await axios.post(API_URL, {
+          order_item_id: null, // you can replace this with a real order_item_id if you want
+          item: formData.item,
+          amount: formData.amount,
+          date: formData.date,
+        });
+      } else {
+        // Update existing sale
+        await axios.put(`${API_URL}/${formData.id}`, {
+          item: formData.item,
+          amount: formData.amount,
+          date: formData.date,
+        });
+      }
+      fetchSales();
+      closeEdit();
+    } catch (err) {
+      console.error("Error saving sale:", err);
+      alert("Failed to save record.");
+    }
   };
 
+  // =====================================================
+  // 🗑️ Delete sale
+  // =====================================================
   const handleDelete = (source, record) => {
     setConfirmDelete({ source, record });
   };
 
-  const confirmDeleteAction = () => {
+  const confirmDeleteAction = async () => {
     const { source, record } = confirmDelete;
-    if (source === "sale") {
-      setSales((prev) => prev.filter((r) => r.id !== record.id));
-      setArchivedSales((prev) => [...prev, record]);
-    } else {
-      setExpenses((prev) => prev.filter((r) => r.id !== record.id));
-      setArchivedExpenses((prev) => [...prev, record]);
-    }
-    setConfirmDelete(null);
-  };
-
-  const handleRestore = (source, record) => {
-    if (source === "sale") {
-      setArchivedSales((prev) => prev.filter((r) => r.id !== record.id));
-      setSales((prev) => [...prev, record]);
-    } else {
-      setArchivedExpenses((prev) => prev.filter((r) => r.id !== record.id));
-      setExpenses((prev) => [...prev, record]);
+    try {
+      await axios.delete(`${API_URL}/${record.id}`);
+      fetchSales();
+      setConfirmDelete(null);
+    } catch (err) {
+      console.error("Error deleting sale:", err);
     }
   };
 
+  // =====================================================
+  // 🧩 Filter + Sort
+  // =====================================================
   const filterAndSort = (data) => {
-    let filtered = data.filter((r) => r.item.toLowerCase().includes(search.toLowerCase()) || r.date.includes(search));
+    let filtered = data.filter(
+      (r) => r.item.toLowerCase().includes(search.toLowerCase()) || r.date.includes(search)
+    );
     return [...filtered].sort((a, b) => {
       if (sortBy === "amount") return b.amount - a.amount;
       if (sortBy === "date") return new Date(b.date) - new Date(a.date);
@@ -113,6 +158,9 @@ const SalesAndExpenseSection = () => {
   const filteredSales = useMemo(() => filterAndSort(sales), [sales, search, sortBy]);
   const filteredExpenses = useMemo(() => filterAndSort(expenses), [expenses, search, sortBy]);
 
+  // =====================================================
+  // 🧱 UI Rendering
+  // =====================================================
   return (
     <div className="p-8 rounded-3xl bg-gradient-to-br from-cyan-50 to-white shadow-xl min-h-screen text-gray-900">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-10">
@@ -130,7 +178,11 @@ const SalesAndExpenseSection = () => {
           </div>
           <div className="relative">
             <button
-              onClick={() => setSortBy((prev) => (prev === "date" ? "amount" : prev === "amount" ? "item" : "date"))}
+              onClick={() =>
+                setSortBy((prev) =>
+                  prev === "date" ? "amount" : prev === "amount" ? "item" : "date"
+                )
+              }
               className="flex items-center gap-1 px-3 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
             >
               Sort: {sortBy} <ChevronDown size={14} />
@@ -142,7 +194,11 @@ const SalesAndExpenseSection = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <SummaryCard title="Total Sales" value={totalSales} color="text-green-600" />
         <SummaryCard title="Total Expenses" value={totalExpenses} color="text-red-600" />
-        <SummaryCard title="Profit" value={profit} color={profit >= 0 ? "text-green-700" : "text-red-700"} />
+        <SummaryCard
+          title="Profit"
+          value={profit}
+          color={profit >= 0 ? "text-green-700" : "text-red-700"}
+        />
       </div>
 
       <Section
@@ -153,9 +209,13 @@ const SalesAndExpenseSection = () => {
         openAdd={openAdd}
         openEdit={openEdit}
         handleDelete={handleDelete}
-        openArchive={() => { setArchiveType("sale"); setIsArchiveOpen(true); }}
+        openArchive={() => {
+          setArchiveType("sale");
+          setIsArchiveOpen(true);
+        }}
       />
 
+      {/* Expenses section (you can connect later to backend) */}
       <Section
         title="Expenses"
         data={filteredExpenses}
@@ -164,54 +224,90 @@ const SalesAndExpenseSection = () => {
         openAdd={openAdd}
         openEdit={openEdit}
         handleDelete={handleDelete}
-        openArchive={() => { setArchiveType("expense"); setIsArchiveOpen(true); }}
+        openArchive={() => {
+          setArchiveType("expense");
+          setIsArchiveOpen(true);
+        }}
       />
 
+      {/* Modal for Add/Edit */}
       <AnimatePresence>
         {selected && (
           <Modal onClose={closeEdit}>
             <h2 className="text-lg font-semibold mb-4">
-              {isNew ? `Add ${selected.source === "sale" ? "Sale" : "Expense"}` : `Edit ${selected.source === "sale" ? "Sale" : "Expense"}`}
+              {isNew
+                ? `Add ${selected.source === "sale" ? "Sale" : "Expense"}`
+                : `Edit ${selected.source === "sale" ? "Sale" : "Expense"}`}
             </h2>
+            
+            <label className="block text-sm font-medium mb-1">Select Order</label>
+            <select
+              className="w-full px-4 py-2 rounded-lg bg-gray-100 border border-gray-300 focus:ring-2 focus:ring-cyan-500 outline-none mb-4"
+              value={formData.order_item_id || ""}
+              onChange={(e) => {
+                const selected = orders.find((o) => o.id === parseInt(e.target.value));
+                setFormData((prev) => ({
+                  ...prev,
+                  order_item_id: e.target.value,
+                  item: selected?.service || "",
+                  amount: selected?.price || "",
+                }));
+              }}
+            >
+              <option value="">Select order...</option>
+              {orders.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.enquiryNo} - {o.customer_name}
+                </option>
+              ))}
+            </select>
 
             <FormInput label="Item" name="item" value={formData.item} onChange={handleChange} />
-            <FormInput label="Amount (₱)" type="number" min="1" name="amount" value={formData.amount} onChange={handleChange} />
-            <FormInput label="Date" type="date" name="date" value={formData.date} onChange={handleChange} />
+
+            <FormInput
+              label="Amount (₱)"
+              type="number"
+              min="1"
+              name="amount"
+              value={formData.amount}
+              onChange={handleChange}
+            />
+            <FormInput
+              label="Date"
+              type="date"
+              name="date"
+              value={formData.date}
+              onChange={handleChange}
+            />
 
             <div className="flex justify-end gap-3 mt-6">
-              <Button variant="secondary" onClick={closeEdit}>Cancel</Button>
-              <Button variant="primary" onClick={handleSave}>{isNew ? "Add" : "Save"}</Button>
+              <Button variant="secondary" onClick={closeEdit}>
+                Cancel
+              </Button>
+              <Button variant="primary" onClick={handleSave}>
+                {isNew ? "Add" : "Save"}
+              </Button>
             </div>
           </Modal>
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {isArchiveOpen && (
-          <Modal onClose={() => setIsArchiveOpen(false)}>
-            <h2 className="text-2xl font-bold mb-6">
-              {archiveType === "sale" ? "Archived Sales" : "Archived Expenses"}
-            </h2>
-
-            <Table
-              data={archiveType === "sale" ? archivedSales : archivedExpenses}
-              color={archiveType === "sale" ? "text-green-600" : "text-red-600"}
-              actionLabel="Restore"
-              actionIcon={<RotateCcw size={16} />}
-              onAction={(row) => handleRestore(archiveType, row)}
-            />
-          </Modal>
-        )}
-      </AnimatePresence>
-
+      {/* Confirm Delete */}
       <AnimatePresence>
         {confirmDelete && (
           <Modal onClose={() => setConfirmDelete(null)}>
             <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
-            <p className="mb-6">Are you sure you want to delete <span className="font-semibold">{confirmDelete.record.item}</span>?</p>
+            <p className="mb-6">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold">{confirmDelete.record.item}</span>?
+            </p>
             <div className="flex justify-end gap-3">
-              <Button variant="secondary" onClick={() => setConfirmDelete(null)}>Cancel</Button>
-              <Button variant="danger" onClick={confirmDeleteAction}>Delete</Button>
+              <Button variant="secondary" onClick={() => setConfirmDelete(null)}>
+                Cancel
+              </Button>
+              <Button variant="danger" onClick={confirmDeleteAction}>
+                Delete
+              </Button>
             </div>
           </Modal>
         )}
@@ -220,6 +316,7 @@ const SalesAndExpenseSection = () => {
   );
 };
 
+// UI Components
 const SummaryCard = ({ title, value, color }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
@@ -232,25 +329,19 @@ const SummaryCard = ({ title, value, color }) => (
   </motion.div>
 );
 
-const Section = ({ title, data, color, source, openAdd, openEdit, handleDelete, openArchive }) => (
+const Section = ({ title, data, color, source, openAdd, openEdit, handleDelete }) => (
   <div className="mb-10">
     <div className="flex justify-between items-center mb-4">
       <h2 className={`text-2xl font-bold ${color}`}>{title}</h2>
-      <div className="flex gap-2">
-        <Button variant="primary" onClick={() => openAdd(source)} icon={<Plus size={16} />}>Add</Button>
-        <Button variant="secondary" onClick={openArchive} icon={<Archive size={16} />}>Archive</Button>
-      </div>
+      <Button variant="primary" onClick={() => openAdd(source)} icon={<Plus size={16} />}>
+        Add
+      </Button>
     </div>
-    <Table
-      data={data}
-      color={color}
-      onEdit={(row) => openEdit(source, row)}
-      onDelete={(row) => handleDelete(source, row)}
-    />
+    <Table data={data} color={color} onEdit={(row) => openEdit(source, row)} onDelete={(row) => handleDelete(source, row)} />
   </div>
 );
 
-const Table = ({ data, color, onEdit, onDelete, actionLabel, actionIcon, onAction }) => (
+const Table = ({ data, color, onEdit, onDelete }) => (
   <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-x-auto">
     <table className="w-full text-left border-separate border-spacing-0 min-w-[720px] text-sm">
       <thead className="bg-gray-50">
@@ -262,30 +353,31 @@ const Table = ({ data, color, onEdit, onDelete, actionLabel, actionIcon, onActio
         </tr>
       </thead>
       <tbody>
-        {data.map((row, i) => (
-          <tr
-            key={row.id}
-            className={`transition ${i % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-cyan-50`}
-          >
-            <td className="py-3 px-6 border-b border-gray-100">{row.item}</td>
-            <td className={`py-3 px-6 font-semibold ${color} border-b border-gray-100`}>
-              ₱{Number(row.amount).toLocaleString()}
-            </td>
-            <td className="py-3 px-6 border-b border-gray-100">
-              {new Date(row.date).toLocaleDateString()}
-            </td>
-            <td className="py-3 px-6 text-right border-b border-gray-100">
-              <div className="flex justify-end gap-2">
-                {onEdit && <Button variant="secondary" onClick={() => onEdit(row)} icon={<Edit2 size={16} />}>Edit</Button>}
-                {onDelete && <Button variant="danger" onClick={() => onDelete(row)} icon={<Trash2 size={16} />}>Delete</Button>}
-                {onAction && <Button variant="primary" onClick={() => onAction(row)} icon={actionIcon}>{actionLabel}</Button>}
-              </div>
-            </td>
-          </tr>
-        ))}
-        {data.length === 0 && (
+        {data.length > 0 ? (
+          data.map((row) => (
+            <tr key={row.id} className="hover:bg-cyan-50">
+              <td className="py-3 px-6 border-b border-gray-100">{row.item}</td>
+              <td className={`py-3 px-6 font-semibold ${color} border-b border-gray-100`}>
+                ₱{Number(row.amount).toLocaleString()}
+              </td>
+              <td className="py-3 px-6 border-b border-gray-100">
+                {new Date(row.date).toLocaleDateString()}
+              </td>
+              <td className="py-3 px-6 text-right border-b border-gray-100">
+                <Button variant="secondary" onClick={() => onEdit(row)} icon={<Edit2 size={16} />}>
+                  Edit
+                </Button>
+                <Button variant="danger" onClick={() => onDelete(row)} icon={<Trash2 size={16} />}>
+                  Delete
+                </Button>
+              </td>
+            </tr>
+          ))
+        ) : (
           <tr>
-            <td colSpan={4} className="py-6 px-6 text-center text-gray-500">No records found.</td>
+            <td colSpan={4} className="py-6 px-6 text-center text-gray-500">
+              No records found.
+            </td>
           </tr>
         )}
       </tbody>

@@ -4,9 +4,7 @@ import logo from "../assets/ICONS.png";
 import orgImage from "../assets/org.jpg";
 import { User, Lock } from "lucide-react";
 import { motion } from "framer-motion";
-
-// 🟡 ADD: import useToast hook
-import { useToast } from "./ui/ToastProvider.jsx"; // adjust the path if needed
+import { useToast } from "./ui/ToastProvider.jsx";
 
 function Login({ onLogin }) {
   const navigate = useNavigate();
@@ -14,7 +12,7 @@ function Login({ onLogin }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🟡 ADD: initialize toast
+  // ADD: initialize toast
   const { showToast } = useToast();
 
   const handleLogin = async (e) => {
@@ -37,8 +35,8 @@ function Login({ onLogin }) {
 
         if (onLogin) onLogin();
 
-        // 🟡 ADD: show success toast
-        showToast("✅ Login successful!", "success");
+        //  ADD: show success toast
+        showToast(" Login successful!", "success");
 
         if (data.user.role === "admin") {
           navigate("/admin");
@@ -48,12 +46,12 @@ function Login({ onLogin }) {
           navigate("/dashboard");
         }
       } else {
-        // 🟡 ADD: show error toast instead of alert
-        showToast(data.message || "❌ Invalid credentials", "error");
+        // ADD: show error toast instead of alert
+        showToast(data.message || " Invalid credentials", "error");
       }
     } catch (error) {
-      console.error("❌ Login error:", error);
-      // 🟡 ADD: show toast on fetch error
+      console.error(" Login error:", error);
+      // ADD: show toast on fetch error
       showToast("Something went wrong. Please try again.", "error");
     } finally {
       setLoading(false);

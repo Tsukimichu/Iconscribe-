@@ -279,10 +279,10 @@ router.put("/:orderId/price", async (req, res) => {
 
 
 // ===================================================
-// Update Status (only affects orderitems)
+// Update Order Status
 // ===================================================
 router.put("/:id/status", async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params; // this is your order_item_id or order_id depending on your setup
   const { status } = req.body;
 
   if (!status) {
@@ -290,24 +290,52 @@ router.put("/:id/status", async (req, res) => {
   }
 
   try {
-    const [result] = await db
-      .promise()
-      .execute("UPDATE orderitems SET status = ? WHERE order_id = ?", [status, id]);
+    // 1️⃣ Update orderitems status
+    await db.promise().query(
+      "UPDATE orderitems SET status=? WHERE order_id=?",
+      [status, id]
+    );
+
+    // 2️⃣ Only if status is Completed, add to sales
+    if (status === "Completed") {
+      const orderId = id; // make sure this matches your order_id
+
+      // ✅ Insert into sales logic here
+      const [order] = await db.promise().query(
+        "SELECT total, order_id FROM orders WHERE order_id = ?",
+        [orderId]
+      );
+
+      if (order.length === 0) {
+        return res.status(404).json({ success: false, message: "Order not found" });
+      }
+
+      const [orderItems] = await db.promise().query(
+        `SELECT oi.order_item_id, p.product_name, oi.quantity
+        FROM orderitems oi
+        JOIN products p ON oi.product_id = p.product_id
+        WHERE oi.order_id = ?`,
+        [orderId]
+      );
+
+      // Combine item names as a string
+      const itemNames = orderItems.map(i => `${i.product_name} x${i.quantity}`).join(", ");
 
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No matching order items found for this order_id",
-      });
+      await db.promise().query(
+        "INSERT INTO sales (order_item_id, item, amount, date) VALUES (?, ?, ?, NOW())",
+        [orderId, itemNames, order[0].total]
+      );
     }
 
-    res.json({ success: true, message: "Status updated successfully" });
+    res.json({ success: true, message: "Order status updated successfully" });
   } catch (err) {
-    console.error("❌ Error updating status:", err);
+    console.error("Error updating status:", err);
     res.status(500).json({ success: false, message: "Database error" });
   }
 });
+
+
 
 
 

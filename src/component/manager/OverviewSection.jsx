@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Chart from "react-apexcharts";
 import axios from "axios";
+import { useToast } from "../ui/ToastProvider.jsx";
 
 const OverviewSection = () => {
   const [activeFilter, setActiveFilter] = useState(null);
@@ -11,17 +12,35 @@ const OverviewSection = () => {
     data: [],
   });
 
+  const { showToast } = useToast();
+  const prevOrderCount = useRef(0); 
+
   // Fetch all orders from backend
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const res = await axios.get("http://localhost:5000/api/orders");
-        setOrders(res.data);
-      } catch (err) {
-        console.error("Error fetching orders:", err);
+  const fetchOrders = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/orders");
+      setOrders(res.data);
+
+      // ✅ Detect new orders
+      if (prevOrderCount.current && res.data.length > prevOrderCount.current) {
+        const newOrders = res.data.length - prevOrderCount.current;
+        showToast({
+          type: "info",
+          message: `${newOrders} new order${newOrders > 1 ? "s" : ""} received!`,
+        });
       }
-    };
+
+      prevOrderCount.current = res.data.length; // update stored count
+    } catch (err) {
+      console.error("Error fetching orders:", err);
+    }
+  };
+
+  // Fetch on mount and poll every 5s
+  useEffect(() => {
     fetchOrders();
+    const interval = setInterval(fetchOrders, 5000); // 🔁 check every 5 seconds
+    return () => clearInterval(interval);
   }, []);
 
   // Fetch product order counts for chart
@@ -44,7 +63,7 @@ const OverviewSection = () => {
   const groupByStatus = (status) =>
     orders.filter((order) => order.status === status);
 
-  // Count orders per status for dashboard cards (copied from admin)
+  // Count orders per status for dashboard cards
   const statusCounts = {
     Pending: groupByStatus("Pending").length,
     Ongoing: groupByStatus("Ongoing").length,
@@ -59,11 +78,9 @@ const OverviewSection = () => {
     { label: "Completed", count: statusCounts["Completed"], color: "from-green-500 to-emerald-400" },
   ];
 
-  // Chart Data (now dynamic)
+  // 🧾 Chart Data
   const orderData = {
-    series: [
-      { name: "Orders", data: orderChartData.data },
-    ],
+    series: [{ name: "Orders", data: orderChartData.data }],
     options: {
       chart: { type: "area", stacked: false, toolbar: { show: false }, background: "transparent" },
       xaxis: { categories: orderChartData.categories },
@@ -117,6 +134,37 @@ const OverviewSection = () => {
     },
   };
 
+  const handleExportAll = () => {
+  if (!orders || orders.length === 0) {
+    showToast({ type: "info", message: "No orders to export." });
+    return;
+  }
+
+  const header = ["Order ID", "Customer", "Product", "Date", "Status"];
+  const rows = orders.map((order) => [
+    order.order_id,
+    order.customer_name,
+    order.product_name,
+    new Date(order.created_at).toLocaleDateString(),
+    order.status,
+  ]);
+
+  const csvContent =
+    "data:text/csv;charset=utf-8," +
+    [header, ...rows].map((row) => row.join(",")).join("\n");
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", "All_Orders.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  showToast({ type: "success", message: "All orders exported successfully!" });
+};
+
+
   return (
     <>
       <motion.div
@@ -131,6 +179,13 @@ const OverviewSection = () => {
             <h1 className="text-4xl font-extrabold text-cyan-700">Dashboard</h1>
             <p className="text-gray-600 text-lg">Hello, Manager</p>
           </div>
+
+            <button
+            onClick={() => handleExportAll()}
+            className="px-5 py-2 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition"
+          >
+            Export All Orders
+          </button>
         </div>
 
         {/* Status Cards */}
@@ -174,7 +229,7 @@ const OverviewSection = () => {
         </div>
       </motion.div>
 
-      {/* Orders Popup (Dynamic from Database) */}
+      {/* Orders Popup */}
       <AnimatePresence>
         {activeFilter && (
           <motion.div

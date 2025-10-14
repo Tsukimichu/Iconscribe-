@@ -20,20 +20,41 @@ router.get("/", async (req, res) => {
 // ===================================================
 router.post("/", async (req, res) => {
   const { order_item_id, item, amount, date } = req.body;
-  if (!order_item_id || !item || !amount || !date)
+
+  if (!order_item_id || !item || !amount || !date) {
     return res.status(400).json({ success: false, message: "Missing fields" });
+  }
 
   try {
-    await db.promise().query(
-      "INSERT INTO sales (order_item_id, item, amount, date) VALUES (?, ?, ?, ?)",
-      [order_item_id, item, amount, date]
-    );
+   // Only check duplicates if order_item_id is provided
+    if (order_item_id) {
+      const [existing] = await db
+        .promise()
+        .query("SELECT id FROM sales WHERE order_item_id = ?", [order_item_id]);
+
+      if (existing.length > 0) {
+        return res.json({
+          success: false,
+          message: "Sale already exists for this order item.",
+        });
+      }
+    }
+
+    // If not found, insert it
+    await db
+      .promise()
+      .query(
+        "INSERT INTO sales (order_item_id, item, amount, date) VALUES (?, ?, ?, ?)",
+        [order_item_id, item, amount, date]
+      );
+
     res.json({ success: true, message: "Sale added successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Database error" });
   }
 });
+
 
 // ===================================================
 // Update sale

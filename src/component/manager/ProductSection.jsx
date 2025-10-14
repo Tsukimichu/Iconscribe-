@@ -6,6 +6,7 @@ const statusColors = {
   active: "bg-green-100 text-green-700",
   inactive: "bg-red-100 text-red-700",
   archived: "bg-yellow-100 text-yellow-700",
+  default: "bg-green-100 text-green-700",
 };
 
 const ProductSection = () => {
@@ -225,13 +226,13 @@ const ProductSection = () => {
                 >
                   <td className="py-3 px-6">{service.product_name}</td>
                   <td className="py-3 px-6">
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                        statusColors[service.status]
-                      }`}
-                    >
-                      {service.status}
-                    </span>
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                      statusColors[service.status] || statusColors.default
+                    }`}
+                  >
+                    {service.status || "active"}
+                  </span>
                   </td>
                   <td className="py-3 px-6 flex gap-2 items-center">
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -262,7 +263,7 @@ const ProductSection = () => {
         </table>
       </motion.div>
 
-      {/* ✅ Popup Section */}
+      {/* Popup Section */}
       <AnimatePresence>
         {isPopupOpen && (
           <motion.div
@@ -288,7 +289,7 @@ const ProductSection = () => {
               {popupType === "add" && (
                 <>
                   <h3 className="text-2xl font-bold mb-5 text-cyan-700">
-                    ➕ Add New Service
+                     Add New Service
                   </h3>
 
                   {/* Title */}
@@ -412,7 +413,7 @@ const ProductSection = () => {
               {popupType === "archive" && (
                 <>
                   <h3 className="text-xl font-bold mb-2 text-yellow-700">
-                    ⚠️ Archive Service
+                     Archive Service
                   </h3>
                   <p className="text-gray-600 mb-6">
                     Are you sure you want to archive{" "}

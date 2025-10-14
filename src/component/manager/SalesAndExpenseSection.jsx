@@ -31,7 +31,7 @@ const SalesAndExpenseSection = () => {
   const [confirmDelete, setConfirmDelete] = useState(null);
 
   // =====================================================
-  // 🧾 Fetch sales data from backend
+  // Fetch sales data from backend
   // =====================================================
   const fetchSales = async () => {
     try {
@@ -61,14 +61,14 @@ const SalesAndExpenseSection = () => {
 
 
   // =====================================================
-  // 📊 Computed totals
+  // Computed totals
   // =====================================================
   const totalSales = useMemo(() => sales.reduce((sum, s) => sum + Number(s.amount), 0), [sales]);
   const totalExpenses = useMemo(() => expenses.reduce((sum, e) => sum + Number(e.amount), 0), [expenses]);
   const profit = totalSales - totalExpenses;
 
   // =====================================================
-  // ✏️ Add or Edit
+  // Add or Edit
   // =====================================================
   const openEdit = (source, record) => {
     setSelected({ source, id: record.id });
@@ -124,7 +124,7 @@ const SalesAndExpenseSection = () => {
   };
 
   // =====================================================
-  // 🗑️ Delete sale
+  // Delete sale
   // =====================================================
   const handleDelete = (source, record) => {
     setConfirmDelete({ source, record });
@@ -142,7 +142,7 @@ const SalesAndExpenseSection = () => {
   };
 
   // =====================================================
-  // 🧩 Filter + Sort
+  // Filter + Sort
   // =====================================================
   const filterAndSort = (data) => {
     let filtered = data.filter(
@@ -158,9 +158,6 @@ const SalesAndExpenseSection = () => {
   const filteredSales = useMemo(() => filterAndSort(sales), [sales, search, sortBy]);
   const filteredExpenses = useMemo(() => filterAndSort(expenses), [expenses, search, sortBy]);
 
-  // =====================================================
-  // 🧱 UI Rendering
-  // =====================================================
   return (
     <div className="p-8 rounded-3xl bg-gradient-to-br from-cyan-50 to-white shadow-xl min-h-screen text-gray-900">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-10">
@@ -342,40 +339,86 @@ const Section = ({ title, data, color, source, openAdd, openEdit, handleDelete }
 );
 
 const Table = ({ data, color, onEdit, onDelete }) => (
-  <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-x-auto">
-    <table className="w-full text-left border-separate border-spacing-0 min-w-[720px] text-sm">
-      <thead className="bg-gray-50">
+  <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-x-auto mt-6">
+    <table className="w-full text-left border-collapse min-w-[800px] text-sm">
+      <thead className="bg-gray-100 sticky top-0 z-10">
         <tr>
-          <th className="py-3 px-6 font-semibold text-gray-700 border-b border-gray-200">Item</th>
-          <th className="py-3 px-6 font-semibold text-gray-700 border-b border-gray-200">Amount</th>
-          <th className="py-3 px-6 font-semibold text-gray-700 border-b border-gray-200">Date</th>
-          <th className="py-3 px-6 font-semibold text-gray-700 text-right border-b border-gray-200">Action</th>
+          <th className="py-3 px-6 font-semibold text-gray-700">Item</th>
+          <th className="py-3 px-6 font-semibold text-gray-700">Quantity</th>
+          <th className="py-3 px-6 font-semibold text-gray-700 text-right">Amount</th>
+          <th className="py-3 px-6 font-semibold text-gray-700">Date</th>
+          <th className="py-3 px-6 font-semibold text-gray-700 text-right">Action</th>
         </tr>
       </thead>
       <tbody>
         {data.length > 0 ? (
-          data.map((row) => (
-            <tr key={row.id} className="hover:bg-cyan-50">
-              <td className="py-3 px-6 border-b border-gray-100">{row.item}</td>
-              <td className={`py-3 px-6 font-semibold ${color} border-b border-gray-100`}>
+          data.map((row, index) => (
+            <tr
+              key={row.id || index}
+              className="border-b border-gray-200 hover:bg-gray-50 transition"
+            >
+             <td className="py-3 px-6">
+              {(() => {
+                const match = row.item.match(/^(.*)\s+x(\d+)$/i);
+                if (match) {
+                  const [, name,] = match;
+                  return (
+                    <>
+                      <span className="font-medium text-gray-800">{name.trim()}</span>
+                    </>
+                  );
+                } else {
+                  return <span className="font-medium text-gray-800">{row.item}</span>;
+                }
+              })()}
+            </td>
+
+              <td className="py-3 px-6">
+              {(() => {
+                const match = row.item.match(/^(.*)\s+x(\d+)$/i);
+                if (match) {
+                  const [, , qty] = match;
+                  return (
+                    <>
+                      <span className="font-medium text-gray-800">{qty}</span>
+                    </>
+                  );
+                } else {
+                  return <span className="font-medium text-gray-800">{row.item}</span>;
+                }
+              })()}
+            </td>
+
+
+              <td className={`py-3 px-6 font-semibold text-right ${color}`}>
                 ₱{Number(row.amount).toLocaleString()}
               </td>
-              <td className="py-3 px-6 border-b border-gray-100">
+
+              <td className="py-3 px-6">
                 {new Date(row.date).toLocaleDateString()}
               </td>
-              <td className="py-3 px-6 text-right border-b border-gray-100">
-                <Button variant="secondary" onClick={() => onEdit(row)} icon={<Edit2 size={16} />}>
-                  Edit
-                </Button>
-                <Button variant="danger" onClick={() => onDelete(row)} icon={<Trash2 size={16} />}>
-                  Delete
-                </Button>
+
+              <td className="py-3 px-6 text-right">
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => onEdit(row)}
+                    className="flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-200 transition"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                  <button
+                    onClick={() => onDelete(row)}
+                    className="flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-lg hover:bg-red-200 transition"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </td>
             </tr>
           ))
         ) : (
           <tr>
-            <td colSpan={4} className="py-6 px-6 text-center text-gray-500">
+            <td colSpan="4" className="py-6 text-center text-gray-500 italic">
               No records found.
             </td>
           </tr>
@@ -384,6 +427,9 @@ const Table = ({ data, color, onEdit, onDelete }) => (
     </table>
   </div>
 );
+
+
+
 
 const Modal = ({ children, onClose }) => (
   <motion.div

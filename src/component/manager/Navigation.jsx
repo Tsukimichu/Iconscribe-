@@ -30,7 +30,7 @@ const Navigation = ({ selectedSection, setSelectedSection, handleLogout }) => {
       initial={{ x: -120, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.6 }}
-      className="w-64 bg-[#243b7d] text-white flex flex-col items-center py-6 shadow-xl rounded-r-3xl"
+      className="w-64 bg-[#243b7d] text-white flex flex-col items-center py-6 shadow-xl rounded-r-3xl sticky top-0 h-screen"
     >
       {/* Logo */}
       <motion.img

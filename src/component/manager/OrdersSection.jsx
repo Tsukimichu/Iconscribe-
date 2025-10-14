@@ -209,49 +209,34 @@ const OrdersSection = () => {
       if (!resOrder.ok || !orderData.success)
         throw new Error(orderData.message || "Failed to update order status");
 
-      // Update each order item
-      if (selectedOrder.items?.length > 0) {
-        await Promise.all(
-          selectedOrder.items.map(async (item) => {
-            // Update item status
-            const resItem = await fetch(
-              `http://localhost:5000/api/orders/${item.order_item_id}/status`,
-              {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: newStatusValue }),
-              }
-            );
-            const itemData = await resItem.json();
-            if (!resItem.ok || !itemData.success)
-              throw new Error(itemData.message || `Failed to update item ${item.order_item_id}`);
+      // Add to sales if completed
+      if (newStatusValue === "Completed") {
+        try {
+          // check first if this order_item_id already exists in sales
+          const checkRes = await fetch(
+            `http://localhost:5000/api/sales?order_item_id=${item.order_item_id}`
+          );
+          const checkData = await checkRes.json();
 
-            // Add to sales only if Completed AND not already added
-            if (newStatusValue === "Completed") {
-              const existingSale = sales.find(
-                (s) => s.order_item_id === item.order_item_id
-              );
-              if (!existingSale) {
-                try {
-                  await fetch(`http://localhost:5000/api/sales`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      order_id: selectedOrder.order_id,
-                      order_item_id: item.order_item_id,
-                      service: item.service,
-                      price: item.price,
-                      customer_name: selectedOrder.customer_name,
-                      date_completed: new Date().toISOString(),
-                    }),
-                  });
-                } catch (err) {
-                  console.error("Failed to add to sales:", err);
-                }
-              }
-            }
-          })
-        );
+          if (checkData.exists) {
+            console.log(`Sale already exists for item ${item.order_item_id}, skipping...`);
+            return;
+          }
+
+          // only insert if not yet in sales
+          await fetch(`http://localhost:5000/api/sales`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              order_item_id: item.order_item_id,
+              item: item.service,
+              amount: item.price,
+              date: new Date().toISOString(),
+            }),
+          });
+        } catch (err) {
+          console.error("Failed to add to sales:", err);
+        }
       }
 
       // Update local state for orders
@@ -278,6 +263,45 @@ const OrdersSection = () => {
   };
 
 
+  const handleExportReport = () => {
+  const completedOrders = orders.filter((o) => o.status === "Completed");
+
+  if (completedOrders.length === 0) {
+    alert("No completed orders to export.");
+    return;
+  }
+
+  // Build CSV content
+  const csvHeaders = ["Enquiry No", "Customer Name", "Service", "Quantity", "Total", "Date Completed"];
+  const csvRows = completedOrders.map((order) => {
+    const totalQty = order.items?.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0);
+    const totalPrice = order.items?.reduce((sum, i) => sum + (Number(i.price) || 0), 0);
+
+    return [
+      order.enquiryNo,
+      order.customer_name,
+      order.items?.map((i) => i.service).join(", "),
+      totalQty,
+      totalPrice,
+      order.completed_at ? new Date(order.completed_at).toLocaleDateString() : "",
+    ];
+  });
+
+  // Convert to CSV format
+  const csvContent =
+    [csvHeaders, ...csvRows]
+      .map((row) => row.map((val) => `"${val ?? ""}"`).join(","))
+      .join("\n");
+
+  // Create a downloadable blob
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Completed_Orders_Report_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
 
 
@@ -524,6 +548,88 @@ const openViewModal = async (order) => {
             </table>
           </div>
         </motion.div>
+
+        {/* --- Completed Orders Table --- */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-x-auto mt-10"
+        >
+          {/* Header with count */}
+          <div className="flex justify-between items-center px-6 py-4 border-b flex-wrap gap-2">
+            <h2 className="text-2xl font-bold text-green-700">
+              Completed Orders
+            </h2>
+            <span className="text-sm font-semibold text-gray-600 bg-green-100 text-green-700 px-3 py-1 rounded-full">
+              {
+                orders?.filter((o) => o.status === "Completed").length || 0
+              }{" "}
+              completed
+            </span>
+          </div>
+
+          <div className="max-h-[400px] overflow-y-auto">
+            <table className="w-full text-left border-collapse min-w-[700px] text-sm">
+              <thead className="bg-gray-100 sticky top-0 z-10">
+                <tr>
+                  <th className="py-3 px-6 font-semibold text-gray-700">Enquiry No.</th>
+                  <th className="py-3 px-6 font-semibold text-gray-700">Name</th>
+                  <th className="py-3 px-6 font-semibold text-gray-700">Service</th>
+                  <th className="py-3 px-6 font-semibold text-gray-700">Quantity</th>
+                  <th className="py-3 px-6 font-semibold text-gray-700">Total</th>
+                  <th className="py-3 px-6 font-semibold text-gray-700">Date Completed</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders && orders.filter((o) => o.status === "Completed").length > 0 ? (
+                  orders
+                    .filter((o) => o.status === "Completed")
+                    .map((order, index) => {
+                      // calculate totals safely
+                      const totalQty = order.items?.reduce(
+                        (sum, i) => sum + (Number(i.quantity) || 0),
+                        0
+                      );
+                      const totalPrice = order.items?.reduce(
+                        (sum, i) => sum + (Number(i.price) || 0),
+                        0
+                      );
+
+                      return (
+                        <tr
+                          key={order.order_id}
+                          className="border-b border-gray-200 hover:bg-gray-50 transition"
+                        >
+                          <td className="py-3 px-6">{index + 1}</td>
+                          <td className="py-3 px-6">{order.customer_name}</td>
+                          <td className="py-3 px-6">
+                            {order.items?.map((i) => i.service).join(", ")}
+                          </td>
+                          <td className="py-3 px-6">{totalQty}</td>
+                          <td className="py-3 px-6 font-medium text-green-700">
+                            ₱{(totalPrice || 0).toLocaleString()}
+                          </td>
+                          <td className="py-3 px-6">
+                            {order.completed_at
+                              ? new Date(order.completed_at).toLocaleDateString()
+                              : "-"}
+                          </td>
+                        </tr>
+                      );
+                    })
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="py-6 text-center text-gray-500 italic">
+                      No completed orders yet.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
+
       </motion.div>
 
       {/* --- View Modal --- */}

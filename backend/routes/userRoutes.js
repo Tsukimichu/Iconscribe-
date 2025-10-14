@@ -90,7 +90,7 @@ router.post("/login", (req, res) => {
           .json({ success: false, message: "Invalid name or password" });
       }
 
-      // ✅ Ensure token payload uses `id` consistently
+      // Ensure token payload uses `id` consistently
       const payload = { id: user.user_id, role: user.role };
       const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "1h" });
       console.log("Signed JWT payload:", payload);
@@ -121,28 +121,28 @@ router.get("/profile", async (req, res) => {
   try {
     const authHeader = req.headers["authorization"];
     if (!authHeader) {
-      console.log("❌ No authorization header");
+      console.log(" No authorization header");
       return res.status(401).json({ success: false, message: "No token provided" });
     }
 
     const token = authHeader.split(" ")[1];
     if (!token) {
-      console.log("❌ Empty token");
+      console.log(" Empty token");
       return res.status(401).json({ success: false, message: "No token provided" });
     }
 
     let decoded;
     try {
       decoded = jwt.verify(token, SECRET_KEY);
-      console.log("✅ Token decoded:", decoded);
+      console.log(" Token decoded:", decoded);
     } catch (err) {
-      console.log("❌ Token verification failed:", err.message);
+      console.log(" Token verification failed:", err.message);
       return res.status(403).json({ success: false, message: "Invalid or expired token" });
     }
 
     const userId = decoded.id;
     if (!userId) {
-      console.log("❌ Decoded token missing `id`");
+      console.log(" Decoded token missing `id`");
       return res.status(403).json({ success: false, message: "Invalid token payload" });
     }
 
@@ -154,20 +154,20 @@ router.get("/profile", async (req, res) => {
 
     db.query(query, [userId], (err, results) => {
       if (err) {
-        console.error("❌ Database error:", err);
+        console.error(" Database error:", err);
         return res.status(500).json({ success: false, message: "Database query failed" });
       }
 
       if (results.length === 0) {
-        console.log("⚠️ No user found for ID:", userId);
+        console.log(" No user found for ID:", userId);
         return res.status(404).json({ success: false, message: "User not found" });
       }
 
-      console.log("✅ User profile fetched successfully:", results[0]);
+      console.log(" User profile fetched successfully:", results[0]);
       return res.json({ success: true, data: results[0] });
     });
   } catch (error) {
-    console.error("❌ Server error in /profile:", error);
+    console.error(" Server error in /profile:", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 });
@@ -230,7 +230,7 @@ router.put("/users/:id/archive", (req, res) => {
 
   db.query(query, [id], (err) => {
     if (err) {
-      console.error("❌ Error archiving user:", err);
+      console.error(" Error archiving user:", err);
       return res.status(500).json({ success: false, message: "Database update failed" });
     }
     res.json({ success: true, message: "User archived successfully" });
@@ -244,13 +244,13 @@ router.put("/users/:id/restore", (req, res) => {
 
   db.query(query, [id], (err, result) => {
     if (err) {
-      console.error("❌ Restore user error:", err);
+      console.error(" Restore user error:", err);
       return res
         .status(500)
         .json({ success: false, message: "Database update failed" });
     }
 
-    console.log("✅ Restore result:", result);
+    console.log(" Restore result:", result);
     res.json({ success: true, message: "User restored", data: { id } });
   });
 });
@@ -265,7 +265,7 @@ router.get("/users", (req, res) => {
   `;
   db.query(query, (err, results) => {
     if (err) {
-      console.error("❌ Error fetching users:", err);
+      console.error(" Error fetching users:", err);
       return res.status(500).json({ success: false, message: "Database query failed" });
     }
     res.json({ success: true, message: "Active users fetched", data: results });
@@ -282,7 +282,7 @@ router.get("/users/archived", (req, res) => {
   `;
   db.query(query, (err, results) => {
     if (err) {
-      console.error("❌ Error fetching archived users:", err);
+      console.error(" Error fetching archived users:", err);
       return res.status(500).json({ success: false, message: err.message });
     }
     res.json({ success: true, message: "Archived users fetched", data: results });

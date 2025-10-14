@@ -299,8 +299,8 @@ const handleConfirmOrder = async () => {
                       </label>
                        <select value={lamination} onChange={(e) => setLamination(e.target.value)} className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black" required>
                         <option value="">Select Lamination type</option>
-                        <option>Single Month (12 pages)</option>
-                        <option>Double Month (6 pages)</option>
+                        <option>Yes</option>
+                        <option>No</option>
                       </select>
                     </div>
                   </div>

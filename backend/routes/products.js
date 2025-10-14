@@ -13,6 +13,56 @@ router.get("/", (req, res) => {
 });
 
 // ====================================================
+// GET single product with attributes + options
+// ====================================================
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [productRows] = await db.promise().query(
+      "SELECT * FROM products WHERE product_id = ?",
+      [id]
+    );
+
+    if (productRows.length === 0) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    const product = productRows[0];
+
+    // Get all attributes for this product
+    const [attributes] = await db
+      .promise()
+      .query("SELECT * FROM product_attributes WHERE product_id = ?", [id]);
+
+    // Attach options if available
+    const attributesWithOptions = await Promise.all(
+      attributes.map(async (attr) => {
+        const [options] = await db
+          .promise()
+          .query(
+            "SELECT option_value FROM attribute_options WHERE attribute_name = ?",
+            [attr.attribute_name]
+          );
+        return {
+          ...attr,
+          options: options.map((opt) => opt.option_value),
+        };
+      })
+    );
+
+    res.json({
+      ...product,
+      attributes: attributesWithOptions,
+    });
+  } catch (error) {
+    console.error("❌ Error fetching product details:", error);
+    res.status(500).json({ error: "Failed to fetch product details" });
+  }
+});
+
+
+// ====================================================
 // ADD new product
 // ====================================================
 router.post("/", (req, res) => {

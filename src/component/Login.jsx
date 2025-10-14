@@ -35,7 +35,6 @@ function Login({ onLogin }) {
 
         if (onLogin) onLogin();
 
-        //  ADD: show success toast
         showToast(" Login successful!", "success");
 
         if (data.user.role === "admin") {
@@ -46,12 +45,10 @@ function Login({ onLogin }) {
           navigate("/dashboard");
         }
       } else {
-        // ADD: show error toast instead of alert
         showToast(data.message || " Invalid credentials", "error");
       }
     } catch (error) {
       console.error(" Login error:", error);
-      // ADD: show toast on fetch error
       showToast("Something went wrong. Please try again.", "error");
     } finally {
       setLoading(false);

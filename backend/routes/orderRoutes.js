@@ -163,8 +163,8 @@ router.post(
 // ===================================================
 router.get("/", async (req, res) => {
   try {
-    const [rows] = await db.promise().query(
-      `SELECT 
+    const [orders] = await db.promise().query(`
+      SELECT 
         oi.order_item_id AS enquiryNo,
         o.order_id,
         p.product_name AS service,
@@ -177,14 +177,33 @@ router.get("/", async (req, res) => {
       JOIN orders o ON oi.order_id = o.order_id
       JOIN users u ON o.user_id = u.user_id
       JOIN products p ON oi.product_id = p.product_id
-      ORDER BY o.order_date DESC`
-    );
-    res.json(rows);
+      ORDER BY o.order_date DESC
+    `);
+
+    // Fetch normalized attributes
+    const [attrs] = await db.promise().query(`
+      SELECT order_item_id, attribute_name, attribute_value
+      FROM order_item_attributes
+    `);
+
+    // Merge attributes with each order item
+    const merged = orders.map(order => {
+      const details = attrs
+        .filter(a => a.order_item_id === order.enquiryNo)
+        .reduce((acc, a) => {
+          acc[a.attribute_name] = a.attribute_value;
+          return acc;
+        }, {});
+      return { ...order, details };
+    });
+
+    res.json(merged);
   } catch (error) {
     console.error("❌ Error fetching orders:", error);
     res.status(500).json({ success: false, message: "Failed to load orders" });
   }
 });
+
 
 // ===================================================
 // Get Order Counts per Product (for charts)
@@ -204,50 +223,76 @@ router.get("/product-order-counts", async (req, res) => {
       );
     res.json(rows);
   } catch (error) {
-    console.error("❌ Error fetching product order counts:", error);
+    console.error(" Error fetching product order counts:", error);
     res.status(500).json({ success: false, message: "Failed to load counts" });
   }
 });
 
 // ===================================================
-// Get Orders by User ID
+// Get a Single Order by ID
 // ===================================================
-router.get("/user/:id", async (req, res) => {
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+
   try {
-    const userId = req.params.id;
-    const [rows] = await db.promise().query(
-      `SELECT 
-        oi.order_item_id AS enquiryNo,
+    // Order header
+    const [orderRows] = await db.promise().query(`
+      SELECT 
         o.order_id,
-        p.product_name AS service,
-        u.name AS customer_name,
         o.order_date AS dateOrdered,
+        o.total AS price,
+        u.name AS customer_name,
+        u.email,
+        u.phone AS contact_number,
+        u.address AS location
+      FROM orders o
+      JOIN users u ON o.user_id = u.user_id
+      WHERE o.order_id = ?
+    `, [id]);
+
+    if (orderRows.length === 0)
+      return res.status(404).json({ success: false, message: "Order not found" });
+
+    // Items
+    const [itemRows] = await db.promise().query(`
+      SELECT 
+        oi.order_item_id AS enquiryNo,
+        p.product_name AS service,
+        oi.quantity,
         oi.urgency,
         oi.status,
-        o.total AS price,
-        oi.custom_details,
         oi.file1,
         oi.file2
       FROM orderitems oi
-      JOIN orders o ON oi.order_id = o.order_id
       JOIN products p ON oi.product_id = p.product_id
-      JOIN users u ON o.user_id = u.user_id
-      WHERE o.user_id = ?
-      ORDER BY o.order_date DESC`,
-      [userId]
-    );
+      WHERE oi.order_id = ?
+    `, [id]);
 
-    const formatted = rows.map((row) => ({
-      ...row,
-      details: row.custom_details ? JSON.parse(row.custom_details) : {},
-    }));
+    // Attributes
+    const [attrs] = await db.promise().query(`
+      SELECT order_item_id, attribute_name, attribute_value
+      FROM order_item_attributes
+      WHERE order_item_id IN (${itemRows.map(i => i.enquiryNo).join(",") || 0})
+    `);
 
-    res.json(formatted);
-  } catch (err) {
-    console.error("❌ Error fetching user orders:", err);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    // Merge details
+    const items = itemRows.map(item => {
+      const details = attrs
+        .filter(a => a.order_item_id === item.enquiryNo)
+        .reduce((acc, a) => {
+          acc[a.attribute_name] = a.attribute_value;
+          return acc;
+        }, {});
+      return { ...item, details, files: [item.file1, item.file2].filter(Boolean) };
+    });
+
+    res.json({ success: true, order: { ...orderRows[0], items } });
+  } catch (error) {
+    console.error("❌ Error fetching order details:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
 
 // ===================================================
 // UPDATE PRICE
@@ -271,7 +316,7 @@ router.put("/:orderId/price", async (req, res) => {
 
     res.json({ success: true, message: "Price updated successfully" });
   } catch (error) {
-    console.error("❌ Error updating price:", error);
+    console.error(" Error updating price:", error);
     res.status(500).json({ success: false, message: "Database error" });
   }
 });
@@ -282,7 +327,7 @@ router.put("/:orderId/price", async (req, res) => {
 // Update Order Status
 // ===================================================
 router.put("/:id/status", async (req, res) => {
-  const { id } = req.params; // this is your order_item_id or order_id depending on your setup
+  const { id } = req.params;
   const { status } = req.body;
 
   if (!status) {
@@ -290,17 +335,17 @@ router.put("/:id/status", async (req, res) => {
   }
 
   try {
-    // 1️⃣ Update orderitems status
+    // Update orderitems status
     await db.promise().query(
       "UPDATE orderitems SET status=? WHERE order_id=?",
       [status, id]
     );
 
-    // 2️⃣ Only if status is Completed, add to sales
+    // Only if status is Completed, add to sales
     if (status === "Completed") {
-      const orderId = id; // make sure this matches your order_id
+      const orderId = id; 
 
-      // ✅ Insert into sales logic here
+      // Insert into sales logic here
       const [order] = await db.promise().query(
         "SELECT total, order_id FROM orders WHERE order_id = ?",
         [orderId]
@@ -417,5 +462,71 @@ router.get("/:id", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
+// ===================================================
+// Get Orders by User ID (Normalized Attributes)
+// ===================================================
+router.get("/user/:id", async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // 1️⃣ Get order + item + attribute data
+    const [rows] = await db.promise().query(
+      `SELECT 
+          oi.order_item_id AS enquiryNo,
+          o.order_id,
+          p.product_name AS service,
+          u.name AS customer_name,
+          o.order_date AS dateOrdered,
+          oi.urgency,
+          oi.status,
+          oi.quantity,
+          o.total AS price,
+          oi.file1,
+          oi.file2,
+          oia.attribute_name,
+          oia.attribute_value
+        FROM orderitems oi
+        JOIN orders o ON oi.order_id = o.order_id
+        JOIN users u ON o.user_id = u.user_id
+        JOIN products p ON oi.product_id = p.product_id
+        LEFT JOIN order_item_attributes oia ON oi.order_item_id = oia.order_item_id
+        WHERE o.user_id = ?
+        ORDER BY o.order_date DESC`,
+      [userId]
+    );
+
+    // 2️⃣ Group attributes under their order items
+    const grouped = {};
+    for (const row of rows) {
+      if (!grouped[row.enquiryNo]) {
+        grouped[row.enquiryNo] = {
+          enquiryNo: row.enquiryNo,
+          order_id: row.order_id,
+          service: row.service,
+          customer_name: row.customer_name,
+          dateOrdered: row.dateOrdered,
+          urgency: row.urgency,
+          status: row.status,
+          quantity: row.quantity,
+          price: row.price,
+          file1: row.file1,
+          file2: row.file2,
+          details: {},
+        };
+      }
+
+      if (row.attribute_name) {
+        grouped[row.enquiryNo].details[row.attribute_name] = row.attribute_value;
+      }
+    }
+
+    res.json(Object.values(grouped));
+  } catch (err) {
+    console.error("❌ Error fetching normalized user orders:", err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+});
+
 
 module.exports = router;

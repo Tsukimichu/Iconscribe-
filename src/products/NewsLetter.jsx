@@ -331,7 +331,7 @@ function Newsletters() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-base font-semibold text-black">
-                        Print Type
+                        Color
                       </label>
                       <select 
                       value={paperType}

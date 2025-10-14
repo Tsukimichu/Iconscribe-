@@ -54,7 +54,7 @@ function Transactions() {
       </motion.h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* 📋 Orders Table */}
+        {/* Orders Table */}
         <motion.div
           className="md:col-span-2 h-[350px] rounded-2xl backdrop-blur-xl bg-white/50 shadow-lg border border-gray-200 p-6 flex flex-col"
           initial={{ opacity: 0, x: -40 }}
@@ -118,7 +118,7 @@ function Transactions() {
           </div>
         </motion.div>
 
-        {/* 🔔 Notifications */}
+        {/* Notifications */}
         <motion.div
           className="rounded-2xl backdrop-blur-xl bg-white/50 shadow-lg border border-gray-200 p-6 flex flex-col"
           initial={{ opacity: 0, x: 40 }}
@@ -145,7 +145,7 @@ function Transactions() {
         </motion.div>
       </div>
 
-      {/* 🪟 Order View Modal */}
+      {/* Order View Modal */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
           <motion.div
@@ -203,62 +203,15 @@ function Transactions() {
               )}
 
               {/* Uploaded Files */}
-              {selectedOrder.files?.length > 0 && (
+              {selectedOrder.details && Object.keys(selectedOrder.details).length > 0 && (
                 <div className="mt-4">
-                  <h4 className="font-semibold text-gray-800 mb-2">Uploaded Files:</h4>
-                  <div className="flex flex-wrap gap-3">
-                    {selectedOrder.files.map((file, idx) => {
-                      // Handle both absolute and relative paths
-                      const fileUrl = file.startsWith("http")
-                        ? file
-                        : `http://localhost:5000${file}`;
-                      const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(file);
-                      const isPDF = /\.pdf$/i.test(file);
-
-                      return (
-                        <div key={idx} className="flex flex-col items-center">
-                          {/* View Image */}
-                          {isImage && (
-                            <button
-                              onClick={() => {
-                                const allImages = selectedOrder.files.filter((f) =>
-                                  /\.(jpg|jpeg|png|gif|webp)$/i.test(f)
-                                );
-                                const startIndex = allImages.findIndex((img) => img === file);
-                                setImageGallery(allImages);
-                                setCurrentImageIndex(startIndex >= 0 ? startIndex : 0);
-                                setPreviewImage(fileUrl);
-                                setShowImageModal(true);
-                              }}
-                              className="px-2 py-1 border border-gray-300 rounded bg-gray-100 hover:bg-gray-200 text-sm"
-                            >
-                              View Image
-                            </button>
-                          )}
-
-                          {/* View PDF */}
-                          {isPDF && (
-                            <a
-                              href={fileUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-2 py-1 border border-gray-300 rounded bg-gray-100 hover:bg-gray-200 text-sm"
-                            >
-                              View PDF
-                            </a>
-                          )}
-
-                          {/* Download Link */}
-                          <a
-                            href={fileUrl}
-                            download
-                            className="text-xs text-cyan-600 mt-1 hover:underline"
-                          >
-                            Download
-                          </a>
-                        </div>
-                      );
-                    })}
+                  <h4 className="font-semibold text-gray-800 mb-2">Order Details</h4>
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    {Object.entries(selectedOrder.details).map(([key, value]) => (
+                      <p key={key}>
+                        <strong>{key}:</strong> {String(value)}
+                      </p>
+                    ))}
                   </div>
                 </div>
               )}

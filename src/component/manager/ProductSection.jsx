@@ -164,13 +164,6 @@ const ProductSection = () => {
       {/* Add & Filter */}
       <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
         <div className="flex gap-2">
-          <button
-            onClick={() => openPopup("add")}
-            className="flex items-center gap-2 bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 transition"
-          >
-            <Plus size={18} /> Add Service
-          </button>
-
           <div className="relative">
             <select
               value={filter}
@@ -201,7 +194,7 @@ const ProductSection = () => {
         <table className="w-full text-left border-collapse">
           <thead className="bg-gray-100 sticky top-0">
             <tr>
-              <th className="py-3 px-6 font-semibold text-gray-700">
+              <th className="py-3 px-6 w-40 font-semibold text-gray-700">
                 Product Name
               </th>
               <th className="py-3 px-6 font-semibold text-gray-700">Status</th>
@@ -222,7 +215,7 @@ const ProductSection = () => {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="border-b border-gray-200 hover:bg-gray-50 transition"
+                  className="border-b  border-gray-200 hover:bg-gray-50 transition"
                 >
                   <td className="py-3 px-6">{service.product_name}</td>
                   <td className="py-3 px-6">
@@ -263,191 +256,6 @@ const ProductSection = () => {
         </table>
       </motion.div>
 
-      {/* Popup Section */}
-      <AnimatePresence>
-        {isPopupOpen && (
-          <motion.div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="bg-white text-gray-900 rounded-2xl p-6 shadow-2xl w-full max-w-xl relative"
-              initial={{ scale: 0.85, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.85, opacity: 0 }}
-              transition={{ duration: 0.25 }}
-            >
-              <button
-                className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
-                onClick={closePopup}
-              >
-                <X size={20} />
-              </button>
-
-              {popupType === "add" && (
-                <>
-                  <h3 className="text-2xl font-bold mb-5 text-cyan-700">
-                     Add New Service
-                  </h3>
-
-                  {/* Title */}
-                  <div className="mb-4">
-                    <label className="block mb-2 font-medium text-gray-700">
-                      Service Title
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Enter service title"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg bg-gray-100 border border-gray-300 focus:ring-2 focus:ring-cyan-400 outline-none"
-                    />
-                  </div>
-
-                  {/* Description */}
-                  <div className="mb-4">
-                    <label className="block mb-2 font-medium text-gray-700">
-                      Description
-                    </label>
-                    <textarea
-                      placeholder="Enter short description"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      rows="3"
-                      className="w-full px-4 py-2 rounded-lg bg-gray-100 border border-gray-300 focus:ring-2 focus:ring-cyan-400 outline-none resize-none"
-                    />
-                  </div>
-
-                  {/* Image Upload */}
-                  <div className="mb-4">
-                    <label className="block mb-2 font-medium text-gray-700">
-                      Preview Image
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-cyan-600 file:text-white hover:file:bg-cyan-700 cursor-pointer"
-                    />
-                    {preview && (
-                      <img
-                        src={preview}
-                        alt="Preview"
-                        className="mt-3 w-full h-44 object-cover rounded-xl border"
-                      />
-                    )}
-                  </div>
-
-                  {/* Customization Switch */}
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="font-medium text-gray-700">
-                      Has Customization
-                    </span>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={hasCustomization}
-                        onChange={() =>
-                          setHasCustomization(!hasCustomization)
-                        }
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-cyan-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
-                    </label>
-                  </div>
-                  {hasCustomization && (
-                    <div className="mb-4">
-                      <label className="block mb-2 font-medium text-gray-700">
-                        Customization Button Title
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Enter button title for customization"
-                        value={customizationText}
-                        onChange={(e) =>
-                          setCustomizationText(e.target.value)
-                        }
-                        className="w-full px-4 py-2 rounded-lg bg-gray-100 border border-gray-300 focus:ring-2 focus:ring-cyan-400 outline-none"
-                      />
-                    </div>
-                  )}
-
-                  {/* Upload Design Switch */}
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="font-medium text-gray-700">
-                      Has Upload Design
-                    </span>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={hasUploadDesign}
-                        onChange={() =>
-                          setHasUploadDesign(!hasUploadDesign)
-                        }
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-cyan-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
-                    </label>
-                  </div>
-                  {hasUploadDesign && (
-                    <div className="mb-4">
-                      <label className="block mb-2 font-medium text-gray-700">
-                        Upload Design Button Title
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Enter button title for upload design"
-                        value={uploadDesignText}
-                        onChange={(e) =>
-                          setUploadDesignText(e.target.value)
-                        }
-                        className="w-full px-4 py-2 rounded-lg bg-gray-100 border border-gray-300 focus:ring-2 focus:ring-cyan-400 outline-none"
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-
-              {popupType === "archive" && (
-                <>
-                  <h3 className="text-xl font-bold mb-2 text-yellow-700">
-                     Archive Service
-                  </h3>
-                  <p className="text-gray-600 mb-6">
-                    Are you sure you want to archive{" "}
-                    <span className="font-semibold text-gray-900">
-                      {selectedService?.product_name}
-                    </span>
-                    ? This can be restored later.
-                  </p>
-                </>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex justify-center gap-4 mt-6">
-                <button
-                  onClick={closePopup}
-                  className="px-5 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleConfirm}
-                  className={`px-5 py-2 rounded-xl text-white ${
-                    popupType === "archive"
-                      ? "bg-yellow-600 hover:bg-yellow-700"
-                      : "bg-cyan-600 hover:bg-cyan-700"
-                  } transition`}
-                >
-                  Confirm
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

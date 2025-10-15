@@ -34,7 +34,7 @@ router.post("/maintenance/off", authenticate, isAdmin, (req, res) => {
       console.error("Error disabling maintenance:", err.message);
       return res.status(500).json({ success: false, message: "Database error" });
     }
-    res.json({ success: true, message: "✅ Website is back online" });
+    res.json({ success: true, message: " Website is back online" });
   });
 });
 

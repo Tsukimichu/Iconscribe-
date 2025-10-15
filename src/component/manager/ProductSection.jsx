@@ -32,9 +32,16 @@ const ProductSection = () => {
   useEffect(() => {
     fetch("http://localhost:5000/api/products")
       .then((res) => res.json())
-      .then((data) => setServices(Array.isArray(data) ? data : []))
+      .then((data) => {
+        const servicesWithStatus = (Array.isArray(data) ? data : []).map(s => ({
+          ...s,
+          status: (s.status || "active").toLowerCase()
+        }));
+        setServices(servicesWithStatus);
+      })
       .catch((err) => console.error("Error loading products:", err));
   }, []);
+
 
   const updateProductStatus = async (productId, newStatus) => {
     setServices((prev) =>
@@ -192,67 +199,75 @@ const ProductSection = () => {
         className="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-200"
       >
         <table className="w-full text-left border-collapse">
-          <thead className="bg-gray-100 sticky top-0">
+        <thead className="bg-gray-100 sticky top-0">
+          <tr>
+            <th className="py-3 px-6 w-40 font-semibold text-gray-700 text-left">
+              Product Name
+            </th>
+            <th className="py-3 px-6 w-28 font-semibold text-gray-700 text-left">
+              Status
+            </th>
+            <th className="py-3 px-6 w-60 font-semibold text-gray-700 text-left">
+              Action
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredServices.length === 0 ? (
             <tr>
-              <th className="py-3 px-6 w-40 font-semibold text-gray-700">
-                Product Name
-              </th>
-              <th className="py-3 px-6 font-semibold text-gray-700">Status</th>
-              <th className="py-3 px-6 font-semibold text-gray-700">Action</th>
+              <td colSpan="3" className="text-center py-6 text-gray-500">
+                No services found.
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {filteredServices.length === 0 ? (
-              <tr>
-                <td colSpan="3" className="text-center py-6 text-gray-500">
-                  No services found.
-                </td>
-              </tr>
-            ) : (
-              filteredServices.map((service, idx) => (
-                <motion.tr
-                  key={idx}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="border-b  border-gray-200 hover:bg-gray-50 transition"
-                >
-                  <td className="py-3 px-6">{service.product_name}</td>
-                  <td className="py-3 px-6">
+          ) : (
+            filteredServices.map((service, idx) => (
+              <motion.tr
+                key={service.product_id} // better than idx
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="border-b border-gray-200 hover:bg-gray-50 transition"
+              >
+                <td className="py-3 px-6">{service.product_name}</td>
+                <td className="py-3 px-6 w-28">
                   <span
-                    className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                    className={`inline-block w-20 text-center px-3 py-1 rounded-full text-sm font-semibold ${
                       statusColors[service.status] || statusColors.default
                     }`}
                   >
                     {service.status || "active"}
                   </span>
-                  </td>
-                  <td className="py-3 px-6 flex gap-2 items-center">
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={service.status === "active"}
-                        onChange={() => handleStatusToggle(service)}
-                        className="sr-only peer"
-                      />
-                      <div
-                        className="w-11 h-6 bg-red-300 rounded-full peer peer-checked:bg-green-500
-                          after:content-[''] after:absolute after:top-[2px] after:left-[2px]
-                          after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all
-                          peer-checked:after:translate-x-full"
-                      ></div>
-                    </label>
-                    <button
-                      onClick={() => openPopup("archive", service)}
-                      className="flex items-center gap-1 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-lg hover:bg-yellow-200 transition"
-                    >
-                      <Archive size={16} /> Archive
-                    </button>
-                  </td>
-                </motion.tr>
-              ))
-            )}
-          </tbody>
+                </td>
+                <td className="py-3 px-6 w-60 flex gap-2 items-center">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={service.status === "active"}
+                      onChange={() => handleStatusToggle(service)}
+                      className="sr-only peer"
+                    />
+                    <div
+                      className={`
+                        w-11 h-6 rounded-full relative
+                        ${service.status === "active" ? "bg-green-500" : "bg-red-500"}
+                        after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+                        after:bg-white after:border-gray-300 after:border after:rounded-full
+                        after:h-5 after:w-5 after:transition-all
+                        ${service.status === "active" ? "after:translate-x-full" : ""}
+                      `}
+                    ></div>
+                  </label>
+                  <button
+                    onClick={() => openPopup("archive", service)}
+                    className="flex items-center gap-1 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-lg hover:bg-yellow-200 transition"
+                  >
+                    <Archive size={16} /> Archive
+                  </button>
+                </td>
+              </motion.tr>
+            ))
+          )}
+        </tbody>
         </table>
       </motion.div>
 

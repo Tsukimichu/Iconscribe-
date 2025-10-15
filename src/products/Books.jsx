@@ -83,13 +83,6 @@ function Books() {
   const { showToast } = useToast();
 
   // Handle Place Order button
-  const handlePlaceOrder = (e) => {
-    e.preventDefault();
-    if (!isLoggedIn) navigate("/login");
-    else setShowConfirm(true);
-  };
-
-  // Confirm and send order to backend
   const handleConfirmOrder = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -98,15 +91,17 @@ function Books() {
         return;
       }
 
-      const customDetails = {
-        "Number of Pages": pages,
-        "Binding Type": binding,
-        "Paper Type": paperType,
-        "Cover Finish": coverFinish,
-        "Color Printing": colorPrinting,
-        "Additional Notes": notes,
-      };
+      // Build attributes array
+      const attributes = [
+        { name: "Number of Pages", value: pages },
+        { name: "Binding Type", value: binding },
+        { name: "Paper Type", value: paperType },
+        { name: "Cover Finish", value: coverFinish },
+        { name: "Color Printing", value: colorPrinting },
+        { name: "Additional Notes", value: notes },
+      ].filter(attr => attr.value && attr.value.trim() !== "");
 
+      // Create order in backend
       const res = await fetch("http://localhost:5000/api/orders/create", {
         method: "POST",
         headers: {
@@ -119,7 +114,7 @@ function Books() {
           quantity,
           urgency: "Normal",
           status: "Pending",
-          custom_details: customDetails,
+          attributes,
         }),
       });
 
@@ -130,7 +125,7 @@ function Books() {
         return;
       }
 
-      // Ensure correct ID from backend
+      // Get correct order_item_id from backend response
       const orderItemId =
         data.order_item_id || data.orderItemId || data.id || data.order_id;
 
@@ -138,8 +133,7 @@ function Books() {
         showToast("Order created, but missing ID from server.", "error");
         return;
       }
-
-      // Upload file
+      
       if (file) {
         const formData = new FormData();
         formData.append("file1", file);
@@ -163,7 +157,7 @@ function Books() {
         showToast("Order placed successfully!", "success");
       }
 
-      // Reset and close
+      // Reset form and navigate away
       setShowConfirm(false);
       setQuantity("");
       setPages("");
@@ -173,12 +167,14 @@ function Books() {
       setColorPrinting("");
       setNotes("");
       setFile(null);
+
       navigate("/dashboard");
     } catch (err) {
       console.error("Error placing order:", err);
       showToast("Something went wrong while placing the order.", "error");
     }
   };
+
 
 
 
@@ -223,7 +219,7 @@ function Books() {
                 </div>
 
                 {/* Right: Order Form */}
-                <form onSubmit={handlePlaceOrder} className="space-y-6 text-black">
+                <form onSubmit={handleConfirmOrder} className="space-y-6 text-black">
                   {/* User Info */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>

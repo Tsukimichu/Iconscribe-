@@ -53,7 +53,16 @@ router.use("/uploads", express.static(uploadDir));
 // ===================================================
 router.post("/create", async (req, res) => {
   try {
-    const { user_id, product_id, quantity, custom_details, urgency, status } = req.body;
+    const {
+      user_id,
+      product_id,
+      quantity,
+      urgency,
+      status,
+      attributes,
+    } = req.body;
+
+    console.log(" Incoming order body:", req.body);
 
     if (!user_id || !product_id || !quantity) {
       return res.status(400).json({
@@ -62,44 +71,70 @@ router.post("/create", async (req, res) => {
       });
     }
 
+    // Parse attributes if sent as a string
+    let parsedAttributes = attributes;
+    if (typeof attributes === "string") {
+      try {
+        parsedAttributes = JSON.parse(attributes);
+      } catch {
+        parsedAttributes = [];
+      }
+    }
+
+    // Create order
     const [orderResult] = await db
       .promise()
       .execute(
         "INSERT INTO orders (user_id, order_date, total) VALUES (?, NOW(), ?)",
         [user_id, 0]
       );
-
     const order_id = orderResult.insertId;
 
+    // Create order item
     const [orderItemResult] = await db
       .promise()
       .execute(
-        `INSERT INTO orderitems 
-         (order_id, product_id, quantity, urgency, status, custom_details) 
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [
-          order_id,
-          product_id,
-          quantity,
-          urgency || "Normal",
-          status || "Pending",
-          JSON.stringify(custom_details || {}),
-        ]
+        "INSERT INTO orderitems (order_id, product_id, quantity, urgency, status) VALUES (?, ?, ?, ?, ?)",
+        [order_id, product_id, quantity, urgency || "Normal", status || "Pending"]
       );
-
     const order_item_id = orderItemResult.insertId;
+
+    // Insert attributes safely
+    if (parsedAttributes && Array.isArray(parsedAttributes)) {
+      for (const attr of parsedAttributes) {
+        if (attr.name && attr.value) {
+          try {
+            await db
+              .promise()
+              .execute(
+                "INSERT INTO order_item_attributes (order_item_id, attribute_name, attribute_value) VALUES (?, ?, ?)",
+                [order_item_id, attr.name, attr.value]
+              );
+          } catch (err) {
+            console.error("❌ Error inserting attribute:", attr, err.message);
+          }
+        }
+      }
+    }
 
     res.json({
       success: true,
       message: "Order placed successfully!",
       order_id,
-      order_item_id,  
+      order_item_id,
     });
   } catch (error) {
     console.error("❌ Error placing order:", error);
-    res.status(500).json({ success: false, message: "Database error", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Database error",
+      error: error.message,
+    });
   }
 });
+
+
+
 
 // ===================================================
 // Upload SINGLE File
@@ -159,7 +194,7 @@ router.post(
 );
 
 // ===================================================
-// Get all orders (Admin Dashboard)
+// Get all orders
 // ===================================================
 router.get("/", async (req, res) => {
   try {
@@ -180,20 +215,20 @@ router.get("/", async (req, res) => {
       ORDER BY o.order_date DESC
     `);
 
-    // Fetch normalized attributes
     const [attrs] = await db.promise().query(`
       SELECT order_item_id, attribute_name, attribute_value
       FROM order_item_attributes
     `);
 
-    // Merge attributes with each order item
+    // Merge attributes into their order item
     const merged = orders.map(order => {
-      const details = attrs
-        .filter(a => a.order_item_id === order.enquiryNo)
-        .reduce((acc, a) => {
-          acc[a.attribute_name] = a.attribute_value;
-          return acc;
-        }, {});
+      const itemAttrs = attrs.filter(a => a.order_item_id === order.enquiryNo);
+      const details = {};
+
+      itemAttrs.forEach(a => {
+        details[a.attribute_name] = a.attribute_value;
+      });
+
       return { ...order, details };
     });
 
@@ -203,6 +238,7 @@ router.get("/", async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to load orders" });
   }
 });
+
 
 
 // ===================================================
@@ -470,7 +506,7 @@ router.get("/user/:id", async (req, res) => {
   try {
     const userId = req.params.id;
 
-    // 1️⃣ Get order + item + attribute data
+    // Get order + item + attribute data
     const [rows] = await db.promise().query(
       `SELECT 
           oi.order_item_id AS enquiryNo,
@@ -496,7 +532,7 @@ router.get("/user/:id", async (req, res) => {
       [userId]
     );
 
-    // 2️⃣ Group attributes under their order items
+    // Group attributes under their order items
     const grouped = {};
     for (const row of rows) {
       if (!grouped[row.enquiryNo]) {

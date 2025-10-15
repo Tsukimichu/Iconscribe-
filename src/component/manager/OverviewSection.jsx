@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Bell } from "lucide-react";
 import Chart from "react-apexcharts";
 import axios from "axios";
 import { useToast } from "../ui/ToastProvider.jsx";
@@ -7,6 +8,8 @@ import { useToast } from "../ui/ToastProvider.jsx";
 const OverviewSection = () => {
   const [activeFilter, setActiveFilter] = useState(null);
   const [orders, setOrders] = useState([]);
+  const [newOrders, setNewOrders] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [orderChartData, setOrderChartData] = useState({
     categories: [],
     data: [],
@@ -14,32 +17,37 @@ const OverviewSection = () => {
 
   const { showToast } = useToast();
   const prevOrderCount = useRef(0); 
+  const isFirstLoad = useRef(true);
 
-  // Fetch all orders from backend
+  // Fetch all orders
   const fetchOrders = async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/orders");
-      setOrders(res.data);
+      const fetchedOrders = Array.isArray(res.data) ? res.data : res.data.data || [];
 
-      // ✅ Detect new orders
-      if (prevOrderCount.current && res.data.length > prevOrderCount.current) {
-        const newOrders = res.data.length - prevOrderCount.current;
-        showToast({
-          type: "info",
-          message: `${newOrders} new order${newOrders > 1 ? "s" : ""} received!`,
-        });
+      console.log("Prev:", prevOrderCount.current, "Now:", fetchedOrders.length, "IsFirstLoad:", isFirstLoad.current);
+
+      setOrders(fetchedOrders);
+
+      if (!isFirstLoad.current && fetchedOrders.length > prevOrderCount.current) {
+        const diff = fetchedOrders.length - prevOrderCount.current;
+        const recent = fetchedOrders.slice(-diff);
+        setNewOrders((prev) => [...recent, ...prev].slice(0, 5));
+        showToast(`${diff} new order${diff > 1 ? "s" : ""} received!`, "info");
       }
 
-      prevOrderCount.current = res.data.length; // update stored count
+      prevOrderCount.current = fetchedOrders.length;
+      isFirstLoad.current = false;
     } catch (err) {
       console.error("Error fetching orders:", err);
     }
   };
 
+
   // Fetch on mount and poll every 5s
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 5000); // 🔁 check every 5 seconds
+    const interval = setInterval(fetchOrders, 5000); 
     return () => clearInterval(interval);
   }, []);
 
@@ -78,7 +86,7 @@ const OverviewSection = () => {
     { label: "Completed", count: statusCounts["Completed"], color: "from-green-500 to-emerald-400" },
   ];
 
-  // 🧾 Chart Data
+  // Chart Data
   const orderData = {
     series: [{ name: "Orders", data: orderChartData.data }],
     options: {
@@ -173,19 +181,82 @@ const OverviewSection = () => {
         transition={{ duration: 0.6 }}
         className="p-8 rounded-3xl bg-white shadow-xl space-y-8 text-gray-900 min-h-screen"
       >
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+ {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 relative">
           <div>
             <h1 className="text-4xl font-extrabold text-cyan-700">Dashboard</h1>
             <p className="text-gray-600 text-lg">Hello, Manager</p>
           </div>
 
+          {/* Notification Bell + Export */}
+          <div className="flex items-center gap-4 relative">
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications((p) => !p)}
+                className="relative p-3 rounded-full hover:bg-gray-100 transition"
+              >
+                <Bell className="w-6 h-6 text-gray-700" />
+                {newOrders.length > 0 && (
+                  <span className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
+                )}
+              </button>
+
+              {/* Dropdown Panel */}
+              <AnimatePresence>
+                {showNotifications && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute right-0 mt-2 w-80 bg-white shadow-xl rounded-xl border border-gray-200 z-50"
+                  >
+                    <div className="p-4 border-b font-semibold text-gray-700">
+                      Notifications
+                    </div>
+                    {newOrders.length > 0 ? (
+                      <ul className="max-h-60 overflow-y-auto divide-y">
+                        {newOrders.map((order, i) => (
+                          <li key={i} className="p-3 hover:bg-gray-50 text-sm">
+                            <p className="font-medium text-gray-800">
+                              New Order #{order.order_id}
+                            </p>
+                            <p className="text-gray-600">
+                              {order.customer_name} — {order.product_name}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              {new Date(order.created_at).toLocaleString()}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="p-4 text-sm text-gray-500 text-center">
+                        No new orders
+                      </p>
+                    )}
+                    <div className="border-t">
+                      <button
+                        onClick={() => {
+                          setNewOrders([]);
+                          setShowNotifications(false);
+                        }}
+                        className="w-full text-sm py-2 text-center text-blue-600 hover:bg-blue-50"
+                      >
+                        Clear Notifications
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             <button
-            onClick={() => handleExportAll()}
-            className="px-5 py-2 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition"
-          >
-            Export All Orders
-          </button>
+              onClick={handleExportAll}
+              className="px-5 py-2 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition"
+            >
+              Export All Orders
+            </button>
+          </div>
         </div>
 
         {/* Status Cards */}

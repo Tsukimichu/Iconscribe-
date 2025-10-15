@@ -107,23 +107,25 @@ function RaffleTicket() {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        showToast("You must be logged in to place an order.", "error");
+        showToast(" You must be logged in to place an order.", "error");
+        navigate("/login");
         return;
       }
 
-      const customDetails = {
-        Name: userProfile.name,
-        Email: userProfile.email,
-        Address: userProfile.address,
-        Phone: userProfile.phone,
-        Businessname: userProfile.business,
-        "Number of Tickets": quantity,
-        Size: size,
-        "With Stub": withStub,
-        Message: message,
-      };
+      // Format attributes to match backend expectations
+      const attributes = [
+        { name: "Name", value: userProfile.name },
+        { name: "Email", value: userProfile.email },
+        { name: "Address", value: userProfile.address },
+        { name: "Phone", value: userProfile.phone },
+        { name: "Business Name", value: userProfile.business },
+        { name: "Number of Tickets", value: quantity },
+        { name: "Size", value: size },
+        { name: "With Stub", value: withStub },
+        { name: "Message", value: message },
+      ].filter((attr) => attr.value && attr.value.toString().trim() !== "");
 
-      // Create the order
+      // Create order in backend
       const res = await fetch("http://localhost:5000/api/orders/create", {
         method: "POST",
         headers: {
@@ -132,27 +134,27 @@ function RaffleTicket() {
         },
         body: JSON.stringify({
           user_id: userProfile.id,
-          product_id: 12,
+          product_id: 12, 
           quantity,
           urgency: "Normal",
           status: "Pending",
-          custom_details: customDetails,
+          attributes, 
         }),
       });
 
       const data = await res.json();
 
       if (!data.success) {
-        showToast("Failed to place order.", "error");
+        showToast(" Failed to place order.", "error");
         return;
       }
 
-      // Ensure correct ID from backend
+      // Retrieve order_item_id from server response
       const orderItemId =
         data.order_item_id || data.orderItemId || data.id || data.order_id;
 
       if (!orderItemId) {
-        showToast("Order created, but missing ID from server.", "error");
+        showToast(" Order created, but missing ID from server.", "error");
         return;
       }
 
@@ -170,17 +172,16 @@ function RaffleTicket() {
         );
 
         const uploadData = await uploadRes.json();
-
         if (uploadData.success) {
-          showToast("Order placed and file uploaded successfully!", "success");
+          showToast(" Order placed and file uploaded successfully!", "success");
         } else {
-          showToast("Order placed, but file upload failed.", "warning");
+          showToast(" Order placed, but file upload failed.", "warning");
         }
       } else {
-        showToast("Order placed successfully!", "success");
+        showToast(" Order placed successfully!", "success");
       }
 
-      // Reset and close modal
+      // Reset fields and navigate away
       setShowConfirm(false);
       setQuantity("");
       setSize("");
@@ -189,10 +190,11 @@ function RaffleTicket() {
       setFile(null);
       navigate("/dashboard");
     } catch (err) {
-      console.error("Error placing order:", err);
-      showToast("Something went wrong while placing the order.", "error");
+      console.error(" Error placing order:", err);
+      showToast(" Something went wrong while placing your order.", "error");
     }
   };
+
 
 
 

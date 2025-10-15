@@ -80,6 +80,7 @@ function Calendars() {
 
   if (!visible) return null;
 
+    // Place Order button handler
   const handlePlaceOrder = (e) => {
     e.preventDefault();
     if (!isLoggedIn) {
@@ -89,23 +90,21 @@ function Calendars() {
     }
   };
 
-  // Updated to include file upload 
   const handleConfirmOrder = async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        alert("⚠️ Please log in to place an order.");
+        showToast(" Please log in to place an order.", "error");
         return;
       }
 
-      const customDetails = {
-        Customization: customization ? "Yes" : "No",
-        Color: color,
-        "Calendar Type": calendarType,
-        Size: size,
-      };
+      const attributes = [
+        { name: "Customization", value: customization ? "Yes" : "No" },
+        { name: "Color", value: color },
+        { name: "Calendar Type", value: calendarType },
+        { name: "Size", value: size },
+      ].filter((attr) => attr.value && attr.value.trim() !== "");
 
-      // Create order
       const response = await fetch("http://localhost:5000/api/orders/create", {
         method: "POST",
         headers: {
@@ -118,25 +117,27 @@ function Calendars() {
           quantity,
           urgency: "Normal",
           status: "Pending",
-          custom_details: customDetails,
+          attributes,
         }),
       });
 
       const data = await response.json();
+      console.log(" Order response:", data);
+
       if (!data.success) {
-        alert("⚠️ Failed to place order. Please try again.");
+        showToast(" Failed to place order.", "error");
         return;
       }
 
-      // Get order item ID
-      const orderItemId =
-        data.order_item_id || data.orderItemId || data.id || data.order_id;
+      const orderItemId = data.order_item_id || data.orderItemId;
+      console.log(" Order item ID:", orderItemId);
+
       if (!orderItemId) {
-        showToast(" Order created, but missing ID from server.");
+        showToast("Order created, but missing ID from server.", "error");
         return;
       }
 
-      // Upload file if provided
+      // Upload file
       if (file) {
         const formData = new FormData();
         formData.append("file1", file);
@@ -150,17 +151,18 @@ function Calendars() {
         );
 
         const uploadData = await uploadRes.json();
+        console.log(" Upload result:", uploadData);
 
         if (uploadData.success) {
-          showToast(" Order placed and file uploaded successfully!");
+          showToast("Order placed and file uploaded successfully!", "success");
         } else {
-          showToast(" Order placed, but file upload failed.");
+          showToast("Order placed, but file upload failed.", "warning");
         }
       } else {
-        showToast(" Order placed successfully!");
+        showToast("Order placed successfully!", "success");
       }
 
-      // Reset fields
+      // Reset form
       setShowConfirm(false);
       setColor("");
       setCalendarType("");
@@ -168,12 +170,14 @@ function Calendars() {
       setQuantity("");
       setFile(null);
       setCustomization(false);
+
       navigate("/dashboard");
     } catch (error) {
       console.error("Order error:", error);
-      alert("⚠️ Something went wrong. Please try again later.");
+      showToast(" Something went wrong. Please try again later.", "error");
     }
   };
+
 
   return (
     <>

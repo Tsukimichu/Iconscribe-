@@ -103,21 +103,22 @@ function Posters() {
         return;
       }
 
-      const customDetails = {
-        Name: userProfile.name,
-        Email: userProfile.email,
-        Address: userProfile.address,
-        Phone: userProfile.phone,
-        "Number of Posters (min)": quantity,
-        Size: size,
-        "Paper Type": paperType,
-        Lamination: lamination,
-        Color: color,
-        Customization: customization ? "Yes" : "No",
-        Message: message,
-      };
+      // Convert order data to the 'attributes' array expected by backend
+      const attributes = [
+        { name: "Name", value: userProfile.name },
+        { name: "Email", value: userProfile.email },
+        { name: "Address", value: userProfile.address },
+        { name: "Phone", value: userProfile.phone },
+        { name: "Number of Posters", value: quantity },
+        { name: "Size", value: size },
+        { name: "Paper Type", value: paperType },
+        { name: "Lamination", value: lamination },
+        { name: "Color", value: color },
+        { name: "Customization", value: customization ? "Yes" : "No" },
+        { name: "Message", value: message },
+      ].filter((a) => a.value && a.value.toString().trim() !== "");
 
-      // Create Order
+      // Create order in the backend
       const response = await fetch("http://localhost:5000/api/orders/create", {
         method: "POST",
         headers: {
@@ -130,23 +131,27 @@ function Posters() {
           quantity,
           urgency: "Normal",
           status: "Pending",
-          custom_details: customDetails,
+          attributes, 
         }),
       });
 
       const data = await response.json();
+      console.log(" Order creation response:", data);
+
       if (!data.success) {
-        showToast("⚠️ Failed to place order. Please try again.", "error");
+        showToast(" Failed to place order. Please try again.", "error");
         return;
       }
 
-      const orderItemId = data.order_item_id || data.id || data.order_id;
+      const orderItemId =
+        data.order_item_id || data.orderItemId || data.id || data.order_id;
+
       if (!orderItemId) {
-        showToast("⚠️ Order created, but missing order ID.", "error");
+        showToast(" Order created, but missing order ID.", "error");
         return;
       }
 
-      // Upload File (if any)
+      // Upload file if one is provided
       if (file) {
         const formData = new FormData();
         formData.append("file1", file);
@@ -155,18 +160,20 @@ function Posters() {
           `http://localhost:5000/api/orders/upload/single/${orderItemId}`,
           { method: "POST", body: formData }
         );
-        const uploadData = await uploadRes.json();
 
-        if (!uploadData.success) {
-          showToast("⚠️ File upload failed.", "error");
+        const uploadData = await uploadRes.json();
+        console.log(" Upload response:", uploadData);
+
+        if (uploadData.success) {
+          showToast(" Order placed and file uploaded successfully!", "success");
         } else {
-          showToast("✅ Order placed and file uploaded successfully!", "success");
+          showToast(" Order placed but file upload failed.", "warning");
         }
       } else {
-        showToast("✅ Order placed successfully!", "success");
+        showToast(" Order placed successfully!", "success");
       }
 
-      // Reset form
+      //  Reset form fields
       setShowConfirm(false);
       setQuantity("");
       setSize("");
@@ -179,10 +186,11 @@ function Posters() {
 
       navigate("/dashboard");
     } catch (error) {
-      console.error("Error placing order:", error);
-      showToast("⚠️ Something went wrong. Please try again.", "error");
+      console.error(" Error placing order:", error);
+      showToast(" Something went wrong while placing your order.", "error");
     }
   };
+
 
   return (
     <>

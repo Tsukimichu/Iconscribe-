@@ -95,18 +95,19 @@ function OfficialReceipt() {
         return;
       }
 
-      const customDetails = {
-        Name: userProfile.name,
-        Email: userProfile.email,
-        Address: userProfile.address,
-        Phone: userProfile.phone,
-        Business: userProfile.business,
-        "Number of copies (min)": quantity,
-        "Paper Type": paperType,
-        "Booklet Finish": bookletFinish,
-        Size: size,
-        Message: message,
-      };
+      //  Convert order data to 'attributes' array
+      const attributes = [
+        { name: "Name", value: userProfile.name },
+        { name: "Email", value: userProfile.email },
+        { name: "Address", value: userProfile.address },
+        { name: "Phone", value: userProfile.phone },
+        { name: "Business", value: userProfile.business },
+        { name: "Quantity", value: quantity },
+        { name: "Paper Type", value: paperType },
+        { name: "Booklet Finish", value: bookletFinish },
+        { name: "Size", value: size },
+        { name: "Message", value: message },
+      ].filter((a) => a.value && a.value.toString().trim() !== "");
 
       // Create the order
       const res = await fetch("http://localhost:5000/api/orders/create", {
@@ -117,27 +118,31 @@ function OfficialReceipt() {
         },
         body: JSON.stringify({
           user_id: userProfile.id,
-          product_id: 10,
+          product_id: 10, 
           quantity,
           urgency: "Normal",
           status: "Pending",
-          custom_details: customDetails,
+          attributes, 
         }),
       });
 
       const data = await res.json();
+      console.log(" Order creation response:", data);
+
       if (!data.success) {
         showToast(" Failed to place order.", "error");
         return;
       }
 
-      const orderItemId = data.order_item_id || data.id || data.order_id;
+      const orderItemId =
+        data.order_item_id || data.orderItemId || data.id || data.order_id;
+
       if (!orderItemId) {
-        showToast(" Order created, but missing order ID.", "warning");
+        showToast(" Order created but missing order ID.", "warning");
         return;
       }
 
-      // Upload both files (Copy of COR + Last Receipt) together
+      // Upload both files if available
       if (fileCOR || fileLastReceipt) {
         const formData = new FormData();
         if (fileCOR) formData.append("file1", fileCOR);
@@ -152,18 +157,18 @@ function OfficialReceipt() {
         );
 
         const uploadData = await uploadRes.json();
-        if (!uploadData.success) {
-          showToast("⚠️ File upload failed.", "error");
+        console.log(" Upload response:", uploadData);
+
+        if (uploadData.success) {
+          showToast(" Order placed and files uploaded successfully!", "success");
         } else {
-          showToast("✅ Files uploaded successfully!", "success");
+          showToast(" Order placed but file upload failed.", "warning");
         }
       } else {
-        showToast("✅ Order placed successfully (no files uploaded).", "success");
+        showToast(" Order placed successfully!", "success");
       }
 
-      showToast(" Order placed and files uploaded successfully!", "success");
-
-      // Reset form fields
+      // Reset form
       setShowConfirm(false);
       setQuantity("");
       setPaperType("");
@@ -175,10 +180,11 @@ function OfficialReceipt() {
 
       navigate("/dashboard");
     } catch (err) {
-      console.error("Error placing order:", err);
+      console.error(" Error placing order:", err);
       showToast(" Something went wrong while placing the order.", "error");
     }
   };
+
 
 
   // Handle "Place Order" button

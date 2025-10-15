@@ -100,17 +100,20 @@ function Flyers() {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          alert("⚠️ Please log in to place an order.");
+          showToast(" Please log in to place an order.", "error");
           return;
         }
 
-        const customDetails = {
-          Customization: customization ? "Yes" : "No",
-          Size: size,
-          Color: color,
-          Paper: paperType,
-          Message: message,
-        };
+        // Use attributes array (not custom_details)
+        const attributes = [
+          { name: "Customization", value: customization ? "Yes" : "No" },
+          { name: "Flyer Size", value: size },
+          { name: "Paper Type", value: paperType },
+          { name: "Color", value: color },
+          { name: "Lamination", value: lamination },
+          { name: "Print", value: backToBack ? "Back-to-back" : "Single side" },
+          { name: "Message", value: message },
+        ].filter(attr => attr.value && attr.value.toString().trim() !== "");
 
         // Create order first
         const response = await fetch("http://localhost:5000/api/orders/create", {
@@ -121,26 +124,28 @@ function Flyers() {
           },
           body: JSON.stringify({
             user_id: userProfile.id,
-            product_id: 6,
+            product_id: 6, 
             quantity,
             urgency: "Normal",
             status: "Pending",
-            custom_details: customDetails,
+            attributes,
           }),
         });
 
         const data = await response.json();
+        console.log(" Order creation response:", data);
+
         if (!data.success) {
-          alert("⚠️ Failed to place order. Please try again.");
+          showToast(" Failed to place order.", "error");
           return;
         }
 
-        // Get created order item ID
+        // Get the created order item ID
         const orderItemId =
           data.order_item_id || data.orderItemId || data.id || data.order_id;
 
         if (!orderItemId) {
-          alert(" Order created but missing ID from server.");
+          showToast(" Order created but missing ID from server.", "error");
           return;
         }
 
@@ -158,13 +163,15 @@ function Flyers() {
           );
 
           const uploadData = await uploadRes.json();
+          console.log(" Upload result:", uploadData);
+
           if (uploadData.success) {
-            showToast(" Order placed and file uploaded successfully!");
+            showToast(" Order placed and file uploaded successfully!", "success");
           } else {
-            showToast(" Order placed, but file upload failed.");
+            showToast(" Order placed, but file upload failed.", "warning");
           }
         } else {
-          showToast(" Order placed successfully!");
+          showToast(" Order placed successfully!", "success");
         }
 
         // Reset form fields
@@ -173,16 +180,19 @@ function Flyers() {
         setSize("");
         setColor("");
         setPaperType("");
+        setLamination("");
         setMessage("");
         setFile(null);
         setCustomization(false);
+        setBackToBack(false);
 
         navigate("/dashboard");
       } catch (error) {
         console.error("Order error:", error);
-        showToast(" Something went wrong. Please try again later.");
+        showToast(" Something went wrong. Please try again later.", "error");
       }
     };
+
     
           
 

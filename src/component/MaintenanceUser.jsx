@@ -37,7 +37,7 @@ const MaintenanceUser = ({ children }) => {
       <div className="min-h-screen flex items-center justify-center bg-yellow-50">
         <div className="max-w-md text-center bg-white p-8 rounded-2xl shadow-lg">
           <h1 className="text-3xl font-bold mb-4 text-yellow-700">
-            🚧 Maintenance Mode Active
+             Maintenance Mode Active
           </h1>
           <p className="text-gray-700 mb-4">
             {status.message ||

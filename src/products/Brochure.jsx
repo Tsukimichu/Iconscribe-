@@ -95,97 +95,105 @@ function Brochure() {
     }
   };
 
- // Confirm and send order to backend (with file upload)
-const handleConfirmOrder = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("⚠️ You must be logged in to place an order.");
-      return;
-    }
-
-    const customDetails = {
-      Customization: customization ? "Yes" : "No",
-      "Number of copies": quantity,
-      Size: size,
-      "Type of paper": paperType,
-      Colored: color,
-      Lamination: lamination,
-      Print: backToBack ? "Back to back" : "Single side",
-      Message: message,
-    };
-
-    // 1️⃣ Create the order
-    const res = await fetch("http://localhost:5000/api/orders/create", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        user_id: userProfile.id,
-        product_id: 3,
-        quantity,
-        urgency: "Normal",
-        status: "Pending",
-        custom_details: customDetails,
-      }),
-    });
-
-    const data = await res.json();
-    if (!data.success) {
-      alert("⚠️ Failed to place order.");
-      return;
-    }
-
-    // 2️⃣ Get order item ID
-    const orderItemId =
-      data.order_item_id || data.orderItemId || data.id || data.order_id;
-    if (!orderItemId) {
-      alert("⚠️ Order created, but missing ID from server.");
-      return;
-    }
-
-    // 3️⃣ Upload file (if any)
-    if (file) {
-      const formData = new FormData();
-      formData.append("file1", file);
-
-      const uploadRes = await fetch(
-        `http://localhost:5000/api/orders/upload/single/${orderItemId}`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      const uploadData = await uploadRes.json();
-
-      if (uploadData.success) {
-        showToast(" Order placed and file uploaded successfully!");
-      } else {
-        showToast(" Order placed, but file upload failed.");
+  // Confirm and send order to backend
+  const handleConfirmOrder = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        showToast("You must be logged in to place an order.", "error");
+        return;
       }
-    } else {
-      showToast("Order placed successfully!");
-    }
 
-    // 4️⃣ Reset and close
-    setShowConfirm(false);
-    setQuantity("");
-    setSize("");
-    setPaperType("");
-    setColor("");
-    setLamination("");
-    setBackToBack(false);
-    setCustomization(false);
-    setMessage("");
-    setFile(null);
-  } catch (err) {
-    console.error("Error placing order:", err);
-    alert("⚠️ Something went wrong while placing the order.");
-  }
-};
+      // Build attributes array
+      const attributes = [
+        { name: "Customization", value: customization ? "Yes" : "No" },
+        { name: "Number of Copies", value: quantity },
+        { name: "Size", value: size },
+        { name: "Type of Paper", value: paperType },
+        { name: "Colored", value: color },
+        { name: "Lamination", value: lamination },
+        { name: "Print", value: backToBack ? "Back to back" : "Single side" },
+        { name: "Message", value: message },
+      ].filter(attr => attr.value && attr.value !== "");
+
+      // Create the order in backend
+      const res = await fetch("http://localhost:5000/api/orders/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_id: userProfile.id,
+          product_id: 3, 
+          quantity,
+          urgency: "Normal",
+          status: "Pending",
+          attributes,
+        }),
+      });
+
+      const data = await res.json();
+      console.log(" Order created:", data);
+
+      if (!data.success) {
+        showToast("Failed to place order.", "error");
+        return;
+      }
+
+      // Get correct order_item_id
+      const orderItemId =
+        data.order_item_id || data.orderItemId || data.id || data.order_id;
+
+      if (!orderItemId) {
+        showToast("Order created, but missing ID from server.", "error");
+        return;
+      }
+
+      // Upload file
+      if (file) {
+        const formData = new FormData();
+        formData.append("file1", file);
+
+        const uploadRes = await fetch(
+          `http://localhost:5000/api/orders/upload/single/${orderItemId}`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        const uploadData = await uploadRes.json();
+        console.log(" Upload response:", uploadData);
+
+        if (uploadData.success) {
+          showToast("Order placed and file uploaded successfully!", "success");
+        } else {
+          showToast("Order placed, but file upload failed.", "warning");
+        }
+      } else {
+        showToast("Order placed successfully!", "success");
+      }
+
+      // Reset form
+      setShowConfirm(false);
+      setQuantity("");
+      setSize("");
+      setPaperType("");
+      setColor("");
+      setLamination("");
+      setBackToBack(false);
+      setCustomization(false);
+      setMessage("");
+      setFile(null);
+
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("❌ Error placing order:", err);
+      showToast("Something went wrong while placing the order.", "error");
+    }
+  };
+
 
   return (
     <>

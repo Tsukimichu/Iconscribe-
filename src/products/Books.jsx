@@ -82,8 +82,18 @@ function Books() {
   const [showContactModal, setShowContactModal] = useState(false);
   const { showToast } = useToast();
 
+  const handlePlaceOrder = (e) => {
+    e.preventDefault();
+    if (!isLoggedIn) {
+      navigate("/login");
+    } else {
+      setShowConfirm(true);
+    }
+  };
+
+
   // Handle Place Order button
-  const handleConfirmOrder = async () => {
+   const handleConfirmOrder = async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -99,7 +109,7 @@ function Books() {
         { name: "Cover Finish", value: coverFinish },
         { name: "Color Printing", value: colorPrinting },
         { name: "Additional Notes", value: notes },
-      ].filter(attr => attr.value && attr.value.trim() !== "");
+      ].filter((attr) => attr.value && attr.value.trim() !== "");
 
       // Create order in backend
       const res = await fetch("http://localhost:5000/api/orders/create", {
@@ -119,13 +129,11 @@ function Books() {
       });
 
       const data = await res.json();
-
       if (!data.success) {
         showToast("Failed to place order.", "error");
         return;
       }
 
-      // Get correct order_item_id from backend response
       const orderItemId =
         data.order_item_id || data.orderItemId || data.id || data.order_id;
 
@@ -133,7 +141,8 @@ function Books() {
         showToast("Order created, but missing ID from server.", "error");
         return;
       }
-      
+
+      // Upload file
       if (file) {
         const formData = new FormData();
         formData.append("file1", file);
@@ -145,7 +154,6 @@ function Books() {
             body: formData,
           }
         );
-
         const uploadData = await uploadRes.json();
 
         if (uploadData.success) {
@@ -157,7 +165,7 @@ function Books() {
         showToast("Order placed successfully!", "success");
       }
 
-      // Reset form and navigate away
+      // Reset form and modal
       setShowConfirm(false);
       setQuantity("");
       setPages("");
@@ -174,7 +182,6 @@ function Books() {
       showToast("Something went wrong while placing the order.", "error");
     }
   };
-
 
 
 
@@ -219,7 +226,7 @@ function Books() {
                 </div>
 
                 {/* Right: Order Form */}
-                <form onSubmit={handleConfirmOrder} className="space-y-6 text-black">
+                <form onSubmit={handlePlaceOrder} className="space-y-6 text-black">
                   {/* User Info */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>

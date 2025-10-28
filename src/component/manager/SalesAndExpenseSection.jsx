@@ -102,7 +102,7 @@ const SalesAndExpenseSection = () => {
       if (isNew) {
         // Add new sale
         await axios.post(API_URL, {
-          order_item_id: null, // you can replace this with a real order_item_id if you want
+          order_item_id: null,
           item: formData.item,
           amount: formData.amount,
           date: formData.date,

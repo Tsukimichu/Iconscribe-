@@ -33,6 +33,7 @@ const Customization = () => {
   const historyIndex = useRef(-1);
   const HISTORY_LIMIT = 50;
 
+
   const showToast = (msg, ms = 2000) => {
     setToast(msg);
     setTimeout(() => setToast(null), ms);
@@ -114,7 +115,6 @@ const Customization = () => {
 
     if (savedHistory.length > 0 && savedIndex >= 0) {
       canvas.loadFromJSON(savedHistory[savedIndex], () => {
-        // after load, background objects might need rescale
         rescaleBackground(canvas);
         canvas.renderAll();
         history.current = savedHistory;
@@ -392,7 +392,7 @@ const Customization = () => {
     reader.readAsDataURL(file);
   };
 
-  // --- BACKGROUND IMAGE UPLOAD (set as canvas background, scaled to cover) ---
+  // --- BACKGROUND IMAGE UPLOAD  ---
   const handleBackgroundUpload = (e) => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
@@ -503,7 +503,7 @@ const Customization = () => {
     }
   };
 
-  // --- Text styling helpers (size, bold, italic, underline, align, lineHeight) ---
+  // --- Text styling helpers ---
   const setTextStyle = (styleKey, value) => {
     if (!selectedObj || selectedObj.type !== "textbox") return;
     const obj = selectedObj;
@@ -683,7 +683,6 @@ const Customization = () => {
     if (selectedObj?.type === "textbox") {
       selectedObj.text = text;
       fabricCanvasRef.current?.requestRenderAll();
-      // don't push on every keystroke; rely on editing:exited event to save
     }
   }, [text, selectedObj]);
 

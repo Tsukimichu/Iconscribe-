@@ -16,8 +16,16 @@ const handleFileChange = (e, key, index) => {
   const file = e.target.files[0];
   if (!file) return;
 
+  const maxSizeMB = 5; // 🔹 set max size here (e.g. 5 MB)
+  const maxSizeBytes = maxSizeMB * 1024 * 1024;
+
+  if (file.size > maxSizeBytes) {
+    alert(`⚠️ File too large! Please upload files below ${maxSizeMB} MB.`);
+    e.target.value = ""; // reset file input
+    return;
+  }
+
   setFiles((prev) => ({ ...prev, [key]: file }));
-  // Send file AND index to parent
   onUploadComplete && onUploadComplete({ files: [file] }, index);
 };
 
@@ -44,16 +52,27 @@ const handleFileChange = (e, key, index) => {
 
       {/* Customize button */}
       {hasCustomization && (
-        <button
-          type="button"
-          onClick={handleCustomize}
-          className="flex items-center justify-center gap-2 border-2 border-blue-400 bg-blue-50 rounded-xl p-4 mb-6 shadow-sm hover:border-blue-600 hover:bg-blue-100 transition"
-        >
-          <Edit3 className="w-6 h-6 text-blue-500" />
-          <span className="text-base font-medium text-black">
-            Customize Design
-          </span>
-        </button>
+        <div className="flex justify-center gap-4 mb-8">
+          {/* Customize Design Button */}
+          <button
+            type="button"
+            onClick={handleCustomize}
+            className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold px-6 py-4 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
+          >
+            <Edit3 className="w-6 h-6 text-white" />
+            <span className="text-base">Customize Design</span>
+          </button>
+
+          {/* Choose Template Button */}
+          <button
+            type="button"
+            onClick={() => navigate('/template')}
+            className="flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 font-semibold px-6 py-4 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
+          >
+            <Upload className="w-6 h-6 text-gray-900" />
+            <span className="text-base">Choose Template</span>
+          </button>
+        </div>
       )}
 
       {/* Upload buttons */}

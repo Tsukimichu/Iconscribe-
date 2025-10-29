@@ -7,6 +7,7 @@ import {
   ChevronDown,
   PlusCircle,
   Truck,
+  Shield,
 } from "lucide-react";
 
 const OrdersSection = () => {
@@ -80,6 +81,31 @@ const OrdersSection = () => {
     cover_finish: "",
     color_printing: "",
   });
+
+  const [showUrgencyModal, setShowUrgencyModal] = useState(false);
+  const [newUrgency, setNewUrgency] = useState("");
+
+  const openUrgencyModal = (order) => {
+    setSelectedOrder(order);
+    setNewUrgency(order.urgency || "Not Rush");
+    setShowUrgencyModal(true);
+  };
+
+  const closeUrgencyModal = () => {
+    setShowUrgencyModal(false);
+    setNewUrgency("");
+  };
+
+  const confirmUrgencyChange = () => {
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.enquiryNo === selectedOrder.enquiryNo
+          ? { ...o, urgency: newUrgency }
+          : o
+      )
+    );
+    setShowUrgencyModal(false);
+  };
 
   // Handle file uploads
   const [orderFiles, setOrderFiles] = useState([]);
@@ -540,6 +566,12 @@ const openViewModal = async (order) => {
                         className="flex items-center justify-center gap-1 bg-red-100 text-red-700 px-2 py-2 rounded-lg hover:bg-red-200 transition text-sm font-medium"
                       >
                         <Trash2 size={16} />
+                      </button>
+                      <button
+                        onClick={() => openUrgencyModal(order)}
+                        className="flex items-center justify-center gap-1 bg-orange-100 text-orange-700 px-2 py-2 rounded-lg hover:bg-yellow-200 transition text-sm font-medium"
+                      >
+                        <Shield size={16} />
                       </button>
                     </td>
                   </motion.tr>
@@ -1205,7 +1237,54 @@ const openViewModal = async (order) => {
           </motion.div>
         )}
       </AnimatePresence>
+      
+      {/* --- Urgency Modal --- */}
+      <AnimatePresence>
+        {showUrgencyModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 flex items-center justify-center bg-black/60 z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-lg p-6 max-w-sm w-full text-center"
+            >
+              <h2 className="text-xl font-bold mb-3 text-gray-900">Edit Urgency</h2>
+              <p className="text-gray-600 mb-4">
+                Choose urgency for <b>{selectedOrder?.enquiryNo}</b>
+              </p>
 
+              <select
+                value={newUrgency}
+                onChange={(e) => setNewUrgency(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:ring-2 focus:ring-orange-500 outline-none"
+              >
+                <option>Rush</option>
+                <option>Not Rush</option>
+              </select>
+
+              <div className="flex justify-center gap-3">
+                <button
+                  onClick={closeUrgencyModal}
+                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmUrgencyChange}
+                  className="px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white transition"
+                >
+                  Save
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* --- Archive Modal --- */}
       <AnimatePresence>

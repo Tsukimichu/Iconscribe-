@@ -28,7 +28,7 @@ const SupplyMonitoring = () => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [popupType, setPopupType] = useState(null);
   const [selectedSupply, setSelectedSupply] = useState(null);
-  const [newSupply, setNewSupply] = useState({ supply_name: "", quantity: 0, price: 0 });
+  const [newSupply, setNewSupply] = useState({ supply_name: "", quantity: 0 });
 
   // ✅ Fetch supplies from backend
   const fetchSupplies = async () => {
@@ -51,7 +51,7 @@ const SupplyMonitoring = () => {
   const openPopup = (type, supply = null) => {
     setPopupType(type);
     setSelectedSupply(supply);
-    setNewSupply(supply || { supply_name: "", quantity: 0, price: 0 });
+    setNewSupply(supply || { supply_name: "", quantity: 0 });
     setIsPopupOpen(true);
   };
 
@@ -59,7 +59,7 @@ const SupplyMonitoring = () => {
     setIsPopupOpen(false);
     setPopupType(null);
     setSelectedSupply(null);
-    setNewSupply({ supply_name: "", quantity: 0, price: 0 });
+    setNewSupply({ supply_name: "", quantity: 0 });
   };
 
   // ✅ Add, Edit, Delete backend functions
@@ -88,9 +88,7 @@ const SupplyMonitoring = () => {
         );
         setSupplies((prev) =>
           prev.map((s) =>
-            s.supply_id === selectedSupply.supply_id
-              ? { ...s, ...res.data }
-              : s
+            s.supply_id === selectedSupply.supply_id ? { ...s, ...res.data } : s
           )
         );
       }
@@ -102,9 +100,7 @@ const SupplyMonitoring = () => {
   };
 
   const sortSupplies = () => {
-    setSupplies((prev) =>
-      [...prev].sort((a, b) => a.supply_name.localeCompare(b.supply_name))
-    );
+    setSupplies((prev) => [...prev].sort((a, b) => a.supply_name.localeCompare(b.supply_name)));
   };
 
   // ✅ Chart Data
@@ -188,9 +184,7 @@ const SupplyMonitoring = () => {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h2 className="text-lg font-semibold mb-3 text-gray-700">
-            Quantity per Product
-          </h2>
+          <h2 className="text-lg font-semibold mb-3 text-gray-700">Quantity per Product</h2>
           <ReactApexChart options={barOptions} series={barSeries} type="bar" height={250} />
         </motion.div>
 
@@ -200,9 +194,7 @@ const SupplyMonitoring = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <h2 className="text-lg font-semibold mb-3 text-gray-700">
-            Stock Status Overview
-          </h2>
+          <h2 className="text-lg font-semibold mb-3 text-gray-700">Stock Status Overview</h2>
           <ReactApexChart options={pieOptions} series={pieData.series} type="donut" height={250} />
         </motion.div>
       </div>
@@ -219,8 +211,6 @@ const SupplyMonitoring = () => {
               <th className="py-3 px-6 font-semibold text-gray-700">Product</th>
               <th className="py-3 px-6 font-semibold text-gray-700">Status</th>
               <th className="py-3 px-6 font-semibold text-gray-700">Quantity</th>
-              <th className="py-3 px-6 font-semibold text-gray-700">Price</th>
-              <th className="py-3 px-6 font-semibold text-gray-700">Total</th>
               <th className="py-3 px-6 font-semibold text-gray-700">Action</th>
             </tr>
           </thead>
@@ -242,10 +232,6 @@ const SupplyMonitoring = () => {
                   </span>
                 </td>
                 <td className="py-3 px-6">{supply.quantity}</td>
-                <td className="py-3 px-6">₱{supply.price}</td>
-                <td className="py-3 px-6 font-semibold text-gray-900">
-                  ₱{(supply.quantity * supply.price).toLocaleString()}
-                </td>
                 <td className="py-3 px-6 flex gap-2">
                   <button
                     type="button"
@@ -311,15 +297,6 @@ const SupplyMonitoring = () => {
                       value={newSupply.quantity}
                       onChange={(e) =>
                         setNewSupply({ ...newSupply, quantity: parseInt(e.target.value) || 0 })
-                      }
-                      className="w-full px-4 py-2 rounded-lg bg-gray-100 border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Price"
-                      value={newSupply.price}
-                      onChange={(e) =>
-                        setNewSupply({ ...newSupply, price: parseFloat(e.target.value) || 0 })
                       }
                       className="w-full px-4 py-2 mb-5 rounded-lg bg-gray-100 border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none"
                     />

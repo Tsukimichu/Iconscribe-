@@ -60,7 +60,7 @@ const handleFileChange = (e, key, index) => {
             className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold px-6 py-4 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
           >
             <Edit3 className="w-6 h-6 text-white" />
-            <span className="text-base">Customize Design</span>
+            <span className="text-base">Design</span>
           </button>
 
           {/* Choose Template Button */}
@@ -70,7 +70,7 @@ const handleFileChange = (e, key, index) => {
             className="flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 font-semibold px-6 py-4 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
           >
             <Upload className="w-6 h-6 text-gray-900" />
-            <span className="text-base">Choose Template</span>
+            <span className="text-base">Template</span>
           </button>
         </div>
       )}

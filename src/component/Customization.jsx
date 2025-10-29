@@ -110,19 +110,13 @@ const Customization = () => {
       const templateParam = new URLSearchParams(window.location.search).get("template");
 
       if (templateParam) {
-        // Delay helps React mount the canvas fully before loading
         setTimeout(() => {
-      fetch(`/templates/${templateParam}`)
-        .then((res) => res.json())
-        .then((json) => {
-          if (!fabricCanvasRef.current) return;
-          fabricCanvasRef.current.loadFromJSON(json, () => {
-            safeRender(fabricCanvasRef.current);
-            saveState(fabricCanvasRef.current);
+        fetch("/templates/json/businesscard1.json")
+          .then((res) => res.json())
+          .then((jsonData) => {
+            canvas.loadFromJSON(jsonData, canvas.renderAll.bind(canvas));
           });
-        })
-        .catch((err) => console.error("Failed to load template:", err));
-        }, 100);
+        }, 500);
       }
 
       // 3️⃣ Cleanup when component unmounts

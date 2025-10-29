@@ -30,10 +30,10 @@ function TemplateGallery() {
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* HEADER SECTION */}
-      <div className="relative h-[300px] bg-blue-700 text-white flex flex-col justify-center items-center text-center">
+      <div className="relative h-[200px] bg-blue-700 text-white flex flex-col justify-center items-center text-center">
         <h1 className="text-4xl font-bold mb-2">Create from a Template</h1>
         <p className="text-gray-200 text-lg max-w-2xl">
-          Choose a ready-made design for your brochure, calendar, flyer, or card.
+          Choose a ready-made designs
         </p>
       </div>
 

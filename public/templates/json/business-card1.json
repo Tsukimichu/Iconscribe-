@@ -1,0 +1,111 @@
+{
+  "version": "5.3.0",
+  "objects": [
+    {
+      "type": "rect",
+      "version": "5.3.0",
+      "originX": "left",
+      "originY": "top",
+      "left": 0,
+      "top": 0,
+      "width": 900,
+      "height": 500,
+      "fill": "#ffffff",
+      "stroke": null,
+      "strokeWidth": 1,
+      "scaleX": 1,
+      "scaleY": 1
+    },
+    {
+      "type": "path",
+      "version": "5.3.0",
+      "path": [
+        ["M", 0, 300],
+        ["Q", 300, 200, 900, 350],
+        ["L", 900, 500],
+        ["L", 0, 500],
+        ["Z"]
+      ],
+      "fill": "#1f1f1f",
+      "stroke": null,
+      "strokeWidth": 0
+    },
+    {
+      "type": "path",
+      "version": "5.3.0",
+      "path": [
+        ["M", 0, 280],
+        ["Q", 300, 180, 900, 330],
+        ["L", 900, 350],
+        ["Q", 300, 200, 0, 300],
+        ["Z"]
+      ],
+      "fill": "#ffffff",
+      "stroke": null,
+      "strokeWidth": 0
+    },
+    {
+      "type": "path",
+      "version": "5.3.0",
+      "path": [
+        ["M", 0, 260],
+        ["Q", 300, 160, 900, 310],
+        ["L", 900, 330],
+        ["Q", 300, 180, 0, 280],
+        ["Z"]
+      ],
+      "fill": "#1f1f1f",
+      "stroke": null,
+      "strokeWidth": 0
+    },
+    {
+      "type": "textbox",
+      "version": "5.3.0",
+      "left": 350,
+      "top": 190,
+      "width": 300,
+      "text": "YASMINE SMITH",
+      "fontSize": 32,
+      "fontWeight": "bold",
+      "fill": "#1f1f1f",
+      "textAlign": "center",
+      "fontFamily": "Arial"
+    },
+    {
+      "type": "textbox",
+      "version": "5.3.0",
+      "left": 350,
+      "top": 230,
+      "width": 300,
+      "text": "PERSONAL ASSISTANT",
+      "fontSize": 20,
+      "fill": "#1f1f1f",
+      "textAlign": "center",
+      "fontFamily": "Arial"
+    },
+    {
+      "type": "rect",
+      "version": "5.3.0",
+      "left": 430,
+      "top": 110,
+      "width": 40,
+      "height": 40,
+      "fill": "transparent",
+      "stroke": "#1f1f1f",
+      "strokeWidth": 3
+    },
+    {
+      "type": "textbox",
+      "version": "5.3.0",
+      "left": 250,
+      "top": 350,
+      "width": 400,
+      "text": "7654 453 2663 321\nRowes Lane 325 11\nyasminesmith.com\nyasminesmith@info.com",
+      "fontSize": 18,
+      "fill": "#1f1f1f",
+      "textAlign": "center",
+      "fontFamily": "Arial"
+    }
+  ],
+  "background": "#ffffff"
+}

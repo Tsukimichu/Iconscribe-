@@ -5,7 +5,7 @@ import logo from "../assets/ICONS.png";
 import orgImage from "../assets/org.jpg";
 import { Eye, EyeOff, ArrowBigLeft, CheckCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useToast } from "./ui/ToastProvider.jsx"; // ✅ added import
+import { useToast } from "./ui/ToastProvider.jsx";
 
 function Signup() {
   const navigate = useNavigate();

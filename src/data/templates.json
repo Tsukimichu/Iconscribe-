@@ -1,0 +1,23 @@
+[
+  {
+    "id": "businesscard1",
+    "name": "Monochrome Business Card",
+    "category": "Business Card",
+    "preview": "/templates/business-card/business-card1.jpg",
+    "json": "/templates/json/businesscard1.json"
+  },
+    {
+        "id": "businesscard2",
+        "name": "Colorful Business Card",
+        "category": "Business Card",
+        "preview": "/templates/business-card/business-card2.jpg",
+        "json": "/templates/json/businesscard2.json"
+    },
+    {
+        "id": "businesscard3",
+        "name": "Minimalist Business Card",
+        "category": "Business Card",
+        "preview": "/templates/business-card/business-card3.jpg",
+        "json": "/templates/json/businesscard3.json"
+    }
+]

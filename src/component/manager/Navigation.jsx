@@ -56,7 +56,7 @@ const Navigation = ({ selectedSection, setSelectedSection, handleLogout }) => {
         />
         <NavItem
           icon={<Package size={18} />}
-          label="Product"
+          label="Services"
           active={selectedSection === 'products'}
           onClick={() => setSelectedSection('products')}
         />

@@ -66,7 +66,7 @@ const handleFileChange = (e, key, index) => {
           {/* Choose Template Button */}
           <button
             type="button"
-            onClick={() => navigate('/template')}
+            onClick={() => navigate('/template-gallery')}
             className="flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 font-semibold px-6 py-4 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
           >
             <Upload className="w-6 h-6 text-gray-900" />

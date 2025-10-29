@@ -12,7 +12,9 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { jsPDF } from "jspdf"; // optional: install jspdf for PDF export
+import { jsPDF } from "jspdf"; 
+import { useLocation } from "react-router-dom";
+
 
 const Customization = () => {
   const [text, setText] = useState("Your text here");
@@ -23,6 +25,7 @@ const Customization = () => {
   const [zoom, setZoom] = useState(1);
   const [toast, setToast] = useState(null);
   const [confirmResetVisible, setConfirmResetVisible] = useState(false);
+  const location = useLocation();
 
   const canvasRef = useRef(null);
   const fabricCanvasRef = useRef(null);
@@ -90,132 +93,51 @@ const Customization = () => {
   };
 
   // --- useEffect for fabric canvas init + event wiring ---
-  useEffect(() => {
-    if (!canvasRef.current) return;
+    useEffect(() => {
+      const canvasEl = canvasRef.current;
+      if (!canvasEl) return;
 
-    const canvas = new fabric.Canvas(canvasRef.current, {
-      width: 700,
-      height: 400,
-      backgroundColor: initialBgRef.current,
-      preserveObjectStacking: true,
-      selection: true,
-    });
-
-    fabricCanvasRef.current = canvas;
-
-    // Panning variables
-    let isPanning = false;
-    let lastPosX = 0;
-    let lastPosY = 0;
-    let spaceDown = false;
-
-    // Restore from localStorage if present
-    const savedHistory = JSON.parse(localStorage.getItem("canvasHistory") || "[]");
-    const savedIndex = parseInt(localStorage.getItem("canvasHistoryIndex") || "-1", 10);
-
-    if (savedHistory.length > 0 && savedIndex >= 0) {
-      canvas.loadFromJSON(savedHistory[savedIndex], () => {
-        rescaleBackground(canvas);
-        canvas.renderAll();
-        history.current = savedHistory;
-        historyIndex.current = savedIndex;
+      // 1️⃣ Create the Fabric canvas safely
+      const canvas = new fabric.Canvas(canvasEl, {
+        width: 800,
+        height: 600,
+        backgroundColor: "#fff",
+        preserveObjectStacking: true,
       });
-    } else {
-      const textObj = new fabric.Textbox(text, {
-        left: 100,
-        top: 100,
-        fontSize: 20,
-        fill: "black",
-        fontFamily: "Arial",
-      });
-      canvas.add(textObj);
-      saveState(canvas);
-    }
+      fabricCanvasRef.current = canvas;
 
-    // Selection update
-    const updateSelection = (e) => {
-      const obj = (e && (e.selected?.[0] || e.target)) || canvas.getActiveObject();
-      setSelectedObj(obj || null);
-      if (obj) {
-        setSelectedSize({
-          width: Math.round(obj.getScaledWidth ? obj.getScaledWidth() : obj.width || 0),
-          height: Math.round(obj.getScaledHeight ? obj.getScaledHeight() : obj.height || 0),
-        });
-      } else {
-        setSelectedSize({ width: 100, height: 100 });
+      // 2️⃣ Load template JSON if provided
+      const templateParam = new URLSearchParams(window.location.search).get("template");
+
+      if (templateParam) {
+        // Delay helps React mount the canvas fully before loading
+        setTimeout(() => {
+      fetch(`/templates/${templateParam}`)
+        .then((res) => res.json())
+        .then((json) => {
+          if (!fabricCanvasRef.current) return;
+          fabricCanvasRef.current.loadFromJSON(json, () => {
+            safeRender(fabricCanvasRef.current);
+            saveState(fabricCanvasRef.current);
+          });
+        })
+        .catch((err) => console.error("Failed to load template:", err));
+        }, 100);
       }
-    };
 
-    canvas.on("selection:created", updateSelection);
-    canvas.on("selection:updated", updateSelection);
-    canvas.on("selection:cleared", updateSelection);
+      // 3️⃣ Cleanup when component unmounts
+      return () => {
+        if (fabricCanvasRef.current) {
+          try {
+            fabricCanvasRef.current.dispose();
+          } catch (err) {
+            console.warn("Canvas already disposed:", err);
+          }
+          fabricCanvasRef.current = null;
+        }
+      };
+    }, []);
 
-    // Save history on meaningful canvas events
-    const record = () => saveState(canvas);
-    canvas.on("object:added", record);
-    canvas.on("object:modified", record);
-    canvas.on("object:removed", record);
-    canvas.on("editing:exited", record);
-
-    // Mouse events for panning (spacebar to pan)
-    canvas.on("mouse:down", (opt) => {
-      if (spaceDown) {
-        isPanning = true;
-        const evt = opt.e;
-        lastPosX = evt.clientX;
-        lastPosY = evt.clientY;
-        canvas.selection = false;
-      }
-    });
-
-    canvas.on("mouse:move", (opt) => {
-      if (isPanning) {
-        const e = opt.e;
-        const vpt = canvas.viewportTransform;
-        const dx = e.clientX - lastPosX;
-        const dy = e.clientY - lastPosY;
-        lastPosX = e.clientX;
-        lastPosY = e.clientY;
-        vpt[4] += dx;
-        vpt[5] += dy;
-        canvas.requestRenderAll();
-      }
-    });
-
-    canvas.on("mouse:up", () => {
-      if (isPanning) {
-        isPanning = false;
-        canvas.selection = true;
-      }
-    });
-
-    // Handle key state for spacebar panning
-    const windowKeyDown = (ev) => {
-      if (ev.code === "Space") {
-        spaceDown = true;
-        // optionally change cursor
-        canvas.defaultCursor = "grab";
-      }
-    };
-    const windowKeyUp = (ev) => {
-      if (ev.code === "Space") {
-        spaceDown = false;
-        canvas.defaultCursor = "default";
-        canvas.requestRenderAll();
-      }
-    };
-    window.addEventListener("keydown", windowKeyDown);
-    window.addEventListener("keyup", windowKeyUp);
-
-    // cleanup
-    return () => {
-      window.removeEventListener("keydown", windowKeyDown);
-      window.removeEventListener("keyup", windowKeyUp);
-      canvas.dispose();
-      fabricCanvasRef.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // --- UNDO / REDO functions ---
   // --- UNDO ---
@@ -230,7 +152,7 @@ const Customization = () => {
     canvas.discardActiveObject();
     canvas.loadFromJSON(history.current[historyIndex.current], () => {
       rescaleBackground(canvas);
-      canvas.renderAll();
+      safeRender(canvas);
       canvas.discardActiveObject();
       localStorage.setItem("canvasHistoryIndex", historyIndex.current);
       showToast("Undone");
@@ -249,7 +171,7 @@ const Customization = () => {
     canvas.discardActiveObject();
     canvas.loadFromJSON(history.current[historyIndex.current], () => {
       rescaleBackground(canvas);
-      canvas.renderAll();
+      safeRender(canvas);
       canvas.discardActiveObject();
       localStorage.setItem("canvasHistoryIndex", historyIndex.current);
       showToast("Redone");
@@ -341,6 +263,24 @@ const Customization = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+  
+  // --- TEMPLATE LOADING from query param ---
+    const getTemplateFromURL = () => {
+    const params = new URLSearchParams(location.search);
+    return params.get("template");
+  };
+
+    
+  // Safe render to prevent clearRect error
+const safeRender = (canvas) => {
+  if (canvas && canvas.contextContainer) {
+    try {
+      canvas.renderAll();
+    } catch (e) {
+      console.warn("Skipped render due to missing context:", e);
+    }
+  }
+};
 
   // --- IMAGE UPLOAD (adds an image object) ---
   const handleImageUpload = (e) => {
@@ -418,35 +358,41 @@ const Customization = () => {
   };
 
   // --- SHAPES ---
-  const addShape = (type) => {
-    let shape;
-    if (type === "rect") {
-      shape = new fabric.Rect({
-        left: 100,
-        top: 100,
-        fill: "#3b82f6",
-        width: 100,
-        height: 100,
-      });
-    } else if (type === "circle") {
-      shape = new fabric.Circle({
-        left: 150,
-        top: 100,
-        fill: "#22c55e",
-        radius: 50,
-      });
-    } else if (type === "triangle") {
-      shape = new fabric.Triangle({
-        left: 200,
-        top: 100,
-        fill: "#f97316",
-        width: 100,
-        height: 100,
-      });
-    }
-    fabricCanvasRef.current.add(shape).setActiveObject(shape);
-    saveState(fabricCanvasRef.current);
-  };
+const addShape = (type) => {
+  const canvas = fabricCanvasRef.current;
+  if (!canvas) return;
+
+  let shape;
+  if (type === "rect") {
+    shape = new fabric.Rect({
+      left: 100,
+      top: 100,
+      fill: "#3b82f6",
+      width: 100,
+      height: 100,
+    });
+  } else if (type === "circle") {
+    shape = new fabric.Circle({
+      left: 150,
+      top: 100,
+      fill: "#22c55e",
+      radius: 50,
+    });
+  } else if (type === "triangle") {
+    shape = new fabric.Triangle({
+      left: 200,
+      top: 100,
+      fill: "#f97316",
+      width: 100,
+      height: 100,
+    });
+  }
+
+  canvas.add(shape);
+  canvas.setActiveObject(shape);
+  canvas.requestRenderAll();
+  saveState(canvas);
+};
 
   // --- SAVE / EXPORT: PNG, JPG, SVG, PDF ---
   const handleSave = async (type = "png", options = {}) => {
@@ -693,7 +639,7 @@ const Customization = () => {
       <div className="flex md:flex-col w-full md:w-20 bg-blue-600 rounded-2xl shadow-md items-center justify-between md:justify-start py-2 md:py-6 space-x-4 md:space-x-0 md:space-y-8">
         {[
           { key: "upload", icon: <Upload className="w-6 h-6" /> },
-          { key: "images", icon: <ImageIcon className="w-6 h-6" /> },
+          { key: "templates", icon: <ImageIcon className="w-6 h-6" /> },
           { key: "text", icon: <Type className="w-6 h-6" /> },
           { key: "shapes", icon: <Shapes className="w-6 h-6" /> },
           { key: "background", icon: <Palette className="w-6 h-6" /> },
@@ -739,38 +685,34 @@ const Customization = () => {
           )}
 
           {/* Images tools */}
-          {activePanel === "images" && (
-            <div>
-              <h2 className="font-semibold text-gray-800 mb-3 capitalize">Image Tools</h2>
-              <div className="flex flex-col gap-2 mb-4">
-                <label className="text-sm">Replace selected image</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) replaceSelectedImage(file);
-                  }}
-                />
-                <div className="flex gap-2 mt-2">
-                  <button onClick={() => flipSelected("x")} className="px-3 py-2 bg-gray-100 rounded">Flip X</button>
-                  <button onClick={() => flipSelected("y")} className="px-3 py-2 bg-gray-100 rounded">Flip Y</button>
-                </div>
-                <div className="mt-2">
-                  <label className="block text-sm mb-1">Opacity</label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.05"
-                    onChange={(e) => setSelectedOpacity(parseFloat(e.target.value))}
-                    defaultValue="1"
-                  />
+            {activePanel === "templates" && (
+              <div>
+                <h2 className="font-semibold text-gray-800 mb-3 capitalize">Templates</h2>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { name: "Template 1", url: "/templates/business-card/business-card1.jpg" },
+                    { name: "Template 2", url: "/templates/business-card/business-card2.jpg" },
+                    { name: "Template 3", url: "/templates/business-card/business-card3.jpg" },
+                  ].map((tpl, index) => (
+                    <div
+                      key={index}
+                      onClick={() => {
+                        fabric.Image.fromURL(tpl.url, (img) => {
+                          const canvas = fabricCanvasRef.current;
+                          img.scaleToWidth(canvas.width);
+                          canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
+                          saveState(canvas);
+                        });
+                      }}
+                      className="cursor-pointer border rounded-lg overflow-hidden hover:shadow-lg transition"
+                    >
+                      <img src={tpl.url} alt={tpl.name} className="w-full h-28 object-cover" />
+                      <p className="text-center text-sm py-1">{tpl.name}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
-          )}
-
+            )}
           {/* Text */}
           {activePanel === "text" && (
             <div>

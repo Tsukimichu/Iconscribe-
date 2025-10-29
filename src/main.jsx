@@ -29,6 +29,7 @@ import RaffleTicket from './products/RaffleTicket.jsx';
 import NewsLetter from './products/NewsLetter.jsx';
 
 import Customization from './component/Customization.jsx';
+import TemplateGallery from './component/TemplateGallery.jsx';
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
@@ -61,6 +62,8 @@ const router = createBrowserRouter([
   // Customization/Maintenance route for selected products
   { path: '/customize', element: <Customization /> },
   { path: '/maintenance', element: <MaintenanceUser/>},
+  { path: '/template-gallery', element: <TemplateGallery /> },
+
 
 
   // Admin role 

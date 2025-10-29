@@ -77,48 +77,6 @@ function Navigation() {
               </li>
             ))}
 
-            {/* Dropdown Menu */}
-            <li className="relative">
-              <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2 px-5 py-2 rounded-lg transition-all duration-300 hover:bg-gradient-to-r hover:from-yellow-300 hover:to-yellow-500 hover:text-black"
-              >
-                Quotation
-                <ChevronDown size={16} />
-              </button>
-
-              {dropdownOpen && (
-                <ul className="absolute left-0 mt-2 w-48 bg-white text-black rounded-lg shadow-lg overflow-hidden z-30">
-                  <li>
-                    <Link
-                      to="/quotation/request"
-                      className="block px-4 py-2 hover:bg-yellow-100"
-                      onClick={() => setDropdownOpen(false)}
-                    >
-                      Single Shit Service
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/quotation/history"
-                      className="block px-4 py-2 hover:bg-yellow-100"
-                      onClick={() => setDropdownOpen(false)}
-                    >
-                      Soft Bound Service
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/quotation/history"
-                      className="block px-4 py-2 hover:bg-yellow-100"
-                      onClick={() => setDropdownOpen(false)}
-                    >
-                      Hard Bound Service
-                    </Link>
-                  </li>
-                </ul>
-              )}
-            </li>
           </ul>
         </div>
 

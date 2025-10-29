@@ -30,6 +30,10 @@ function Brochure() {
   const [message, setMessage] = useState("");
   const [file, setFile] = useState(null);
 
+  
+  const [estimatedPrice, setEstimatedPrice] = useState(0);
+
+
 
   const { showToast } = useToast();
   const [showConfirm, setShowConfirm] = useState(false);
@@ -194,6 +198,50 @@ function Brochure() {
     }
   };
 
+  useEffect(() => {
+    const baseRatePerPiece = 1.5; // Base price per brochure
+    const paperRates = {
+      Matte: 1.0,
+      Glossy: 1.2,
+      "Book Paper": 0.9,
+    };
+    const colorRates = {
+      Yes: 1.3,
+      No: 1.0,
+    };
+    const laminationRates = {
+      Yes: 1.15,
+      No: 1.0,
+    };
+    const sizeRates = {
+      "11”x17”": 1.0,
+      "17”x22”": 1.2,
+      "22”x34”": 1.4,
+      "8.5”x14”": 0.9,
+    };
+
+    if (!quantity) {
+      setEstimatedPrice(0);
+      return;
+    }
+
+    const paperMultiplier = paperRates[paperType] || 1;
+    const colorMultiplier = colorRates[color] || 1;
+    const laminationMultiplier = laminationRates[lamination] || 1;
+    const sizeMultiplier = sizeRates[size] || 1;
+
+    const total =
+      quantity *
+      baseRatePerPiece *
+      paperMultiplier *
+      colorMultiplier *
+      laminationMultiplier *
+      sizeMultiplier;
+
+    setEstimatedPrice(total);
+  }, [quantity, size, paperType, color, lamination]);
+
+
 
   return (
     <>
@@ -311,6 +359,18 @@ function Brochure() {
                         <option>No</option>
                       </select>
                     </div>
+                    <div className="flex items-center gap-3 p-3">
+                        <input
+                          type="checkbox"
+                          id="backToBack"
+                          className="w-6 h-6 scale-125 cursor-pointer"
+                          checked={backToBack}
+                          onChange={(e) => setBackToBack(e.target.checked)}
+                        />
+                        <label htmlFor="backToBack" className="text-lg font-bold cursor-pointer">
+                          Print Back-to-Back
+                        </label>
+                      </div>
                   </div>
 
                   {/* Upload + Message */}
@@ -325,18 +385,7 @@ function Brochure() {
                     {/* Size + Message */}
                     <div className="flex flex-col gap-3 mt-9  ">
               
-                      <div className="flex items-center gap-3 p-3">
-                        <input
-                          type="checkbox"
-                          id="backToBack"
-                          className="w-6 h-6 scale-125 cursor-pointer"
-                          checked={backToBack}
-                          onChange={(e) => setBackToBack(e.target.checked)}
-                        />
-                        <label htmlFor="backToBack" className="text-lg font-bold cursor-pointer">
-                          Print Back-to-Back
-                        </label>
-                      </div>
+                      
                       <div>
                         <label className="block text-base font-semibold text-black">
                           Message{" "}
@@ -351,6 +400,17 @@ function Brochure() {
                           onChange={(e) => setMessage(e.target.value)}
                         ></textarea>
                       </div>
+                      {/* Estimated Price Box */}
+                      <div className="mt-6 border border-blue-200 bg-blue-50 rounded-2xl shadow-sm p-5 text-right">
+                        <p className="text-base text-gray-700 font-medium">Estimated Price</p>
+                        <p className="text-3xl font-bold text-blue-700 mt-1">
+                          ₱{estimatedPrice.toFixed(2)}
+                        </p>
+                        <p className="text-sm text-gray-500 italic mt-1">
+                          *Final price may vary depending on specifications
+                        </p>
+                      </div>
+
                     </div>
                   </div>
 

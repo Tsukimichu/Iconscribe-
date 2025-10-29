@@ -35,6 +35,9 @@ function CallingCard() {
       const [showConfirm, setShowConfirm] = useState(false);
       const [showContactModal, setShowContactModal] = useState(false);
 
+      const [estimatedPrice, setEstimatedPrice] = useState(0);
+
+
   useEffect(() => {
         const checkToken = () => {
           const token = localStorage.getItem("token");
@@ -187,6 +190,53 @@ function CallingCard() {
         showToast(" Something went wrong. Please try again later.", "error");
       }
     };
+
+    useEffect(() => {
+      const baseRatePerCard = 2.5; // base price per calling card
+      const paperRates = {
+        Matte: 1.0,
+        Glossy: 1.2,
+        Textured: 1.3,
+      };
+      const colorRates = {
+        "Full Color": 1.4,
+        "Black & White": 1.0,
+      };
+      const laminationRates = {
+        "Gloss Lamination": 1.15,
+        "Matte Lamination": 1.1,
+        None: 1.0,
+      };
+      const sizeRates = {
+        "2” x 3.5” (Standard)": 1.0,
+        "Custom Size": 1.25,
+      };
+
+      if (!quantity) {
+        setEstimatedPrice(0);
+        return;
+      }
+
+      const paperMultiplier = paperRates[paperType] || 1;
+      const colorMultiplier = colorRates[color] || 1;
+      const laminationMultiplier = laminationRates[lamination] || 1;
+      const sizeMultiplier = sizeRates[size] || 1;
+      const backToBackMultiplier = backToBack ? 1.15 : 1.0;
+      const customizationMultiplier = customization ? 1.1 : 1.0;
+
+      const total =
+        quantity *
+        baseRatePerCard *
+        paperMultiplier *
+        colorMultiplier *
+        laminationMultiplier *
+        sizeMultiplier *
+        backToBackMultiplier *
+        customizationMultiplier;
+
+      setEstimatedPrice(total);
+    }, [quantity, size, paperType, color, lamination, backToBack, customization]);
+
 
 
 
@@ -378,6 +428,15 @@ function CallingCard() {
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-41 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           placeholder="Enter message"
                         ></textarea>
+                      </div>
+                      <div className="mt-4 border border-blue-200 bg-blue-50 rounded-2xl shadow-sm p-5 text-right">
+                        <p className="text-base text-gray-700 font-medium">Estimated Price</p>
+                        <p className="text-3xl font-bold text-blue-700 mt-1">
+                          ₱{estimatedPrice.toFixed(2)}
+                        </p>
+                        <p className="text-sm text-gray-500 italic mt-1">
+                          *Final price may vary depending on specifications
+                        </p>
                       </div>
                     </div>
                   </div>

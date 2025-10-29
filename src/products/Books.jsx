@@ -10,6 +10,12 @@ function Books() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
+  const [estimatedPrice, setEstimatedPrice] = useState(0);
+
+
+  
+
+
   // User profile state
   const [userProfile, setUserProfile] = useState({
     id: "",
@@ -182,6 +188,51 @@ function Books() {
       showToast("Something went wrong while placing the order.", "error");
     }
   };
+
+    useEffect(() => {
+    // Basic base rates (you can adjust these)
+      const baseRatePerPage = 0.5;  // ₱ per page
+      const bindingRates = {
+        "Perfect Binding": 30,
+        "Saddle Stitch": 20,
+        "Hardcover": 50,
+        "Spiral": 25,
+      };
+      const paperRates = {
+        Matte: 1.0,
+        Glossy: 1.2,
+        "Book Paper": 0.9,
+      };
+      const coverRates = {
+        Matte: 10,
+        Glossy: 15,
+        "Soft Touch": 20,
+      };
+      const colorRates = {
+        "Full Color": 1.5,
+        "Black & White": 1.0,
+        Mixed: 1.2,
+      };
+
+      if (!quantity || !pages) {
+        setEstimatedPrice(0);
+        return;
+      }
+
+      const bindingCost = bindingRates[binding] || 0;
+      const paperMultiplier = paperRates[paperType] || 1;
+      const coverCost = coverRates[coverFinish] || 0;
+      const colorMultiplier = colorRates[colorPrinting] || 1;
+
+      // Formula
+      const total =
+        quantity *
+        (pages * baseRatePerPage * paperMultiplier * colorMultiplier +
+          bindingCost +
+          coverCost);
+
+      setEstimatedPrice(total);
+    }, [quantity, pages, binding, paperType, coverFinish, colorPrinting]);
 
 
 
@@ -372,27 +423,46 @@ function Books() {
                       </div>
 
 
-                 {/* Upload + Message */}
+                  {/* Upload + Notes + Estimated Price */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Left: Upload */}
+                    <div>
                       <UploadSection
                         uploadCount={1}
                         onUploadComplete={(res) => {
                           if (res?.files?.[0]) setFile(res.files[0]);
                         }}
                       />
+                    </div>
+
+                  {/* Right: Notes + Price */}
+                  <div className="flex flex-col justify-between h-full">
                     {/* Notes */}
-                    <div className="flex flex-col gap-3 mt-0">
+                    <div className="flex flex-col gap-3">
                       <label className="block text-base font-semibold text-black">
                         Additional Notes <span className="text-sm text-gray-700">(optional)</span>
                       </label>
-                        <textarea
-                          value={notes}
-                          onChange={(e) => setNotes(e.target.value)}
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-45 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
-                          placeholder="Enter a Message"
-                        ></textarea>
+                      <textarea
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-45 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                        placeholder="Enter a message"
+                      ></textarea>
+                    </div>
+
+                    {/* Estimated Price Box */}
+                    <div className="mt-4 border border-blue-200 bg-blue-50 rounded-2xl shadow-sm p-5 text-right">
+                      <p className="text-base text-gray-700 font-medium">Estimated Price</p>
+                      <p className="text-3xl font-bold text-blue-700 mt-1">
+                        ₱{estimatedPrice.toFixed(2)}
+                      </p>
+                      <p className="text-sm text-gray-500 italic mt-1">
+                        *Final price may vary depending on specifications
+                      </p>
                     </div>
                   </div>
+                </div>
+
 
                 {/* Price + Contact */}
                   <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">

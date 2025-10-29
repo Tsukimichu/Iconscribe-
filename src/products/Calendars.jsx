@@ -31,6 +31,9 @@ function Calendars() {
   const [visible, setVisible] = useState(true);
   const {showToast} = useToast();
 
+  const [estimatedPrice, setEstimatedPrice] = useState(0);
+
+
   useEffect(() => {
     const checkToken = () => {
       const token = localStorage.getItem("token");
@@ -177,6 +180,45 @@ function Calendars() {
       showToast(" Something went wrong. Please try again later.", "error");
     }
   };
+
+  useEffect(() => {
+    const baseRate = 15; // base price per calendar
+    const colorRates = {
+      "Single Colored": 1.0,
+      "More Than 1 Color": 1.25,
+    };
+    const typeRates = {
+      "Single Month (12 pages)": 1.0,
+      "Double Month (6 pages)": 0.85,
+    };
+    const sizeRates = {
+      "11”x17”": 1.0,
+      "17”x22”": 1.2,
+      "22”x34”": 1.4,
+      "81/2”x14”": 0.9,
+    };
+
+    if (!quantity) {
+      setEstimatedPrice(0);
+      return;
+    }
+
+    const colorMultiplier = colorRates[color] || 1;
+    const typeMultiplier = typeRates[calendarType] || 1;
+    const sizeMultiplier = sizeRates[size] || 1;
+    const customizationMultiplier = customization ? 1.1 : 1.0; // +10% if customization
+
+    const total =
+      quantity *
+      baseRate *
+      colorMultiplier *
+      typeMultiplier *
+      sizeMultiplier *
+      customizationMultiplier;
+
+    setEstimatedPrice(total);
+  }, [quantity, color, calendarType, size, customization]);
+
 
 
   return (
@@ -384,6 +426,15 @@ function Calendars() {
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-23 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           placeholder="Enter message"
                         ></textarea>
+                      </div>
+                      <div className="mt-4 border border-blue-200 bg-blue-50 rounded-2xl shadow-sm p-5 text-right">
+                        <p className="text-base text-gray-700 font-medium">Estimated Price</p>
+                        <p className="text-3xl font-bold text-blue-700 mt-1">
+                          ₱{estimatedPrice.toFixed(2)}
+                        </p>
+                        <p className="text-sm text-gray-500 italic mt-1">
+                          *Final price may vary depending on specifications
+                        </p>
                       </div>
                     </div>
                   </div>

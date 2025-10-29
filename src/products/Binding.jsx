@@ -10,6 +10,64 @@
     const navigate = useNavigate();
     const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
+
+    //estimate
+    const [estimatedPrice, setEstimatedPrice] = useState(0);
+
+    const calculatePrice = (quantity, pages, bindingType, paperType) => {
+      if (!quantity || !pages) return 0;
+
+      let basePrice = 0.10 * pages; // ₱0.10 per page (example rate)
+
+      // Adjust by binding type
+      switch (bindingType) {
+        case "Perfect Binding":
+          basePrice += 30;
+          break;
+        case "Saddle Stitch":
+          basePrice += 20;
+          break;
+        case "Hardcover":
+          basePrice += 80;
+          break;
+        case "Spiral":
+          basePrice += 25;
+          break;
+        case "Ring Binding":
+          basePrice += 40;
+          break;
+        default:
+          break;
+      }
+
+      // Adjust by paper type
+      switch (paperType) {
+        case "Glossy":
+          basePrice *= 1.2;
+          break;
+        case "Matte":
+          basePrice *= 1.1;
+          break;
+        case "Bond Paper":
+          basePrice *= 1.05;
+          break;
+        case "Book Paper":
+          basePrice *= 1.0;
+          break;
+        default:
+          break;
+      }
+
+      return basePrice * quantity;
+    };
+
+    
+
+
+
+
+
+
     // user profile
     const [userProfile, setUserProfile] = useState({
       id: "",
@@ -170,6 +228,11 @@
         showToast("Something went wrong while placing the order.", "error");
       }
     };
+
+    useEffect(() => {
+      const price = calculatePrice(quantity, pageCount, bindingType, paperType);
+      setEstimatedPrice(price);
+    }, [quantity, pageCount, bindingType, paperType]);
 
 
     if (!visible) return null;
@@ -351,27 +414,48 @@
                       </div>
                     </div>
 
-                    {/* Upload + Notes */}
+                    {/* Upload + Notes + Estimated Price */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Always visible upload section */}
+                      {/* Left: Upload Section */}
+                      <div>
                         <UploadSection
                           uploadCount={1}
                           onUploadComplete={(res) => {
                             if (res?.files?.[0]) setFile(res.files[0]);
                           }}
                         />
-                      <div className="flex flex-col gap-3 mt-0">
-                        <label className="block text-base font-semibold text-black">
-                          Additional Notes (optional)
-                        </label>
-                        <textarea
-                          value={notes}
-                          onChange={(e) => setNotes(e.target.value)}
-                          className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-41 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 text-black"
-                          placeholder="Enter a message"
-                        ></textarea>
+                      </div>
+
+                      {/* Right: Notes + Estimated Price */}
+                      <div className="flex flex-col justify-between h-full">
+                        {/* Notes Section */}
+                        <div className="flex flex-col gap-3">
+                          <label className="block text-base font-semibold text-black">
+                            Additional Notes (optional)
+                          </label>
+                          <textarea
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-13 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 text-black"
+                            placeholder="Enter a message"
+                          ></textarea>
+                        </div>
+
+                        {/* Estimated Price Box */}
+                        <div className="mt-4 border border-blue-200 bg-blue-50 rounded-2xl shadow-sm p-5 text-right">
+                          <p className="text-base text-gray-700 font-medium">Estimated Price</p>
+                          <p className="text-3xl font-bold text-blue-700 mt-1">
+                            ₱{estimatedPrice.toFixed(2)}
+                          </p>
+                          <p className="text-sm text-gray-500 italic mt-1">
+                            *Final price may vary depending on specifications
+                          </p>
+                        </div>
                       </div>
                     </div>
+
+
+
 
                     {/* Contact + Submit */}
                     <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">

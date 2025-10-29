@@ -33,6 +33,9 @@ function Flyers() {
     const [showContactModal, setShowContactModal] = useState(false);
 
     const { showToast } = useToast();
+
+    const [estimatedPrice, setEstimatedPrice] = useState(0);
+
     
 
   useEffect(() => {
@@ -192,6 +195,55 @@ function Flyers() {
         showToast(" Something went wrong. Please try again later.", "error");
       }
     };
+
+    useEffect(() => {
+      const baseRatePerFlyer = 1.2; // Base price per flyer (₱1.20 each)
+      const sizeRates = {
+        A4: 1.0,
+        A5: 0.8,
+        DL: 0.7,
+        Custom: 1.2,
+      };
+      const paperRates = {
+        Glossy: 1.1,
+        Matte: 1.0,
+        "Premium Card": 1.3,
+      };
+      const colorRates = {
+        Yes: 1.3,
+        No: 1.0,
+      };
+      const laminationRates = {
+        Gloss: 1.1,
+        Matte: 1.05,
+        "UV Coated": 1.2,
+      };
+
+      if (!quantity) {
+        setEstimatedPrice(0);
+        return;
+      }
+
+      const sizeMultiplier = sizeRates[size] || 1;
+      const paperMultiplier = paperRates[paperType] || 1;
+      const colorMultiplier = colorRates[color] || 1;
+      const laminationMultiplier = laminationRates[lamination] || 1;
+      const backToBackMultiplier = backToBack ? 1.15 : 1.0;
+      const customizationMultiplier = customization ? 1.1 : 1.0;
+
+      const total =
+        quantity *
+        baseRatePerFlyer *
+        sizeMultiplier *
+        paperMultiplier *
+        colorMultiplier *
+        laminationMultiplier *
+        backToBackMultiplier *
+        customizationMultiplier;
+
+      setEstimatedPrice(total);
+    }, [quantity, size, paperType, color, lamination, backToBack, customization]);
+
 
     
           
@@ -404,6 +456,15 @@ function Flyers() {
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-41 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         placeholder="Enter a Message"
                       ></textarea>
+                    </div>
+                    <div className="border border-blue-200 bg-blue-50 rounded-2xl shadow-sm p-5 text-right">
+                      <p className="text-base text-gray-700 font-medium">Estimated Price</p>
+                      <p className="text-3xl font-bold text-blue-700 mt-1">
+                        ₱{estimatedPrice.toFixed(2)}
+                      </p>
+                      <p className="text-sm text-gray-500 italic mt-1">
+                        *Final price may vary depending on specifications
+                      </p>
                     </div>
                   </div>
 

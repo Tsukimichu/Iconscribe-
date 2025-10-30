@@ -94,43 +94,72 @@ const Customization = () => {
 
   // --- useEffect for fabric canvas init + event wiring ---
     useEffect(() => {
+      // Make sure the <canvas> exists in the DOM
       const canvasEl = canvasRef.current;
-      if (!canvasEl) return;
+      if (!canvasEl) {
+        console.warn("Canvas element not yet available");
+        return;
+      }
 
-      // 1️⃣ Create the Fabric canvas safely
+      // Initialize Fabric only once
       const canvas = new fabric.Canvas(canvasEl, {
-        width: 800,
-        height: 600,
+        width: 500,
+        height: 500,
         backgroundColor: "#fff",
         preserveObjectStacking: true,
       });
       fabricCanvasRef.current = canvas;
 
-      // 2️⃣ Load template JSON if provided
-      const templateParam = new URLSearchParams(window.location.search).get("template");
+      let isMounted = true; // Flag to prevent updates after unmount
 
-      if (templateParam) {
-        setTimeout(() => {
-        fetch("/templates/json/businesscard1.json")
-          .then((res) => res.json())
+      const templateParamRaw = new URLSearchParams(window.location.search).get("template");
+
+      if (templateParamRaw) {
+        const templateParam = templateParamRaw.startsWith("/")
+          ? templateParamRaw
+          : `/${templateParamRaw}`;
+
+        console.log(" Fetching template:", templateParam);
+
+        fetch(templateParam)
+          .then((res) => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            return res.json();
+          })
           .then((jsonData) => {
-            canvas.loadFromJSON(jsonData, canvas.renderAll.bind(canvas));
+            if (!isMounted) return; // Prevent running after unmount
+
+            try {
+              canvas.loadFromJSON(jsonData, () => {
+                if (!isMounted) return;
+                canvas.renderAll();
+                console.log("✅ Template loaded:", templateParam);
+              });
+            } catch (err) {
+              console.error("❌ Error loading JSON into Fabric:", err);
+            }
+          })
+          .catch((err) => {
+            console.error("❌ Template fetch/load error:", err);
           });
-        }, 500);
       }
 
-      // 3️⃣ Cleanup when component unmounts
+      // Cleanup safely
       return () => {
+        isMounted = false;
         if (fabricCanvasRef.current) {
           try {
             fabricCanvasRef.current.dispose();
+            fabricCanvasRef.current = null;
           } catch (err) {
-            console.warn("Canvas already disposed:", err);
+            console.warn("⚠️ Error disposing canvas:", err);
           }
-          fabricCanvasRef.current = null;
         }
       };
     }, []);
+
+
+
 
 
   // --- UNDO / REDO functions ---

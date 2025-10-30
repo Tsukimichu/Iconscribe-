@@ -24,7 +24,7 @@ function TemplateGallery() {
   );
 
   const handleSelect = (tpl) => {
-    navigate(`/customize?template=${encodeURIComponent(tpl.preview)}`);
+    navigate(`/customize?template=${encodeURIComponent(tpl.json)}`);
   };
 
   return (

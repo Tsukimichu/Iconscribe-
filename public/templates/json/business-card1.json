@@ -1,111 +1,29 @@
 {
   "version": "5.3.0",
   "objects": [
+    { "type": "rect", "left": 0, "top": 0, "width": 900, "height": 500, "fill": "#1f1f1f" },
     {
-      "type": "rect",
-      "version": "5.3.0",
-      "originX": "left",
-      "originY": "top",
-      "left": 0,
-      "top": 0,
-      "width": 900,
-      "height": 500,
-      "fill": "#ffffff",
-      "stroke": null,
-      "strokeWidth": 1,
-      "scaleX": 1,
-      "scaleY": 1
+      "type": "path",
+      "path": [["M", 0, 100], ["Q", 300, 0, 900, 80], ["L", 900, 500], ["L", 0, 500], ["Z"]],
+      "fill": "#ffffff"
     },
     {
       "type": "path",
-      "version": "5.3.0",
-      "path": [
-        ["M", 0, 300],
-        ["Q", 300, 200, 900, 350],
-        ["L", 900, 500],
-        ["L", 0, 500],
-        ["Z"]
-      ],
-      "fill": "#1f1f1f",
-      "stroke": null,
-      "strokeWidth": 0
+      "path": [["M", 0, 120], ["Q", 300, 20, 900, 100], ["L", 900, 500], ["L", 0, 500], ["Z"]],
+      "fill": "#1f1f1f"
     },
-    {
-      "type": "path",
-      "version": "5.3.0",
-      "path": [
-        ["M", 0, 280],
-        ["Q", 300, 180, 900, 330],
-        ["L", 900, 350],
-        ["Q", 300, 200, 0, 300],
-        ["Z"]
-      ],
-      "fill": "#ffffff",
-      "stroke": null,
-      "strokeWidth": 0
-    },
-    {
-      "type": "path",
-      "version": "5.3.0",
-      "path": [
-        ["M", 0, 260],
-        ["Q", 300, 160, 900, 310],
-        ["L", 900, 330],
-        ["Q", 300, 180, 0, 280],
-        ["Z"]
-      ],
-      "fill": "#1f1f1f",
-      "stroke": null,
-      "strokeWidth": 0
-    },
-    {
-      "type": "textbox",
-      "version": "5.3.0",
-      "left": 350,
-      "top": 190,
-      "width": 300,
-      "text": "YASMINE SMITH",
-      "fontSize": 32,
-      "fontWeight": "bold",
-      "fill": "#1f1f1f",
-      "textAlign": "center",
-      "fontFamily": "Arial"
-    },
-    {
-      "type": "textbox",
-      "version": "5.3.0",
-      "left": 350,
-      "top": 230,
-      "width": 300,
-      "text": "PERSONAL ASSISTANT",
-      "fontSize": 20,
-      "fill": "#1f1f1f",
-      "textAlign": "center",
-      "fontFamily": "Arial"
-    },
-    {
-      "type": "rect",
-      "version": "5.3.0",
-      "left": 430,
-      "top": 110,
-      "width": 40,
-      "height": 40,
-      "fill": "transparent",
-      "stroke": "#1f1f1f",
-      "strokeWidth": 3
-    },
-    {
-      "type": "textbox",
-      "version": "5.3.0",
-      "left": 250,
-      "top": 350,
-      "width": 400,
-      "text": "7654 453 2663 321\nRowes Lane 325 11\nyasminesmith.com\nyasminesmith@info.com",
-      "fontSize": 18,
-      "fill": "#1f1f1f",
-      "textAlign": "center",
-      "fontFamily": "Arial"
-    }
+    { "type": "path", "path": [["M", 760, 60], ["L", 790, 45], ["L", 820, 60], ["L", 820, 90], ["L", 790, 105], ["L", 760, 90], ["Z"]], "fill": "transparent", "stroke": "#ffffff", "strokeWidth": 3 },
+    { "type": "circle", "left": 470, "top": 180, "radius": 5, "fill": "#1f1f1f" },
+    { "type": "path", "path": [["M", 475, 215], ["L", 475, 215], ["L", 475, 215]], "stroke": "#1f1f1f", "strokeWidth": 2 },
+    { "type": "path", "path": [["M", 470, 240], ["L", 470, 260], ["L", 480, 260], ["L", 480, 240], ["Z"]], "fill": "#1f1f1f" },
+    { "type": "rect", "left": 470, "top": 275, "width": 12, "height": 8, "fill": "transparent", "stroke": "#1f1f1f", "strokeWidth": 2 },
+
+    { "type": "textbox", "left": 60, "top": 80, "width": 400, "text": "YASMINE SMITH", "fontSize": 40, "fontWeight": "bold", "fill": "#ffffff", "textAlign": "left", "fontFamily": "Arial" },
+    { "type": "textbox", "left": 60, "top": 130, "width": 400, "text": "PERSONAL ASSISTANT", "fontSize": 20, "fill": "#ffffff", "textAlign": "left", "fontFamily": "Arial" },
+    { "type": "textbox", "left": 500, "top": 180, "width": 350, "text": "7654 453 2663 321", "fontSize": 18, "fill": "#1f1f1f", "textAlign": "left", "fontFamily": "Arial" },
+    { "type": "textbox", "left": 500, "top": 210, "width": 350, "text": "Rowes Lane 325 11", "fontSize": 18, "fill": "#1f1f1f", "textAlign": "left", "fontFamily": "Arial" },
+    { "type": "textbox", "left": 500, "top": 240, "width": 350, "text": "yasminesmith.com", "fontSize": 18, "fill": "#1f1f1f", "textAlign": "left", "fontFamily": "Arial" },
+    { "type": "textbox", "left": 500, "top": 270, "width": 350, "text": "yasminesmith@info.com", "fontSize": 18, "fill": "#1f1f1f", "textAlign": "left", "fontFamily": "Arial" }
   ],
   "background": "#ffffff"
 }

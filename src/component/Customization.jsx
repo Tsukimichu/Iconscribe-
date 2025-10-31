@@ -103,7 +103,7 @@ const Customization = () => {
 
       // Initialize Fabric only once
       const canvas = new fabric.Canvas(canvasEl, {
-        width: 500,
+        width: 700,
         height: 500,
         backgroundColor: "#fff",
         preserveObjectStacking: true,

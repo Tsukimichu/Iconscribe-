@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Home,
   ClipboardList,
@@ -6,17 +6,18 @@ import {
   Truck,
   BarChart3,
   Archive,
+  MessageCircle,
   LogOut,
-} from 'lucide-react';
-import { motion } from 'framer-motion';
-import logo from '../../assets/ICONS.png';
+} from "lucide-react";
+import { motion } from "framer-motion";
+import logo from "../../assets/ICONS.png";
 
 const Navigation = ({ selectedSection, setSelectedSection, handleLogout }) => {
   const NavItem = ({ icon, label, onClick, active }) => (
     <motion.div
-      whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.08)' }}
+      whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,0.08)" }}
       className={`flex items-center space-x-3 cursor-pointer p-2 rounded-xl transition ${
-        active ? 'bg-white/10' : ''
+        active ? "bg-white/10" : ""
       }`}
       onClick={onClick}
     >
@@ -45,38 +46,44 @@ const Navigation = ({ selectedSection, setSelectedSection, handleLogout }) => {
         <NavItem
           icon={<Home size={18} />}
           label="Dashboard"
-          active={selectedSection === 'overview'}
-          onClick={() => setSelectedSection('overview')}
+          active={selectedSection === "overview"}
+          onClick={() => setSelectedSection("overview")}
         />
         <NavItem
           icon={<ClipboardList size={18} />}
           label="Orders"
-          active={selectedSection === 'orders'}
-          onClick={() => setSelectedSection('orders')}
+          active={selectedSection === "orders"}
+          onClick={() => setSelectedSection("orders")}
+        />
+        <NavItem
+          icon={<MessageCircle size={18} />}
+          label="Conversations"
+          active={selectedSection === "chat"}
+          onClick={() => setSelectedSection("chat")}
         />
         <NavItem
           icon={<Package size={18} />}
           label="Services"
-          active={selectedSection === 'products'}
-          onClick={() => setSelectedSection('products')}
+          active={selectedSection === "products"}
+          onClick={() => setSelectedSection("products")}
         />
         <NavItem
           icon={<Truck size={18} />}
           label="Supply"
-          active={selectedSection === 'supply'}
-          onClick={() => setSelectedSection('supply')}
+          active={selectedSection === "supply"}
+          onClick={() => setSelectedSection("supply")}
         />
         <NavItem
           icon={<BarChart3 size={18} />}
           label="Sales & Expense"
-          active={selectedSection === 'salesExpense'}
-          onClick={() => setSelectedSection('salesExpense')}
+          active={selectedSection === "salesExpense"}
+          onClick={() => setSelectedSection("salesExpense")}
         />
         <NavItem
           icon={<Archive size={18} />}
           label="Archive"
-          active={selectedSection === 'archive'}
-          onClick={() => setSelectedSection('archive')}
+          active={selectedSection === "archive"}
+          onClick={() => setSelectedSection("archive")}
         />
 
         {/* Logout Button */}

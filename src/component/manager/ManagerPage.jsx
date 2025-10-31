@@ -7,6 +7,7 @@ import ProductSection from './ProductSection';
 import SupplySection from './SupplySection';
 import SalesAndExpenseSection from './SalesAndExpenseSection';
 import ArchiveSection from './ArchiveSection';
+import ManagerChatPanel from "./ManagerChatPanel";
 
 const ManagerPage = () => {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ const ManagerPage = () => {
         {selectedSection === 'supply' && <SupplySection />}
         {selectedSection === 'salesExpense' && <SalesAndExpenseSection />}
         {selectedSection === 'archive' && <ArchiveSection />}
+        {selectedSection === "chat" && <ManagerChatPanel />}
       </main>
     </div>
   );

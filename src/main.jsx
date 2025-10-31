@@ -10,7 +10,6 @@ import Login from './component/Login.jsx';
 import Profile from './component/Profile.jsx';
 import Transactions from './component/Transactions.jsx';
 import ProtectedRoute from './component/ProtectedRoute.jsx';
-
 import AdminPage from './component/admin/AdminPage.jsx';  
 import Books from './products/Books.jsx';
 import Brochure from './products/Brochure.jsx';
@@ -27,14 +26,11 @@ import Binding from './products/Binding.jsx';
 import Invitation from './products/Invitation.jsx';
 import RaffleTicket from './products/RaffleTicket.jsx';
 import NewsLetter from './products/NewsLetter.jsx';
-
 import Customization from './component/Customization.jsx';
 import TemplateGallery from './component/TemplateGallery.jsx';
-
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-
-// ADDED: Toast provider (only addition)
 import { ToastProvider } from './component/ui/ToastProvider.jsx';
+import { AuthProvider } from './context/authContext.jsx';
 
 const router = createBrowserRouter([
   { path: '/', element: <Splash /> },
@@ -59,16 +55,13 @@ const router = createBrowserRouter([
   { path: '/raffleticket', element: <RaffleTicket/>},
   { path: '/newsletter', element: <NewsLetter/>},          
 
-  // Customization/Maintenance route for selected products
+  // Customization/Maintenance
   { path: '/customize', element: <Customization /> },
   { path: '/maintenance', element: <MaintenanceUser/>},
   { path: '/template-gallery', element: <TemplateGallery /> },
 
-
-
   // Admin role 
-   { path: '/mainteance', element: <Maintenance/> },
-
+  { path: '/mainteance', element: <Maintenance/> },
 
   // Roles
   { path: '/admin', element: <AdminPage /> },      
@@ -77,8 +70,10 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ToastProvider>
-      <RouterProvider router={router} />
-    </ToastProvider>
+    <AuthProvider>
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
+    </AuthProvider>
   </StrictMode>
 );

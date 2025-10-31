@@ -1,19 +1,21 @@
 import { useState, useEffect } from "react";
-
 import Nav from "./component/navigation";
 import Hero from "./component/Hero";
 import ProductSection from "./component/ProductSection";
 import Transactions from "./component/Transactions";
 import Aboutus from "./component/Aboutus";
-import ContactUs from "./component/ContactUs"; 
+import ContactUs from "./component/ContactUs";
 import Footer from "./component/footer";
-import MaintenanceUser from "./component/MaintenanceUser"; 
+import MaintenanceUser from "./component/MaintenanceUser";
+import ChatWidget from "./component/ChatWidget";
+import { useAuth } from "./context/authContext.jsx";
 
 function UserPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeProducts, setActiveProducts] = useState([]);
+  const { user } = useAuth();
 
-   useEffect(() => {
+  useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) setIsLoggedIn(true);
 
@@ -26,7 +28,6 @@ function UserPage() {
       .catch((err) => console.error("Error fetching products:", err));
   }, []);
 
-
   return (
     <MaintenanceUser>
       <>
@@ -37,7 +38,7 @@ function UserPage() {
           </section>
 
           <section id="product">
-             <ProductSection products={activeProducts} />
+            <ProductSection products={activeProducts} />
           </section>
 
           {isLoggedIn && (
@@ -58,6 +59,9 @@ function UserPage() {
         <footer>
           <Footer />
         </footer>
+
+        <ChatWidget userId={user?.user_id || 6} managerId={10} />
+
       </>
     </MaintenanceUser>
   );

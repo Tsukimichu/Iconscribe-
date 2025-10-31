@@ -32,6 +32,29 @@ function Newsletters() {
 
   const { showToast } = useToast();
 
+
+  // --- Price Estimation ---
+  const [estimatedPrice, setEstimatedPrice] = useState(0);
+
+  const priceConfig = {
+    base: 3.0, // base per piece
+    color: {
+      "Black & White": 0.5,
+      "Full Color": 1.2,
+    },
+    layout: {
+      "Single Page": 0.3,
+      "Multi-Page": 1.0,
+    },
+    size: {
+      A4: 0.8,
+      A5: 0.5,
+      "Letter (8.5”x11”)": 0.9,
+      "Legal (8.5”x14”)": 1.1,
+    },
+  };
+
+
   // Check login status
   useEffect(() => {
     const checkToken = () => {
@@ -192,6 +215,23 @@ const handleConfirmOrder = async () => {
     showToast(" Something went wrong while placing your order.", "error");
   }
 };
+
+
+useEffect(() => {
+  if (!quantity || quantity < 100) {
+    setEstimatedPrice(0);
+    return;
+  }
+
+  const q = Number(quantity);
+  const colorCost = priceConfig.color[paperType] || 0;
+  const layoutCost = priceConfig.layout[layout] || 0;
+  const sizeCost = priceConfig.size[size] || 0;
+
+  const total = q * (priceConfig.base + colorCost + layoutCost + sizeCost);
+  setEstimatedPrice(total);
+}, [quantity, paperType, layout, size]);
+
 
 
 
@@ -405,6 +445,15 @@ const handleConfirmOrder = async () => {
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-23 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           placeholder="Enter message"
                         ></textarea>
+                      </div>
+                      <div className="border border-blue-200 bg-blue-50 rounded-2xl shadow-sm p-5 text-right">
+                        <p className="text-base text-gray-700 font-medium">Estimated Price</p>
+                        <p className="text-3xl font-bold text-blue-700 mt-1">
+                          ₱{estimatedPrice.toFixed(2)}
+                        </p>
+                        <p className="text-sm text-gray-500 italic mt-1">
+                          *Final price may vary depending on specifications
+                        </p>
                       </div>
                     </div>
                   </div>

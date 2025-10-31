@@ -39,6 +39,22 @@ function RaffleTicket() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
 
+  // --- Price Estimation ---
+  const [estimatedPrice, setEstimatedPrice] = useState(0);
+
+  const priceConfig = {
+    base: 1.5, // base price per raffle ticket
+    size: {
+      '2” x 5” (Standard)': 0.5,
+      'Custom Size': 0.8,
+    },
+    withStub: {
+      Yes: 0.4,
+      No: 0,
+    },
+  };
+
+
   // Check login state
   useEffect(() => {
     const checkToken = () => {
@@ -194,6 +210,21 @@ function RaffleTicket() {
       showToast(" Something went wrong while placing your order.", "error");
     }
   };
+
+  useEffect(() => {
+    if (!quantity || quantity < 50) {
+      setEstimatedPrice(0);
+      return;
+    }
+
+    const q = Number(quantity);
+    const sizeCost = priceConfig.size[size] || 0;
+    const stubCost = priceConfig.withStub[withStub] || 0;
+
+    const total = q * (priceConfig.base + sizeCost + stubCost);
+    setEstimatedPrice(total);
+  }, [quantity, size, withStub]);
+
 
 
 
@@ -393,6 +424,15 @@ function RaffleTicket() {
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-19 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           placeholder="Enter special instructions"
                         ></textarea>
+                      </div>
+                      <div className="border border-blue-200 bg-blue-50 rounded-2xl shadow-sm p-5 text-right">
+                        <p className="text-base text-gray-700 font-medium">Estimated Price</p>
+                        <p className="text-3xl font-bold text-blue-700 mt-1">
+                          ₱{estimatedPrice.toFixed(2)}
+                        </p>
+                        <p className="text-sm text-gray-500 italic mt-1">
+                          *Final price may vary depending on specifications
+                        </p>
                       </div>
                     </div>
                   </div>

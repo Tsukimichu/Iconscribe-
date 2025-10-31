@@ -24,6 +24,29 @@ function Invitation() {
   const [showContactModal, setShowContactModal] = useState(false);
   const [visible, setVisible] = useState(true);
 
+
+  const [estimatedPrice, setEstimatedPrice] = useState(0);
+
+  // Base prices (you can tweak these or fetch from DB later)
+  const priceConfig = {
+    base: 2.5, // base price per copy
+    size: {
+      "5x7 inches": 0.5,
+      "4x6 inches": 0.3,
+      "Custom": 1.0,
+    },
+    paperType: {
+      Carbonized: 1.2,
+      Colored: 0.8,
+      Plain: 0.5,
+    },
+    printMethod: {
+      "Computer Printout": 0.5,
+      "Offset Machine": 1.0,
+    },
+  };
+
+
   // Form fields
   const [size, setSize] = useState("");
   const [paperType, setPaperType] = useState("");
@@ -186,6 +209,22 @@ const handleConfirmOrder = async () => {
     showToast(" Something went wrong. Please try again later.", "error");
   }
 };
+
+useEffect(() => {
+  if (!quantity || quantity < 50) {
+    setEstimatedPrice(0);
+    return;
+  }
+
+  const q = Number(quantity);
+  const sizeCost = priceConfig.size[size] || 0;
+  const paperCost = priceConfig.paperType[paperType] || 0;
+  const printCost = priceConfig.printMethod[printMethod] || 0;
+
+  const total = q * (priceConfig.base + sizeCost + paperCost + printCost);
+  setEstimatedPrice(total);
+}, [quantity, size, paperType, printMethod]);
+
 
 
   return (
@@ -391,6 +430,15 @@ const handleConfirmOrder = async () => {
                           placeholder="Enter message"
                         ></textarea>
                       </div>
+                    </div>
+                    <div className="border border-blue-200 bg-blue-50 rounded-2xl shadow-sm p-5 text-right">
+                      <p className="text-base text-gray-700 font-medium">Estimated Price</p>
+                      <p className="text-3xl font-bold text-blue-700 mt-1">
+                        ₱{estimatedPrice.toFixed(2)}
+                      </p>
+                      <p className="text-sm text-gray-500 italic mt-1">
+                        *Final price may vary depending on specifications
+                      </p>
                     </div>
                   </div>
 

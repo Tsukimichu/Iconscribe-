@@ -35,6 +35,31 @@ function OfficialReceipt() {
     business: "",
   });
 
+
+
+  // --- Price Estimation ---
+  const [estimatedPrice, setEstimatedPrice] = useState(0);
+
+  const priceConfig = {
+    base: 2.5, // base price per receipt
+    paperType: {
+      Carbonized: 1.2,
+      "Colored Bondpaper": 0.6,
+    },
+    bookletFinish: {
+      Padded: 0.7,
+      Stapled: 0.4,
+      Loose: 0.3,
+    },
+    size: {
+      A4: 1.0,
+      A5: 0.8,
+      "Half Page": 0.6,
+      "Full Page": 1.2,
+    },
+  };
+
+
   // Check login state
   useEffect(() => {
     const checkToken = () => {
@@ -196,6 +221,22 @@ function OfficialReceipt() {
       setShowConfirm(true);
     }
   };
+
+  useEffect(() => {
+    if (!quantity || quantity < 100) {
+      setEstimatedPrice(0);
+      return;
+    }
+
+    const q = Number(quantity);
+    const paperCost = priceConfig.paperType[paperType] || 0;
+    const finishCost = priceConfig.bookletFinish[bookletFinish] || 0;
+    const sizeCost = priceConfig.size[size] || 0;
+
+    const total = q * (priceConfig.base + paperCost + finishCost + sizeCost);
+    setEstimatedPrice(total);
+  }, [quantity, paperType, bookletFinish, size]);
+
 
 
   return (
@@ -408,6 +449,15 @@ function OfficialReceipt() {
                           className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-23 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                           placeholder="Enter message"
                         ></textarea>
+                      </div>
+                      <div className="border border-blue-200 bg-blue-50 rounded-2xl shadow-sm p-5 text-right">
+                        <p className="text-base text-gray-700 font-medium">Estimated Price</p>
+                        <p className="text-3xl font-bold text-blue-700 mt-1">
+                          ₱{estimatedPrice.toFixed(2)}
+                        </p>
+                        <p className="text-sm text-gray-500 italic mt-1">
+                          *Final price may vary depending on specifications
+                        </p>
                       </div>
                     </div>
                   </div>

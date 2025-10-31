@@ -27,6 +27,24 @@ function Label() {
   const [file, setFile] = useState(null); // ✅ added file state
   const [visible, setVisible] = useState(true);
 
+
+  const [estimatedPrice, setEstimatedPrice] = useState(0);
+
+  const priceConfig = {
+    base: 1.5, // base price per label
+    size: {
+      "2” x 2”": 0.3,
+      "3” x 3”": 0.5,
+      "Custom Size": 0.8,
+    },
+    paperType: {
+      Matte: 0.5,
+      Glossy: 0.7,
+      Transparent: 1.0,
+      "Waterproof Vinyl": 1.3,
+    },
+  };
+
   // --- Auth Check ---
   useEffect(() => {
     const checkToken = () => {
@@ -179,6 +197,21 @@ const handleConfirmOrder = async () => {
   }
 };
 
+useEffect(() => {
+  if (!quantity || quantity < 100) {
+    setEstimatedPrice(0);
+    return;
+  }
+
+  const q = Number(quantity);
+  const sizeCost = priceConfig.size[size] || 0;
+  const paperCost = priceConfig.paperType[paperType] || 0;
+
+  const total = q * (priceConfig.base + sizeCost + paperCost);
+  setEstimatedPrice(total);
+}, [quantity, size, paperType]);
+
+
 
   return (
     <>
@@ -287,6 +320,15 @@ const handleConfirmOrder = async () => {
                   className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-28 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition"
                   placeholder="Add special instructions..."
                 ></textarea>
+              </div>
+              <div className="border border-blue-200 bg-blue-50 rounded-2xl shadow-sm p-5 text-right">
+                <p className="text-base text-gray-700 font-medium">Estimated Price</p>
+                <p className="text-3xl font-bold text-blue-700 mt-1">
+                  ₱{estimatedPrice.toFixed(2)}
+                </p>
+                <p className="text-sm text-gray-500 italic mt-1">
+                  *Final price may vary depending on specifications
+                </p>
               </div>
 
               {!isLoggedIn && (

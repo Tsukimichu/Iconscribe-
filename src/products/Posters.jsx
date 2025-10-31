@@ -33,6 +33,35 @@ function Posters() {
   const [showContactModal, setShowContactModal] = useState(false);
   const [visible, setVisible] = useState(true);
 
+  // --- Price Estimation ---
+  const [estimatedPrice, setEstimatedPrice] = useState(0);
+
+  const priceConfig = {
+    base: 3.5, // base cost per poster
+    size: {
+      A3: 0.8,
+      A2: 1.2,
+      A1: 1.8,
+      Custom: 2.0,
+    },
+    paperType: {
+      Glossy: 1.0,
+      Matte: 0.8,
+      "Premium Card": 1.3,
+    },
+    lamination: {
+      None: 0,
+      Gloss: 0.5,
+      Matte: 0.6,
+      "UV Coated": 0.9,
+    },
+    color: {
+      "Full Color": 1.2,
+      "Black & White": 0.5,
+    },
+  };
+
+
   // AUTH CHECK
   useEffect(() => {
     const checkToken = () => {
@@ -190,6 +219,23 @@ function Posters() {
       showToast(" Something went wrong while placing your order.", "error");
     }
   };
+
+  useEffect(() => {
+    if (!quantity || quantity < 100) {
+      setEstimatedPrice(0);
+      return;
+    }
+
+    const q = Number(quantity);
+    const sizeCost = priceConfig.size[size] || 0;
+    const paperCost = priceConfig.paperType[paperType] || 0;
+    const laminationCost = priceConfig.lamination[lamination] || 0;
+    const colorCost = priceConfig.color[color] || 0;
+
+    const total = q * (priceConfig.base + sizeCost + paperCost + laminationCost + colorCost);
+    setEstimatedPrice(total);
+  }, [quantity, size, paperType, lamination, color]);
+
 
 
   return (
@@ -402,6 +448,15 @@ function Posters() {
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl h-41 resize-none shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         placeholder="Enter a Message"
                       ></textarea>
+                    </div>
+                    <div className="border border-blue-200 bg-blue-50 rounded-2xl shadow-sm p-5 text-right">
+                      <p className="text-base text-gray-700 font-medium">Estimated Price</p>
+                      <p className="text-3xl font-bold text-blue-700 mt-1">
+                        ₱{estimatedPrice.toFixed(2)}
+                      </p>
+                      <p className="text-sm text-gray-500 italic mt-1">
+                        *Final price may vary depending on specifications
+                      </p>
                     </div>
                   </div>
 

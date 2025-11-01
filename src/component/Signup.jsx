@@ -4,6 +4,7 @@ import axios from "axios";
 import logo from "../assets/ICONS.png";
 import orgImage from "../assets/org.jpg";
 import { Eye, EyeOff, ArrowBigLeft, CheckCircle } from "lucide-react";
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "./ui/ToastProvider.jsx";
 

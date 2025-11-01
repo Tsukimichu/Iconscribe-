@@ -11,14 +11,13 @@ import ChatWidget from "./component/ChatWidget";
 import { useAuth } from "./context/authContext.jsx";
 
 function UserPage() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeProducts, setActiveProducts] = useState([]);
   const { user } = useAuth();
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) setIsLoggedIn(true);
+  // user exists → logged in
+  const isLoggedIn = !!user;
 
+  useEffect(() => {
     fetch("http://localhost:5000/api/products")
       .then((res) => res.json())
       .then((data) => {
@@ -60,8 +59,8 @@ function UserPage() {
           <Footer />
         </footer>
 
-        <ChatWidget userId={user?.user_id || 6} managerId={10} />
-
+        {/* ✅ Fix: use user?.id instead of user?.user_id */}
+        {isLoggedIn && <ChatWidget userId={user?.id} managerId={10} />}
       </>
     </MaintenanceUser>
   );

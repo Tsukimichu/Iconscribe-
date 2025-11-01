@@ -1,4 +1,4 @@
-// src/context/authContext.js
+// src/context/authContext.jsx
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext();
@@ -8,25 +8,23 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const id = localStorage.getItem("userId");
-    const role = localStorage.getItem("role");
+    const storedUser = localStorage.getItem("user");
 
-    if (token && id) {
-      setUser({ id, role, token });
+    if (token && storedUser) {
+      setUser({ ...JSON.parse(storedUser), token });
     }
   }, []);
 
-  const login = (token, id, role) => {
+  const login = (token, userData) => {
     localStorage.setItem("token", token);
-    localStorage.setItem("userId", id);
-    localStorage.setItem("role", role);
-    setUser({ id, role, token });
+    localStorage.setItem("user", JSON.stringify(userData));
+
+    setUser({ ...userData, token });
   };
 
   const logout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("role");
+    localStorage.removeItem("user");
     setUser(null);
   };
 
@@ -37,4 +35,5 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);

@@ -3,17 +3,18 @@ import { useNavigate } from "react-router-dom";
 import logo from "../assets/ICONS.png";
 import orgImage from "../assets/org.jpg";
 import { User, Lock } from "lucide-react";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { useToast } from "./ui/ToastProvider.jsx";
+import { useAuth } from "../context/authContext.jsx";
 
-function Login({ onLogin }) {
+function Login() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // ADD: initialize toast
   const { showToast } = useToast();
+  const { login } = useAuth(); 
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -29,14 +30,11 @@ function Login({ onLogin }) {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        localStorage.setItem("isLoggedIn", "true");
+        login(data.token, data.user);
 
-        if (onLogin) onLogin();
+        showToast("Login successful!", "success");
 
-        showToast(" Login successful!", "success");
-
+        // navigate based on role
         if (data.user.role === "admin") {
           navigate("/admin");
         } else if (data.user.role === "manager") {
@@ -45,10 +43,10 @@ function Login({ onLogin }) {
           navigate("/dashboard");
         }
       } else {
-        showToast(data.message || " Invalid credentials", "error");
+        showToast(data.message || "Invalid credentials", "error");
       }
     } catch (error) {
-      console.error(" Login error:", error);
+      console.error("Login error:", error);
       showToast("Something went wrong. Please try again.", "error");
     } finally {
       setLoading(false);
@@ -67,11 +65,7 @@ function Login({ onLogin }) {
       <div className="relative bg-white rounded-3xl shadow-4xl w-full max-w-5xl h-[650px] flex overflow-hidden">
         {/* Left Image */}
         <div className="w-1/2 h-full">
-          <img
-            src={orgImage}
-            alt="Organization"
-            className="w-full h-full object-cover"
-          />
+          <img src={orgImage} alt="Organization" className="w-full h-full object-cover" />
         </div>
 
         {/* Right Side (Form) */}
@@ -89,10 +83,7 @@ function Login({ onLogin }) {
             {/* Login Form */}
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="relative">
-                <User
-                  className="absolute left-3 top-2.5 text-gray-600"
-                  size={18}
-                />
+                <User className="absolute left-3 top-2.5 text-gray-600" size={18} />
                 <input
                   type="text"
                   placeholder="Username"
@@ -104,10 +95,7 @@ function Login({ onLogin }) {
               </div>
 
               <div className="relative">
-                <Lock
-                  className="absolute left-3 top-2.5 text-gray-600"
-                  size={18}
-                />
+                <Lock className="absolute left-3 top-2.5 text-gray-600" size={18} />
                 <input
                   type="password"
                   placeholder="Password"

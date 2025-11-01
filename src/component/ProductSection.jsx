@@ -25,7 +25,7 @@ function ProductSection() {
   const [services, setServices] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const productAssets = [
+  const productAssets = React.useMemo(() => [
     { title: "OfficialReceipt", description: "BIR-compliant official receipts with premium quality, smudge-free ink.", image: Officialreceipt, alt: "Official Receipts", link: "/official-receipt" },
     { title: "Calendars", description: "Custom calendars designed with your branding in mind.", image: calendar, alt: "Calendars", link: "/calendars" },
     { title: "Brochure", description: "Professionally printed brochures to showcase your products and services.", image: Brochure, alt: "Brochures", link: "/brochure" },
@@ -38,7 +38,7 @@ function ProductSection() {
     { title: "Invitation", description: "Invitation", image: Invitation, alt: "Invitation", link: "/invitation" },
     { title: "RaffleTicket", description: "RaffleTicket", image: RaffleTicket, alt: "RaffleTicket", link: "/raffleticket" },
     { title: "NewsLetter", description: "NewsLetter", image: NewsLetter, alt: "NewsLetter", link: "/newsletter" },
-  ];
+  ], []);
 
   
   useEffect(() => {
@@ -72,7 +72,7 @@ function ProductSection() {
         console.error("Error fetching products:", err);
         setServices([]);
       });
-  }, []);
+  }, [productAssets]);
 
 
   const filteredServices = services.filter((service) =>

@@ -1,29 +1,46 @@
 {
-  "version": "5.3.0",
-  "objects": [
-    { "type": "rect", "left": 0, "top": 0, "width": 900, "height": 500, "fill": "#1f1f1f" },
-    {
-      "type": "path",
-      "path": [["M", 0, 100], ["Q", 300, 0, 900, 80], ["L", 900, 500], ["L", 0, 500], ["Z"]],
-      "fill": "#ffffff"
-    },
-    {
-      "type": "path",
-      "path": [["M", 0, 120], ["Q", 300, 20, 900, 100], ["L", 900, 500], ["L", 0, 500], ["Z"]],
-      "fill": "#1f1f1f"
-    },
-    { "type": "path", "path": [["M", 760, 60], ["L", 790, 45], ["L", 820, 60], ["L", 820, 90], ["L", 790, 105], ["L", 760, 90], ["Z"]], "fill": "transparent", "stroke": "#ffffff", "strokeWidth": 3 },
-    { "type": "circle", "left": 470, "top": 180, "radius": 5, "fill": "#1f1f1f" },
-    { "type": "path", "path": [["M", 475, 215], ["L", 475, 215], ["L", 475, 215]], "stroke": "#1f1f1f", "strokeWidth": 2 },
-    { "type": "path", "path": [["M", 470, 240], ["L", 470, 260], ["L", 480, 260], ["L", 480, 240], ["Z"]], "fill": "#1f1f1f" },
-    { "type": "rect", "left": 470, "top": 275, "width": 12, "height": 8, "fill": "transparent", "stroke": "#1f1f1f", "strokeWidth": 2 },
+  "front": {
+    "version": "5.3.0",
+    "objects": [
+      { "type": "rect", "left": 0, "top": 0, "width": 525, "height": 300, "fill": "#ffffff" },
 
-    { "type": "textbox", "left": 60, "top": 80, "width": 400, "text": "YASMINE SMITH", "fontSize": 40, "fontWeight": "bold", "fill": "#ffffff", "textAlign": "left", "fontFamily": "Arial" },
-    { "type": "textbox", "left": 60, "top": 130, "width": 400, "text": "PERSONAL ASSISTANT", "fontSize": 20, "fill": "#ffffff", "textAlign": "left", "fontFamily": "Arial" },
-    { "type": "textbox", "left": 500, "top": 180, "width": 350, "text": "7654 453 2663 321", "fontSize": 18, "fill": "#1f1f1f", "textAlign": "left", "fontFamily": "Arial" },
-    { "type": "textbox", "left": 500, "top": 210, "width": 350, "text": "Rowes Lane 325 11", "fontSize": 18, "fill": "#1f1f1f", "textAlign": "left", "fontFamily": "Arial" },
-    { "type": "textbox", "left": 500, "top": 240, "width": 350, "text": "yasminesmith.com", "fontSize": 18, "fill": "#1f1f1f", "textAlign": "left", "fontFamily": "Arial" },
-    { "type": "textbox", "left": 500, "top": 270, "width": 350, "text": "yasminesmith@info.com", "fontSize": 18, "fill": "#1f1f1f", "textAlign": "left", "fontFamily": "Arial" }
-  ],
-  "background": "#ffffff"
+      { "type": "rect", "left": 0, "top": 0, "width": 150, "height": 150, "fill": "#1B5E20", "angle": 45, "originX": "left", "originY": "top" },
+      { "type": "rect", "left": 375, "top": 150, "width": 150, "height": 150, "fill": "#2E7D32", "angle": 45, "originX": "left", "originY": "top" },
+      { "type": "rect", "left": 375, "top": -30, "width": 120, "height": 120, "fill": "#43A047", "angle": 45, "originX": "left", "originY": "top" },
+      { "type": "rect", "left": 0, "top": 180, "width": 120, "height": 120, "fill": "#43A047", "angle": 45, "originX": "left", "originY": "top" },
+
+      { "type": "circle", "left": 212, "top": 90, "radius": 45, "fill": "#2E7D32" },
+      { "type": "triangle", "left": 228, "top": 105, "width": 50, "height": 55, "fill": "#ffffff" },
+      { "type": "path", "path": [["M", 220, 130], ["Q", 260, 140, 280, 120]], "stroke": "#ffffff", "strokeWidth": 4, "fill": "" },
+
+      { "type": "textbox", "left": 185, "top": 200, "width": 200, "text": "LICERIA", "fontSize": 26, "fontWeight": "bold", "fill": "#000000", "textAlign": "center", "fontFamily": "Arial" },
+      { "type": "textbox", "left": 185, "top": 230, "width": 200, "text": "COMPANY", "fontSize": 20, "fontWeight": "bold", "fill": "#2E7D32", "textAlign": "center", "fontFamily": "Arial" }
+    ],
+    "background": "#ffffff"
+  },
+
+  "back": {
+    "version": "5.3.0",
+    "objects": [
+      { "type": "rect", "left": 0, "top": 0, "width": 525, "height": 300, "fill": "#ffffff" },
+
+      { "type": "rect", "left": 350, "top": 200, "width": 120, "height": 120, "fill": "#1B5E20", "angle": 45 },
+      { "type": "rect", "left": 370, "top": 70, "width": 80, "height": 80, "fill": "#43A047", "angle": 45 },
+      { "type": "rect", "left": 410, "top": 30, "width": 40, "height": 40, "fill": "#2E7D32", "angle": 45 },
+
+      { "type": "circle", "left": 30, "top": 40, "radius": 18, "fill": "#2E7D32" },
+      { "type": "triangle", "left": 37, "top": 50, "width": 20, "height": 22, "fill": "#ffffff" },
+      { "type": "path", "path": [["M", 34, 65], ["Q", 55, 70, 65, 60]], "stroke": "#ffffff", "strokeWidth": 2, "fill": "" },
+      { "type": "textbox", "left": 70, "top": 42, "width": 200, "text": "LICERIA COMPANY", "fontSize": 14, "fontWeight": "bold", "fill": "#000000", "fontFamily": "Arial" },
+
+      { "type": "textbox", "left": 30, "top": 90, "width": 300, "text": "YOUR NAME", "fontSize": 24, "fontWeight": "bold", "fill": "#2E7D32", "fontFamily": "Arial" },
+      { "type": "textbox", "left": 30, "top": 120, "width": 300, "text": "YOUR POSITION", "fontSize": 16, "fill": "#000000", "fontStyle": "italic", "fontFamily": "Arial" },
+
+      { "type": "textbox", "left": 30, "top": 160, "width": 300, "text": "📞 123-456-7890", "fontSize": 14, "fill": "#000000", "fontFamily": "Arial" },
+      { "type": "textbox", "left": 30, "top": 180, "width": 300, "text": "🌐 www.yourwebsite.com", "fontSize": 14, "fill": "#000000", "fontFamily": "Arial" },
+      { "type": "textbox", "left": 30, "top": 200, "width": 300, "text": "✉️ youremail@example.com", "fontSize": 14, "fill": "#000000", "fontFamily": "Arial" },
+      { "type": "textbox", "left": 30, "top": 220, "width": 300, "text": "📍 123 Street, City, Country", "fontSize": 14, "fill": "#000000", "fontFamily": "Arial" }
+    ],
+    "background": "#ffffff"
+  }
 }

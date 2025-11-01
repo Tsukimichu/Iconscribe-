@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import * as fabric from "fabric";
 import {
   Upload,
@@ -19,13 +19,15 @@ import { useLocation } from "react-router-dom";
 const Customization = () => {
   const [text, setText] = useState("Your text here");
   const [activePanel, setActivePanel] = useState(null);
-  const [selectedObj, setSelectedObj] = useState(null);
+  const [selectedObj, SET_SELECTED_OBJ] = useState(null);
   const [selectedSize, setSelectedSize] = useState({ width: 100, height: 100 });
   const [previewUrls, setPreviewUrls] = useState([]);
   const [zoom, setZoom] = useState(1);
   const [toast, setToast] = useState(null);
   const [confirmResetVisible, setConfirmResetVisible] = useState(false);
   const location = useLocation();
+  const [canvases, setCanvases] = useState([{ id: 1 }]);
+
 
   const canvasRef = useRef(null);
   const fabricCanvasRef = useRef(null);
@@ -92,79 +94,9 @@ const Customization = () => {
     canvas.renderAll();
   };
 
-  // --- useEffect for fabric canvas init + event wiring ---
-    useEffect(() => {
-      // Make sure the <canvas> exists in the DOM
-      const canvasEl = canvasRef.current;
-      if (!canvasEl) {
-        console.warn("Canvas element not yet available");
-        return;
-      }
-
-      // Initialize Fabric only once
-      const canvas = new fabric.Canvas(canvasEl, {
-        width: 700,
-        height: 500,
-        backgroundColor: "#fff",
-        preserveObjectStacking: true,
-      });
-      fabricCanvasRef.current = canvas;
-
-      let isMounted = true; // Flag to prevent updates after unmount
-
-      const templateParamRaw = new URLSearchParams(window.location.search).get("template");
-
-      if (templateParamRaw) {
-        const templateParam = templateParamRaw.startsWith("/")
-          ? templateParamRaw
-          : `/${templateParamRaw}`;
-
-        console.log(" Fetching template:", templateParam);
-
-        fetch(templateParam)
-          .then((res) => {
-            if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-            return res.json();
-          })
-          .then((jsonData) => {
-            if (!isMounted) return; // Prevent running after unmount
-
-            try {
-              canvas.loadFromJSON(jsonData, () => {
-                if (!isMounted) return;
-                canvas.renderAll();
-                console.log("✅ Template loaded:", templateParam);
-              });
-            } catch (err) {
-              console.error("❌ Error loading JSON into Fabric:", err);
-            }
-          })
-          .catch((err) => {
-            console.error("❌ Template fetch/load error:", err);
-          });
-      }
-
-      // Cleanup safely
-      return () => {
-        isMounted = false;
-        if (fabricCanvasRef.current) {
-          try {
-            fabricCanvasRef.current.dispose();
-            fabricCanvasRef.current = null;
-          } catch (err) {
-            console.warn("⚠️ Error disposing canvas:", err);
-          }
-        }
-      };
-    }, []);
-
-
-
-
-
   // --- UNDO / REDO functions ---
   // --- UNDO ---
-  const handleUndo = () => {
+  const handleUndo = useCallback(() => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
     if (historyIndex.current <= 0) {
@@ -180,10 +112,10 @@ const Customization = () => {
       localStorage.setItem("canvasHistoryIndex", historyIndex.current);
       showToast("Undone");
     });
-  };
+  }, []);
 
   // --- REDO ---
-  const handleRedo = () => {
+  const handleRedo = useCallback(() => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
     if (historyIndex.current >= history.current.length - 1) {
@@ -199,7 +131,74 @@ const Customization = () => {
       localStorage.setItem("canvasHistoryIndex", historyIndex.current);
       showToast("Redone");
     });
-  };
+  }, []);
+
+  // --- useEffect for fabric canvas init + event wiring ---
+  useEffect(() => {
+    // Make sure the <canvas> exists in the DOM
+    const canvasEl = canvasRef.current;
+    if (!canvasEl) {
+      console.warn("Canvas element not yet available");
+      return;
+    }
+
+    // Initialize Fabric only once
+    const canvas = new fabric.Canvas(canvasEl, {
+      width: 700,
+      height: 500,
+      backgroundColor: "#fff",
+      preserveObjectStacking: true,
+    });
+    fabricCanvasRef.current = canvas;
+
+    let isMounted = true; // Flag to prevent updates after unmount
+
+    const templateParamRaw = new URLSearchParams(window.location.search).get("template");
+
+    if (templateParamRaw) {
+      const templateParam = templateParamRaw.startsWith("/")
+        ? templateParamRaw
+        : `/${templateParamRaw}`;
+
+      console.log(" Fetching template:", templateParam);
+
+      fetch(templateParam)
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+          return res.json();
+        })
+        .then((jsonData) => {
+          if (!isMounted) return; // Prevent running after unmount
+
+          try {
+            canvas.loadFromJSON(jsonData, () => {
+              if (!isMounted) return;
+              canvas.renderAll();
+              console.log("✅ Template loaded:", templateParam);
+            });
+          } catch (err) {
+            console.error("❌ Error loading JSON into Fabric:", err);
+          }
+        })
+        .catch((err) => {
+          console.error("❌ Template fetch/load error:", err);
+        });
+    }
+
+    // Cleanup safely
+    return () => {
+      isMounted = false;
+      if (fabricCanvasRef.current) {
+        try {
+          fabricCanvasRef.current.dispose();
+          fabricCanvasRef.current = null;
+        } catch (err) {
+          console.warn("⚠️ Error disposing canvas:", err);
+        }
+      }
+    };
+  }, [handleRedo, handleUndo]);
+
 
   // --- Keyboard Shortcuts: Undo/Redo/Delete/Nudge/Duplicate/SelectAll/Escape ---
   useEffect(() => {
@@ -285,10 +284,10 @@ const Customization = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [handleRedo, handleUndo]);
   
   // --- TEMPLATE LOADING from query param ---
-    const getTemplateFromURL = () => {
+    const GET_TEMPLATE_FROM_URL = () => {
     const params = new URLSearchParams(location.search);
     return params.get("template");
   };
@@ -328,35 +327,9 @@ const safeRender = (canvas) => {
     setPreviewUrls((prev) => [...prev, ...newUrls]);
   };
 
-  // --- Replace selected image with new file ---
-  const replaceSelectedImage = (file) => {
-    const canvas = fabricCanvasRef.current;
-    if (!canvas || !file) return;
-    const activeObj = canvas.getActiveObject();
-    if (!activeObj || !(activeObj.type === "image")) return;
-
-    const reader = new FileReader();
-    reader.onload = (f) => {
-      fabric.Image.fromURL(f.target.result, (img) => {
-        img.set({
-          left: activeObj.left,
-          top: activeObj.top,
-          scaleX: activeObj.scaleX,
-          scaleY: activeObj.scaleY,
-        });
-        // remove old and add new
-        canvas.remove(activeObj);
-        canvas.add(img);
-        canvas.setActiveObject(img);
-        canvas.requestRenderAll();
-        saveState(canvas);
-      });
-    };
-    reader.readAsDataURL(file);
-  };
 
   // --- BACKGROUND IMAGE UPLOAD  ---
-  const handleBackgroundUpload = (e) => {
+  function handleBackgroundUpload(e) {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
     const file = e.target.files[0];
@@ -378,7 +351,7 @@ const safeRender = (canvas) => {
       });
     };
     reader.readAsDataURL(file);
-  };
+  }
 
   // --- SHAPES ---
 const addShape = (type) => {
@@ -418,7 +391,7 @@ const addShape = (type) => {
 };
 
   // --- SAVE / EXPORT: PNG, JPG, SVG, PDF ---
-  const handleSave = async (type = "png", options = {}) => {
+  const handleSave = async (type = "png") => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
     const format = type.toLowerCase();
@@ -582,32 +555,10 @@ const addShape = (type) => {
     saveState(canvas);
   };
 
-  // --- IMAGE TOOLS: flip / opacity ---
-  const flipSelected = (axis = "x") => {
-    const canvas = fabricCanvasRef.current;
-    if (!canvas) return;
-    const obj = canvas.getActiveObject();
-    if (!obj || obj.type !== "image") return;
-    if (axis === "x") obj.set("flipX", !obj.flipX);
-    if (axis === "y") obj.set("flipY", !obj.flipY);
-    canvas.requestRenderAll();
-    saveState(canvas);
-  };
-
-  const setSelectedOpacity = (value) => {
-    const canvas = fabricCanvasRef.current;
-    if (!canvas) return;
-    const obj = canvas.getActiveObject();
-    if (!obj) return;
-    obj.set("opacity", value);
-    canvas.requestRenderAll();
-    saveState(canvas);
-  };
-
   // --- BACKGROUND color reset (with confirmation) ---
-  const handleResetBackground = () => {
+  function handleResetBackground() {
     setConfirmResetVisible(true);
-  };
+  }
 
   const confirmReset = (doReset) => {
     setConfirmResetVisible(false);
@@ -892,7 +843,7 @@ const addShape = (type) => {
       {/* Main Area */}
       <div className="flex-1 flex flex-col mt-4 md:mt-0 md:ml-4">
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-2 bg-white rounded-2xl shadow-md p-2 md:p-3 mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-1 bg-white rounded-2xl shadow-md p-2 md:p-3 mb-4">
           <div className="space-x-2">
             <button onClick={handleUndo} className="px-3 md:px-4 py-1 md:py-2 bg-gray-100 hover:bg-gray-200 rounded-lg shadow-sm"><Undo2 /></button>
             <button onClick={handleRedo} className="px-3 md:px-4 py-1 md:py-2 bg-gray-100 hover:bg-gray-200 rounded-lg shadow-sm"><Redo2 /></button>
@@ -900,7 +851,7 @@ const addShape = (type) => {
               <button onClick={() => handleSave("png")} className="px-3 md:px-4 py-1 md:py-2 bg-yellow-400 hover:bg-yellow-500 text-black font-medium rounded-lg shadow mr-2">Save PNG</button>
               <button onClick={() => handleSave("jpeg")} className="px-3 md:px-4 py-1 md:py-2 bg-yellow-200 hover:bg-yellow-300 text-black font-medium rounded-lg shadow mr-2">Save JPG</button>
               <button onClick={() => handleSave("svg")} className="px-3 md:px-4 py-1 md:py-2 bg-gray-100 hover:bg-gray-200 rounded-lg shadow mr-2">Save SVG</button>
-              <button onClick={() => handleSave("pdf")} className="px-3 md:px-4 py-1 md:py-2 bg-gray-100 hover:bg-gray-200 rounded-lg shadow">Save PDF</button>
+              <button onClick={() => handleSave("pdf")} className="px-3 md:px-4 py-1 md:py-2 bg-gray-100 hover:bg-gray-200 rounded-lg shadow">Save PDF</button> 
             </div>
           </div>
 
@@ -929,9 +880,31 @@ const addShape = (type) => {
 
         {/* Canvas */}
         <div className="flex-1 flex flex-col items-center bg-white rounded-2xl shadow-md overflow-auto relative">
-          <div className="flex-1 flex justify-center items-center">
-            <canvas ref={canvasRef} className="relative w-full max-w-3xl overflow-hidden group shadow-2xl" />
-          </div>
+         <div className="flex flex-col gap-4 mt-4 items-center">
+                {/* Render all canvases stacked vertically */}
+                {canvases.map((c, index) => (
+                  <div
+                    key={c.id}
+                    className="border rounded-lg bg-white p-2 shadow-md"
+                  >
+                    <canvas
+                      id={`canvas-${c.id}`}
+                      ref={index === 0 ? canvasRef : null} 
+                      width={700}
+                      height={500}
+                      className="rounded-lg"
+                    />
+                  </div>
+                ))}
+
+                {/* Add Canvas button at the bottom */}
+                <button
+                  onClick={() => setCanvases((prev) => [...prev, { id: prev.length + 1 }])}
+                  className="px-4 py-2 bg-gray-200 text-black-200 rounded-lg shadow hover:bg-gray-400"
+                >
+                  +
+                </button>
+              </div>
 
           {/* Zoom controls */}
           <div className="flex items-center gap-2 p-2 bg-gray-100 rounded-lg shadow mt-2 mb-2">

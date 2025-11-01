@@ -3,7 +3,7 @@
     "id": "businesscard1",
     "name": "Monochrome Business Card",
     "category": "Business Card",
-    "preview": "/templates/business-card/business-card1.jpg",
+    "preview": "/templates/business-card/business-card1.png",
     "json": "/templates/json/business-card1.json"
   },
     {

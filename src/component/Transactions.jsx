@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { Eye, CheckCircle, Clock, Truck, X } from "lucide-react";
 
@@ -12,8 +13,11 @@ function Transactions() {
   const [loading, setLoading] = useState(true);
   const [showImageModal, setShowImageModal] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
-  const [imageGallery, setImageGallery] = useState([]);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  function handleImagePreview(image) {
+    setPreviewImage(image);
+    setShowImageModal(true);
+  }
 
 
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -98,7 +102,13 @@ function Transactions() {
                       <td>{item.dateOrdered?.slice(0, 10) || item.created_at?.slice(0, 10)}</td>
                       <td className="font-semibold">{item.urgency}</td>
                       <td className="font-semibold flex items-center gap-2">
-                        {getStatusIcon(item.status)}
+                        <span
+                          className={`cursor-pointer ${item.image ? "opacity-90 hover:opacity-100" : ""}`}
+                          onClick={() => item.image && handleImagePreview(item.image)}
+                          title={item.image ? "Preview image" : "No image"}
+                        >
+                          {getStatusIcon(item.status)}
+                        </span>
                         {item.status}
                       </td>
                       <td>
@@ -164,6 +174,13 @@ function Transactions() {
                 <X size={20} />
               </button>
             </div>
+              <p>
+                <strong>Status:</strong>{" "}
+                <span className="inline-flex items-center gap-2">
+                  {getStatusIcon(selectedOrder.status)}
+                  {selectedOrder.status}
+                </span>
+              </p>
 
             <div className="space-y-3 text-gray-700">
               <p><strong>Service:</strong> {selectedOrder.service || selectedOrder.product_name}</p>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
-
 import Navigation from "./Navigation";
 import OverviewSection from "./OverviewSection";
 import ManageUserSection from "./ManageUserSection";

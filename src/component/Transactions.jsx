@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { Eye, CheckCircle, Clock, Truck, X } from "lucide-react";
+import { useAuth } from "../context/authContext.jsx";
 
 function Transactions() {
-  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-  const user = JSON.parse(localStorage.getItem("user"));
-  const userId = user?.id;
+const { user } = useAuth();
+const isLoggedIn = !!user;
+const userId = user?.id;
 
 
   const [orders, setOrders] = useState([]);

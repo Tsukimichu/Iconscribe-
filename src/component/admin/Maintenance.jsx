@@ -9,6 +9,44 @@ const Maintenance = () => {
   const [endDate, setEndDate] = useState("");
   const [showCountdown, setShowCountdown] = useState(true);
 
+  const [selectedProduct, setSelectedProduct] = useState("Book");
+  const [productComponents, setProductComponents] = useState({
+    Book: [
+      { name: "Paper (Matte)", cost: 15, unit: "per sheet" },
+      { name: "Binding Glue", cost: 10, unit: "per use" },
+      { name: "Ink", cost: 5, unit: "per page" },
+    ],
+    Sticker: [
+      { name: "Vinyl Sheet", cost: 8, unit: "per piece" },
+      { name: "Adhesive", cost: 5, unit: "per ml" },
+    ],
+  });
+
+  // Component editing logic
+  const handleComponentChange = (index, key, value) => {
+    const updated = { ...productComponents };
+    updated[selectedProduct][index][key] = value;
+    setProductComponents(updated);
+  };
+
+  const handleAddComponent = (product) => {
+    const updated = { ...productComponents };
+    updated[product].push({ name: "", cost: "", unit: "" });
+    setProductComponents(updated);
+  };
+
+  const handleDeleteComponent = (product, index) => {
+    const updated = { ...productComponents };
+    updated[product].splice(index, 1);
+    setProductComponents(updated);
+  };
+
+  const handleSaveComponent = (product, index) => {
+    const comp = productComponents[product][index];
+    alert(`✅ Saved ${comp.name} (${comp.cost} / ${comp.unit}) for ${product}`);
+  };
+
+
   useEffect(() => {
     const fetchStatus = async () => {
       try {
@@ -202,6 +240,94 @@ const Maintenance = () => {
             <p className="text-gray-500">Maintenance mode is <b>OFF</b>.</p>
           )}
         </div>
+
+
+        {/* Product Components Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mt-12 bg-white border border-gray-200 shadow-lg rounded-2xl p-8"
+        >
+          <h2 className="text-2xl font-bold text-cyan-700 mb-4">Product Components Cost</h2>
+
+          {/* Select Product */}
+          <div className="flex flex-col md:flex-row md:items-center md:space-x-4 mb-6">
+            <label className="text-sm font-medium text-gray-700 mb-2 md:mb-0">
+              Select Product:
+            </label>
+            <select
+              value={selectedProduct}
+              onChange={(e) => setSelectedProduct(e.target.value)}
+              className="border border-gray-300 rounded-lg p-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+              {Object.keys(productComponents).map((product) => (
+                <option key={product} value={product}>
+                  {product}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Component List */}
+          <div className="space-y-4">
+            {productComponents[selectedProduct].map((comp, index) => (
+              <div
+                key={index}
+                className="flex flex-col md:flex-row md:items-center md:space-x-4 p-4 border border-gray-200 rounded-xl bg-gray-50 shadow-sm"
+              >
+                <input
+                  type="text"
+                  value={comp.name}
+                  onChange={(e) => handleComponentChange(index, "name", e.target.value)}
+                  className="flex-1 bg-white border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  placeholder="Component Name"
+                />
+                <div className="flex items-center space-x-2 mt-2 md:mt-0">
+                  <span className="text-gray-600">₱</span>
+                  <input
+                    type="number"
+                    value={comp.cost}
+                    onChange={(e) => handleComponentChange(index, "cost", e.target.value)}
+                    className="w-24 border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    placeholder="Cost"
+                  />
+                </div>
+                <input
+                  type="text"
+                  value={comp.unit}
+                  onChange={(e) => handleComponentChange(index, "unit", e.target.value)}
+                  className="w-32 border border-gray-300 rounded-lg p-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  placeholder="Unit (e.g. per sheet)"
+                />
+                <div className="flex space-x-2 mt-3 md:mt-0">
+                  <button
+                    onClick={() => handleSaveComponent(selectedProduct, index)}
+                    className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-sm shadow-md transition"
+                  >
+                    <Save className="w-4 h-4" /> Save
+                  </button>
+                  <button
+                    onClick={() => handleDeleteComponent(selectedProduct, index)}
+                    className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-lg text-sm shadow-md transition"
+                  >
+                    <X className="w-4 h-4" /> Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Add Component */}
+          <div className="mt-6">
+            <button
+              onClick={() => handleAddComponent(selectedProduct)}
+              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm transition"
+            >
+              + Add Component
+            </button>
+          </div>
+        </motion.div>
       </div>
     </motion.div>
   );

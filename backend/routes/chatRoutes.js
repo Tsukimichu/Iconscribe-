@@ -15,10 +15,10 @@ router.get("/messages/:conversationId", (req, res) => {
         return res.status(500).json({ message: "Database error" });
       }
 
-      // Map results to include `time` for frontend
+      // Add 'time' field for frontend
       const formatted = results.map(msg => ({
         ...msg,
-        time: msg.createdAt
+        time: msg.createdAt,
       }));
 
       res.json(formatted);
@@ -34,7 +34,10 @@ router.post("/conversations", (req, res) => {
     "SELECT * FROM conversations WHERE clientId = ? AND managerId = ?",
     [clientId, managerId],
     (err, results) => {
-      if (err) return res.status(500).json({ message: err.message });
+      if (err) {
+        console.error("❌ Error fetching conversation:", err);
+        return res.status(500).json({ message: "Database error" });
+      }
 
       if (results.length > 0) {
         res.json(results[0]);
@@ -43,7 +46,10 @@ router.post("/conversations", (req, res) => {
           "INSERT INTO conversations (clientId, managerId) VALUES (?, ?)",
           [clientId, managerId],
           (err, result) => {
-            if (err) return res.status(500).json({ message: err.message });
+            if (err) {
+              console.error("❌ Error creating conversation:", err);
+              return res.status(500).json({ message: "Database error" });
+            }
             res.json({ id: result.insertId, clientId, managerId });
           }
         );
@@ -52,29 +58,36 @@ router.post("/conversations", (req, res) => {
   );
 });
 
+// -------------------- GET conversations by manager --------------------
 router.get("/conversations/:managerId", (req, res) => {
   const managerId = req.params.managerId;
 
-  db.query(
-    `SELECT c.*, m.text AS lastMessage
-     FROM conversations c
-     LEFT JOIN messages m ON m.id = (
-         SELECT id FROM messages WHERE conversationId = c.id ORDER BY createdAt DESC LIMIT 1
-     )
-     WHERE c.managerId = ?
-     ORDER BY c.id DESC`,
-    [managerId],
-    (err, results) => {
-      if (err) {
-        console.error("❌ Error loading conversations:", err);
-        return res.status(500).json({ message: "Database error" });
-      }
-      res.json(results);
+  const query = `
+    SELECT 
+      c.id,
+      c.clientId,
+      u.name AS clientName,
+      m.text AS lastMessage
+    FROM conversations c
+    LEFT JOIN users u ON c.clientId = u.user_id
+    LEFT JOIN messages m ON m.id = (
+        SELECT id FROM messages 
+        WHERE conversationId = c.id 
+        ORDER BY createdAt DESC 
+        LIMIT 1
+    )
+    WHERE c.managerId = ?
+    ORDER BY c.id DESC
+  `;
+
+  db.query(query, [managerId], (err, results) => {
+    if (err) {
+      console.error("❌ Error loading conversations:", err);
+      return res.status(500).json({ message: "Database error" });
     }
-  );
+    res.json(results);
+  });
 });
-
-
 
 // -------------------- POST message --------------------
 router.post("/messages", (req, res) => {
@@ -94,10 +107,10 @@ router.post("/messages", (req, res) => {
         conversationId,
         senderId,
         text,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       };
 
-      // Emit the message via Socket.IO
+      // Emit via Socket.IO
       const io = req.app.get("io");
       if (io) io.to(`room_${conversationId}`).emit("receiveMessage", message);
 

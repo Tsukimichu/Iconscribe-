@@ -6,18 +6,81 @@
     "preview": "/templates/business-card/business-card1.png",
     "json": "/templates/json/business-card/business-card1.json"
   },
-    {
-        "id": "businesscard2",
-        "name": "Colorful Business Card",
-        "category": "Business Card",
-        "preview": "/templates/business-card/business-card2.jpg",
-        "json": "/templates/json/business-card2.json"
-    },
-    {
-        "id": "businesscard3",
-        "name": "Minimalist Business Card",
-        "category": "Business Card",
-        "preview": "/templates/business-card/business-card3.jpg",
-        "json": "/templates/json/business-card3.json"
-    }
+  {
+    "id": "businesscard2",
+    "name": "Colorful Business Card",
+    "category": "Business Card",
+    "preview": "/templates/business-card/business-card2.jpg",
+    "json": "/templates/json/business-card2.json"
+  },
+  {
+    "id": "businesscard3",
+    "name": "Minimalist Business Card",
+    "category": "Business Card",
+    "preview": "/templates/business-card/business-card3.jpg",
+    "json": "/templates/json/business-card3.json"
+  },
+  {
+    "id": "calendar1",
+    "name": "Wall Calendar",
+    "category": "Calendar",
+    "preview": "/templates/calendar/calendar1.png",
+    "json": "/templates/json/calendar/calendar1.json"
+  },
+  {
+    "id": "calendar2",
+    "name": "Desk Calendar",
+    "category": "Calendar",
+    "preview": "/templates/calendar/calendar2.png",
+    "json": "/templates/json/calendar/calendar2.json"
+  },
+  {
+    "id": "calendar3",
+    "name": "Monthly Planner",
+    "category": "Calendar",
+    "preview": "/templates/calendar/calendar3.png",
+    "json": "/templates/json/calendar/calendar3.json"
+  },
+  {
+    "id":"calendar4",
+    "name":"Photo Calendar",
+    "category":"Calendar",
+    "preview":"/templates/calendar/calendar4.png",
+    "json":"/templates/json/calendar/calendar4.json"
+  },
+  {
+    "id": "poster1",
+    "name": "Business Poster",
+    "category": "Poster",
+    "preview":"/templates/poster/poster1.png",
+    "json":"/templates/json/poster/poster1.json"
+  },
+  {
+    "id": "poster2",
+    "name": "Realestate Poster",
+    "category": "Poster",
+    "preview":"/templates/poster/poster2.png",
+    "json":"/templates/json/poster/poster2.json"
+  },
+  {
+    "id":"poster3",
+    "name": "Modern Interior Poster",
+    "category":"Poster",
+    "preview":"/templates/poster/poster3.png",
+    "json":"/templates/json/poster/poster3.json"
+  },
+  {
+    "id":"poster4",
+    "name":"Company Poster",
+    "category":"Poster",
+    "preview":"/templates/poster/poster4.png",
+    "json":"/templates/json/poster/poster4.json"
+  },
+  {
+    "id":"poster5",
+    "name":"Minimalist Interior Poster",
+    "category":"Poster",
+    "preview":"/templates/poster/poster5.png",
+    "json":"/templates/json/poster/poster5.json"
+  }
 ]

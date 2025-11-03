@@ -1,10 +1,15 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/authContext";
 
-function ProtectedRoute({ children }) {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+const ProtectedRoute = ({ children }) => {
+  const { user } = useAuth();
 
-  return isLoggedIn ? children : <Navigate to="/login" replace />;
-}
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
 
 export default ProtectedRoute;

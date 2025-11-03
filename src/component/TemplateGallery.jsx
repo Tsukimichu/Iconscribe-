@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import templates from "../data/templates.json";
+import { ArrowLeft } from "lucide-react"; // Optional icon for back button
 
 function TemplateGallery() {
   const [activeCategory, setActiveCategory] = useState("All");
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const categories = [
     "All",
@@ -30,11 +31,20 @@ function TemplateGallery() {
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* HEADER SECTION */}
-      <div className="relative h-[200px] bg-blue-700 text-white flex flex-col justify-center items-center text-center">
+      <div className="relative h-[150px] bg-blue-700 text-white flex flex-col justify-center items-center text-center">
         <h1 className="text-4xl font-bold mb-2">Create from a Template</h1>
         <p className="text-gray-200 text-lg max-w-2xl">
-          Choose a ready-made designs
+          Choose a ready-made design
         </p>
+
+        {/* BACK BUTTON */}
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-4 left-4 flex items-center gap-2 bg-white text-blue-700 px-4 py-2 rounded-full shadow hover:bg-blue-100 transition"
+        >
+          <ArrowLeft size={18} />
+          <span className="font-medium">Back</span>
+        </button>
       </div>
 
       {/* CATEGORY FILTERS */}

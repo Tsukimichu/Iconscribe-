@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { Calendar, Clock, Save, X } from "lucide-react";
+import { useToast } from "../ui/ToastProvider.jsx";
 
 const Maintenance = () => {
   const [isMaintenance, setIsMaintenance] = useState(false);
@@ -8,6 +10,7 @@ const Maintenance = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [showCountdown, setShowCountdown] = useState(true);
+  const {showToast} = useToast();
 
   const [selectedProduct, setSelectedProduct] = useState("Book");
   const [productComponents, setProductComponents] = useState({
@@ -43,7 +46,7 @@ const Maintenance = () => {
 
   const handleSaveComponent = (product, index) => {
     const comp = productComponents[product][index];
-    alert(`✅ Saved ${comp.name} (${comp.cost} / ${comp.unit}) for ${product}`);
+    alert(` Saved ${comp.name} (${comp.cost} / ${comp.unit}) for ${product}`);
   };
 
 
@@ -98,10 +101,10 @@ const Maintenance = () => {
         });
       }
 
-      alert("✅ Maintenance configuration saved to backend!");
+      showToast(" Maintenance configuration saved to backend!");
     } catch (error) {
-      console.error("❌ Failed to save maintenance:", error);
-      alert("❌ Failed to save maintenance configuration");
+      console.error(" Failed to save maintenance:", error);
+      alert(" Failed to save maintenance configuration");
     }
   };
 

@@ -199,7 +199,7 @@ function Brochure() {
   };
 
   useEffect(() => {
-    const baseRatePerPiece = 1.5; // Base price per brochure
+    const baseRatePerPiece = 1.5; 
     const paperRates = {
       Matte: 1.0,
       Glossy: 1.2,

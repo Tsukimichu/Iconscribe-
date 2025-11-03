@@ -4,7 +4,7 @@
     "name": "Monochrome Business Card",
     "category": "Business Card",
     "preview": "/templates/business-card/business-card1.png",
-    "json": "/templates/json/business-card1.json"
+    "json": "/templates/json/business-card/business-card1.json"
   },
     {
         "id": "businesscard2",

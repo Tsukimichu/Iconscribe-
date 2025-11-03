@@ -65,7 +65,7 @@ function ManagerChatPanel({ managerId = 10 }) {
     const handleReceive = (msg) => {
       console.log("Message received:", msg);
 
-      // 1️⃣ Update conversation list
+      // Update conversation list
       setConversations(prev => {
         const convExists = prev.find(c => c.id === msg.conversationId);
         if (convExists) {
@@ -77,7 +77,7 @@ function ManagerChatPanel({ managerId = 10 }) {
         }
       });
 
-      // 2️⃣ Update messages in chat window if this conversation is selected
+      // Update messages in chat window if this conversation is selected
       if (selectedConversationRef.current?.id === msg.conversationId) {
         setMessages(prev => [
           ...prev,
@@ -130,7 +130,7 @@ function ManagerChatPanel({ managerId = 10 }) {
                   : "hover:bg-blue-50 text-gray-700"
               }`}
             >
-              <p className="font-semibold">Client #{conv.clientId}</p>
+              <p className="font-semibold">{conv.clientName}</p>
               <p className="text-xs text-gray-500 truncate">
                 {conv.lastMessage || "No messages yet"}
               </p>
@@ -148,7 +148,7 @@ function ManagerChatPanel({ managerId = 10 }) {
         ) : (
           <>
             <div className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-md">
-              Chat with <span className="text-yellow-200">Client #{selectedConversation.clientId}</span>
+              Chat with <span className="text-yellow-200">{selectedConversation.clientName}</span>
             </div>
             <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-gray-50">
               {messages.map((msg, i) => (

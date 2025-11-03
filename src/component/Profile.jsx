@@ -54,6 +54,21 @@ function Profile() {
     }
   }, []);
 
+  // Helper function to generate consistent color based on name
+  const getProfileColor = (name) => {
+    const colors = [
+      "#F87171", "#FBBF24", "#34D399", "#60A5FA",
+      "#A78BFA", "#F472B6", "#F59E0B", "#10B981",
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
+  };
+
+
   const handleSaveProfile = async () => {
     try {
       const payload = {
@@ -114,8 +129,11 @@ function Profile() {
           >
             <ArrowBigLeft />
           </button>
-          <div className="w-9 h-9 bg-gray-200 border border-gray-300 rounded-full flex items-center justify-center text-lg">
-            👤
+          <div
+            className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-lg"
+            style={{ backgroundColor: getProfileColor(profile.name || "U") }}
+          >
+            {profile.name ? profile.name.charAt(0).toUpperCase() : "U"}
           </div>
         </div>
       </nav>
@@ -125,9 +143,12 @@ function Profile() {
         {/* Left Card */}
         <div className="bg-white shadow-md rounded-2xl p-6 text-center border border-gray-200">
           <div className="w-full border border-gray-300 rounded-xl p-4">
-            <div className="w-32 h-32 mx-auto rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-4xl">
-              👤
-            </div>
+          <div
+            className="w-32 h-32 mx-auto rounded-full flex items-center justify-center text-white text-6xl font-bold"
+            style={{ backgroundColor: getProfileColor(profile.name || "U") }}
+          >
+            {profile.name ? profile.name.charAt(0).toUpperCase() : "U"}
+          </div>
             <h2 className="mt-4 text-xl font-bold">{profile.name}</h2>
             <p className="text-sm text-gray-500">User ID: #{profile.user_id}</p>
           </div>

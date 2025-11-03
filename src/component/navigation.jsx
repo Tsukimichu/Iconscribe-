@@ -1,26 +1,23 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import logo from "../assets/ICONS.png";
 import { Link, useNavigate } from "react-router-dom";
 import { UserCircle, LogOut, Menu, X, ChevronDown } from "lucide-react";
+import { useAuth } from "../context/authContext";
 
 function Navigation() {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [activeSection, setActiveSection] = useState("");
+  const { user, logout } = useAuth();
+  const isLoggedIn = !!user;
+  const [activeSection] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  useEffect(() => {
-    const loginStatus = !!localStorage.getItem("token");
-    setIsLoggedIn(loginStatus);
-  }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    setIsLoggedIn(false);
-    window.dispatchEvent(new Event("auth-change"));
+    logout();
     navigate("/");
   };
+
 
   const handleScroll = (id) => {
     if (window.location.pathname === "/dashboard") {
@@ -41,6 +38,19 @@ function Navigation() {
     { label: "About us", id: "about-us" },
     { label: "Contact us", id: "contact" },
   ];
+
+  const getProfileColor = (name) => {
+    const colors = [
+      "#F87171", "#FBBF24", "#34D399", "#60A5FA",
+      "#A78BFA", "#F472B6", "#F59E0B", "#10B981",
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
+
 
   return (
     <nav
@@ -85,10 +95,14 @@ function Navigation() {
           {isLoggedIn ? (
             <>
               <Link to="/profile">
-                <UserCircle
-                  size={36}
-                  className="hover:text-yellow-400 cursor-pointer transition duration-300 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]"
-                />
+                <div
+                  className="w-10 h-10 flex items-center justify-center rounded-full font-bold text-white text-lg shadow-[0_0_10px_rgba(250,204,21,0.5)] cursor-pointer hover:scale-105 transition"
+                  style={{
+                    backgroundColor: getProfileColor(user?.name || "U"),
+                  }}
+                >
+                  {(user?.name?.charAt(0) || "U").toUpperCase()}
+                </div>
               </Link>
               <button
                 onClick={handleLogout}
@@ -116,7 +130,7 @@ function Navigation() {
         </button>
       </div>
 
-      {/* ✅ Mobile Menu */}
+      {/* Mobile Menu */}
       {menuOpen && (
         <div className="md:hidden bg-[#0d3c8c] bg-opacity-95 border-t border-yellow-400/40">
           <ul className="flex flex-col p-4 space-y-2 text-center font-semibold text-base">

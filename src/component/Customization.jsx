@@ -33,6 +33,8 @@ const Customization = () => {
   const fabricCanvasRef = useRef(null);
   const initialBgRef = useRef("#f9fafb");
 
+  
+
   // --- NEW: History using snapshots (persistent)
   const history = useRef([]);
   const historyIndex = useRef(-1);

@@ -51,3 +51,8 @@ body {
 .animate-toast-out {
   animation: toast-out 220ms ease both;
 }
+
+
+.btn {
+  @apply flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 text-gray-700;
+}

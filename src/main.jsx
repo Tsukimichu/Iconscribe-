@@ -32,6 +32,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ToastProvider } from './component/ui/ToastProvider.jsx';
 import { AuthProvider } from './context/authContext.jsx';
 //import CustomizationPage from "./component/customization/CustomizationPage";
+import Customizer from "./pages/Customizer";
 
 const router = createBrowserRouter([
   { path: '/', element: <Splash /> },
@@ -58,6 +59,7 @@ const router = createBrowserRouter([
 
   // Customization/Maintenance
   //{ path: '/customize', element: <CustomizationPage /> },
+  { path: '/customizer', element: <Customizer /> },
   { path: '/customize', element: <Customization /> },
   { path: '/maintenance', element: <MaintenanceUser/>},
   { path: '/template-gallery', element: <TemplateGallery /> },

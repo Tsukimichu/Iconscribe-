@@ -1,22 +1,22 @@
 [
   {
     "id": "businesscard1",
-    "name": "Monochrome Business Card",
-    "category": "Business Card",
+    "name": "Monochrome Calling Card",
+    "category": "Calling Card",
     "preview": "/templates/business-card/business-card1.png",
     "json": "/templates/json/business-card/business-card1.json"
   },
   {
     "id": "businesscard2",
-    "name": "Colorful Business Card",
-    "category": "Business Card",
+    "name": "Colorful Calling Card",
+    "category": "Calling Card",
     "preview": "/templates/business-card/business-card2.jpg",
     "json": "/templates/json/business-card2.json"
   },
   {
     "id": "businesscard3",
-    "name": "Minimalist Business Card",
-    "category": "Business Card",
+    "name": "Minimalist Calling Card",
+    "category": "Calling Card",
     "preview": "/templates/business-card/business-card3.jpg",
     "json": "/templates/json/business-card3.json"
   },

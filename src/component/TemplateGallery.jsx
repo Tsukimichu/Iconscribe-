@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import templates from "../data/templates.json";
-import { ArrowBigLeft } from "lucide-react"; // Optional icon for back button
+import { ArrowBigLeft } from "lucide-react";
 
 function TemplateGallery() {
   const [activeCategory, setActiveCategory] = useState("All");
@@ -11,12 +11,11 @@ function TemplateGallery() {
     "All",
     "Brochure",
     "Calendar",
-    "Business Card",
+    "Calling Card",
     "Flyer",
     "Poster",
     "Invitation",
     "Label",
-    "Newsletter",
   ];
 
   // Filter templates based on category
@@ -40,7 +39,7 @@ function TemplateGallery() {
         {/* BACK BUTTON   //p-2 hover:bg-gray-200 rounded-full transition*/}
         <button
           onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 flex items-center bg-white text-blue-700 p-2 rounded-full shadow hover:bg-gray-200 transition"
+          className="absolute top-4 left-4 flex items-center bg-blue text-white-700 p-2 rounded-full shadow hover:bg-white hover:text-blue-600 transition"
         > 
           <ArrowBigLeft className="w-6 h-6" />
         </button>

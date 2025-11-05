@@ -10,7 +10,7 @@ const Splash = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(false);
-      navigate('/dashboard'); // Redirect after splash
+      navigate('/editor'); // Redirect directly to the simplified Canva editor
     }, 3000);
 
     return () => clearTimeout(timer);

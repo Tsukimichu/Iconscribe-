@@ -56,3 +56,10 @@ body {
 .btn {
   @apply flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 text-gray-700;
 }
+
+@import "tailwindcss/preflight";
+@import "tailwindcss/utilities";
+@import "tailwindcss/components";
+
+/* small helper to make contentEditable text focus look good */
+[contenteditable]:focus { outline: none; }

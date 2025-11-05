@@ -1,83 +1,71 @@
 import React, { useEffect, useImperativeHandle, forwardRef, useRef } from "react";
-import * as fabric from "fabric";
+import fabric from "fabric";
 
 const CanvasEditor = forwardRef((props, ref) => {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
+
   const undoStack = useRef([]);
   const redoStack = useRef([]);
+  const historyLock = useRef(false);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    // Create canvas element dynamically
-    const canvasElement = document.createElement("canvas");
-    canvasElement.id = "design-canvas";
+    const canvasEl = document.createElement("canvas");
+    canvasEl.id = "design-canvas";
     container.innerHTML = "";
-    container.appendChild(canvasElement);
+    container.appendChild(canvasEl);
 
-    // Initialize Fabric.js
     const canvas = new fabric.Canvas("design-canvas", {
       backgroundColor: "#ffffff",
       preserveObjectStacking: true,
       selection: true,
     });
 
-    // Dynamic resizing
+    canvasRef.current = canvas;
+
     const resizeCanvas = () => {
       canvas.setWidth(container.clientWidth - 20);
       canvas.setHeight(container.clientHeight - 20);
       canvas.renderAll();
     };
+
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
 
-    canvasRef.current = canvas;
-
-    // --- Undo/Redo tracking ---
     const saveState = () => {
-      const json = canvas.toJSON();
-      undoStack.current.push(json);
+      if (historyLock.current) return;
+      undoStack.current.push(canvas.toJSON());
       redoStack.current = [];
     };
 
     canvas.on("object:added", saveState);
     canvas.on("object:modified", saveState);
+    canvas.on("object:removed", saveState);
+
     saveState();
 
-    // --- Keyboard shortcuts ---
     const handleKeyDown = (e) => {
-      const activeObjs = canvas.getActiveObjects();
+      const active = canvas.getActiveObjects();
 
-      // Delete selected (Backspace/Delete)
       if (["Delete", "Backspace"].includes(e.key)) {
-        if (activeObjs.length > 0 && !activeObjs.some(o => o.isEditing)) {
-          activeObjs.forEach((o) => canvas.remove(o));
+        if (active.length > 0 && !active.some(o => o.isEditing)) {
+          active.forEach(o => canvas.remove(o));
           canvas.discardActiveObject();
           canvas.renderAll();
-          saveState();
         }
       }
 
-      // Undo (Ctrl+Z)
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
         e.preventDefault();
-        if (undoStack.current.length > 1) {
-          redoStack.current.push(undoStack.current.pop());
-          const prev = undoStack.current[undoStack.current.length - 1];
-          canvas.loadFromJSON(prev, () => canvas.renderAll());
-        }
+        undo();
       }
 
-      // Redo (Ctrl+Y)
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
         e.preventDefault();
-        if (redoStack.current.length > 0) {
-          const state = redoStack.current.pop();
-          undoStack.current.push(state);
-          canvas.loadFromJSON(state, () => canvas.renderAll());
-        }
+        redo();
       }
     };
 
@@ -90,10 +78,35 @@ const CanvasEditor = forwardRef((props, ref) => {
     };
   }, []);
 
-  // --- Public methods exposed to parent ---
-  useImperativeHandle(ref, () => ({
-    getCanvas: () => canvasRef.current,
+  const undo = () => {
+    const canvas = canvasRef.current;
+    if (undoStack.current.length > 1) {
+      historyLock.current = true;
+      redoStack.current.push(undoStack.current.pop());
+      const prev = undoStack.current[undoStack.current.length - 1];
+      canvas.loadFromJSON(prev, () => {
+        canvas.renderAll();
+        historyLock.current = false;
+      });
+    }
+  };
 
+  const redo = () => {
+    const canvas = canvasRef.current;
+    if (redoStack.current.length > 0) {
+      historyLock.current = true;
+      const state = redoStack.current.pop();
+      undoStack.current.push(state);
+      canvas.loadFromJSON(state, () => {
+        canvas.renderAll();
+        historyLock.current = false;
+      });
+    }
+  };
+
+  const saveStateManual = () => undoStack.current.push(canvasRef.current.toJSON());
+
+  useImperativeHandle(ref, () => ({
     addText() {
       const canvas = canvasRef.current;
       const text = new fabric.Textbox("Double-click to edit", {
@@ -108,26 +121,24 @@ const CanvasEditor = forwardRef((props, ref) => {
 
     addRect() {
       const canvas = canvasRef.current;
-      const rect = new fabric.Rect({
+      canvas.add(new fabric.Rect({
         left: 150,
         top: 150,
         width: 120,
         height: 80,
         fill: "#60a5fa",
-      });
-      canvas.add(rect).setActiveObject(rect);
+      }));
       canvas.renderAll();
     },
 
     addCircle() {
       const canvas = canvasRef.current;
-      const circle = new fabric.Circle({
+      canvas.add(new fabric.Circle({
         left: 200,
         top: 150,
         radius: 50,
         fill: "#22c55e",
-      });
-      canvas.add(circle).setActiveObject(circle);
+      }));
       canvas.renderAll();
     },
 
@@ -138,7 +149,8 @@ const CanvasEditor = forwardRef((props, ref) => {
         fabric.Image.fromURL(e.target.result, (img) => {
           img.scaleToWidth(300);
           img.set({ left: 100, top: 100 });
-          canvas.add(img).setActiveObject(img);
+          canvas.add(img);
+          canvas.setActiveObject(img);
           canvas.renderAll();
         });
       };
@@ -148,7 +160,7 @@ const CanvasEditor = forwardRef((props, ref) => {
     changeColor(color) {
       const canvas = canvasRef.current;
       const obj = canvas.getActiveObject();
-      if (obj && obj.set) {
+      if (obj) {
         obj.set("fill", color);
         canvas.renderAll();
       }
@@ -156,55 +168,39 @@ const CanvasEditor = forwardRef((props, ref) => {
 
     deleteSelected() {
       const canvas = canvasRef.current;
-      const objs = canvas.getActiveObjects();
-      if (objs.length > 0) {
-        objs.forEach(o => canvas.remove(o));
-        canvas.discardActiveObject();
-        canvas.renderAll();
-      }
+      canvas.getActiveObjects().forEach(o => canvas.remove(o));
+      canvas.discardActiveObject();
+      canvas.renderAll();
     },
 
     exportPNG() {
-      const canvas = canvasRef.current;
-      const dataURL = canvas.toDataURL({ format: "png" });
+      const dataURL = canvasRef.current.toDataURL({ format: "png" });
       const link = document.createElement("a");
       link.href = dataURL;
       link.download = "design.png";
       link.click();
     },
 
-    undo() {
-      const canvas = canvasRef.current;
-      if (undoStack.current.length > 1) {
-        redoStack.current.push(undoStack.current.pop());
-        const prev = undoStack.current[undoStack.current.length - 1];
-        canvas.loadFromJSON(prev, () => canvas.renderAll());
-      }
-    },
-
-    redo() {
-      const canvas = canvasRef.current;
-      if (redoStack.current.length > 0) {
-        const next = redoStack.current.pop();
-        undoStack.current.push(next);
-        canvas.loadFromJSON(next, () => canvas.renderAll());
-      }
-    },
+    undo,
+    redo,
 
     zoomIn() {
       const canvas = canvasRef.current;
       canvas.setZoom(canvas.getZoom() * 1.1);
+      canvas.renderAll();
     },
 
     zoomOut() {
       const canvas = canvasRef.current;
       canvas.setZoom(canvas.getZoom() / 1.1);
+      canvas.renderAll();
     },
 
     resetZoom() {
       const canvas = canvasRef.current;
       canvas.setZoom(1);
       canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+      canvas.renderAll();
     },
   }));
 
@@ -212,11 +208,7 @@ const CanvasEditor = forwardRef((props, ref) => {
     <div
       ref={containerRef}
       className="relative flex justify-center items-center w-full h-full bg-gray-100 overflow-hidden border border-gray-300 rounded-md shadow-inner"
-    >
-      <div className="absolute text-gray-400 text-sm top-2 right-3 select-none">
-        Canvas Editor
-      </div>
-    </div>
+    />
   );
 });
 

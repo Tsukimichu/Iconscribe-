@@ -1,0 +1,88 @@
+{
+  "version": "5.2.4",
+  "objects": [
+    {
+      "type": "rect",
+      "version": "5.2.4",
+      "originX": "left",
+      "originY": "top",
+      "left": 0,
+      "top": 0,
+      "width": 525,
+      "height": 300,
+      "fill": "#f8f7f5"
+    },
+    {
+      "type": "rect",
+      "version": "5.2.4",
+      "left": 0,
+      "top": 240,
+      "width": 525,
+      "height": 60,
+      "fill": "#1e2a56"
+    },
+    {
+      "type": "group",
+      "left": 262,
+      "top": 110,
+      "scaleX": 0.9,
+      "scaleY": 0.9,
+      "objects": [
+        {
+          "type": "path",
+          "path": "M 0 40 L 20 0 L 40 40 L 20 20 Z",
+          "fill": "transparent",
+          "stroke": "#1e2a56",
+          "strokeWidth": 3
+        },
+        {
+          "type": "path",
+          "path": "M 10 40 L 20 15 L 30 40",
+          "fill": "transparent",
+          "stroke": "#1e2a56",
+          "strokeWidth": 2
+        }
+      ]
+    },
+    {
+      "type": "i-text",
+      "left": 262,
+      "top": 165,
+      "originX": "center",
+      "originY": "top",
+      "text": "YOUR COMPANY",
+      "fontFamily": "Open Sans",
+      "fontSize": 28,
+      "fontWeight": "bold",
+      "fill": "#3a2f2f",
+      "textAlign": "center",
+      "editable": true
+    },
+    {
+      "type": "i-text",
+      "left": 262,
+      "top": 195,
+      "originX": "center",
+      "originY": "top",
+      "text": "YOUR TAGLINE",
+      "fontFamily": "Open Sans",
+      "fontSize": 16,
+      "fill": "#1e2a56",
+      "textAlign": "center",
+      "editable": true
+    },
+    {
+      "type": "i-text",
+      "left": 262,
+      "top": 255,
+      "originX": "center",
+      "originY": "top",
+      "text": "www.reallygreatsite.com",
+      "fontFamily": "Open Sans",
+      "fontSize": 14,
+      "fill": "#ffffff",
+      "textAlign": "center",
+      "editable": true
+    }
+  ]
+}

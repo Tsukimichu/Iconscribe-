@@ -1,0 +1,76 @@
+{
+  "version": "5.2.4",
+  "objects": [
+    {
+      "type": "rect",
+      "left": 0,
+      "top": 0,
+      "width": 525,
+      "height": 300,
+      "fill": "#000000"
+    },
+    {
+      "type": "i-text",
+      "left": 90,
+      "top": 110,
+      "fontFamily": "Times New Roman",
+      "fontSize": 80,
+      "fontWeight": "bold",
+      "fill": "#ffffff",
+      "text": "D",
+      "editable": true
+    },
+    {
+      "type": "i-text",
+      "left": 130,
+      "top": 125,
+      "fontFamily": "Times New Roman",
+      "fontSize": 80,
+      "fontWeight": "bold",
+      "fill": "#ffffff",
+      "text": "G",
+      "editable": true
+    },
+    {
+      "type": "line",
+      "x1": 220,
+      "y1": 60,
+      "x2": 220,
+      "y2": 240,
+      "stroke": "#ffffff",
+      "strokeWidth": 1.5
+    },
+    {
+      "type": "i-text",
+      "left": 250,
+      "top": 80,
+      "fontFamily": "Open Sans",
+      "fontSize": 20,
+      "fontWeight": "bold",
+      "fill": "#ffffff",
+      "text": "Daniel Gallego",
+      "editable": true
+    },
+    {
+      "type": "i-text",
+      "left": 250,
+      "top": 105,
+      "fontFamily": "Open Sans",
+      "fontSize": 14,
+      "fill": "#cccccc",
+      "text": "Fashion Designer",
+      "editable": true
+    },
+    {
+      "type": "i-text",
+      "left": 250,
+      "top": 145,
+      "fontFamily": "Open Sans",
+      "fontSize": 13,
+      "fill": "#f5f5f5",
+      "text": "+123-456-7890\nhello@reallygreatsite.com\n123 Anywhere St., Any City",
+      "lineHeight": 1.6,
+      "editable": true
+    }
+  ]
+}

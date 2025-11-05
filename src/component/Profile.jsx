@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowBigLeft } from "lucide-react";
 import logo from "../assets/ICONS.png";
+import { useAuth } from "../context/authContext";
+
 
 function Modal({ isOpen, onClose, title, children }) {
   if (!isOpen) return null;
@@ -24,6 +26,7 @@ function Modal({ isOpen, onClose, title, children }) {
 function Profile() {
   const navigate = useNavigate();
 
+  const { logout } = useAuth(); 
   const [isEditing, setIsEditing] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -104,10 +107,14 @@ function Profile() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("user");
-    navigate("/");
+    setShowLogoutModal(false);
+
+    setTimeout(() => {
+      logout(); 
+      navigate("/dashboard", { replace: true });
+    }, 300);
   };
+
 
   const handleBack = () => {
     navigate("/dashboard");
@@ -236,13 +243,22 @@ function Profile() {
         title="Confirm Logout"
       >
         <p>Are you sure you want to log out?</p>
-        <button
-          onClick={handleLogout}
-          className="mt-4 w-full py-2 rounded-lg bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-semibold transition"
-        >
-          Yes, Logout
-        </button>
+        <div className="flex gap-3 mt-4">
+          <button
+            onClick={handleLogout}
+            className="w-1/2 py-2 rounded-lg bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-semibold transition"
+          >
+            Yes, Logout
+          </button>
+          <button
+            onClick={() => setShowLogoutModal(false)}
+            className="w-1/2 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold transition"
+          >
+            Cancel
+          </button>
+        </div>
       </Modal>
+
 
       <Modal
         isOpen={showDeleteModal}

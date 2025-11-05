@@ -10,7 +10,7 @@ import { useToast } from "./ui/ToastProvider.jsx";
 
 function Signup() {
   const navigate = useNavigate();
-  const { showToast } = useToast(); // ✅ use toast hook
+  const { showToast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -37,7 +37,7 @@ function Signup() {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      showToast("Passwords do not match!", "error"); // ✅ replaced alert
+      showToast("Passwords do not match!", "error");
       return;
     }
 
@@ -55,11 +55,11 @@ function Signup() {
         setGeneratedOtp(randomOtp);
         console.log("Generated OTP:", randomOtp);
         setOtpSent(true);
-        showToast(`OTP sent to ${formData.email} and ${formData.phone}`, "success"); // ✅ replaced alert
+        showToast(`OTP sent to ${formData.email} and ${formData.phone}`, "success"); 
       }
     } catch (err) {
       console.error("Signup error:", err);
-      showToast("Signup failed. Please check the console.", "error"); // ✅ replaced alert
+      showToast("Signup failed. Please check the console.", "error");
     }
   };
 
@@ -68,10 +68,10 @@ function Signup() {
     e.preventDefault();
     if (otp === String(generatedOtp)) {
       setSuccess(true);
-      showToast("Your account has been verified successfully!", "success"); // ✅ success toast
+      showToast("Your account has been verified successfully!", "success");
     } else {
       setShake(true);
-      showToast("Incorrect OTP. Please try again.", "error"); // ✅ error toast
+      showToast("Incorrect OTP. Please try again.", "error");
       setTimeout(() => setShake(false), 500);
     }
   };
@@ -109,7 +109,6 @@ function Signup() {
 
             <AnimatePresence mode="wait">
               {success ? (
-                // ✅ Success screen
                 <motion.div
                   key="success"
                   initial={{ opacity: 0, y: 40 }}
@@ -136,7 +135,7 @@ function Signup() {
                   </button>
                 </motion.div>
               ) : otpSent ? (
-                // 🔐 OTP verification form
+                // OTP verification form
                 <motion.div
                   key="otp"
                   initial={{ opacity: 0, y: 40 }}
@@ -207,7 +206,7 @@ function Signup() {
                   </form>
                 </motion.div>
               ) : (
-                // 📝 Signup form
+                // Signup form
                 <motion.div
                   key="form"
                   initial={{ opacity: 0, y: 40 }}

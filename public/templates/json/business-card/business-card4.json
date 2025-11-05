@@ -1,0 +1,138 @@
+{
+  "version": "5.2.4",
+  "objects": [
+    {
+      "type": "rect",
+      "left": 0,
+      "top": 0,
+      "width": 525,
+      "height": 300,
+      "fill": "#ffffff"
+    },
+    {
+      "type": "rect",
+      "left": 360,
+      "top": 180,
+      "width": 180,
+      "height": 140,
+      "fill": "#0d2340",
+      "angle": -5
+    },
+    {
+      "type": "rect",
+      "left": 340,
+      "top": 160,
+      "width": 170,
+      "height": 130,
+      "fill": "#0073aa",
+      "angle": -8,
+      "opacity": 0.9
+    },
+    {
+      "type": "rect",
+      "left": 320,
+      "top": 150,
+      "width": 165,
+      "height": 120,
+      "fill": "#00aadd",
+      "angle": -10,
+      "opacity": 0.8
+    },
+    {
+      "type": "rect",
+      "left": 400,
+      "top": 200,
+      "width": 120,
+      "height": 100,
+      "fill": "#0099cc",
+      "angle": -15,
+      "opacity": 0.9
+    },
+    {
+      "type": "group",
+      "left": 365,
+      "top": 100,
+      "scaleX": 0.7,
+      "scaleY": 0.7,
+      "objects": [
+        {
+          "type": "circle",
+          "radius": 35,
+          "fill": "#ffcc33",
+          "left": 0,
+          "top": 0
+        },
+        {
+          "type": "polygon",
+          "points": [
+            { "x": -35, "y": 35 },
+            { "x": -10, "y": 10 },
+            { "x": 15, "y": 25 },
+            { "x": 40, "y": 5 },
+            { "x": 60, "y": 25 },
+            { "x": 75, "y": 45 },
+            { "x": -35, "y": 45 }
+          ],
+          "fill": "#0073aa"
+        },
+        {
+          "type": "line",
+          "x1": 10,
+          "y1": -35,
+          "x2": 55,
+          "y2": -15,
+          "stroke": "#0d2340",
+          "strokeWidth": 4
+        },
+        {
+          "type": "triangle",
+          "width": 10,
+          "height": 10,
+          "fill": "#0d2340",
+          "left": 57,
+          "top": -20
+        },
+        {
+          "type": "rect",
+          "width": 6,
+          "height": 14,
+          "fill": "#0d2340",
+          "left": 15,
+          "top": -32
+        }
+      ]
+    },
+    {
+      "type": "i-text",
+      "left": 50,
+      "top": 60,
+      "fontFamily": "Open Sans",
+      "fontSize": 26,
+      "fontWeight": "bold",
+      "fill": "#0d2340",
+      "text": "AARON LOEB",
+      "editable": true
+    },
+    {
+      "type": "i-text",
+      "left": 50,
+      "top": 90,
+      "fontFamily": "Open Sans",
+      "fontSize": 15,
+      "fill": "#333333",
+      "text": "GENERAL MANAGER",
+      "editable": true
+    },
+    {
+      "type": "i-text",
+      "left": 50,
+      "top": 130,
+      "fontFamily": "Open Sans",
+      "fontSize": 13,
+      "fill": "#111111",
+      "text": "• 123-456-7890\n• www.reallygreatsite.com\n• hello@reallygreatsite.com\n• 123 Anywhere St., Any City",
+      "lineHeight": 1.5,
+      "editable": true
+    }
+  ]
+}

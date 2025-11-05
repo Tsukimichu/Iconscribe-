@@ -10,15 +10,29 @@
     "id": "businesscard2",
     "name": "Colorful Calling Card",
     "category": "Calling Card",
-    "preview": "/templates/business-card/business-card2.jpg",
-    "json": "/templates/json/business-card2.json"
+    "preview": "/templates/business-card/business-card2.png",
+    "json": "/templates/json/business-card/business-card2.json"
   },
   {
     "id": "businesscard3",
     "name": "Minimalist Calling Card",
     "category": "Calling Card",
-    "preview": "/templates/business-card/business-card3.jpg",
-    "json": "/templates/json/business-card3.json"
+    "preview": "/templates/business-card/business-card3.png",
+    "json": "/templates/json/business-card/business-card3.json"
+  },
+  {
+    "id": "businesscard4",
+    "name": "Creative Calling Card",
+    "category": "Calling Card",
+    "preview": "/templates/business-card/business-card4.png",
+    "json": "/templates/json/business-card/business-card4.json"
+  },
+  {
+    "id": "businesscard5",
+    "name": "Professional Calling Card",
+    "category": "Calling Card",
+    "preview": "/templates/business-card/business-card5.png",
+    "json": "/templates/json/business-card/business-card5.json"
   },
   {
     "id": "calendar1",

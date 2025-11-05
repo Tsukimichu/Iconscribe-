@@ -1,0 +1,124 @@
+{
+  "version": "5.2.4",
+  "objects": [
+    {
+      "type": "text",
+      "version": "5.2.4",
+      "left": 80,
+      "top": 100,
+      "fontSize": 48,
+      "fontWeight": "bold",
+      "fill": "#1a1a1a",
+      "text": "Claudia Alves",
+      "fontFamily": "Open Sans",
+      "textAlign": "left"
+    },
+    {
+      "type": "text",
+      "version": "5.2.4",
+      "left": 80,
+      "top": 160,
+      "fontSize": 28,
+      "fill": "#555555",
+      "text": "Marketing Manager",
+      "fontFamily": "Open Sans",
+      "textAlign": "left"
+    },
+    {
+      "type": "text",
+      "version": "5.2.4",
+      "left": 80,
+      "top": 240,
+      "fontSize": 26,
+      "fill": "#1a1a1a",
+      "text": "+123-456-7890\nhello@reallygreatsite.com\nwww.reallygreatsite.com\n123 Anywhere St., Any City, ST 12345",
+      "fontFamily": "Open Sans",
+      "lineHeight": 1.6,
+      "textAlign": "left"
+    },
+    {
+      "type": "rect",
+      "version": "5.2.4",
+      "left": 600,
+      "top": 60,
+      "width": 320,
+      "height": 320,
+      "angle": 45,
+      "fill": "#009c9c"
+    },
+    {
+      "type": "rect",
+      "version": "5.2.4",
+      "left": 640,
+      "top": 100,
+      "width": 280,
+      "height": 280,
+      "angle": 45,
+      "fill": "#00b8b8"
+    },
+    {
+      "type": "rect",
+      "version": "5.2.4",
+      "left": 680,
+      "top": 140,
+      "width": 240,
+      "height": 240,
+      "angle": 45,
+      "fill": "#00cccc"
+    },
+    {
+      "type": "text",
+      "version": "5.2.4",
+      "left": 400,
+      "top": 700,
+      "fontSize": 40,
+      "fontWeight": "bold",
+      "fill": "#1a1a1a",
+      "text": "LICERIA & CO.",
+      "fontFamily": "Open Sans",
+      "textAlign": "center"
+    },
+    {
+      "type": "text",
+      "version": "5.2.4",
+      "left": 400,
+      "top": 750,
+      "fontSize": 26,
+      "fill": "#555555",
+      "text": "Real Estate",
+      "fontFamily": "Open Sans",
+      "textAlign": "center"
+    },
+    {
+      "type": "text",
+      "version": "5.2.4",
+      "left": 400,
+      "top": 820,
+      "fontSize": 24,
+      "fill": "#333333",
+      "text": "www.reallygreatsite.com",
+      "fontFamily": "Open Sans",
+      "textAlign": "center"
+    },
+    {
+      "type": "rect",
+      "version": "5.2.4",
+      "left": 470,
+      "top": 640,
+      "width": 40,
+      "height": 40,
+      "angle": 45,
+      "fill": "#00b8b8"
+    },
+    {
+      "type": "rect",
+      "version": "5.2.4",
+      "left": 490,
+      "top": 620,
+      "width": 40,
+      "height": 40,
+      "angle": 45,
+      "fill": "#009c9c"
+    }
+  ]
+}

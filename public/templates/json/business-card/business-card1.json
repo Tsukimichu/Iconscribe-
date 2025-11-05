@@ -1,46 +1,19 @@
 {
-  "front": {
     "version": "5.3.0",
     "objects": [
-      { "type": "rect", "left": 0, "top": 0, "width": 525, "height": 300, "fill": "#ffffff" },
+    
+      { "type": "rect", "left": -40, "top": -40, "width": 180, "height": 180, "fill": "#1B5E20", "angle": 45 },
+      { "type": "rect", "left": 400, "top": -40, "width": 180, "height": 180, "fill": "#2E7D32", "angle": 45 },
+      { "type": "rect", "left": -50, "top": 190, "width": 180, "height": 180, "fill": "#43A047", "angle": 45 },
+      { "type": "rect", "left": 400, "top": 190, "width": 180, "height": 180, "fill": "#1B5E20", "angle": 45 },
+      { "type": "rect", "left": 240, "top": 140, "width": 16, "height": 16, "fill": "#2E7D32", "angle": 45 },
 
-      { "type": "rect", "left": 0, "top": 0, "width": 150, "height": 150, "fill": "#1B5E20", "angle": 45, "originX": "left", "originY": "top" },
-      { "type": "rect", "left": 375, "top": 150, "width": 150, "height": 150, "fill": "#2E7D32", "angle": 45, "originX": "left", "originY": "top" },
-      { "type": "rect", "left": 375, "top": -30, "width": 120, "height": 120, "fill": "#43A047", "angle": 45, "originX": "left", "originY": "top" },
-      { "type": "rect", "left": 0, "top": 180, "width": 120, "height": 120, "fill": "#43A047", "angle": 45, "originX": "left", "originY": "top" },
+      { "type": "circle", "left": 210, "top": 80, "radius": 52, "fill": "#2E7D32" },
+      { "type": "triangle", "left": 232, "top": 98, "width": 45, "height": 60, "fill": "#ffffff" },
+      { "type": "path", "path": [["M", 220, 130], ["Q", 260, 150, 285, 115]], "stroke": "#ffffff", "strokeWidth": 5, "fill": "" },
 
-      { "type": "circle", "left": 212, "top": 90, "radius": 45, "fill": "#2E7D32" },
-      { "type": "triangle", "left": 228, "top": 105, "width": 50, "height": 55, "fill": "#ffffff" },
-      { "type": "path", "path": [["M", 220, 130], ["Q", 260, 140, 280, 120]], "stroke": "#ffffff", "strokeWidth": 4, "fill": "" },
-
-      { "type": "textbox", "left": 185, "top": 200, "width": 200, "text": "LICERIA", "fontSize": 26, "fontWeight": "bold", "fill": "#000000", "textAlign": "center", "fontFamily": "Arial" },
-      { "type": "textbox", "left": 185, "top": 230, "width": 200, "text": "COMPANY", "fontSize": 20, "fontWeight": "bold", "fill": "#2E7D32", "textAlign": "center", "fontFamily": "Arial" }
+      { "type": "textbox", "left": 185, "top": 205, "width": 200, "text": "LICERIA", "fontSize": 28, "fontWeight": "bold", "fill": "#000000", "textAlign": "center", "fontFamily": "Arial" },
+      { "type": "textbox", "left": 185, "top": 235, "width": 200, "text": "COMPANY", "fontSize": 22, "fontWeight": "bold", "fill": "#2E7D32", "textAlign": "center", "fontFamily": "Arial" }
     ],
     "background": "#ffffff"
-  },
-
-  "back": {
-    "version": "5.3.0",
-    "objects": [
-      { "type": "rect", "left": 0, "top": 0, "width": 525, "height": 300, "fill": "#ffffff" },
-
-      { "type": "rect", "left": 350, "top": 200, "width": 120, "height": 120, "fill": "#1B5E20", "angle": 45 },
-      { "type": "rect", "left": 370, "top": 70, "width": 80, "height": 80, "fill": "#43A047", "angle": 45 },
-      { "type": "rect", "left": 410, "top": 30, "width": 40, "height": 40, "fill": "#2E7D32", "angle": 45 },
-
-      { "type": "circle", "left": 30, "top": 40, "radius": 18, "fill": "#2E7D32" },
-      { "type": "triangle", "left": 37, "top": 50, "width": 20, "height": 22, "fill": "#ffffff" },
-      { "type": "path", "path": [["M", 34, 65], ["Q", 55, 70, 65, 60]], "stroke": "#ffffff", "strokeWidth": 2, "fill": "" },
-      { "type": "textbox", "left": 70, "top": 42, "width": 200, "text": "LICERIA COMPANY", "fontSize": 14, "fontWeight": "bold", "fill": "#000000", "fontFamily": "Arial" },
-
-      { "type": "textbox", "left": 30, "top": 90, "width": 300, "text": "YOUR NAME", "fontSize": 24, "fontWeight": "bold", "fill": "#2E7D32", "fontFamily": "Arial" },
-      { "type": "textbox", "left": 30, "top": 120, "width": 300, "text": "YOUR POSITION", "fontSize": 16, "fill": "#000000", "fontStyle": "italic", "fontFamily": "Arial" },
-
-      { "type": "textbox", "left": 30, "top": 160, "width": 300, "text": "📞 123-456-7890", "fontSize": 14, "fill": "#000000", "fontFamily": "Arial" },
-      { "type": "textbox", "left": 30, "top": 180, "width": 300, "text": "🌐 www.yourwebsite.com", "fontSize": 14, "fill": "#000000", "fontFamily": "Arial" },
-      { "type": "textbox", "left": 30, "top": 200, "width": 300, "text": "✉️ youremail@example.com", "fontSize": 14, "fill": "#000000", "fontFamily": "Arial" },
-      { "type": "textbox", "left": 30, "top": 220, "width": 300, "text": "📍 123 Street, City, Country", "fontSize": 14, "fill": "#000000", "fontFamily": "Arial" }
-    ],
-    "background": "#ffffff"
-  }
 }

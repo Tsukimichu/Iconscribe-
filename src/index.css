@@ -1,5 +1,9 @@
-@import "tailwindcss";
+/* Import the new Tailwind v4 layers */
+@import "tailwindcss/preflight";
+@import "tailwindcss/utilities";
+@import "tailwindcss/theme";
 
+/* Custom global styles */
 body {
   -ms-overflow-style: none; 
   scrollbar-width: none; 
@@ -18,6 +22,7 @@ body {
   -ms-overflow-style: none;
 }
 
+/* Text glow animation */
 @keyframes text-glow {
   0%, 100% {
     text-shadow: 0 0 5px rgba(255, 255, 255, 0.6), 
@@ -37,29 +42,39 @@ body {
   animation: text-glow 4s ease-in-out infinite;
 }
 
+/* Toast animations */
 @keyframes toast-in {
   from { opacity: 0; transform: translateY(10px) scale(0.98); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
+
 @keyframes toast-out {
   from { opacity: 1; transform: translateY(0) scale(1); }
   to   { opacity: 0; transform: translateY(8px) scale(0.98); }
 }
+
 .animate-toast-in {
   animation: toast-in 280ms cubic-bezier(.22,.9,.36,1) both;
 }
+
 .animate-toast-out {
   animation: toast-out 220ms ease both;
 }
 
-
+/* ✅ Replace @apply with plain CSS (Tailwind v4 no longer supports it globally) */
 .btn {
-  @apply flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 text-gray-700;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  color: rgb(55 65 81); /* text-gray-700 */
+  transition: background-color 0.2s;
+}
+.btn:hover {
+  background-color: rgb(243 244 246); /* hover:bg-gray-100 */
 }
 
-@import "tailwindcss/preflight";
-@import "tailwindcss/utilities";
-@import "tailwindcss/components";
-
-/* small helper to make contentEditable text focus look good */
+/* Editable text helper */
 [contenteditable]:focus { outline: none; }
+  

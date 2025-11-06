@@ -6,11 +6,33 @@ import { useEditor } from '../../context/EditorContext'
 import Element from './Element'
 
 export default function CanvasWorkspace() {
-  const { state, undo, redo, deleteElement, updateElement, setElements } = useEditor()
+  const { state, undo, redo, deleteElement, setElements } = useEditor()
   const canvasRef = useRef(null)
+  const containerRef = useRef(null)
   const [zoom, setZoom] = useState(1)
+  const [fitZoom, setFitZoom] = useState(1)
   const [showGrid, setShowGrid] = useState(true)
   const [guides, setGuides] = useState({ vertical: null, horizontal: null })
+
+  const canvasWidth = state?.canvas?.width ?? 1080
+  const canvasHeight = state?.canvas?.height ?? 1080
+
+  // 🔄 Auto-fit canvas to container (preserve aspect ratio)
+  useEffect(() => {
+    const handleResize = () => {
+      if (!containerRef.current) return
+      const container = containerRef.current.getBoundingClientRect()
+      const scale = Math.min(
+        (container.width * 0.9) / canvasWidth,
+        (container.height * 0.9) / canvasHeight
+      )
+      setFitZoom(scale)
+    }
+
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [canvasWidth, canvasHeight])
 
   // ⌨️ Keyboard Shortcuts
   useEffect(() => {
@@ -18,90 +40,71 @@ export default function CanvasWorkspace() {
       const selected = state.elements.find(el => el.id === state.selectedId)
       if (e.ctrlKey || e.metaKey) {
         if (e.key === 'z') {
-          e.preventDefault()
-          undo()
+          e.preventDefault(); undo()
         } else if (e.key === 'y') {
-          e.preventDefault()
-          redo()
+          e.preventDefault(); redo()
         } else if (e.key === 'd' && selected) {
           e.preventDefault()
           const clone = { ...selected, id: crypto.randomUUID(), x: selected.x + 20, y: selected.y + 20 }
           setElements([...state.elements, clone])
         } else if (e.key === '+' || e.key === '=') {
-          e.preventDefault()
-          setZoom((z) => Math.min(2, z + 0.1))
+          e.preventDefault(); setZoom(z => Math.min(3, z + 0.1))
         } else if (e.key === '-') {
-          e.preventDefault()
-          setZoom((z) => Math.max(0.5, z - 0.1))
+          e.preventDefault(); setZoom(z => Math.max(0.25, z - 0.1))
         }
       }
       if (e.key === 'Delete' && state.selectedId) {
-        e.preventDefault()
-        deleteElement(state.selectedId)
+        e.preventDefault(); deleteElement(state.selectedId)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [state])
 
-  // 🧭 Smart Alignment Guides (detect when elements align)
+  // 🧭 Smart Alignment Guides
   useEffect(() => {
     if (!state.selectedId) {
       setGuides({ vertical: null, horizontal: null })
       return
     }
-
     const selected = state.elements.find(el => el.id === state.selectedId)
     if (!selected) return
-
     const others = state.elements.filter(el => el.id !== selected.id)
-    let vGuide = null
-    let hGuide = null
-
+    let vGuide = null, hGuide = null
     for (const other of others) {
-      // Vertical alignment (center or edges)
       if (Math.abs(selected.x - other.x) < 5) vGuide = other.x
       if (Math.abs(selected.x + selected.width / 2 - (other.x + other.width / 2)) < 5)
         vGuide = other.x + other.width / 2
-      if (Math.abs(selected.x + selected.width - (other.x + other.width)) < 5)
-        vGuide = other.x + other.width
-
-      // Horizontal alignment
       if (Math.abs(selected.y - other.y) < 5) hGuide = other.y
       if (Math.abs(selected.y + selected.height / 2 - (other.y + other.height / 2)) < 5)
         hGuide = other.y + other.height / 2
-      if (Math.abs(selected.y + selected.height - (other.y + other.height)) < 5)
-        hGuide = other.y + other.height
     }
-
     setGuides({ vertical: vGuide, horizontal: hGuide })
   }, [state.selectedId, state.elements])
 
-  // 🧾 Grid pattern (background)
   const gridStyle = showGrid
     ? {
-        backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
+        backgroundSize: `${20}px ${20}px`,
         backgroundImage:
           'linear-gradient(to right, #e5e7eb 1px, transparent 1px), linear-gradient(to bottom, #e5e7eb 1px, transparent 1px)',
       }
     : {}
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center relative">
-      {/* Toolbar for zoom and grid */}
+    <div
+      ref={containerRef}
+      className="w-full h-full flex items-center justify-center relative overflow-hidden bg-gray-50"
+    >
+      {/* Toolbar */}
       <div className="absolute top-2 left-2 flex gap-2 z-20">
         <button
-          onClick={() => setZoom(z => Math.min(2, z + 0.1))}
+          onClick={() => setZoom(z => Math.min(3, z + 0.1))}
           className="px-2 py-1 text-sm bg-slate-200 rounded hover:bg-slate-300"
-        >
-          +
-        </button>
+        >+</button>
         <button
-          onClick={() => setZoom(z => Math.max(0.5, z - 0.1))}
+          onClick={() => setZoom(z => Math.max(0.25, z - 0.1))}
           className="px-2 py-1 text-sm bg-slate-200 rounded hover:bg-slate-300"
-        >
-          -
-        </button>
+        >-</button>
         <button
           onClick={() => setShowGrid(s => !s)}
           className="px-2 py-1 text-sm bg-slate-200 rounded hover:bg-slate-300"
@@ -110,35 +113,47 @@ export default function CanvasWorkspace() {
         </button>
       </div>
 
+      {/* Centered Canvas Wrapper */}
       <div
-        id="editor-canvas"
-        ref={canvasRef}
-        className="relative bg-white border shadow-inner"
+        className="relative origin-center transition-transform duration-300"
         style={{
-          width: 900 * zoom,
-          height: 600 * zoom,
-          transform: `scale(${zoom})`,
-          transformOrigin: 'center',
-          ...gridStyle,
+          transform: `scale(${fitZoom * zoom})`,
         }}
       >
-        {state.elements.map((el) => (
-          <Element key={el.id} element={el} zoom={zoom} />
-        ))}
+        {/* Actual Canvas (true size) */}
+        <div
+          id="canvas-area"
+          ref={canvasRef}
+          className="relative bg-white border border-gray-300 shadow-inner transition-all duration-300 rounded"
+          style={{
+            width: `${canvasWidth}px`,
+            height: `${canvasHeight}px`,
+            ...gridStyle,
+          }}
+        >
+          {state.elements.map((el) => (
+            <Element key={el.id} element={el} zoom={fitZoom * zoom} />
+          ))}
 
-        {/* Alignment Guides */}
-        {guides.vertical && (
-          <div
-            className="absolute bg-red-500/50 w-[1px] h-full"
-            style={{ left: `${guides.vertical}px`, top: 0 }}
-          />
-        )}
-        {guides.horizontal && (
-          <div
-            className="absolute bg-red-500/50 h-[1px] w-full"
-            style={{ top: `${guides.horizontal}px`, left: 0 }}
-          />
-        )}
+          {/* Guides */}
+          {guides.vertical && (
+            <div
+              className="absolute bg-red-500/50 w-[1px] h-full"
+              style={{ left: `${guides.vertical}px`, top: 0 }}
+            />
+          )}
+          {guides.horizontal && (
+            <div
+              className="absolute bg-red-500/50 h-[1px] w-full"
+              style={{ top: `${guides.horizontal}px`, left: 0 }}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Info Overlay */}
+      <div className="absolute bottom-2 right-2 bg-white/80 text-xs px-2 py-1 rounded shadow">
+        {canvasWidth}×{canvasHeight}px • Zoom: {(zoom * fitZoom * 100).toFixed(0)}%
       </div>
     </div>
   )

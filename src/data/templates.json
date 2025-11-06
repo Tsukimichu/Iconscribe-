@@ -117,5 +117,33 @@
     "category": "Label",  
     "preview": "/templates/label/label3.png",
     "json": "/templates/json/label/label3.json"
+  },
+  {
+    "id": "brochure1",
+    "name": "Corporate Brochure",
+    "category": "Brochure",
+    "preview": "/templates/brochure/brochure1.png",
+    "json": "/templates/json/brochure/brochure1.json"
+  },
+  {
+    "id": "brochure2",
+    "name": "Travel Brochure",
+    "category": "Brochure",
+    "preview": "/templates/brochure/brochure2.png",
+    "json": "/templates/json/brochure/brochure2.json"
+  },
+  {
+    "id": "brochure3",
+    "name": "Event Brochure",
+    "category": "Brochure",
+    "preview": "/templates/brochure/brochure3.png",
+    "json": "/templates/json/brochure/brochure3.json"
+  },
+  {
+    "id": "brochure4",
+    "name": "Product Brochure",
+    "category": "Brochure",
+    "preview": "/templates/brochure/brochure4.png",
+    "json": "/templates/json/brochure/brochure4.json"
   }
 ]

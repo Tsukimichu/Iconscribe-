@@ -96,5 +96,26 @@
     "category":"Poster",
     "preview":"/templates/poster/poster5.png",
     "json":"/templates/json/poster/poster5.json"
+  },
+  {
+    "id": "label1",
+    "name": "Product Label",
+    "category": "Label",  
+    "preview": "/templates/label/label1.png",
+    "json": "/templates/json/label/label1.json"
+  },
+  {
+    "id": "label2",
+    "name": "Food Label",
+    "category": "Label",  
+    "preview": "/templates/label/label2.png",
+    "json": "/templates/json/label/label2.json"
+  },
+  {
+    "id": "label3",
+    "name": "Cosmetic Label",
+    "category": "Label",  
+    "preview": "/templates/label/label3.png",
+    "json": "/templates/json/label/label3.json"
   }
 ]

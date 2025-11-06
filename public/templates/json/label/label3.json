@@ -1,0 +1,148 @@
+{
+  "version": "5.3.0",
+  "objects": [
+    {
+      "type": "rect",
+      "left": 0,
+      "top": 0,
+      "width": 600,
+      "height": 350,
+      "fill": "#FFF7E9"
+    },
+    {
+      "type": "rect",
+      "left": 0,
+      "top": 100,
+      "width": 600,
+      "height": 150,
+      "fill": "#F8D9A0"
+    },
+    {
+      "type": "circle",
+      "left": 200,
+      "top": 60,
+      "radius": 100,
+      "fill": "#FFF7E9",
+      "stroke": "#6D4C41",
+      "strokeWidth": 5
+    },
+    {
+      "type": "rect",
+      "left": 240,
+      "top": 100,
+      "width": 80,
+      "height": 60,
+      "rx": 10,
+      "ry": 10,
+      "fill": "#BBDEFB",
+      "stroke": "#6D4C41",
+      "strokeWidth": 1
+    },
+    {
+      "type": "rect",
+      "left": 240,
+      "top": 125,
+      "width": 80,
+      "height": 35,
+      "fill": "#A5D6A7"
+    },
+    {
+      "type": "circle",
+      "left": 260,
+      "top": 110,
+      "radius": 6,
+      "fill": "#FFD54F"
+    },
+    {
+      "type": "textbox",
+      "left": 220,
+      "top": 180,
+      "width": 160,
+      "text": "BORCELLE",
+      "fontSize": 22,
+      "fontWeight": "bold",
+      "fill": "#4E342E",
+      "fontFamily": "Times New Roman",
+      "textAlign": "center"
+    },
+    {
+      "type": "textbox",
+      "left": 220,
+      "top": 205,
+      "width": 160,
+      "text": "cold brew coffee",
+      "fontSize": 14,
+      "fill": "#4E342E",
+      "fontFamily": "Arial",
+      "textAlign": "center"
+    },
+    {
+      "type": "textbox",
+      "left": 70,
+      "top": 130,
+      "width": 200,
+      "text": "100%\nPremium coffee Blend",
+      "fontSize": 14,
+      "fill": "#4E342E",
+      "fontFamily": "Arial",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": 70,
+      "top": 220,
+      "width": 200,
+      "text": "BORCELLE\n123 Anywhere ST., Any City,\nST 12345\nwww.reallygreatsite.com",
+      "fontSize": 12,
+      "fill": "#4E342E",
+      "fontFamily": "Arial",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": 400,
+      "top": 130,
+      "width": 170,
+      "text": "Better use before",
+      "fontSize": 14,
+      "fontWeight": "bold",
+      "fill": "#4E342E",
+      "fontFamily": "Arial",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": 400,
+      "top": 150,
+      "width": 170,
+      "text": "20/03/2025",
+      "fontSize": 13,
+      "fill": "#4E342E",
+      "fontFamily": "Arial",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": 400,
+      "top": 190,
+      "width": 170,
+      "text": "|||||||||||||||||||||||||",
+      "fontSize": 22,
+      "fontFamily": "Courier New",
+      "fill": "#000000",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": 400,
+      "top": 215,
+      "width": 170,
+      "text": "Expired Date : December 13, 2023",
+      "fontSize": 11,
+      "fill": "#4E342E",
+      "fontFamily": "Arial",
+      "textAlign": "left"
+    }
+  ],
+  "background": "#FFF7E9"
+}

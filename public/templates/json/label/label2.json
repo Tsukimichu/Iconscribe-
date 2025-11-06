@@ -1,0 +1,149 @@
+{
+  "version": "5.3.0",
+  "objects": [
+    {
+      "type": "rect",
+      "left": 0,
+      "top": 0,
+      "width": 600,
+      "height": 300,
+      "fill": "#FFF3E0"
+    },
+    {
+      "type": "rect",
+      "left": 0,
+      "top": 100,
+      "width": 600,
+      "height": 100,
+      "fill": "#FBC02D"
+    },
+    {
+      "type": "circle",
+      "left": 250,
+      "top": 80,
+      "radius": 70,
+      "fill": "#FBC02D",
+      "stroke": "#EF6C00",
+      "strokeWidth": 3
+    },
+    {
+      "type": "rect",
+      "left": 265,
+      "top": 95,
+      "width": 70,
+      "height": 50,
+      "rx": 8,
+      "ry": 8,
+      "fill": "#BBDEFB",
+      "stroke": "#F57C00",
+      "strokeWidth": 1
+    },
+    {
+      "type": "rect",
+      "left": 265,
+      "top": 120,
+      "width": 70,
+      "height": 25,
+      "fill": "#A5D6A7"
+    },
+    {
+      "type": "circle",
+      "left": 285,
+      "top": 105,
+      "radius": 5,
+      "fill": "#FDD835"
+    },
+    {
+      "type": "textbox",
+      "left": 60,
+      "top": 115,
+      "width": 200,
+      "text": "APRICOT JAM",
+      "fontSize": 22,
+      "fontWeight": "bold",
+      "fill": "#000000",
+      "fontFamily": "Arial",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": 60,
+      "top": 140,
+      "width": 200,
+      "text": "made with love",
+      "fontSize": 14,
+      "fill": "#3E2723",
+      "fontFamily": "Arial",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": 60,
+      "top": 160,
+      "width": 200,
+      "text": "Ingredients:",
+      "fontSize": 14,
+      "fontWeight": "bold",
+      "fill": "#3E2723",
+      "fontFamily": "Arial",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": 60,
+      "top": 178,
+      "width": 200,
+      "text": "Apricot, Ginger, Cinnamon,\nHoney, Lemon juice,\nSugar, Salt.",
+      "fontSize": 13,
+      "fill": "#3E2723",
+      "fontFamily": "Arial",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": 420,
+      "top": 120,
+      "width": 140,
+      "text": "Expiry date:",
+      "fontSize": 13,
+      "fontWeight": "bold",
+      "fill": "#3E2723",
+      "fontFamily": "Arial",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": 420,
+      "top": 138,
+      "width": 140,
+      "text": "02/05/2025",
+      "fontSize": 13,
+      "fill": "#3E2723",
+      "fontFamily": "Arial",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": 410,
+      "top": 185,
+      "width": 150,
+      "text": "|||||||||||||||||||||||||",
+      "fontSize": 22,
+      "fontFamily": "Courier New",
+      "fill": "#000000",
+      "textAlign": "center"
+    },
+    {
+      "type": "textbox",
+      "left": 400,
+      "top": 210,
+      "width": 170,
+      "text": "www.reallygreatsite.com",
+      "fontSize": 12,
+      "fill": "#3E2723",
+      "fontFamily": "Arial",
+      "textAlign": "center"
+    }
+  ],
+  "background": "#FFF3E0"
+}

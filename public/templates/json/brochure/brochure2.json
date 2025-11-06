@@ -1,0 +1,484 @@
+{
+  "version": "5.3.0",
+  "objects": [
+    {
+      "type": "rect",
+      "left": 0,
+      "top": 0,
+      "width": 1000,
+      "height": 2200,
+      "fill": "#FFFFFF",
+      "selectable": false
+    },
+
+    {
+      "type": "rect",
+      "left": 40,
+      "top": 24,
+      "width": 920,
+      "height": 980,
+      "fill": "#F2F2F2",
+      "rx": 6,
+      "ry": 6,
+      "selectable": false
+    },
+
+    {
+      "type": "rect",
+      "left": 56,
+      "top": 40,
+      "width": 420,
+      "height": 880,
+      "fill": "#E0E0E0",
+      "stroke": "#CFCFCF",
+      "strokeWidth": 1,
+      "rx": 4,
+      "ry": 4
+    },
+    {
+      "type": "textbox",
+      "left": 56,
+      "top": 420,
+      "width": 420,
+      "text": "Left Image Placeholder",
+      "fontSize": 14,
+      "fill": "#777777",
+      "textAlign": "center"
+    },
+
+    {
+      "type": "rect",
+      "left": 492,
+      "top": 40,
+      "width": 464,
+      "height": 220,
+      "fill": "#241728",
+      "rx": 4,
+      "ry": 4,
+      "selectable": false
+    },
+    {
+      "type": "textbox",
+      "left": 512,
+      "top": 56,
+      "width": 420,
+      "text": "Contact Us",
+      "fontSize": 24,
+      "fontWeight": "bold",
+      "fill": "#F6B03C",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": 512,
+      "top": 96,
+      "width": 420,
+      "text": "+123-456-7890\nhello@reallygreatsite.com\nwww.reallygreatsite.com\n123 Anywhere St., Any City, ST 12345",
+      "fontSize": 13,
+      "fill": "#FFFFFF",
+      "textAlign": "left",
+      "lineHeight": 1.4
+    },
+
+    {
+      "type": "rect",
+      "left": 492,
+      "top": 272,
+      "width": 230,
+      "height": 210,
+      "fill": "#F6B03C",
+      "rx": 4,
+      "ry": 4,
+      "selectable": false
+    },
+    {
+      "type": "textbox",
+      "left": 506,
+      "top": 292,
+      "width": 200,
+      "text": "Achievements",
+      "fontSize": 18,
+      "fontWeight": "bold",
+      "fill": "#241728",
+      "textAlign": "left"
+    },
+    {
+      "type": "rect",
+      "left": 506,
+      "top": 330,
+      "width": 60,
+      "height": 60,
+      "fill": "#FFFFFF",
+      "stroke": "#D0D0D0",
+      "strokeWidth": 1
+    },
+    {
+      "type": "rect",
+      "left": 576,
+      "top": 330,
+      "width": 60,
+      "height": 60,
+      "fill": "#FFFFFF",
+      "stroke": "#D0D0D0",
+      "strokeWidth": 1
+    },
+    {
+      "type": "rect",
+      "left": 646,
+      "top": 330,
+      "width": 60,
+      "height": 60,
+      "fill": "#FFFFFF",
+      "stroke": "#D0D0D0",
+      "strokeWidth": 1
+    },
+    {
+      "type": "rect",
+      "left": 506,
+      "top": 400,
+      "width": 60,
+      "height": 60,
+      "fill": "#FFFFFF",
+      "stroke": "#D0D0D0",
+      "strokeWidth": 1
+    },
+    {
+      "type": "rect",
+      "left": 576,
+      "top": 400,
+      "width": 60,
+      "height": 60,
+      "fill": "#FFFFFF",
+      "stroke": "#D0D0D0",
+      "strokeWidth": 1
+    },
+    {
+      "type": "rect",
+      "left": 646,
+      "top": 400,
+      "width": 60,
+      "height": 60,
+      "fill": "#FFFFFF",
+      "stroke": "#D0D0D0",
+      "strokeWidth": 1
+    },
+
+    {
+      "type": "rect",
+      "left": 728,
+      "top": 272,
+      "width": 228,
+      "height": 210,
+      "fill": "#F6B03C",
+      "rx": 4,
+      "ry": 4,
+      "selectable": false
+    },
+    {
+      "type": "textbox",
+      "left": 742,
+      "top": 312,
+      "width": 198,
+      "text": "\"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut tempor magna erat.\"",
+      "fontSize": 13,
+      "fill": "#241728",
+      "fontStyle": "italic",
+      "textAlign": "left",
+      "lineHeight": 1.4
+    },
+
+    {
+      "type": "rect",
+      "left": 492,
+      "top": 496,
+      "width": 464,
+      "height": 220,
+      "fill": "#E0E0E0",
+      "stroke": "#CFCFCF",
+      "strokeWidth": 1,
+      "rx": 4,
+      "ry": 4
+    },
+    {
+      "type": "textbox",
+      "left": 492,
+      "top": 596,
+      "width": 464,
+      "text": "Image Placeholder",
+      "fontSize": 14,
+      "fill": "#777777",
+      "textAlign": "center"
+    },
+
+    {
+      "type": "rect",
+      "left": 56,
+      "top": 936,
+      "width": 420,
+      "height": 184,
+      "fill": "#241728",
+      "rx": 4,
+      "ry": 4,
+      "selectable": false
+    },
+    {
+      "type": "textbox",
+      "left": 80,
+      "top": 958,
+      "width": 360,
+      "text": "What We Offer?",
+      "fontSize": 18,
+      "fontWeight": "bold",
+      "fill": "#F6B03C",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": 80,
+      "top": 988,
+      "width": 360,
+      "text": "• Digital strategy and planning\n• Social media campaigns\n• Analytics & reporting",
+      "fontSize": 13,
+      "fill": "#FFFFFF",
+      "textAlign": "left",
+      "lineHeight": 1.5
+    },
+
+    {
+      "type": "rect",
+      "left": 492,
+      "top": 736,
+      "width": 464,
+      "height": 384,
+      "fill": "#241728",
+      "rx": 4,
+      "ry": 4,
+      "selectable": false
+    },
+    {
+      "type": "textbox",
+      "left": 512,
+      "top": 752,
+      "width": 420,
+      "text": "Our Mission",
+      "fontSize": 18,
+      "fontWeight": "bold",
+      "fill": "#F6B03C",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": 512,
+      "top": 782,
+      "width": 420,
+      "text": "1. Empower businesses with measurable growth strategies.\n2. Provide creative solutions tailored to audience needs.\n3. Build sustainable digital presences.",
+      "fontSize": 13,
+      "fill": "#FFFFFF",
+      "textAlign": "left",
+      "lineHeight": 1.5
+    },
+
+    {
+      "type": "rect",
+      "left": 56,
+      "top": 1130,
+      "width": 900,
+      "height": 8,
+      "fill": "#D0D0D0",
+      "selectable": false
+    },
+
+
+    {
+      "type": "rect",
+      "left": 40,
+      "top": 1160,
+      "width": 920,
+      "height": 980,
+      "fill": "#FFFFFF",
+      "rx": 6,
+      "ry": 6,
+      "selectable": false
+    },
+
+    {
+      "type": "rect",
+      "left": 56,
+      "top": 1180,
+      "width": 560,
+      "height": 880,
+      "fill": "#241728",
+      "rx": 4,
+      "ry": 4,
+      "selectable": false
+    },
+    {
+      "type": "rect",
+      "left": 76,
+      "top": 1200,
+      "width": 240,
+      "height": 240,
+      "fill": "#E0E0E0",
+      "stroke": "#CFCFCF",
+      "strokeWidth": 1,
+      "rx": 6,
+      "ry": 6
+    },
+    {
+      "type": "textbox",
+      "left": 76,
+      "top": 1236,
+      "width": 240,
+      "text": "Portrait Placeholder",
+      "fontSize": 14,
+      "fill": "#777777",
+      "textAlign": "center"
+    },
+    {
+      "type": "textbox",
+      "left": 340,
+      "top": 1208,
+      "width": 260,
+      "text": "Why Choose Us?",
+      "fontSize": 20,
+      "fontWeight": "bold",
+      "fill": "#F6B03C",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": 340,
+      "top": 1240,
+      "width": 260,
+      "text": "1. Proven results for clients.\n2. Cross-channel expertise.\n3. Data-driven campaigns.\n4. Dedicated account management.",
+      "fontSize": 13,
+      "fill": "#FFFFFF",
+      "textAlign": "left",
+      "lineHeight": 1.45
+    },
+
+    {
+      "type": "textbox",
+      "left": 76,
+      "top": 1460,
+      "width": 520,
+      "text": "Services\n\n• SEO & Content\n• Social Media Management\n• Paid Advertising\n• Analytics & CRO",
+      "fontSize": 13,
+      "fill": "#FFFFFF",
+      "textAlign": "left",
+      "lineHeight": 1.6
+    },
+
+    {
+      "type": "rect",
+      "left": 632,
+      "top": 1180,
+      "width": 320,
+      "height": 880,
+      "fill": "#F6B03C",
+      "rx": 4,
+      "ry": 4,
+      "selectable": false
+    },
+    {
+      "type": "rect",
+      "left": 632,
+      "top": 1180,
+      "width": 320,
+      "height": 320,
+      "fill": "#FFFFFF",
+      "rx": 4,
+      "ry": 4,
+      "selectable": false
+    },
+    {
+      "type": "textbox",
+      "left": 652,
+      "top": 1210,
+      "width": 280,
+      "text": "Borcelle Company\nA Digital Marketing Company",
+      "fontSize": 12,
+      "fill": "#241728",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": 652,
+      "top": 1310,
+      "width": 280,
+      "text": "Digital\nMarketing\nAgency",
+      "fontSize": 36,
+      "fontWeight": "bold",
+      "fill": "#241728",
+      "textAlign": "left",
+      "lineHeight": 0.9
+    },
+    {
+      "type": "rect",
+      "left": 652,
+      "top": 1520,
+      "width": 220,
+      "height": 120,
+      "fill": "#FFFFFF",
+      "rx": 4,
+      "ry": 4
+    },
+    {
+      "type": "textbox",
+      "left": 662,
+      "top": 1540,
+      "width": 200,
+      "text": "Logo\n(Placeholder)",
+      "fontSize": 12,
+      "fill": "#241728",
+      "textAlign": "center"
+    },
+
+    {
+      "type": "rect",
+      "left": 652,
+      "top": 1708,
+      "width": 20,
+      "height": 20,
+      "fill": "#241728",
+      "angle": 45,
+      "rx": 2,
+      "ry": 2
+    },
+    {
+      "type": "rect",
+      "left": 682,
+      "top": 1708,
+      "width": 20,
+      "height": 20,
+      "fill": "#F6B03C",
+      "angle": 45,
+      "rx": 2,
+      "ry": 2
+    },
+    {
+      "type": "rect",
+      "left": 712,
+      "top": 1708,
+      "width": 20,
+      "height": 20,
+      "fill": "#241728",
+      "angle": 45,
+      "rx": 2,
+      "ry": 2
+    },
+
+
+    {
+      "type": "textbox",
+      "left": 56,
+      "top": 2068,
+      "width": 896,
+      "text": "© 2025 Borcelle Company • www.reallygreatsite.com • 123 Anywhere St., Any City",
+      "fontSize": 11,
+      "fill": "#777777",
+      "textAlign": "center"
+    }
+  ],
+  "background": "#FFFFFF"
+}

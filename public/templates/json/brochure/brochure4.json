@@ -1,0 +1,246 @@
+{
+  "version": "5.3.0",
+  "objects": [
+    {
+      "type": "rect",
+      "left": 0,
+      "top": 0,
+      "width": "100%",
+      "height": "100%",
+      "fill": "#000000",
+      "selectable": false
+    },
+    
+    {
+      "type": "textbox",
+      "left": "5%",
+      "top": "5%",
+      "width": "25%",
+      "text": "Client Success Stories",
+      "fontSize": 42,
+      "fontFamily": "Playfair Display",
+      "fontWeight": "bold",
+      "fill": "#FFFFFF",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": "5%",
+      "top": "17%",
+      "width": "25%",
+      "text": "Creative collaboration that produces measurable results.",
+      "fontSize": 18,
+      "fontFamily": "Helvetica",
+      "fill": "#E0E0E0",
+      "textAlign": "left",
+      "lineHeight": 1.4
+    },
+    {
+      "type": "circle",
+      "left": "23%",
+      "top": "2%",
+      "radius": 80,
+      "fill": "transparent",
+      "stroke": "#f15a29",
+      "strokeWidth": 40,
+      "angle": 45
+    },
+    {
+      "type": "rect",
+      "left": "35%",
+      "top": 0,
+      "width": "30%",
+      "height": "100%",
+      "fill": "#f15a29"
+    },
+    {
+      "type": "textbox",
+      "left": "37%",
+      "top": "25%",
+      "width": "25%",
+      "text": "We’re Ready to Support You!",
+      "fontSize": 38,
+      "fontFamily": "Playfair Display",
+      "fontWeight": "bold",
+      "fill": "#FFFFFF",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": "37%",
+      "top": "48%",
+      "width": "25%",
+      "text": "Contact us to start your onboarding journey.",
+      "fontSize": 18,
+      "fontFamily": "Helvetica",
+      "fill": "#FFFFFF",
+      "textAlign": "left",
+      "lineHeight": 1.4
+    },
+    {
+      "type": "rect",
+      "left": "65%",
+      "top": 0,
+      "width": "35%",
+      "height": "100%",
+      "fill": "#1A1A1A"
+    },
+    {
+      "type": "textbox",
+      "left": "68%",
+      "top": "10%",
+      "width": "28%",
+      "text": "Our Contact",
+      "fontSize": 36,
+      "fontFamily": "Playfair Display",
+      "fontWeight": "bold",
+      "fill": "#FFFFFF",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": "68%",
+      "top": "20%",
+      "width": "28%",
+      "text": "📞 +123-456-7890\n🌐 www.reallygreatsite.com\n🏢 123 Anywhere St., Any City",
+      "fontSize": 18,
+      "fontFamily": "Helvetica",
+      "fill": "#E0E0E0",
+      "textAlign": "left",
+      "lineHeight": 1.6
+    },
+    {
+      "type": "rect",
+      "left": "68%",
+      "top": "55%",
+      "width": "28%",
+      "height": "35%",
+      "fill": "#2A2A2A"
+    },
+    {
+      "type": "textbox",
+      "left": "68%",
+      "top": "70%",
+      "width": "28%",
+      "text": "Image Placeholder",
+      "fontSize": 16,
+      "fontFamily": "Helvetica",
+      "fill": "#777777",
+      "textAlign": "center"
+    },
+
+    {
+      "type": "rect",
+      "left": 0,
+      "top": "110%",
+      "width": "100%",
+      "height": "100%",
+      "fill": "#000000",
+      "selectable": false
+    },
+    {
+      "type": "textbox",
+      "left": "5%",
+      "top": "115%",
+      "width": "28%",
+      "text": "Why Are Client Stories Important to Us?",
+      "fontSize": 36,
+      "fontFamily": "Playfair Display",
+      "fontWeight": "bold",
+      "fill": "#FFFFFF",
+      "textAlign": "left"
+    },
+    {
+      "type": "textbox",
+      "left": "5%",
+      "top": "127%",
+      "width": "28%",
+      "text": "Because every brand is unique and has its own challenges. We come not only with creative ideas, but also with real solutions. Here's how we help our clients achieve success.",
+      "fontSize": 16,
+      "fontFamily": "Helvetica",
+      "fill": "#E0E0E0",
+      "lineHeight": 1.5,
+      "textAlign": "left"
+    },
+    {
+      "type": "rect",
+      "left": "5%",
+      "top": "145%",
+      "width": "28%",
+      "height": "40%",
+      "fill": "#1A1A1A"
+    },
+    {
+      "type": "textbox",
+      "left": "5%",
+      "top": "165%",
+      "width": "28%",
+      "text": "Image Placeholder",
+      "fontSize": 16,
+      "fontFamily": "Helvetica",
+      "fill": "#777777",
+      "textAlign": "center"
+    },
+    {
+      "type": "rect",
+      "left": "37%",
+      "top": "110%",
+      "width": "27%",
+      "height": "100%",
+      "fill": "#f15a29"
+    },
+    {
+      "type": "textbox",
+      "left": "39%",
+      "top": "115%",
+      "width": "24%",
+      "text": "Success Story 1: Branding and Identity",
+      "fontSize": 28,
+      "fontFamily": "Playfair Display",
+      "fontWeight": "bold",
+      "fill": "#FFFFFF"
+    },
+    {
+      "type": "textbox",
+      "left": "39%",
+      "top": "125%",
+      "width": "24%",
+      "text": "Title: Tech Startup – Impactful Rebranding\n\nChallenge: The existing brand had become outdated.\n\nSolution: We created a new, modern visual identity.\n\nResults: Increased brand awareness by 65% in 6 months.",
+      "fontSize": 16,
+      "fontFamily": "Helvetica",
+      "fill": "#FFFFFF",
+      "lineHeight": 1.5
+    },
+    {
+      "type": "rect",
+      "left": "66%",
+      "top": "110%",
+      "width": "29%",
+      "height": "100%",
+      "fill": "#000000"
+    },
+    {
+      "type": "textbox",
+      "left": "68%",
+      "top": "115%",
+      "width": "25%",
+      "text": "Success Story 2: Content & Campaign",
+      "fontSize": 28,
+      "fontFamily": "Playfair Display",
+      "fontWeight": "bold",
+      "fill": "#FFFFFF"
+    },
+    {
+      "type": "textbox",
+      "left": "68%",
+      "top": "125%",
+      "width": "25%",
+      "text": "Title: Fashion Brand – Viral Digital Campaign\n\nChallenge: Low engagement and difficulty reaching Gen Z.\n\nSolution: Creative video content campaign.\n\nResults: 300% engagement increase in 3 months.",
+      "fontSize": 16,
+      "fontFamily": "Helvetica",
+      "fill": "#E0E0E0",
+      "lineHeight": 1.5
+    }
+  ],
+  "background": "#000000"
+}

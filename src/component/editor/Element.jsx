@@ -9,27 +9,32 @@ export default function Element({ element, zoom = 1 }) {
   const { updateElement, selectElement, state } = useEditor()
   const selected = state.selectedId === element.id
 
-  // Local rotation state — **will be synced** with element.rotation
+  // Local states for smooth interactions
   const [rotation, setRotation] = useState(element.rotation || 0)
+  const [tempPos, setTempPos] = useState({ x: element.x, y: element.y })
   const rotateRef = useRef(null)
+  const draggingRef = useRef(false)
 
-  // --- KEEP LOCAL ROTATION IN SYNC WITH CONTEXT ---
-  // This is the crucial fix: when the element prop updates (e.g. via undo/redo),
-  // update the local rotation so the visual matches the context state.
+  // Keep local rotation in sync with context (for undo/redo updates)
   useEffect(() => {
     setRotation(element.rotation ?? 0)
   }, [element.rotation])
 
-  // Keyboard: Shift + R rotates element by 15°, updates context (which goes into history)
+  // Keep temp position in sync with context (for undo/redo updates)
+  useEffect(() => {
+    if (!draggingRef.current) {
+      setTempPos({ x: element.x, y: element.y })
+    }
+  }, [element.x, element.y])
+
+  // Shift + R = rotate 15°
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!selected) return
       if (e.shiftKey && e.key.toLowerCase() === 'r') {
         e.preventDefault()
         const newRotation = (rotation + 15) % 360
-        // update context — this will be included in undo/redo history
         updateElement(element.id, { rotation: newRotation })
-        // update local state (will also be synced by the effect above)
         setRotation(newRotation)
       }
     }
@@ -37,15 +42,23 @@ export default function Element({ element, zoom = 1 }) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [selected, rotation, element.id, updateElement])
 
-  // Drag/resize handlers convert scaled values back to canvas coordinates
-  const onDragStop = (e, d) => {
+  // --- SMOOTH, ZOOM-AWARE DRAGGING ---
+  const handleDrag = (e, d) => {
+    draggingRef.current = true
+    // Move visually only, no context updates (for performance)
+    setTempPos({ x: d.x / zoom, y: d.y / zoom })
+  }
+
+  const handleDragStop = (e, d) => {
+    draggingRef.current = false
     updateElement(element.id, {
       x: d.x / zoom,
       y: d.y / zoom,
     })
   }
 
-  const onResizeStop = (e, dir, ref, delta, pos) => {
+  // --- ZOOM-AWARE RESIZING ---
+  const handleResizeStop = (e, dir, ref, delta, pos) => {
     updateElement(element.id, {
       width: parseInt(ref.style.width) / zoom,
       height: parseInt(ref.style.height) / zoom,
@@ -54,29 +67,31 @@ export default function Element({ element, zoom = 1 }) {
     })
   }
 
-  // Rotation handle dragging (pointer-based)
+  // --- ROTATION HANDLE ---
   const startRotate = (e) => {
     e.stopPropagation()
     const move = (ev) => {
-      // Get the center of the element's visual box (use bounding rect)
       const rect = rotateRef.current.getBoundingClientRect()
       const cx = rect.left + rect.width / 2
       const cy = rect.top + rect.height / 2
       const radians = Math.atan2(ev.clientY - cy, ev.clientX - cx)
       const angle = (radians * 180) / Math.PI
       const newRotation = Math.round(angle)
-      // Persist rotation to context (so it enters undo history)
-      updateElement(element.id, { rotation: newRotation })
-      // update local immediately for responsive UI (effect will keep them synced)
       setRotation(newRotation)
     }
     const stop = () => {
+      updateElement(element.id, { rotation })
       window.removeEventListener('mousemove', move)
       window.removeEventListener('mouseup', stop)
     }
     window.addEventListener('mousemove', move)
     window.addEventListener('mouseup', stop)
   }
+
+  // Calculate current visible position (live updates while dragging)
+  const visiblePos = draggingRef.current
+    ? { x: tempPos.x * zoom, y: tempPos.y * zoom }
+    : { x: element.x * zoom, y: element.y * zoom }
 
   return (
     <Rnd
@@ -85,12 +100,11 @@ export default function Element({ element, zoom = 1 }) {
         width: element.width * zoom,
         height: element.height * zoom,
       }}
-      position={{
-        x: element.x * zoom,
-        y: element.y * zoom,
-      }}
-      onDragStop={onDragStop}
-      onResizeStop={onResizeStop}
+      position={visiblePos}
+      scale={zoom}
+      onDrag={handleDrag}
+      onDragStop={handleDragStop}
+      onResizeStop={handleResizeStop}
       onClick={(e) => {
         e.stopPropagation()
         selectElement(element.id)
@@ -105,6 +119,7 @@ export default function Element({ element, zoom = 1 }) {
         zIndex: element.zIndex ?? 1,
         opacity: element.opacity ?? 1,
         outline: selected ? '2px solid #3b82f6' : 'none',
+        transition: draggingRef.current ? 'none' : 'transform 0.05s ease-out',
       }}
     >
       <div
@@ -120,7 +135,7 @@ export default function Element({ element, zoom = 1 }) {
         {element.type === 'image' && <ImageElement element={element} />}
         {element.type === 'shape' && <ShapeElement element={element} />}
 
-        {/* Rotation Handle */}
+        {/* Rotation handle (only visible when selected) */}
         {selected && (
           <div
             className="absolute left-1/2 -top-6 w-4 h-4 bg-blue-500 rounded-full cursor-grab border border-white shadow"

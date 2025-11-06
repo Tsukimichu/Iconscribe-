@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import * as fabric  from "fabric";
+import * as fabric from "fabric";
 
 const CanvasEditor = () => {
   const canvasRef = useRef(null);
@@ -11,6 +11,7 @@ const CanvasEditor = () => {
 
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
+  const [showExportOptions, setShowExportOptions] = useState(false);
 
   // ==================================================
   // 🧠 Initialize Fabric Canvas
@@ -49,18 +50,14 @@ const CanvasEditor = () => {
     if (!canvas) return;
 
     const json = JSON.stringify(canvas.toDatalessJSON(["selectable", "evented"]));
-
-    // Prevent redundant history entries
     if (history.current[historyIndex.current] === json) return;
 
-    // Truncate redo history if we add new action after undo
     if (historyIndex.current < history.current.length - 1) {
       history.current = history.current.slice(0, historyIndex.current + 1);
     }
 
     history.current.push(json);
     historyIndex.current = history.current.length - 1;
-
     updateButtonState();
   }, []);
 
@@ -165,11 +162,52 @@ const CanvasEditor = () => {
   };
 
   // ==================================================
+  // 📤 Export Functions
+  // ==================================================
+  const exportCanvas = (type) => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+
+    let dataURL, blob;
+    const link = document.createElement("a");
+
+    switch (type) {
+      case "png":
+        dataURL = canvas.toDataURL({ format: "png" });
+        link.href = dataURL;
+        link.download = "canvas.png";
+        break;
+      case "jpg":
+        dataURL = canvas.toDataURL({ format: "jpeg" });
+        link.href = dataURL;
+        link.download = "canvas.jpg";
+        break;
+      case "svg":
+        const svgData = canvas.toSVG();
+        blob = new Blob([svgData], { type: "image/svg+xml" });
+        link.href = URL.createObjectURL(blob);
+        link.download = "canvas.svg";
+        break;
+      case "json":
+        const jsonData = JSON.stringify(canvas.toDatalessJSON(), null, 2);
+        blob = new Blob([jsonData], { type: "application/json" });
+        link.href = URL.createObjectURL(blob);
+        link.download = "canvas.json";
+        break;
+      default:
+        return;
+    }
+
+    link.click();
+    setShowExportOptions(false);
+  };
+
+  // ==================================================
   // 🖼️ Render
   // ==================================================
   return (
     <div className="p-4 space-y-4">
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center relative">
         <button
           onClick={addShape}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -206,6 +244,44 @@ const CanvasEditor = () => {
         >
           Clear
         </button>
+
+        {/* 🧾 Export Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setShowExportOptions((prev) => !prev)}
+            className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+          >
+            Export ▼
+          </button>
+          {showExportOptions && (
+            <div className="absolute z-10 bg-white border rounded shadow-md mt-1 right-0">
+              <button
+                onClick={() => exportCanvas("png")}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+              >
+                Export as PNG
+              </button>
+              <button
+                onClick={() => exportCanvas("jpg")}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+              >
+                Export as JPG
+              </button>
+              <button
+                onClick={() => exportCanvas("svg")}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+              >
+                Export as SVG
+              </button>
+              <button
+                onClick={() => exportCanvas("json")}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+              >
+                Export as JSON
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <canvas

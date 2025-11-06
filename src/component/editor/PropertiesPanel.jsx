@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useEditor } from '../../context/EditorContext'
 
 export default function PropertiesPanel() {
@@ -8,6 +8,48 @@ export default function PropertiesPanel() {
   if (!selected) return <div className="p-4 text-gray-500">No selection</div>
 
   const set = (k, v) => updateElement(selected.id, { [k]: v })
+
+  // --- Google Font Loader ---
+  useEffect(() => {
+    if (selected?.fontFamily) {
+      const linkId = `google-font-${selected.fontFamily.replace(/\s+/g, '-')}`
+      if (!document.getElementById(linkId)) {
+        const link = document.createElement('link')
+        link.id = linkId
+        link.rel = 'stylesheet'
+        link.href = `https://fonts.googleapis.com/css2?family=${selected.fontFamily.replace(/\s+/g, '+')}:wght@300;400;600;700&display=swap`
+        document.head.appendChild(link)
+      }
+    }
+  }, [selected?.fontFamily])
+
+  // --- Font Options ---
+  const fontOptions = [
+    // 🖥️ System fonts
+    { label: 'Arial', value: 'Arial' },
+    { label: 'Verdana', value: 'Verdana' },
+    { label: 'Georgia', value: 'Georgia' },
+    { label: 'Times New Roman', value: 'Times New Roman' },
+    { label: 'Courier New', value: 'Courier New' },
+    { label: 'Tahoma', value: 'Tahoma' },
+
+    // 🌐 Google Fonts
+    { label: 'Poppins', value: 'Poppins' },
+    { label: 'Roboto', value: 'Roboto' },
+    { label: 'Montserrat', value: 'Montserrat' },
+    { label: 'Playfair Display', value: 'Playfair Display' },
+    { label: 'Raleway', value: 'Raleway' },
+    { label: 'Lato', value: 'Lato' },
+    { label: 'Open Sans', value: 'Open Sans' },
+    { label: 'Oswald', value: 'Oswald' },
+    { label: 'Merriweather', value: 'Merriweather' },
+    { label: 'Nunito', value: 'Nunito' },
+    { label: 'Quicksand', value: 'Quicksand' },
+    { label: 'Dancing Script', value: 'Dancing Script' },
+    { label: 'Pacifico', value: 'Pacifico' },
+    { label: 'Bebas Neue', value: 'Bebas Neue' },
+    { label: 'Inter', value: 'Inter' },
+  ]
 
   return (
     <div className="p-4 space-y-4">
@@ -34,7 +76,7 @@ export default function PropertiesPanel() {
             <label className="text-sm font-medium">Font Size</label>
             <input
               type="number"
-              value={selected.fontSize}
+              value={selected.fontSize ?? 24}
               onChange={(e) => set('fontSize', parseInt(e.target.value || 14))}
               className="w-full border rounded px-2 py-1"
             />
@@ -43,14 +85,16 @@ export default function PropertiesPanel() {
           <div>
             <label className="text-sm font-medium">Font Family</label>
             <select
-              value={selected.fontFamily}
+              value={selected.fontFamily ?? 'Arial'}
               onChange={(e) => set('fontFamily', e.target.value)}
               className="w-full border rounded px-2 py-1"
+              style={{ fontFamily: selected.fontFamily }}
             >
-              <option>Arial, sans-serif</option>
-              <option>Georgia, serif</option>
-              <option>"Courier New", monospace</option>
-              <option>Tahoma, sans-serif</option>
+              {fontOptions.map(f => (
+                <option key={f.value} value={f.value} style={{ fontFamily: f.value }}>
+                  {f.label}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -58,7 +102,7 @@ export default function PropertiesPanel() {
             <label className="text-sm font-medium">Color</label>
             <input
               type="color"
-              value={selected.color}
+              value={selected.color ?? '#000000'}
               onChange={(e) => set('color', e.target.value)}
               className="w-full h-8"
             />
@@ -113,7 +157,7 @@ export default function PropertiesPanel() {
           <label className="text-sm font-medium">Fill</label>
           <input
             type="color"
-            value={selected.background}
+            value={selected.background || '#000000'}
             onChange={(e) => set('background', e.target.value)}
             className="w-full h-8"
           />

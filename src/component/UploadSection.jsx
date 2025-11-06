@@ -16,12 +16,12 @@ const handleFileChange = (e, key, index) => {
   const file = e.target.files[0];
   if (!file) return;
 
-  const maxSizeMB = 5; // 🔹 set max size here (e.g. 5 MB)
+  const maxSizeMB = 5;
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
   if (file.size > maxSizeBytes) {
     alert(`⚠️ File too large! Please upload files below ${maxSizeMB} MB.`);
-    e.target.value = ""; // reset file input
+    e.target.value = "";
     return;
   }
 
@@ -36,7 +36,7 @@ const handleFileChange = (e, key, index) => {
   };
 
   const handleCustomize = () => {
-    navigate("/customize");
+    navigate("/editor");
   };
 
   // Determine upload labels

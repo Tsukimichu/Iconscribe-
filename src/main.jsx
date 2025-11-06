@@ -32,7 +32,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ToastProvider } from './component/ui/ToastProvider.jsx';
 import { AuthProvider } from './context/authContext.jsx';
 
-// ✅ Canva-style Editor imports
+// Canva-style Editor imports
 import EditorPage from './pages/EditorPage.jsx';
 import { EditorProvider } from './context/EditorContext.jsx';
 
@@ -71,7 +71,7 @@ const router = createBrowserRouter([
   { path: '/admin', element: <AdminPage /> },
   { path: '/manager', element: <ManagerPage /> },
 
-  // ✅ Canva-style Editor Page
+  // Canva-style Editor Page
   {
     path: '/editor',
     element: (

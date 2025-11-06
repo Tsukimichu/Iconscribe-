@@ -33,6 +33,7 @@ import { ToastProvider } from './component/ui/ToastProvider.jsx';
 import { AuthProvider } from './context/authContext.jsx';
 //import CustomizationPage from "./component/customization/CustomizationPage";
 import Customizer from "./pages/Customizer";
+import CanvasEditor from './component/CanvasEditor.jsx';
 
 const router = createBrowserRouter([
   { path: '/', element: <Splash /> },
@@ -61,6 +62,7 @@ const router = createBrowserRouter([
   //{ path: '/customize', element: <CustomizationPage /> },
   { path: '/customizer', element: <Customizer /> },
   { path: '/customize', element: <Customization /> },
+  { path: '/canvas-editor', element: <CanvasEditor /> },
   { path: '/maintenance', element: <MaintenanceUser/>},
   { path: '/template-gallery', element: <TemplateGallery /> },
 

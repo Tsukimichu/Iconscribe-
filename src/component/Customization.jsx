@@ -46,18 +46,15 @@ const Customization = () => {
     setTimeout(() => setToast(null), ms);
   };
 
-  const saveState = (canvas, overwrite = false) => {
+  // --- SAVE CANVAS SNAPSHOT ---
+  const saveState = useCallback((canvas, overwrite = false) => {
     if (!canvas) return;
-    // Exclude controls/selection or not? We'll save full JSON for simplicity
-    const json = canvas.toJSON([
-      // include properties we might need for objects
-      "selectable",
-      "evented",
-    ]);
+    const json = canvas.toJSON(["selectable", "evented"]);
 
     if (overwrite && historyIndex.current >= 0) {
       history.current[historyIndex.current] = json;
     } else {
+      // If we undo, then make a new change — drop forward history
       if (historyIndex.current < history.current.length - 1) {
         history.current = history.current.slice(0, historyIndex.current + 1);
       }
@@ -69,137 +66,67 @@ const Customization = () => {
       history.current.shift();
       historyIndex.current--;
     }
-
-    try {
-      localStorage.setItem("canvasHistory", JSON.stringify(history.current));
-      localStorage.setItem("canvasHistoryIndex", historyIndex.current);
-    } catch (err) {
-      // localStorage might fail if snapshot too large — ignore but notify
-      console.warn("Unable to save history to localStorage", err);
-    }
-  };
+  }, []);
 
   // helper to rescale background image to cover canvas
   const rescaleBackground = (canvas) => {
-    if (!canvas) return;
-    const bg = canvas.backgroundImage;
+    const bg = canvas?.backgroundImage;
     if (!bg) return;
-    const scale = Math.max(canvas.getWidth() / bg.width, canvas.getHeight() / bg.height);
-    bg.set({
-      originX: "left",
-      originY: "top",
-      left: 0,
-      top: 0,
-      selectable: false,
-    });
+    const scale = Math.max(canvas.width / bg.width, canvas.height / bg.height);
+    bg.set({ left: 0, top: 0, originX: "left", originY: "top", selectable: false });
     bg.scale(scale);
-    canvas.renderAll();
   };
 
   // --- UNDO / REDO functions ---
-  // --- UNDO ---
   const handleUndo = useCallback(() => {
     const canvas = fabricCanvasRef.current;
-    if (!canvas) return;
-    if (historyIndex.current <= 0) {
-      showToast("No more undo");
-      return;
-    }
+    if (!canvas || historyIndex.current <= 0) return;
     historyIndex.current--;
-    canvas.discardActiveObject();
     canvas.loadFromJSON(history.current[historyIndex.current], () => {
       rescaleBackground(canvas);
       safeRender(canvas);
-      canvas.discardActiveObject();
-      localStorage.setItem("canvasHistoryIndex", historyIndex.current);
-      showToast("Undone");
     });
   }, []);
 
   // --- REDO ---
   const handleRedo = useCallback(() => {
     const canvas = fabricCanvasRef.current;
-    if (!canvas) return;
-    if (historyIndex.current >= history.current.length - 1) {
-      showToast("No more redo");
-      return;
-    }
+    if (!canvas || historyIndex.current >= history.current.length - 1) return;
     historyIndex.current++;
-    canvas.discardActiveObject();
     canvas.loadFromJSON(history.current[historyIndex.current], () => {
       rescaleBackground(canvas);
       safeRender(canvas);
-      canvas.discardActiveObject();
-      localStorage.setItem("canvasHistoryIndex", historyIndex.current);
-      showToast("Redone");
     });
   }, []);
 
-  // --- useEffect for fabric canvas init + event wiring ---
-  useEffect(() => {
-    // Make sure the <canvas> exists in the DOM
-    const canvasEl = canvasRef.current;
-    if (!canvasEl) {
-      console.warn("Canvas element not yet available");
-      return;
-    }
+    // --- FABRIC INIT ---
+    useEffect(() => {
+      const canvasEl = canvasRef.current;
+      if (!canvasEl) return;
+      const canvas = new fabric.Canvas(canvasEl, {
+        width: 700,
+        height: 500,
+        backgroundColor: "#fff",
+        preserveObjectStacking: true,
+      });
+      fabricCanvasRef.current = canvas;
 
-    // Initialize Fabric only once
-    const canvas = new fabric.Canvas(canvasEl, {
-      width: 700,
-      height: 500,
-      backgroundColor: "#fff",
-      preserveObjectStacking: true,
-    });
-    fabricCanvasRef.current = canvas;
+      // --- Listen for changes ---
+      const recordChange = () => saveState(canvas);
+      canvas.on("object:added", recordChange);
+      canvas.on("object:modified", recordChange);
+      canvas.on("object:removed", recordChange);
 
-    let isMounted = true; // Flag to prevent updates after unmount
+      // --- Initial state ---
+      saveState(canvas);
 
-    const templateParamRaw = new URLSearchParams(window.location.search).get("template");
-
-    if (templateParamRaw) {
-      const templateParam = templateParamRaw.startsWith("/")
-        ? templateParamRaw
-        : `/${templateParamRaw}`;
-
-      console.log(" Fetching template:", templateParam);
-
-      fetch(templateParam)
-        .then((res) => {
-          if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-          return res.json();
-        })
-        .then((jsonData) => {
-          if (!isMounted) return; // Prevent running after unmount
-
-          try {
-            canvas.loadFromJSON(jsonData, () => {
-              if (!isMounted) return;
-              canvas.renderAll();
-              console.log("✅ Template loaded:", templateParam);
-            });
-          } catch (err) {
-            console.error("❌ Error loading JSON into Fabric:", err);
-          }
-        })
-        .catch((err) => {
-          console.error("❌ Template fetch/load error:", err);
-        });
-    }
-
-    // Cleanup safely
-    return () => {
-      isMounted = false;
-      if (fabricCanvasRef.current) {
-        try {
-          fabricCanvasRef.current.dispose();
-          fabricCanvasRef.current = null;
-        } catch (err) {
-          console.warn("⚠️ Error disposing canvas:", err);
-        }
-      }
-    };
-  }, [handleRedo, handleUndo]);
+      return () => {
+        canvas.off("object:added", recordChange);
+        canvas.off("object:modified", recordChange);
+        canvas.off("object:removed", recordChange);
+        canvas.dispose();
+      };
+    }, [saveState]);
 
 
   // --- Keyboard Shortcuts: Undo/Redo/Delete/Nudge/Duplicate/SelectAll/Escape ---
@@ -286,7 +213,7 @@ const Customization = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleRedo, handleUndo]);
+  }, [saveState, handleUndo, handleRedo]);
   
   // --- TEMPLATE LOADING from query param ---
     const GET_TEMPLATE_FROM_URL = () => {
@@ -296,15 +223,15 @@ const Customization = () => {
 
     
   // Safe render to prevent clearRect error
-const safeRender = (canvas) => {
-  if (canvas && canvas.contextContainer) {
-    try {
-      canvas.renderAll();
-    } catch (e) {
-      console.warn("Skipped render due to missing context:", e);
-    }
-  }
-};
+    const safeRender = (canvas) => {
+      if (canvas && canvas.contextContainer) {
+        try {
+          canvas.renderAll();
+        } catch (err) {
+          console.warn("Render skipped:", err);
+        }
+      }
+    };
 
   // --- IMAGE UPLOAD (adds an image object) ---
   const handleImageUpload = (e) => {

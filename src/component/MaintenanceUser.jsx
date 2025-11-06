@@ -21,7 +21,7 @@ const MaintenanceUser = ({ children }) => {
 
         setStatus(data);
       } catch (error) {
-        console.error("❌ Error fetching maintenance status:", error);
+        console.error(" Error fetching maintenance status:", error);
       }
     };
 

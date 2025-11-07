@@ -13,6 +13,7 @@ const salesRoutes = require("./routes/salesRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const backupRoutes = require("./routes/backupRoutes");
 const sessionRoutes = require("./routes/sessionRoutes");
+const otpRoutes = require("./routes/otpRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -42,6 +43,7 @@ app.use("/api/sales", salesRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/backup", backupRoutes);
 app.use("/api/sessions", sessionRoutes);
+app.use("/api", otpRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {

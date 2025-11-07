@@ -32,7 +32,7 @@ function Signup() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Step 1: Handle signup and "send" OTP
+  // Handle signup and "send" OTP
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -42,7 +42,8 @@ function Signup() {
     }
 
     try {
-      const res = await axios.post("http://localhost:5000/api/signup", {
+      // Step 1: Signup user
+      const signupRes = await axios.post("http://localhost:5000/api/signup", {
         name: formData.name,
         phone: formData.phone,
         email: formData.email,
@@ -50,20 +51,31 @@ function Signup() {
         password: formData.password,
       });
 
-      if (res.data.success) {
-        const randomOtp = Math.floor(100000 + Math.random() * 900000);
-        setGeneratedOtp(randomOtp);
-        console.log("Generated OTP:", randomOtp);
+      if (!signupRes.data.success) {
+        showToast("Signup failed. Please try again.", "error");
+        return;
+      }
+
+      // Step 2: Request OTP from backend
+      const otpRes = await axios.post("http://localhost:5000/api/send-otp", {
+        email: formData.email,
+      });
+
+      if (otpRes.data.success) {
+        setGeneratedOtp(otpRes.data.otp); // store OTP from backend
         setOtpSent(true);
-        showToast(`OTP sent to ${formData.email} and ${formData.phone}`, "success"); 
+        showToast(`OTP sent to ${formData.email}`, "success");
+      } else {
+        showToast("Failed to send OTP. Please try again.", "error");
       }
     } catch (err) {
-      console.error("Signup error:", err);
-      showToast("Signup failed. Please check the console.", "error");
+      console.error("Error during signup or OTP sending:", err);
+      showToast("Something went wrong. Please try again later.", "error");
     }
   };
 
-  // Step 2: Verify OTP with shake animation on wrong entry
+
+  // Verify OTP with shake animation on wrong entry
   const handleVerifyOtp = (e) => {
     e.preventDefault();
     if (otp === String(generatedOtp)) {

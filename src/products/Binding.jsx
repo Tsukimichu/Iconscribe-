@@ -17,8 +17,7 @@
     const calculatePrice = (quantity, pages, bindingType, paperType) => {
       if (!quantity || !pages) return 0;
 
-      let basePrice = 0.10 * pages; // ₱0.10 per page (example rate)
-
+      let basePrice = 0.10 * pages;
       // Adjust by binding type
       switch (bindingType) {
         case "Perfect Binding":
@@ -60,13 +59,6 @@
 
       return basePrice * quantity;
     };
-
-    
-
-
-
-
-
 
     // user profile
     const [userProfile, setUserProfile] = useState({
@@ -167,20 +159,22 @@
 
         // Create order via backend
         const res = await fetch("http://localhost:5000/api/orders/create", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            user_id: userProfile.id,
-            product_id: 1, 
-            quantity,
-            urgency: "Normal",
-            status: "Pending",
-            attributes, 
-          }),
-        });
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              user_id: userProfile.id,
+              product_id: 1,
+              quantity,
+              urgency: "Normal",
+              status: "Pending",
+              attributes,
+              estimated_price: estimatedPrice, 
+            }),
+          });
+
 
         const data = await res.json();
 

@@ -1,4 +1,6 @@
+/* eslint-disable no-undef */
 import React, { useState, useEffect, useMemo } from "react";
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Trash2,
@@ -12,6 +14,7 @@ import {
 
 const OrdersSection = () => {
   const [orders, setOrders] = useState([]);
+// eslint-disable-next-line no-unused-vars
   const [archived, setArchived] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -24,6 +27,7 @@ const OrdersSection = () => {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [previewImage, setPreviewImage] = useState(null);
 
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -288,49 +292,6 @@ const OrdersSection = () => {
     }
   };
 
-
-  const handleExportReport = () => {
-  const completedOrders = orders.filter((o) => o.status === "Completed");
-
-  if (completedOrders.length === 0) {
-    alert("No completed orders to export.");
-    return;
-  }
-
-  // Build CSV content
-  const csvHeaders = ["Enquiry No", "Customer Name", "Service", "Quantity", "Total", "Date Completed"];
-  const csvRows = completedOrders.map((order) => {
-    const totalQty = order.items?.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0);
-    const totalPrice = order.items?.reduce((sum, i) => sum + (Number(i.price) || 0), 0);
-
-    return [
-      order.enquiryNo,
-      order.customer_name,
-      order.items?.map((i) => i.service).join(", "),
-      totalQty,
-      totalPrice,
-      order.completed_at ? new Date(order.completed_at).toLocaleDateString() : "",
-    ];
-  });
-
-  // Convert to CSV format
-  const csvContent =
-    [csvHeaders, ...csvRows]
-      .map((row) => row.map((val) => `"${val ?? ""}"`).join(","))
-      .join("\n");
-
-  // Create a downloadable blob
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `Completed_Orders_Report_${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-
-
   // --- Add Walk-In Order Logic ---
   const handleAddOrder = async () => {
   const { customer_name, service, price, urgency } = newOrder;
@@ -506,7 +467,7 @@ const openViewModal = async (order) => {
                     { key: "dateOrdered", label: "Date Ordered" },
                     { key: "urgency", label: "Urgency" },
                     { key: "status", label: "Status" },
-                    { key: "price", label: "Price" },
+                    { key: "price", label: "Estimated Price" },
                   ].map((col) => (
                     <th
                       key={col.key}
@@ -540,7 +501,9 @@ const openViewModal = async (order) => {
                     <td className="py-3 px-6">{order.urgency || "—"}</td>
                     <td className="py-3 px-6">{order.status || "Pending"}</td>
                     <td className="py-3 px-6">
-                      {order.price ? `₱${order.price}` : <span className="text-gray-400 italic">No Price</span>}
+                      {order.estimated_price
+                        ? `₱${order.estimated_price.toFixed(2)}`
+                        : <span className="text-gray-400 italic">Not Set</span>}
                     </td>
                     <td className="py-3 px-6 flex justify-end gap-2">
                       <button

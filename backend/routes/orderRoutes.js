@@ -49,7 +49,7 @@ router.use("/uploads", express.static(uploadDir));
 router.use("/uploads", express.static(uploadDir));
 
 // ===================================================
-// CREATE NEW ORDER
+// CREATE NEW ORDER 
 // ===================================================
 router.post("/create", async (req, res) => {
   try {
@@ -60,9 +60,10 @@ router.post("/create", async (req, res) => {
       urgency,
       status,
       attributes,
+      estimated_price, 
     } = req.body;
 
-    console.log(" Incoming order body:", req.body);
+    console.log("📦 Incoming order body:", req.body);
 
     if (!user_id || !product_id || !quantity) {
       return res.status(400).json({
@@ -81,13 +82,14 @@ router.post("/create", async (req, res) => {
       }
     }
 
-    // Create order
+    // Create order with estimated_price
     const [orderResult] = await db
       .promise()
       .execute(
-        "INSERT INTO orders (user_id, order_date, total) VALUES (?, NOW(), ?)",
-        [user_id, 0]
+        "INSERT INTO orders (user_id, order_date, total, estimated_price) VALUES (?, NOW(), 0, ?)",
+        [user_id, estimated_price || 0]
       );
+
     const order_id = orderResult.insertId;
 
     // Create order item
@@ -97,6 +99,7 @@ router.post("/create", async (req, res) => {
         "INSERT INTO orderitems (order_id, product_id, quantity, urgency, status) VALUES (?, ?, ?, ?, ?)",
         [order_id, product_id, quantity, urgency || "Normal", status || "Pending"]
       );
+
     const order_item_id = orderItemResult.insertId;
 
     // Insert attributes safely
@@ -122,6 +125,7 @@ router.post("/create", async (req, res) => {
       message: "Order placed successfully!",
       order_id,
       order_item_id,
+      estimated_price,
     });
   } catch (error) {
     console.error("❌ Error placing order:", error);
@@ -132,6 +136,7 @@ router.post("/create", async (req, res) => {
     });
   }
 });
+
 
 
 
@@ -207,13 +212,15 @@ router.get("/", async (req, res) => {
         o.order_date AS dateOrdered,
         oi.urgency,
         oi.status,
-        o.total AS price
+        o.total AS price,
+        o.estimated_price
       FROM orderitems oi
       JOIN orders o ON oi.order_id = o.order_id
       JOIN users u ON o.user_id = u.user_id
       JOIN products p ON oi.product_id = p.product_id
       ORDER BY o.order_date DESC
     `);
+
 
     const [attrs] = await db.promise().query(`
       SELECT order_item_id, attribute_name, attribute_value

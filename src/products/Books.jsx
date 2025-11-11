@@ -2,19 +2,14 @@ import Nav from "../component/navigation";
 import sampleBook from "../assets/Book.png"; 
 import { ArrowBigLeft, Upload, Phone, Mail, Contact, MessageCircle, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 import UploadSection from "../component/UploadSection";
 import { useToast } from "../component/ui/ToastProvider";
+import { computeBookQuotation } from "../utils/bookQuatation";
 
 function Books() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
-
-  const [estimatedPrice, setEstimatedPrice] = useState(0);
-
-
-  
-
 
   // User profile state
   const [userProfile, setUserProfile] = useState({
@@ -24,6 +19,23 @@ function Books() {
     address: "",
     phone: "",
   });
+
+    const [quantity, setQuantity] = useState("");
+    const [pages, setPages] = useState("");
+    const [binding, setBinding] = useState("");
+    const [paperType, setPaperType] = useState("");
+    const [coverFinish, setCoverFinish] = useState("");
+    const [colorPrinting, setColorPrinting] = useState("");
+    const [file, setFile] = useState(null);
+    const [notes, setNotes] = useState("");
+
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [showContactModal, setShowContactModal] = useState(false);
+    const [estimatedPrice, setEstimatedPrice] = useState(0);
+    const { showToast } = useToast();
+
+
+
 
   // Watch token login state
   useEffect(() => {
@@ -74,19 +86,6 @@ function Books() {
   }, []);
 
   if (!visible) return null;
-
-  const [quantity, setQuantity] = useState("");
-  const [pages, setPages] = useState("");
-  const [binding, setBinding] = useState("");
-  const [paperType, setPaperType] = useState("");
-  const [coverFinish, setCoverFinish] = useState("");
-  const [colorPrinting, setColorPrinting] = useState("");
-  const [file, setFile] = useState(null);
-  const [notes, setNotes] = useState("");
-
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
-  const { showToast } = useToast();
 
   const handlePlaceOrder = (e) => {
     e.preventDefault();
@@ -189,51 +188,21 @@ function Books() {
     }
   };
 
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     useEffect(() => {
-    // Basic base rates (you can adjust these)
-      const baseRatePerPage = 0.5;  // ₱ per page
-      const bindingRates = {
-        "Perfect Binding": 30,
-        "Saddle Stitch": 20,
-        "Hardcover": 50,
-        "Spiral": 25,
-      };
-      const paperRates = {
-        Matte: 1.0,
-        Glossy: 1.2,
-        "Book Paper": 0.9,
-      };
-      const coverRates = {
-        Matte: 10,
-        Glossy: 15,
-        "Soft Touch": 20,
-      };
-      const colorRates = {
-        "Full Color": 1.5,
-        "Black & White": 1.0,
-        Mixed: 1.2,
-      };
-
-      if (!quantity || !pages) {
+      if (!pages || !quantity) {
         setEstimatedPrice(0);
         return;
       }
 
-      const bindingCost = bindingRates[binding] || 0;
-      const paperMultiplier = paperRates[paperType] || 1;
-      const coverCost = coverRates[coverFinish] || 0;
-      const colorMultiplier = colorRates[colorPrinting] || 1;
+      const result = computeBookQuotation({
+        pages: Number(pages),
+        copies: Number(quantity),
+        colored: colorPrinting === "Full Color", // or any label you use
+      });
 
-      // Formula
-      const total =
-        quantity *
-        (pages * baseRatePerPage * paperMultiplier * colorMultiplier +
-          bindingCost +
-          coverCost);
-
-      setEstimatedPrice(total);
-    }, [quantity, pages, binding, paperType, coverFinish, colorPrinting]);
-
+      setEstimatedPrice(result.total);
+    }, [pages, quantity, colorPrinting]);
 
 
 
@@ -454,7 +423,7 @@ function Books() {
                     <div className="mt-4 border border-blue-200 bg-blue-50 rounded-2xl shadow-sm p-5 text-right">
                       <p className="text-base text-gray-700 font-medium">Estimated Price</p>
                       <p className="text-3xl font-bold text-blue-700 mt-1">
-                        ₱{estimatedPrice.toFixed(2)}
+                           ₱{estimatedPrice ? estimatedPrice.toLocaleString() : "0"}
                       </p>
                       <p className="text-sm text-gray-500 italic mt-1">
                         *Final price may vary depending on specifications

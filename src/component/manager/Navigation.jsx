@@ -9,6 +9,7 @@ import {
   MessageCircle,
   LogOut,
 } from "lucide-react";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import logo from "../../assets/ICONS.png";
 
@@ -69,7 +70,7 @@ const Navigation = ({ selectedSection, setSelectedSection, handleLogout }) => {
         />
         <NavItem
           icon={<Truck size={18} />}
-          label="Supply"
+          label="Expenses"
           active={selectedSection === "supply"}
           onClick={() => setSelectedSection("supply")}
         />

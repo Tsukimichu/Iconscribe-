@@ -2,78 +2,103 @@ const express = require("express");
 const router = express.Router();
 const db = require("../models/db");
 
-// GET all supplies
-router.get("/", (req, res) => {
-  db.query("SELECT * FROM supplies", (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(results);
-  });
-});
-
-// GET supply by ID (optional)
-router.get("/:id", (req, res) => {
-  const { id } = req.params;
-  db.query("SELECT * FROM supplies WHERE supply_id=?", [id], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (results.length === 0) return res.status(404).json({ error: "Supply not found" });
-    res.json(results[0]);
-  });
-});
-
-// ADD supply
-router.post("/", (req, res) => {
-  const { supply_name, quantity, price, status } = req.body;
-  if (
-    !supply_name ||
-    typeof quantity === "undefined" ||
-    typeof price === "undefined" ||
-    !status
-  ) {
-    return res.status(400).json({ error: "Missing required fields" });
+// ===================================================
+// Get all sales
+// ===================================================
+router.get("/", async (req, res) => {
+  try {
+    const [rows] = await db.promise().query("SELECT * FROM sales");
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Database error" });
   }
-  const qty = Number(quantity);
-  const prc = Number(price);
-  db.query(
-    "INSERT INTO supplies (supply_name, quantity, price, status) VALUES (?, ?, ?, ?)",
-    [supply_name, qty, prc, status],
-    (err, result) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ supply_id: result.insertId, supply_name, quantity: qty, price: prc, status });
-    }
-  );
 });
 
-// UPDATE supply
-router.put("/:id", (req, res) => {
-  const { id } = req.params;
-  const { supply_name, quantity, price, status } = req.body;
-  if (
-    !supply_name ||
-    typeof quantity === "undefined" ||
-    typeof price === "undefined" ||
-    !status
-  ) {
-    return res.status(400).json({ error: "Missing required fields" });
+// ===================================================
+// Add sale
+// ===================================================
+router.post("/", async (req, res) => {
+  let { order_item_id, item, amount, date } = req.body;
+
+  if (!item || amount == null) {
+    return res.status(400).json({ success: false, message: "Missing fields" });
   }
-  const qty = Number(quantity);
-  const prc = Number(price);
-  db.query(
-    "UPDATE supplies SET supply_name=?, quantity=?, price=?, status=? WHERE supply_id=?",
-    [supply_name, qty, prc, status, id],
-    (err) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ supply_id: parseInt(id), supply_name, quantity: qty, price: prc, status });
+
+  if (!date) date = new Date().toISOString().split("T")[0];
+
+  try {
+    if (order_item_id) {
+      const [existing] = await db
+        .promise()
+        .query("SELECT id FROM sales WHERE order_item_id = ?", [order_item_id]);
+
+      if (existing.length > 0) {
+        return res.json({
+          success: false,
+          message: "Sale already exists for this order item.",
+        });
+      }
     }
-  );
+
+    await db
+      .promise()
+      .query("INSERT INTO sales (order_item_id, item, amount, date) VALUES (?, ?, ?, ?)", [
+        order_item_id || null,
+        item,
+        amount,
+        date,
+      ]);
+
+    res.json({ success: true, message: "Sale added successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Database error" });
+  }
 });
 
-// DELETE supply
-router.delete("/:id", (req, res) => {
+// ===================================================
+// Update sale
+// ===================================================
+router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  db.query("DELETE FROM supplies WHERE supply_id=?", [id], (err) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: "Deleted successfully" });
-  });
+  const { item, amount, date } = req.body;
+
+  if (!item || !amount) {
+    return res.status(400).json({ success: false, message: "Missing fields" });
+  }
+
+  // Set system date if not provided
+  const updateDate = date || new Date().toISOString().split("T")[0];
+
+  try {
+    await db
+      .promise()
+      .query("UPDATE sales SET item=?, amount=?, date=? WHERE id=?", [
+        item,
+        amount,
+        updateDate,
+        id,
+      ]);
+    res.json({ success: true, message: "Sale updated successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Database error" });
+  }
+});
+
+// ===================================================
+// Delete sale
+// ===================================================
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await db.promise().query("DELETE FROM sales WHERE id=?", [id]);
+    res.json({ success: true, message: "Sale deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Database error" });
+  }
 });
 
 module.exports = router;

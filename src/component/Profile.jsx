@@ -225,14 +225,6 @@ function Profile() {
               Logout
             </button>
           </div>
-
-          {/* Order Summary */}
-          <div className="mt-8">
-            <h3 className="text-lg font-bold mb-2">Order Summary</h3>
-            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 text-center text-gray-500 text-sm">
-              ~ No Transactions ~
-            </div>
-          </div>
         </div>
       </div>
 

@@ -11,12 +11,14 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import ReactApexChart from "react-apexcharts";
+
 
 const API_URL = "http://localhost:5000/api/sales";
 
 const SalesAndExpenseSection = () => {
   const [sales, setSales] = useState([]);
-  const [expenses, setExpenses] = useState([]); 
+  const [expenses, setExpenses] = useState([]);
   const [orders, setOrders] = useState([]);
   const [archivedSales, setArchivedSales] = useState([]);
   const [archivedExpenses, setArchivedExpenses] = useState([]);
@@ -46,18 +48,21 @@ const SalesAndExpenseSection = () => {
     fetchSales();
   }, []);
 
-      // Fetch orders from backend for dropdown
-    useEffect(() => {
-      const fetchOrders = async () => {
-        try {
-          const res = await axios.get("http://localhost:5000/api/orders");
-          if (res.data) setOrders(res.data);
-        } catch (err) {
-          console.error("Error fetching orders:", err);
-        }
-      };
-      fetchOrders();
-    }, []);
+  // =====================================================
+  // Fetch expenses data from backend
+  // =====================================================
+  const fetchExpenses = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/expenses");
+      if (res.data.success) setExpenses(res.data.data);
+    } catch (err) {
+      console.error("Error fetching expenses:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchExpenses();
+  }, []);
 
 
   // =====================================================
@@ -77,10 +82,13 @@ const SalesAndExpenseSection = () => {
   };
 
   const openAdd = (source) => {
-    setSelected({ source, id: null });
+    setSelected({ source, id: null }); 
     setIsNew(true);
-    setFormData({ id: null, item: "", amount: "", date: "" });
+    const today = new Date().toISOString().split("T")[0];
+    setFormData({ id: null, item: "", amount: "", date: today });
   };
+
+
 
   const closeEdit = () => {
     setSelected(null);
@@ -94,34 +102,44 @@ const SalesAndExpenseSection = () => {
   };
 
   const handleSave = async () => {
-    if (!formData.item.trim() || !formData.amount || !formData.date) {
+    if (!formData.item.trim() || formData.amount === "" || !formData.date) {
       return alert("All fields are required");
     }
 
+    // Decide API based on type
+    const url = selected.source === "expense"
+      ? "http://localhost:5000/api/expenses"
+      : "http://localhost:5000/api/sales";
+
     try {
       if (isNew) {
-        // Add new sale
-        await axios.post(API_URL, {
-          order_item_id: null,
+        await axios.post(url, {
           item: formData.item,
-          amount: formData.amount,
+          amount: Number(formData.amount),
           date: formData.date,
         });
       } else {
-        // Update existing sale
-        await axios.put(`${API_URL}/${formData.id}`, {
+        await axios.put(`${url}/${formData.id}`, {
           item: formData.item,
-          amount: formData.amount,
+          amount: Number(formData.amount),
           date: formData.date,
         });
       }
-      fetchSales();
+
+      // Refresh data based on type
+      if (selected.source === "expense") {
+        fetchExpenses();
+      } else {
+        fetchSales();
+      }
+
       closeEdit();
     } catch (err) {
-      console.error("Error saving sale:", err);
+      console.error("Error saving record:", err);
       alert("Failed to save record.");
     }
   };
+
 
   // =====================================================
   // Delete sale
@@ -148,6 +166,7 @@ const SalesAndExpenseSection = () => {
     let filtered = data.filter(
       (r) => r.item.toLowerCase().includes(search.toLowerCase()) || r.date.includes(search)
     );
+
     return [...filtered].sort((a, b) => {
       if (sortBy === "amount") return b.amount - a.amount;
       if (sortBy === "date") return new Date(b.date) - new Date(a.date);
@@ -158,10 +177,67 @@ const SalesAndExpenseSection = () => {
   const filteredSales = useMemo(() => filterAndSort(sales), [sales, search, sortBy]);
   const filteredExpenses = useMemo(() => filterAndSort(expenses), [expenses, search, sortBy]);
 
+  // Group and sum amounts by month
+  const monthlyData = useMemo(() => {
+    const months = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    ];
+
+    const salesByMonth = Array(12).fill(0);
+    const expensesByMonth = Array(12).fill(0);
+
+    sales.forEach((s) => {
+      const month = new Date(s.date).getMonth();
+      salesByMonth[month] += Number(s.amount);
+    });
+
+    expenses.forEach((e) => {
+      const month = new Date(e.date).getMonth();
+      expensesByMonth[month] += Number(e.amount);
+    });
+
+    return { months, salesByMonth, expensesByMonth };
+  }, [sales, expenses]);
+
+  const chartOptions = useMemo(() => ({
+    chart: {
+      type: "bar",
+      toolbar: { show: false },
+    },
+    plotOptions: {
+      bar: { horizontal: false, columnWidth: "45%", endingShape: "rounded" },
+    },
+    dataLabels: { enabled: false },
+    stroke: { show: true, width: 2, colors: ["transparent"] },
+    xaxis: { categories: monthlyData.months },
+    yaxis: { title: { text: "Amount (₱)" } },
+    fill: { opacity: 1 },
+    tooltip: {
+      y: { formatter: (val) => `₱${val.toLocaleString()}` },
+    },
+    colors: ["#00BFFF", "#FF6347"], // blue for sales, red for expenses
+    legend: { position: "top" },
+  }), [monthlyData]);
+
+  const chartSeries = useMemo(() => [
+    { name: "Sales", data: monthlyData.salesByMonth },
+    { name: "Expenses", data: monthlyData.expensesByMonth },
+  ], [monthlyData]);
+
+
+
+
+  // =====================================================
+  // UI Rendering
+  // =====================================================
   return (
     <div className="p-8 rounded-3xl bg-gradient-to-br from-cyan-50 to-white shadow-xl min-h-screen text-gray-900">
+
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-10">
         <h1 className="text-4xl font-extrabold text-cyan-700 tracking-tight">Sales & Expenses</h1>
+
         <div className="flex items-center gap-3 w-full md:w-auto">
           <div className="relative w-full md:w-80">
             <input
@@ -173,6 +249,7 @@ const SalesAndExpenseSection = () => {
             />
             <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
           </div>
+
           <div className="relative">
             <button
               onClick={() =>
@@ -188,6 +265,7 @@ const SalesAndExpenseSection = () => {
         </div>
       </div>
 
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <SummaryCard title="Total Sales" value={totalSales} color="text-green-600" />
         <SummaryCard title="Total Expenses" value={totalExpenses} color="text-red-600" />
@@ -198,6 +276,16 @@ const SalesAndExpenseSection = () => {
         />
       </div>
 
+      
+        {/* Comparison Chart */}
+        <div className="bg-white p-6 rounded-2xl shadow-md mb-10">
+          <h2 className="text-xl font-semibold mb-4 text-gray-700">
+            Monthly Sales vs Expenses
+          </h2>
+          <ReactApexChart options={chartOptions} series={chartSeries} type="bar" height={350} />
+        </div>
+
+      {/* Sales Section */}
       <Section
         title="Sales"
         data={filteredSales}
@@ -212,7 +300,7 @@ const SalesAndExpenseSection = () => {
         }}
       />
 
-      {/* Expenses section (you can connect later to backend) */}
+      {/* Expenses Section */}
       <Section
         title="Expenses"
         data={filteredExpenses}
@@ -236,44 +324,14 @@ const SalesAndExpenseSection = () => {
                 ? `Add ${selected.source === "sale" ? "Sale" : "Expense"}`
                 : `Edit ${selected.source === "sale" ? "Sale" : "Expense"}`}
             </h2>
-            
-            <label className="block text-sm font-medium mb-1">Select Order</label>
-            <select
-              className="w-full px-4 py-2 rounded-lg bg-gray-100 border border-gray-300 focus:ring-2 focus:ring-cyan-500 outline-none mb-4"
-              value={formData.order_item_id || ""}
-              onChange={(e) => {
-                const selected = orders.find((o) => o.id === parseInt(e.target.value));
-                setFormData((prev) => ({
-                  ...prev,
-                  order_item_id: e.target.value,
-                  item: selected?.service || "",
-                  amount: selected?.price || "",
-                }));
-              }}
-            >
-              <option value="">Select order...</option>
-              {orders.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.enquiryNo} - {o.customer_name}
-                </option>
-              ))}
-            </select>
 
             <FormInput label="Item" name="item" value={formData.item} onChange={handleChange} />
-
             <FormInput
               label="Amount (₱)"
               type="number"
               min="1"
               name="amount"
               value={formData.amount}
-              onChange={handleChange}
-            />
-            <FormInput
-              label="Date"
-              type="date"
-              name="date"
-              value={formData.date}
               onChange={handleChange}
             />
 
@@ -313,7 +371,9 @@ const SalesAndExpenseSection = () => {
   );
 };
 
-// UI Components
+// =====================================================
+// Reusable UI Components
+// =====================================================
 const SummaryCard = ({ title, value, color }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
@@ -326,6 +386,9 @@ const SummaryCard = ({ title, value, color }) => (
   </motion.div>
 );
 
+// =====================================================
+// Section and Table Components
+// =====================================================
 const Section = ({ title, data, color, source, openAdd, openEdit, handleDelete }) => (
   <div className="mb-10">
     <div className="flex justify-between items-center mb-4">
@@ -334,10 +397,18 @@ const Section = ({ title, data, color, source, openAdd, openEdit, handleDelete }
         Add
       </Button>
     </div>
-    <Table data={data} color={color} onEdit={(row) => openEdit(source, row)} onDelete={(row) => handleDelete(source, row)} />
+    <Table
+      data={data}
+      color={color}
+      onEdit={(row) => openEdit(source, row)}
+      onDelete={(row) => handleDelete(source, row)}
+    />
   </div>
 );
 
+// =====================================================
+// Table Component
+// =====================================================
 const Table = ({ data, color, onEdit, onDelete }) => (
   <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-x-auto mt-6">
     <table className="w-full text-left border-collapse min-w-[800px] text-sm">
@@ -353,50 +424,36 @@ const Table = ({ data, color, onEdit, onDelete }) => (
       <tbody>
         {data.length > 0 ? (
           data.map((row, index) => (
-            <tr
-              key={row.id || index}
-              className="border-b border-gray-200 hover:bg-gray-50 transition"
-            >
-             <td className="py-3 px-6">
-              {(() => {
-                const match = row.item.match(/^(.*)\s+x(\d+)$/i);
-                if (match) {
-                  const [, name,] = match;
-                  return (
-                    <>
-                      <span className="font-medium text-gray-800">{name.trim()}</span>
-                    </>
-                  );
-                } else {
-                  return <span className="font-medium text-gray-800">{row.item}</span>;
-                }
-              })()}
-            </td>
+            <tr key={row.id || index} className="border-b border-gray-200 hover:bg-gray-50 transition">
+              <td className="py-3 px-6">
+                {(() => {
+                  const match = row.item.match(/^(.*)\s+x(\d+)$/i);
+                  if (match) {
+                    const [, name] = match;
+                    return <span className="font-medium text-gray-800">{name.trim()}</span>;
+                  } else {
+                    return <span className="font-medium text-gray-800">{row.item}</span>;
+                  }
+                })()}
+              </td>
 
               <td className="py-3 px-6">
-              {(() => {
-                const match = row.item.match(/^(.*)\s+x(\d+)$/i);
-                if (match) {
-                  const [, , qty] = match;
-                  return (
-                    <>
-                      <span className="font-medium text-gray-800">{qty}</span>
-                    </>
-                  );
-                } else {
-                  return <span className="font-medium text-gray-800">{row.item}</span>;
-                }
-              })()}
-            </td>
-
+                {(() => {
+                  const match = row.item.match(/^(.*)\s+x(\d+)$/i);
+                  if (match) {
+                    const [, , qty] = match;
+                    return <span className="font-medium text-gray-800">{qty}</span>;
+                  } else {
+                    return <span className="font-medium text-gray-800">—</span>;
+                  }
+                })()}
+              </td>
 
               <td className={`py-3 px-6 font-semibold text-right ${color}`}>
                 ₱{Number(row.amount).toLocaleString()}
               </td>
 
-              <td className="py-3 px-6">
-                {new Date(row.date).toLocaleDateString()}
-              </td>
+              <td className="py-3 px-6">{new Date(row.date).toLocaleDateString()}</td>
 
               <td className="py-3 px-6 text-right">
                 <div className="flex justify-end gap-2">
@@ -418,7 +475,7 @@ const Table = ({ data, color, onEdit, onDelete }) => (
           ))
         ) : (
           <tr>
-            <td colSpan="4" className="py-6 text-center text-gray-500 italic">
+            <td colSpan="5" className="py-6 text-center text-gray-500 italic">
               No records found.
             </td>
           </tr>
@@ -428,9 +485,9 @@ const Table = ({ data, color, onEdit, onDelete }) => (
   </div>
 );
 
-
-
-
+// =====================================================
+// Reusable UI Components
+// =====================================================
 const Modal = ({ children, onClose }) => (
   <motion.div
     initial={{ opacity: 0 }}
@@ -445,7 +502,10 @@ const Modal = ({ children, onClose }) => (
       transition={{ duration: 0.2 }}
       className="bg-white text-gray-900 rounded-2xl p-6 shadow-2xl w-full max-w-lg border relative"
     >
-      <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+      >
         <X size={20} />
       </button>
       {children}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { Search, Archive, List, X, Edit } from "lucide-react";
 
@@ -11,6 +12,7 @@ const statusColors = {
 
 const ProductSection = () => {
   const [services, setServices] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [archived, setArchived] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");

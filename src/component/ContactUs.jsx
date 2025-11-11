@@ -21,7 +21,7 @@ function ContactUs() {
           {
             icon: <MdEmail size={40} />,
             title: "Email Address",
-            detail: "achuchu@email.com",
+            detail: "iconscribe@email.com",
           },
           {
             icon: <MdPhone size={40} />,

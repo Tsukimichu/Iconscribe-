@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import UploadSection from "../component/UploadSection";
 import { useToast } from "../component/ui/ToastProvider";
+import { computeQuotation } from "../utils/computeQuatation";
 
 
 function Brochure() {
@@ -29,10 +30,6 @@ function Brochure() {
   const [customization, setCustomization] = useState(false);
   const [message, setMessage] = useState("");
   const [file, setFile] = useState(null);
-
-  
-  const [estimatedPrice, setEstimatedPrice] = useState(0);
-
 
 
   const { showToast } = useToast();
@@ -198,50 +195,34 @@ function Brochure() {
     }
   };
 
-  useEffect(() => {
-    const baseRatePerPiece = 1.5; 
-    const paperRates = {
-      Matte: 1.0,
-      Glossy: 1.2,
-      "Book Paper": 0.9,
-    };
-    const colorRates = {
-      Yes: 1.3,
-      No: 1.0,
-    };
-    const laminationRates = {
-      Yes: 1.15,
-      No: 1.0,
-    };
-    const sizeRates = {
-      "11”x17”": 1.0,
-      "17”x22”": 1.2,
-      "22”x34”": 1.4,
-      "8.5”x14”": 0.9,
-    };
-
-    if (!quantity) {
-      setEstimatedPrice(0);
-      return;
-    }
-
-    const paperMultiplier = paperRates[paperType] || 1;
-    const colorMultiplier = colorRates[color] || 1;
-    const laminationMultiplier = laminationRates[lamination] || 1;
-    const sizeMultiplier = sizeRates[size] || 1;
-
-    const total =
-      quantity *
-      baseRatePerPiece *
-      paperMultiplier *
-      colorMultiplier *
-      laminationMultiplier *
-      sizeMultiplier;
-
-    setEstimatedPrice(total);
-  }, [quantity, size, paperType, color, lamination]);
+    // Dynamically compute result based on inputs
+    const result = computeQuotation({
+      width:
+        size === "11”x17”"
+          ? 11
+          : size === "17”x22”"
+          ? 17
+          : size === "22”x34”"
+          ? 22
+          : size === "8.5”x14”"
+          ? 8.5
+          : null, 
+      height:
+        size === "11”x17”"
+          ? 17
+          : size === "17”x22”"
+          ? 22
+          : size === "22”x34”"
+          ? 34
+          : size === "8.5”x14”"
+          ? 14
+          : null,
+      copies: parseInt(quantity),
+      colored: color === "Yes",
+    });
 
 
+    console.log(result);
 
   return (
     <>
@@ -359,7 +340,7 @@ function Brochure() {
                         <option>No</option>
                       </select>
                     </div>
-                    <div className="flex items-center gap-3 p-3">
+                    <div className="flex items-center gap-3 p-2">
                         <input
                           type="checkbox"
                           id="backToBack"
@@ -383,7 +364,7 @@ function Brochure() {
                         }}
                       />
                     {/* Size + Message */}
-                    <div className="flex flex-col gap-3 mt-9  ">
+                    <div className="flex flex-col gap-3 ">
               
                       
                       <div>
@@ -401,16 +382,21 @@ function Brochure() {
                         ></textarea>
                       </div>
                       {/* Estimated Price Box */}
-                      <div className="mt-6 border border-blue-200 bg-blue-50 rounded-2xl shadow-sm p-5 text-right">
-                        <p className="text-base text-gray-700 font-medium">Estimated Price</p>
-                        <p className="text-3xl font-bold text-blue-700 mt-1">
-                          ₱{estimatedPrice.toFixed(2)}
-                        </p>
-                        <p className="text-sm text-gray-500 italic mt-1">
-                          *Final price may vary depending on specifications
-                        </p>
-                      </div>
-
+                        <div className="mt-2 border border-blue-200 bg-blue-50 rounded-2xl shadow-sm p-5 text-right">
+                          <p className="text-base text-gray-700 font-medium">Estimated Price</p>
+                          {result ? (
+                            <p className="text-2xl font-bold text-blue-700 mt-1">
+                              ₱{result.total.toLocaleString()}
+                            </p>
+                          ) : (
+                            <p className="text-lg italic text-gray-500 mt-1">
+                              Fill in all fields to see estimate
+                            </p>
+                          )}
+                          <p className="text-sm text-gray-500 italic mt-1">
+                            *Final price may vary depending on specifications
+                          </p>
+                        </div>
                     </div>
                   </div>
 

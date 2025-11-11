@@ -1,15 +1,21 @@
 import React, { useEffect } from 'react'
 import { useEditor } from '../../context/EditorContext'
+import { Bold, Italic, AlignLeft, AlignCenter, AlignRight } from 'lucide-react'
 
 export default function PropertiesPanel() {
   const { state, updateElement, deleteElement } = useEditor()
   const selected = state.elements.find(e => e.id === state.selectedId)
 
-  if (!selected) return <div className="p-4 text-gray-500">No selection</div>
+  if (!selected)
+    return (
+      <div className="p-6 text-gray-400 italic text-center border border-dashed border-gray-200 rounded-xl">
+        No element selected
+      </div>
+    )
 
   const set = (k, v) => updateElement(selected.id, { [k]: v })
 
-  // --- Google Font Loader ---
+  // Load Google Fonts dynamically
   useEffect(() => {
     if (selected?.fontFamily) {
       const linkId = `google-font-${selected.fontFamily.replace(/\s+/g, '-')}`
@@ -23,41 +29,22 @@ export default function PropertiesPanel() {
     }
   }, [selected?.fontFamily])
 
-  // --- Font Options ---
   const fontOptions = [
-    // 🖥️ System fonts
-    { label: 'Arial', value: 'Arial' },
-    { label: 'Verdana', value: 'Verdana' },
-    { label: 'Georgia', value: 'Georgia' },
-    { label: 'Times New Roman', value: 'Times New Roman' },
-    { label: 'Courier New', value: 'Courier New' },
-    { label: 'Tahoma', value: 'Tahoma' },
-
-    // 🌐 Google Fonts
-    { label: 'Poppins', value: 'Poppins' },
-    { label: 'Roboto', value: 'Roboto' },
-    { label: 'Montserrat', value: 'Montserrat' },
-    { label: 'Playfair Display', value: 'Playfair Display' },
-    { label: 'Raleway', value: 'Raleway' },
-    { label: 'Lato', value: 'Lato' },
-    { label: 'Open Sans', value: 'Open Sans' },
-    { label: 'Oswald', value: 'Oswald' },
-    { label: 'Merriweather', value: 'Merriweather' },
-    { label: 'Nunito', value: 'Nunito' },
-    { label: 'Quicksand', value: 'Quicksand' },
-    { label: 'Dancing Script', value: 'Dancing Script' },
-    { label: 'Pacifico', value: 'Pacifico' },
-    { label: 'Bebas Neue', value: 'Bebas Neue' },
-    { label: 'Inter', value: 'Inter' },
+    'Arial', 'Verdana', 'Georgia', 'Times New Roman', 'Courier New', 'Tahoma',
+    'Poppins', 'Roboto', 'Montserrat', 'Playfair Display', 'Raleway', 'Lato',
+    'Open Sans', 'Oswald', 'Merriweather', 'Nunito', 'Quicksand', 'Dancing Script',
+    'Pacifico', 'Bebas Neue', 'Inter'
   ]
 
-  return (
-    <div className="p-4 space-y-4">
-      <h3 className="font-semibold text-lg border-b pb-2">Properties</h3>
+  const sectionStyle = 'bg-gray-50 p-3 rounded-xl shadow-inner border border-gray-100 space-y-3'
 
-      {/* Shared */}
-      <div>
-        <label className="text-sm font-medium">Opacity</label>
+  return (
+    <div className="bg-white shadow-xl rounded-2xl border border-gray-200 p-5 space-y-6 w-80">
+      <h3 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-2">Properties</h3>
+
+      {/* Opacity */}
+      <div className={sectionStyle}>
+        <label className="text-sm font-medium text-gray-700">Opacity</label>
         <input
           type="range"
           min="0"
@@ -65,111 +52,109 @@ export default function PropertiesPanel() {
           step="0.05"
           value={selected.opacity || 1}
           onChange={(e) => set('opacity', parseFloat(e.target.value))}
-          className="w-full"
+          className="w-full mt-2 accent-blue-500"
         />
       </div>
 
-      {/* TEXT ELEMENT */}
+      {/* Text Properties */}
       {selected.type === 'text' && (
-        <>
-          <div>
-            <label className="text-sm font-medium">Font Size</label>
-            <input
-              type="number"
-              value={selected.fontSize ?? 24}
-              onChange={(e) => set('fontSize', parseInt(e.target.value || 14))}
-              className="w-full border rounded px-2 py-1"
-            />
+        <div className={sectionStyle}>
+          <h4 className="text-gray-700 font-semibold mb-1">Text</h4>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium text-gray-600">Font Size</label>
+              <input
+                type="number"
+                value={selected.fontSize ?? 24}
+                onChange={(e) => set('fontSize', parseInt(e.target.value || 14))}
+                className="w-full mt-1 border-gray-300 rounded-lg px-2 py-1 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-600">Font Family</label>
+              <select
+                value={selected.fontFamily ?? 'Arial'}
+                onChange={(e) => set('fontFamily', e.target.value)}
+                className="w-full mt-1 border-gray-300 rounded-lg px-2 py-1 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+                style={{ fontFamily: selected.fontFamily }}
+              >
+                {fontOptions.map(f => (
+                  <option key={f} value={f} style={{ fontFamily: f }}>
+                    {f}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div>
-            <label className="text-sm font-medium">Font Family</label>
-            <select
-              value={selected.fontFamily ?? 'Arial'}
-              onChange={(e) => set('fontFamily', e.target.value)}
-              className="w-full border rounded px-2 py-1"
-              style={{ fontFamily: selected.fontFamily }}
-            >
-              {fontOptions.map(f => (
-                <option key={f.value} value={f.value} style={{ fontFamily: f.value }}>
-                  {f.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium">Color</label>
-            <input
-              type="color"
-              value={selected.color ?? '#000000'}
-              onChange={(e) => set('color', e.target.value)}
-              className="w-full h-8"
-            />
-          </div>
-
-          {/* Text Alignment */}
-          <div>
-            <label className="text-sm font-medium">Alignment</label>
-            <div className="flex gap-1 mt-1">
-              {['left', 'center', 'right'].map((align) => (
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <div>
+              <label className="text-sm font-medium text-gray-600">Color</label>
+              <input
+                type="color"
+                value={selected.color ?? '#000000'}
+                onChange={(e) => set('color', e.target.value)}
+                className="w-full h-10 rounded-lg border border-gray-200 mt-1 cursor-pointer"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-600">Alignment</label>
+              <div className="flex gap-1 mt-1">
                 <button
-                  key={align}
-                  onClick={() => set('textAlign', align)}
-                  className={`flex-1 border rounded py-1 text-sm capitalize ${
-                    selected.textAlign === align ? 'bg-blue-500 text-white' : 'bg-gray-100'
-                  }`}
-                >
-                  {align}
+                  onClick={() => set('textAlign', 'left')}
+                  className={`flex-1 p-2 rounded-lg ${selected.textAlign === 'left' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                  <AlignLeft size={16} />
                 </button>
-              ))}
+                <button
+                  onClick={() => set('textAlign', 'center')}
+                  className={`flex-1 p-2 rounded-lg ${selected.textAlign === 'center' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                  <AlignCenter size={16} />
+                </button>
+                <button
+                  onClick={() => set('textAlign', 'right')}
+                  className={`flex-1 p-2 rounded-lg ${selected.textAlign === 'right' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                  <AlignRight size={16} />
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Bold / Italic */}
-          <div>
-            <label className="text-sm font-medium">Style</label>
-            <div className="flex gap-2 mt-1">
-              <button
-                onClick={() => set('fontWeight', selected.fontWeight === 'bold' ? 'normal' : 'bold')}
-                className={`flex-1 border rounded py-1 font-bold ${
-                  selected.fontWeight === 'bold' ? 'bg-blue-500 text-white' : 'bg-gray-100'
-                }`}
-              >
-                B
-              </button>
-              <button
-                onClick={() => set('fontStyle', selected.fontStyle === 'italic' ? 'normal' : 'italic')}
-                className={`flex-1 border rounded py-1 italic ${
-                  selected.fontStyle === 'italic' ? 'bg-blue-500 text-white' : 'bg-gray-100'
-                }`}
-              >
-                I
-              </button>
-            </div>
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={() => set('fontWeight', selected.fontWeight === 'bold' ? 'normal' : 'bold')}
+              className={`flex-1 p-2 rounded-lg font-bold ${selected.fontWeight === 'bold' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+              <Bold size={16} />
+            </button>
+            <button
+              onClick={() => set('fontStyle', selected.fontStyle === 'italic' ? 'normal' : 'italic')}
+              className={`flex-1 p-2 rounded-lg italic ${selected.fontStyle === 'italic' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+              <Italic size={16} />
+            </button>
           </div>
-        </>
+        </div>
       )}
 
-      {/* SHAPE ELEMENT */}
+      {/* Shape Properties */}
       {selected.type === 'shape' && (
-        <div>
-          <label className="text-sm font-medium">Fill</label>
+        <div className={sectionStyle}>
+          <h4 className="text-gray-700 font-semibold mb-1">Shape</h4>
+          <label className="text-sm font-medium text-gray-600">Fill Color</label>
           <input
             type="color"
             value={selected.background || '#000000'}
             onChange={(e) => set('background', e.target.value)}
-            className="w-full h-8"
+            className="w-full h-10 rounded-lg border border-gray-200 mt-1 cursor-pointer"
           />
         </div>
       )}
 
-      {/* IMAGE ELEMENT */}
+      {/* Image Properties */}
       {selected.type === 'image' && (
-        <div>
-          <label className="text-sm font-medium">Image URL</label>
+        <div className={sectionStyle}>
+          <h4 className="text-gray-700 font-semibold mb-1">Image</h4>
+          <label className="text-sm font-medium text-gray-600">Image URL</label>
           <input
-            className="w-full border rounded px-2 py-1"
+            className="w-full mt-1 border-gray-300 rounded-lg px-2 py-1 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
             value={selected.src}
             onChange={(e) => set('src', e.target.value)}
           />
@@ -178,7 +163,7 @@ export default function PropertiesPanel() {
 
       <div className="pt-4 border-t">
         <button
-          className="px-3 py-1 rounded bg-red-500 text-white w-full"
+          className="w-full py-2 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors shadow-md"
           onClick={() => deleteElement(selected.id)}
         >
           Delete Element

@@ -134,11 +134,13 @@ export function EditorProvider({ children }) {
     return { x: width / 2, y: height / 2 }
   }
 
+  // 🆕 Add name field to each element for persistence
   const addText = (overrides = {}) => {
     const { x, y } = getCanvasCenter()
     const el = {
       id: uuid(),
       type: 'text',
+      name: overrides.name ?? 'New Text',
       x: x - 100,
       y: y - 40,
       width: 200,
@@ -158,6 +160,7 @@ export function EditorProvider({ children }) {
     const el = {
       id: uuid(),
       type: 'shape',
+      name: overrides.name ?? `New ${shapeType}`,
       shape: shapeType,
       x: x - 75,
       y: y - 50,
@@ -176,6 +179,7 @@ export function EditorProvider({ children }) {
     const el = {
       id: uuid(),
       type: 'image',
+      name: overrides.name ?? 'New Image',
       src,
       x: x - 120,
       y: y - 80,
@@ -186,6 +190,10 @@ export function EditorProvider({ children }) {
     }
     dispatch({ type: 'ADD_ELEMENT', payload: el })
   }
+
+  // 🆕 Rename element
+  const renameElement = (id, newName) =>
+    dispatch({ type: 'UPDATE_ELEMENT', payload: { id, updates: { name: newName } } })
 
   const updateElement = (id, updates) =>
     dispatch({ type: 'UPDATE_ELEMENT', payload: { id, updates } })
@@ -252,6 +260,7 @@ export function EditorProvider({ children }) {
     addText,
     addShape,
     addImage,
+    renameElement,
     updateElement,
     selectElement,
     deleteElement,

@@ -12,24 +12,19 @@ export default function Element({ element, zoom = 1, fitZoom = 1 }) {
   const { updateElement, selectElement, state } = useEditor();
   const selected = state.selectedId === element.id;
 
-  // combined visual scale used by CSS transform on the canvas wrapper
   const scale = Math.max(0.0001, zoom * fitZoom);
-
-  // local states for UX (rotation, live drag pos)
   const [rotation, setRotation] = useState(element.rotation || 0);
   const [livePos, setLivePos] = useState({ x: element.x, y: element.y });
   const draggingRef = useRef(false);
   const rotateRef = useRef(null);
 
-  // keep local rotation synced when external state changes (undo/redo, load)
   useEffect(() => setRotation(element.rotation ?? 0), [element.rotation]);
 
-  // keep local livePos in sync unless user is currently dragging
   useEffect(() => {
     if (!draggingRef.current) setLivePos({ x: element.x, y: element.y });
   }, [element.x, element.y]);
 
-  // keyboard: Shift+R rotate 15°
+  // Keyboard shortcut: Shift + R = rotate 15°
   useEffect(() => {
     const onKey = (e) => {
       if (!selected) return;
@@ -44,44 +39,38 @@ export default function Element({ element, zoom = 1, fitZoom = 1 }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [selected, rotation, element.id, updateElement]);
 
-  // ---------- Drag Handlers ----------
-  // IMPORTANT: We're passing *unscaled* position/size to Rnd.
-  // When `scale` prop is provided to Rnd, its callback d.x/d.y are also unscaled,
-  // so we can use them directly as canvas coordinates.
+  // ---------------- Dragging ----------------
   const onDrag = (e, d) => {
-    // visual live update while dragging
     draggingRef.current = true;
     setLivePos({ x: d.x, y: d.y });
   };
 
   const onDragStop = (e, d) => {
     draggingRef.current = false;
-    // d.x/d.y are unscaled canvas coords when `scale` prop is set to the visual scale
-    updateElement(element.id, { x: Math.max(0, d.x), y: Math.max(0, d.y) });
+    // ❌ remove Math.max(0, d.x/y) so element can move beyond canvas
+    updateElement(element.id, { x: d.x, y: d.y });
   };
 
-  // ---------- Resize Handlers ----------
+  // ---------------- Resizing ----------------
   const onResize = (e, dir, ref, delta, pos) => {
-    // live preview
     const w = parseFloat(ref.style.width) || element.width;
     const h = parseFloat(ref.style.height) || element.height;
     setLivePos({ x: pos.x, y: pos.y });
-    // optionally show a live size somewhere if you like
   };
 
   const onResizeStop = (e, dir, ref, delta, pos) => {
-    // ref.style.width/height are in px (unscaled) when Rnd has scale prop set
     const w = parseFloat(ref.style.width) || element.width;
     const h = parseFloat(ref.style.height) || element.height;
+    // ❌ remove Math.max(0, pos.x/y) to allow positioning beyond canvas
     updateElement(element.id, {
       width: Math.max(1, w),
       height: Math.max(1, h),
-      x: Math.max(0, pos.x),
-      y: Math.max(0, pos.y),
+      x: pos.x,
+      y: pos.y,
     });
   };
 
-  // ---------- Rotation handle ----------
+  // ---------------- Rotation ----------------
   const startRotate = (e) => {
     e.stopPropagation();
     const move = (ev) => {
@@ -101,20 +90,14 @@ export default function Element({ element, zoom = 1, fitZoom = 1 }) {
     window.addEventListener("mouseup", stop, { passive: true });
   };
 
-  // visible position (live while dragging, otherwise from element)
-  const visiblePos = {
-    x: livePos.x,
-    y: livePos.y,
-  };
+  const visiblePos = { x: livePos.x, y: livePos.y };
 
   return (
     <Rnd
-      // Give Rnd the *unscaled* values. React-Rnd will handle the pointer math
-      // correctly because we're telling it what the current scale is.
-      bounds="#canvas-area"
+      // ❌ remove bounds — allow free movement
       size={{ width: element.width, height: element.height }}
       position={visiblePos}
-      scale={scale} // <-- critical: match the CSS visual scale (fitZoom*zoom)
+      scale={scale}
       onDrag={onDrag}
       onDragStop={onDragStop}
       onResize={onResize}
@@ -129,16 +112,15 @@ export default function Element({ element, zoom = 1, fitZoom = 1 }) {
         topRight: true,
         topLeft: true,
       }}
-      // small Rnd niceties
       dragHandleClassName={selected ? undefined : undefined}
       style={{
         zIndex: element.zIndex ?? 1,
         opacity: element.opacity ?? 1,
         outline: selected ? "2px solid rgba(59,130,246,0.9)" : "none",
         boxShadow: selected ? "0 6px 18px rgba(59,130,246,0.08)" : undefined,
-        touchAction: "none", // helps mobile/pointer interactions
+        touchAction: "none",
+        overflow: "visible", // allows rotation handle and selection ring outside
       }}
-      // performance: avoid extra transforms by letting Rnd position normally
       enableUserSelectHack={false}
     >
       <div
@@ -154,13 +136,13 @@ export default function Element({ element, zoom = 1, fitZoom = 1 }) {
         {element.type === "image" && <ImageElement element={element} />}
         {element.type === "shape" && <ShapeElement element={element} />}
 
+        {/* rotation handle (still visible outside clipping area) */}
         {selected && (
           <div
             className="absolute left-1/2 -top-6 w-5 h-5 bg-blue-600 rounded-full cursor-grab border border-white shadow-lg flex items-center justify-center"
             style={{ transform: "translateX(-50%)" }}
             onMouseDown={startRotate}
             onTouchStart={(e) => {
-              // for touch: prevent default and start rotate like mouse
               e.preventDefault();
               startRotate(e);
             }}

@@ -16,7 +16,8 @@ const initialState = {
   canvas: {
     width: 1080,
     height: 1080,
-    aspect: '1:1', // Default square
+    aspect: '1:1',
+    zoom: 1,
   },
 }
 
@@ -29,7 +30,7 @@ function reducer(state, action) {
         ...state,
         elements: newElements,
         selectedId: action.payload.id,
-        history: [...state.history.slice(-30), state.elements], // limit history size
+        history: [...state.history.slice(-30), state.elements],
         future: [],
       }
     }
@@ -128,12 +129,18 @@ export function EditorProvider({ children }) {
   }, [state])
 
   // --- Actions ---
+  const getCanvasCenter = () => {
+    const { width, height } = state.canvas
+    return { x: width / 2, y: height / 2 }
+  }
+
   const addText = (overrides = {}) => {
+    const { x, y } = getCanvasCenter()
     const el = {
       id: uuid(),
       type: 'text',
-      x: 100,
-      y: 100,
+      x: x - 100,
+      y: y - 40,
       width: 200,
       height: 80,
       text: overrides.text ?? 'Double-click to edit',
@@ -147,12 +154,13 @@ export function EditorProvider({ children }) {
   }
 
   const addShape = (shapeType = 'rect', overrides = {}) => {
+    const { x, y } = getCanvasCenter()
     const el = {
       id: uuid(),
       type: 'shape',
       shape: shapeType,
-      x: 120,
-      y: 120,
+      x: x - 75,
+      y: y - 50,
       width: 150,
       height: 100,
       background: overrides.background ?? '#ef4444',
@@ -164,12 +172,13 @@ export function EditorProvider({ children }) {
   }
 
   const addImage = (src, overrides = {}) => {
+    const { x, y } = getCanvasCenter()
     const el = {
       id: uuid(),
       type: 'image',
       src,
-      x: 140,
-      y: 140,
+      x: x - 120,
+      y: y - 80,
       width: 240,
       height: 160,
       opacity: overrides.opacity ?? 1,
@@ -197,6 +206,8 @@ export function EditorProvider({ children }) {
       backgroundColor: null,
       useCORS: true,
       scale: 2,
+      width: state.canvas.width,
+      height: state.canvas.height,
     })
     const dataURL = canvas.toDataURL(`image/${format}`)
     const link = document.createElement('a')
@@ -207,7 +218,7 @@ export function EditorProvider({ children }) {
 
   // 📤 Export as JSON
   const exportAsJSON = () => {
-    const json = JSON.stringify(state.elements, null, 2)
+    const json = JSON.stringify(state, null, 2)
     const blob = new Blob([json], { type: 'application/json' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
@@ -218,9 +229,12 @@ export function EditorProvider({ children }) {
   // 📥 Import JSON
   const importFromJSON = (jsonData) => {
     try {
-      const elements = JSON.parse(jsonData)
-      if (Array.isArray(elements)) dispatch({ type: 'SET_ELEMENTS', payload: elements })
-    } catch (e) {
+      const parsed = JSON.parse(jsonData)
+      if (parsed?.elements) {
+        dispatch({ type: 'SET_ELEMENTS', payload: parsed.elements })
+        if (parsed.canvas) dispatch({ type: 'SET_CANVAS_SIZE', payload: parsed.canvas })
+      }
+    } catch {
       alert('Invalid JSON file!')
     }
   }
@@ -229,7 +243,7 @@ export function EditorProvider({ children }) {
   const setCanvasSize = (width, height, aspect = 'custom') => {
     dispatch({
       type: 'SET_CANVAS_SIZE',
-      payload: { width, height, aspect },
+      payload: { width, height, aspect, zoom: state.canvas.zoom },
     })
   }
 

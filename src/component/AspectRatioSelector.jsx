@@ -38,36 +38,36 @@ export default function AspectRatioSelector() {
   }, [state.canvas])
 
   return (
-    <div className="flex items-center gap-3 bg-white/80 backdrop-blur-md rounded-xl p-3 shadow-md border border-gray-200">
-      <label className="text-sm font-medium text-gray-700">Aspect Ratio:</label>
+    <div className="flex items-center gap-3 bg-white/80 backdrop-blur-md rounded-xl p-3 shadow-md border border-gray-200 text-black">
+      <label className="text-sm font-medium text-black">Aspect Ratio:</label>
       <select
         onChange={handleChange}
         value={state?.canvas?.aspect ?? '1:1 (Square)'}
-        className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+        className="rounded-md border border-gray-300 px-2 py-1 text-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-400"
       >
         {presets.map(p => (
-          <option key={p.label} value={p.label}>{p.label}</option>
+          <option key={p.label} value={p.label} className="text-black">{p.label}</option>
         ))}
-        <option value="custom">Custom</option>
+        <option value="custom" className="text-black">Custom</option>
       </select>
 
       {state?.canvas?.aspect === 'custom' && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 text-black">
           <input
             type="number"
             min="100"
             value={custom.w}
             onChange={(e) => handleCustomChange('w', e.target.value)}
-            className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm"
+            className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm text-black placeholder:text-gray-500"
             placeholder="Width"
           />
-          <span className="text-gray-500 text-sm">×</span>
+          <span className="text-black text-sm">×</span>
           <input
             type="number"
             min="100"
             value={custom.h}
             onChange={(e) => handleCustomChange('h', e.target.value)}
-            className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm"
+            className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm text-black placeholder:text-gray-500"
             placeholder="Height"
           />
         </div>

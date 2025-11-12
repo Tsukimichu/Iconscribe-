@@ -21,11 +21,14 @@ const SupplyMonitoring = () => {
   const fetchSupplies = async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/supplies");
-      setSupplies(res.data);
+      console.log("API response:", res.data); 
+      setSupplies(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("❌ Error fetching supplies:", err);
     }
   };
+
+
 
   useEffect(() => {
     fetchSupplies();

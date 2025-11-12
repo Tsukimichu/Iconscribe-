@@ -1,6 +1,4 @@
-/* eslint-disable no-undef */
 import React, { useState, useEffect, useMemo } from "react";
-// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Trash2,
@@ -14,7 +12,6 @@ import {
 
 const OrdersSection = () => {
   const [orders, setOrders] = useState([]);
-// eslint-disable-next-line no-unused-vars
   const [archived, setArchived] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -27,7 +24,6 @@ const OrdersSection = () => {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
-  // eslint-disable-next-line no-unused-vars
   const [previewImage, setPreviewImage] = useState(null);
 
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -502,7 +498,7 @@ const openViewModal = async (order) => {
                     <td className="py-3 px-6">{order.status || "Pending"}</td>
                     <td className="py-3 px-6">
                       {order.estimated_price
-                        ? `₱${order.estimated_price.toFixed(2)}`
+                        ? `₱${Number(order.estimated_price || 0).toFixed(2)}`
                         : <span className="text-gray-400 italic">Not Set</span>}
                     </td>
                     <td className="py-3 px-6 flex justify-end gap-2">

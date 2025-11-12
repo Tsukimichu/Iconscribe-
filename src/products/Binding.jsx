@@ -343,7 +343,7 @@
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-base font-semibold text-black">
-                          Number of Copies
+                          Number of Books
                         </label>
                         <input
                           type="number"

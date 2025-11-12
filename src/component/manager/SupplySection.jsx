@@ -21,14 +21,11 @@ const SupplyMonitoring = () => {
   const fetchSupplies = async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/supplies");
-      console.log("API response:", res.data); 
       setSupplies(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("❌ Error fetching supplies:", err);
     }
   };
-
-
 
   useEffect(() => {
     fetchSupplies();
@@ -43,12 +40,21 @@ const SupplyMonitoring = () => {
     setPopupType(type);
     setSelectedSupply(supply);
 
-    setNewSupply({
-      supply_name: supply?.supply_name || "",
-      quantity: supply?.quantity || 0,
-      unit: supply?.unit || "",
-      price: supply?.price || 0,
-    });
+    if (type === "edit" && supply) {
+      setNewSupply({
+        supply_name: supply.supply_name,
+        quantity: 0,
+        unit: supply.unit,
+        price: supply.price,
+      });
+    } else {
+      setNewSupply({
+        supply_name: "",
+        quantity: 0,
+        unit: "",
+        price: 0,
+      });
+    }
 
     setIsPopupOpen(true);
   };
@@ -58,63 +64,80 @@ const SupplyMonitoring = () => {
     setIsPopupOpen(false);
     setPopupType(null);
     setSelectedSupply(null);
-    setNewSupply({ supply_name: "", quantity: 0, unit: "", price: 0 });
+    setNewSupply({
+      supply_name: "",
+      quantity: 0,
+      unit: "",
+      price: 0,
+    });
   };
 
   // Confirm add/edit
   const handleConfirm = async () => {
     try {
-      const payload = {
-        supply_name: newSupply.supply_name,
-        quantity: Number(newSupply.quantity),
-        price: Number(newSupply.price),
-        unit: newSupply.unit.trim(), 
-      };
-
-      console.log("Payload to send:", payload);
-
       if (popupType === "add") {
-        const res = await axios.post("http://localhost:5000/api/supplies", payload);
-        setSupplies((prev) => [...prev, res.data]);
+        await axios.post("http://localhost:5000/api/supplies", {
+          supply_name: newSupply.supply_name.trim(),
+          quantity: Number(newSupply.quantity),
+          unit: newSupply.unit.trim(),
+          price: Number(newSupply.price),
+        });
       } else if (popupType === "edit" && selectedSupply) {
-        const res = await axios.put(
+        // Add quantity to existing stock, update unit & price
+        const updatedQuantity =
+          Number(selectedSupply.quantity) + Number(newSupply.quantity);
+
+        const payload = {
+          supply_name: selectedSupply.supply_name,
+          quantity: updatedQuantity,
+          unit: newSupply.unit.trim(),
+          price: Number(newSupply.price),
+        };
+
+        await axios.put(
           `http://localhost:5000/api/supplies/${selectedSupply.supply_id}`,
           payload
         );
-        setSupplies((prev) =>
-          prev.map((s) => (s.supply_id === selectedSupply.supply_id ? res.data : s))
-        );
       }
 
+      await fetchSupplies();
       closePopup();
     } catch (err) {
-      console.error("❌ Error updating supply:", err.response?.data || err.message);
+      console.error("❌ Error saving supply:", err.response?.data || err.message);
     }
   };
 
 
   const sortSupplies = () => {
-    setSupplies((prev) => [...prev].sort((a, b) => a.supply_name.localeCompare(b.supply_name)));
+    setSupplies((prev) =>
+      [...prev].sort((a, b) => a.supply_name.localeCompare(b.supply_name))
+    );
   };
 
   // Chart Data
-  const barOptions = useMemo(() => ({
-    chart: { type: "bar", toolbar: { show: false } },
-    xaxis: { categories: supplies.map((s) => s.supply_name) },
-    colors: ["#11d8fbff"],
-    plotOptions: { bar: { borderRadius: 6, horizontal: false } },
-    dataLabels: { enabled: false },
-  }), [supplies]);
+  const barOptions = useMemo(
+    () => ({
+      chart: { type: "bar", toolbar: { show: false } },
+      xaxis: { categories: supplies.map((s) => s.supply_name) },
+      colors: ["#11d8fbff"],
+      plotOptions: { bar: { borderRadius: 6, horizontal: false } },
+      dataLabels: { enabled: false },
+    }),
+    [supplies]
+  );
 
-  const barSeries = useMemo(() => [
-    { name: "Quantity", data: supplies.map((s) => s.quantity) }
-  ], [supplies]);
+  const barSeries = useMemo(
+    () => [{ name: "Quantity", data: supplies.map((s) => s.quantity) }],
+    [supplies]
+  );
 
   return (
     <div className="p-6 min-h-screen bg-white text-gray-800 rounded-3xl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-6">
-        <h1 className="text-4xl font-extrabold text-cyan-700">Expenses Management</h1>
+        <h1 className="text-4xl font-extrabold text-cyan-700">
+          Expenses Management
+        </h1>
         <div className="relative w-full sm:w-auto">
           <input
             type="text"
@@ -150,8 +173,15 @@ const SupplyMonitoring = () => {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h2 className="text-lg font-semibold mb-3 text-gray-700">Quantity per Item</h2>
-          <ReactApexChart options={barOptions} series={barSeries} type="bar" height={250} />
+          <h2 className="text-lg font-semibold mb-3 text-gray-700">
+            Quantity per Item
+          </h2>
+          <ReactApexChart
+            options={barOptions}
+            series={barSeries}
+            type="bar"
+            height={250}
+          />
         </motion.div>
       </div>
 
@@ -182,10 +212,16 @@ const SupplyMonitoring = () => {
                 className="border-b border-gray-200 hover:bg-gray-50 transition"
               >
                 <td className="py-3 px-6">{s.supply_name}</td>
-                <td className="py-3 px-6">{s.created_at ? new Date(s.created_at).toLocaleDateString() : "—"}</td>
+                <td className="py-3 px-6">
+                  {s.created_at
+                    ? new Date(s.created_at).toLocaleDateString()
+                    : "—"}
+                </td>
                 <td className="py-3 px-6">{s.quantity}</td>
                 <td className="py-3 px-6">{s.unit || "—"}</td>
-                <td className="py-3 px-6">₱{(Number(s.price) || 0).toFixed(2)}</td>
+                <td className="py-3 px-6">
+                  ₱{(Number(s.price) || 0).toFixed(2)}
+                </td>
                 <td className="py-3 px-6">
                   <button
                     onClick={() => openPopup("edit", s)}
@@ -223,39 +259,76 @@ const SupplyMonitoring = () => {
               </button>
 
               <h3 className="text-xl font-bold mb-4">
-                {popupType === "add" ? "Add New Supply" : "Edit Supply"}
+                {popupType === "add"
+                  ? "Add New Supply"
+                  : `Edit Supply: ${selectedSupply?.supply_name}`}
               </h3>
 
               <div className="space-y-4">
+                {/* Supply name - read-only in edit mode */}
                 <input
                   type="text"
                   placeholder="Product name"
                   value={newSupply.supply_name}
-                  onChange={(e) => setNewSupply({ ...newSupply, supply_name: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg bg-gray-100 border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none"
+                  readOnly={popupType === "edit"}
+                  onChange={(e) =>
+                    setNewSupply({
+                      ...newSupply,
+                      supply_name: e.target.value,
+                    })
+                  }
+                  className={`w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none ${
+                    popupType === "edit"
+                      ? "bg-gray-100 cursor-not-allowed"
+                      : "bg-white"
+                  }`}
                 />
-                <input
-                  type="number"
-                  placeholder="Quantity"
-                  value={newSupply.quantity}
-                  onChange={(e) => setNewSupply({ ...newSupply, quantity: parseInt(e.target.value) || 0 })}
-                  className="w-full px-4 py-2 rounded-lg bg-gray-100 border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none"
-                />
+
+                {/* Quantity input (additive when editing) */}
+                <div>
+                  <input
+                    type="number"
+                    placeholder={popupType === "edit" ? "Add Quantity" : "Quantity"}
+                    value={newSupply.quantity}
+                    onChange={(e) =>
+                      setNewSupply({
+                        ...newSupply,
+                        quantity: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none"
+                  />
+                  {popupType === "edit" && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      Current quantity: {selectedSupply?.quantity}
+                    </p>
+                  )}
+                </div>
+
+                {/* Editable Unit */}
                 <input
                   type="text"
                   placeholder="Unit"
                   value={newSupply.unit}
                   onChange={(e) => setNewSupply({ ...newSupply, unit: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg bg-gray-100 border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none"
+                  className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none"
                 />
+
+                {/* Editable Price */}
                 <input
                   type="number"
                   placeholder="Price"
                   value={newSupply.price}
-                  onChange={(e) => setNewSupply({ ...newSupply, price: parseFloat(e.target.value) || 0 })}
-                  className="w-full px-4 py-2 rounded-lg bg-gray-100 border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none"
+                  onChange={(e) =>
+                    setNewSupply({
+                      ...newSupply,
+                      price: parseFloat(e.target.value) || 0,
+                    })
+                  }
+                  className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none"
                 />
               </div>
+
 
               <div className="flex justify-center gap-4 mt-6">
                 <button

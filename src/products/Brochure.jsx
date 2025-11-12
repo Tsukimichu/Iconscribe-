@@ -126,11 +126,12 @@ function Brochure() {
         },
         body: JSON.stringify({
           user_id: userProfile.id,
-          product_id: 3, 
+          product_id: 3,
           quantity,
           urgency: "Normal",
           status: "Pending",
           attributes,
+          estimated_price: result?.total || 0,
         }),
       });
 

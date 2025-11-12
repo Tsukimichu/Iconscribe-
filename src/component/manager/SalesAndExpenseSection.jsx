@@ -48,17 +48,29 @@ const SalesAndExpenseSection = () => {
     fetchSales();
   }, []);
 
-  // =====================================================
-  // Fetch expenses data from backend
-  // =====================================================
+// =====================================================
+// Fetch supplies as expenses
+// =====================================================
   const fetchExpenses = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/expenses");
-      if (res.data.success) setExpenses(res.data.data);
+      const res = await axios.get("http://localhost:5000/api/supplies");
+      if (Array.isArray(res.data)) {
+        const mapped = res.data.map((s) => ({
+          id: s.supply_id,
+          supply_name: s.supply_name,
+          quantity: s.quantity,
+          unit: s.unit,
+          price: s.price,
+          date: s.created_at || new Date().toISOString(),
+        }));
+        setExpenses(mapped);
+      }
     } catch (err) {
-      console.error("Error fetching expenses:", err);
+      console.error("Error fetching supplies as expenses:", err);
     }
   };
+
+
 
   useEffect(() => {
     fetchExpenses();
@@ -69,8 +81,12 @@ const SalesAndExpenseSection = () => {
   // Computed totals
   // =====================================================
   const totalSales = useMemo(() => sales.reduce((sum, s) => sum + Number(s.amount), 0), [sales]);
-  const totalExpenses = useMemo(() => expenses.reduce((sum, e) => sum + Number(e.amount), 0), [expenses]);
+  const totalExpenses = useMemo(() => 
+    expenses.reduce((sum, e) => sum + ((Number(e.quantity) || 0) * (Number(e.price) || 0)), 0),
+    [expenses]
+  ); 
   const profit = totalSales - totalExpenses;
+
 
   // =====================================================
   // Add or Edit
@@ -163,16 +179,22 @@ const SalesAndExpenseSection = () => {
   // Filter + Sort
   // =====================================================
   const filterAndSort = (data) => {
-    let filtered = data.filter(
-      (r) => r.item.toLowerCase().includes(search.toLowerCase()) || r.date.includes(search)
-    );
+    let filtered = data.filter((r) => {
+      const name = (r.item || r.supply_name || "").toLowerCase();
+      return name.includes(search.toLowerCase()) || (r.date || "").includes(search);
+    });
 
     return [...filtered].sort((a, b) => {
-      if (sortBy === "amount") return b.amount - a.amount;
+      if (sortBy === "amount") {
+        const aAmount = a.amount ?? (a.quantity && a.price ? a.quantity * a.price : 0);
+        const bAmount = b.amount ?? (b.quantity && b.price ? b.quantity * b.price : 0);
+        return bAmount - aAmount;
+      }
       if (sortBy === "date") return new Date(b.date) - new Date(a.date);
-      return a.item.localeCompare(b.item);
+      return (a.item || a.supply_name || "").localeCompare(b.item || b.supply_name || "");
     });
   };
+
 
   const filteredSales = useMemo(() => filterAndSort(sales), [sales, search, sortBy]);
   const filteredExpenses = useMemo(() => filterAndSort(expenses), [expenses, search, sortBy]);
@@ -189,16 +211,19 @@ const SalesAndExpenseSection = () => {
 
     sales.forEach((s) => {
       const month = new Date(s.date).getMonth();
-      salesByMonth[month] += Number(s.amount);
+      salesByMonth[month] += Number(s.amount) || 0;
     });
 
     expenses.forEach((e) => {
       const month = new Date(e.date).getMonth();
-      expensesByMonth[month] += Number(e.amount);
+      // calculate total expense per record
+      const totalExpense = (Number(e.quantity) || 0) * (Number(e.price) || 0);
+      expensesByMonth[month] += totalExpense;
     });
 
     return { months, salesByMonth, expensesByMonth };
   }, [sales, expenses]);
+
 
   const chartOptions = useMemo(() => ({
     chart: {
@@ -303,17 +328,15 @@ const SalesAndExpenseSection = () => {
       {/* Expenses Section */}
       <Section
         title="Expenses"
-        data={filteredExpenses}
+        data={filteredExpenses}     
         color="text-red-600"
         source="expense"
+        type="expense"            
         openAdd={openAdd}
         openEdit={openEdit}
         handleDelete={handleDelete}
-        openArchive={() => {
-          setArchiveType("expense");
-          setIsArchiveOpen(true);
-        }}
       />
+
 
       {/* Modal for Add/Edit */}
       <AnimatePresence>
@@ -389,101 +412,98 @@ const SummaryCard = ({ title, value, color }) => (
 // =====================================================
 // Section and Table Components
 // =====================================================
-const Section = ({ title, data, color, source, openAdd, openEdit, handleDelete }) => (
-  <div className="mb-10">
-    <div className="flex justify-between items-center mb-4">
-      <h2 className={`text-2xl font-bold ${color}`}>{title}</h2>
-      <Button variant="primary" onClick={() => openAdd(source)} icon={<Plus size={16} />}>
-        Add
-      </Button>
+  const Section = ({ title, data, color, source, openAdd, openEdit, handleDelete, type }) => (
+    <div className="mb-10">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className={`text-2xl font-bold ${color}`}>{title}</h2>
+
+        {/* Render Add button only for expenses */}
+        {type === "expense" && (
+          <Button variant="primary" onClick={() => openAdd(source)} icon={<Plus size={16} />}>
+            Add
+          </Button>
+        )}
+      </div>
+
+      <Table
+        data={data}
+        color={color}
+        source={source}
+        type={type}
+        onEdit={openEdit}
+        onDelete={handleDelete}
+      />
     </div>
-    <Table
-      data={data}
-      color={color}
-      onEdit={(row) => openEdit(source, row)}
-      onDelete={(row) => handleDelete(source, row)}
-    />
-  </div>
-);
+  );
+
+
 
 // =====================================================
 // Table Component
 // =====================================================
-const Table = ({ data, color, onEdit, onDelete }) => (
-  <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-x-auto mt-6">
-    <table className="w-full text-left border-collapse min-w-[800px] text-sm">
-      <thead className="bg-gray-100 sticky top-0 z-10">
-        <tr>
-          <th className="py-3 px-6 font-semibold text-gray-700">Item</th>
-          <th className="py-3 px-6 font-semibold text-gray-700">Quantity</th>
-          <th className="py-3 px-6 font-semibold text-gray-700 text-right">Amount</th>
-          <th className="py-3 px-6 font-semibold text-gray-700">Date</th>
-          <th className="py-3 px-6 font-semibold text-gray-700 text-right">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {data.length > 0 ? (
-          data.map((row, index) => (
-            <tr key={row.id || index} className="border-b border-gray-200 hover:bg-gray-50 transition">
-              <td className="py-3 px-6">
-                {(() => {
-                  const match = row.item.match(/^(.*)\s+x(\d+)$/i);
-                  if (match) {
-                    const [, name] = match;
-                    return <span className="font-medium text-gray-800">{name.trim()}</span>;
-                  } else {
-                    return <span className="font-medium text-gray-800">{row.item}</span>;
+  const Table = ({ data, color, onEdit, onDelete, type }) => (
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-x-auto mt-6">
+      <table className="w-full text-left border-collapse min-w-[600px] text-sm">
+        <thead className="bg-gray-100 sticky top-0 z-10">
+          <tr>
+            <th className="py-3 px-6 font-semibold text-gray-700">Item</th>
+            {type === "expense" && <th className="py-3 px-6 font-semibold text-gray-700">Quantity</th>}
+            <th className="py-3 px-6 font-semibold text-gray-700 text-right">Amount</th>
+            <th className="py-3 px-6 font-semibold text-gray-700">Date</th>
+            <th className="py-3 px-6 font-semibold text-gray-700 text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.length > 0 ? (
+            data.map((row, index) => (
+              <tr key={row.id || index} className="border-b border-gray-200 hover:bg-gray-50 transition">
+                <td className="py-3 px-6 font-medium text-gray-800">{row.item || row.supply_name}</td>
+
+                {type === "expense" && (
+                  <td className="py-3 px-6">{row.quantity || 0}</td>
+                )}
+
+                <td className={`py-3 px-6 font-semibold text-right ${color}`}>
+                  ₱{type === "expense"
+                    ? ((Number(row.quantity) || 0) * (Number(row.price) || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                    : Number(row.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                   }
-                })()}
-              </td>
+                </td>
 
-              <td className="py-3 px-6">
-                {(() => {
-                  const match = row.item.match(/^(.*)\s+x(\d+)$/i);
-                  if (match) {
-                    const [, , qty] = match;
-                    return <span className="font-medium text-gray-800">{qty}</span>;
-                  } else {
-                    return <span className="font-medium text-gray-800">—</span>;
-                  }
-                })()}
-              </td>
+                <td className="py-3 px-6">{row.date ? new Date(row.date).toLocaleDateString() : "—"}</td>
 
-              <td className={`py-3 px-6 font-semibold text-right ${color}`}>
-                ₱{Number(row.amount).toLocaleString()}
-              </td>
-
-              <td className="py-3 px-6">{new Date(row.date).toLocaleDateString()}</td>
-
-              <td className="py-3 px-6 text-right">
-                <div className="flex justify-end gap-2">
-                  <button
-                    onClick={() => onEdit(row)}
-                    className="flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-200 transition"
-                  >
-                    <Edit2 size={16} />
-                  </button>
-                  <button
-                    onClick={() => onDelete(row)}
-                    className="flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-lg hover:bg-red-200 transition"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
+                <td className="py-3 px-6 text-right">
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => onEdit(row)}
+                      className="flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-200 transition"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button
+                      onClick={() => onDelete(row)}
+                      className="flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-lg hover:bg-red-200 transition"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={type === "expense" ? 4 : 5} className="py-6 text-center text-gray-500 italic">
+                No records found.
               </td>
             </tr>
-          ))
-        ) : (
-          <tr>
-            <td colSpan="5" className="py-6 text-center text-gray-500 italic">
-              No records found.
-            </td>
-          </tr>
-        )}
-      </tbody>
-    </table>
-  </div>
-);
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+
+
+
 
 // =====================================================
 // Reusable UI Components

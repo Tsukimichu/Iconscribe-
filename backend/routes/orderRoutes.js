@@ -96,9 +96,10 @@ router.post("/create", async (req, res) => {
     const [orderItemResult] = await db
       .promise()
       .execute(
-        "INSERT INTO orderitems (order_id, product_id, quantity, urgency, status) VALUES (?, ?, ?, ?, ?)",
-        [order_id, product_id, quantity, urgency || "Normal", status || "Pending"]
+        "INSERT INTO orderitems (order_id, product_id, quantity, urgency, status, estimated_price) VALUES (?, ?, ?, ?, ?, ?)",
+        [order_id, product_id, quantity, urgency || "Normal", status || "Pending", estimated_price || 0]
       );
+
 
     const order_item_id = orderItemResult.insertId;
 

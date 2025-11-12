@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
-// eslint-disable-next-line no-unused-vars
+import React, { useState, useEffect, useRef,useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell } from "lucide-react";
 import Chart from "react-apexcharts";
+import ReactApexChart from "react-apexcharts";
 import axios from "axios";
 import { useToast } from "../ui/ToastProvider.jsx";
 
@@ -16,6 +16,8 @@ const OverviewSection = () => {
     data: [],
   });
 
+  const [productTotals, setProductTotals] = useState([]);
+
   const { showToast } = useToast();
   const prevOrderCount = useRef(0); 
   const isFirstLoad = useRef(true);
@@ -26,10 +28,22 @@ const OverviewSection = () => {
       const res = await axios.get("http://localhost:5000/api/orders");
       const fetchedOrders = Array.isArray(res.data) ? res.data : res.data.data || [];
 
-      console.log("Prev:", prevOrderCount.current, "Now:", fetchedOrders.length, "IsFirstLoad:", isFirstLoad.current);
-
       setOrders(fetchedOrders);
 
+      // --- inside fetchOrders ---
+      const salesMap = {};
+      fetchedOrders.forEach(order => {
+        const key = order.product_name || "Unknown";
+        const saleAmount = Number(order.total_price || 0);
+        salesMap[key] = (salesMap[key] || 0) + saleAmount;
+      });
+
+      setSalesChartData({
+        categories: Object.keys(salesMap),
+        data: Object.values(salesMap),
+      });
+
+      // New orders notification
       if (!isFirstLoad.current && fetchedOrders.length > prevOrderCount.current) {
         const diff = fetchedOrders.length - prevOrderCount.current;
         const recent = fetchedOrders.slice(-diff);
@@ -44,13 +58,30 @@ const OverviewSection = () => {
     }
   };
 
+    useEffect(() => {
+      const fetchProductTotals = async () => {
+        try {
+          const res = await axios.get("http://localhost:5000/api/sales/product-totals");
+          setProductTotals(res.data);
+        } catch (err) {
+          console.error("❌ Error fetching product totals:", err);
+        }
+      };
+
+      fetchProductTotals();
+    }, []);
+
+
+
+
 
   // Fetch on mount and poll every 5s
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 5000); 
+    const interval = setInterval(fetchOrders, 5000);
     return () => clearInterval(interval);
   }, []);
+
 
   // Fetch product order counts for chart
   useEffect(() => {
@@ -67,6 +98,22 @@ const OverviewSection = () => {
     };
     fetchOrderChartData();
   }, []);
+
+ const totalSalesChart = useMemo(() => {
+  return {
+    series: [{ name: "Total Sales", data: productTotals.map((p) => Number(p.total_sales) || 0),},],
+    options: { chart: { type: "area",stacked: false, toolbar: { show: false }, background: "transparent",},
+      xaxis: { categories: productTotals.map((p) => p.product_name), },
+      stroke: {curve: "smooth",width: 3,}, dataLabels: { enabled: false,},
+      legend: { position: "top", horizontalAlign: "left", },
+      fill: { opacity: 0.25, gradient: { shade: "light", type: "vertical",},},
+      grid: { borderColor: "#e5e7eb",},
+      colors: ["#22c55e"],
+    },
+  };
+}, [productTotals]);
+
+
 
   // Group orders by status for popup display
   const groupByStatus = (status) =>
@@ -102,29 +149,18 @@ const OverviewSection = () => {
     },
   };
 
-  const salesData = {
-    series: [{ name: "Sales", data: [180, 140, 110, 90, 70] }],
-    options: {
-      chart: { type: "line", toolbar: { show: false }, background: "transparent" },
-      xaxis: { categories: ["Official Receipt", "Calendar", "Yearbook", "Book", "Mug"] },
-      stroke: { curve: "smooth", width: 3 },
-      dataLabels: { enabled: false },
-      colors: ["#22c55e"],
-      markers: { size: 5, colors: ["#22c55e"], strokeColors: "#fff", strokeWidth: 2 },
-      grid: { borderColor: "#e5e7eb" },
-    },
-  };
-
-  const reportData = {
-    series: [264.64, 230.12, 175.5, 90.2, 250.2],
+  // After fetching orderChartData
+  const reportChartData = {
+    series: orderChartData.data,
     options: {
       chart: { type: "donut", background: "transparent" },
-      labels: ["Official Receipt", "Calendar", "Book", "Mug", "Yearbook"],
+      labels: orderChartData.categories, 
       legend: { position: "bottom" },
-      colors: ["#3b82f6", "#facc15", "#ef4444", "#10b981", "#a855f7"],
+      colors: ["#3b82f6", "#facc15", "#ef4444", "#10b981", "#a855f7", "#f97316", "#8b5cf6"], // extend colors if more products
       plotOptions: { pie: { donut: { size: "70%" } } },
     },
   };
+
 
   const expenseData = {
     series: [
@@ -281,19 +317,28 @@ const OverviewSection = () => {
           <motion.div className="bg-gray-50 p-6 rounded-2xl shadow-md border border-gray-200">
             <h2 className="text-lg font-semibold text-gray-700 mb-3"> Total Orders</h2>
             <Chart options={orderData.options} series={orderData.series} type="area" height={260} />
-          </motion.div>
+          </motion.div >
           <motion.div className="bg-gray-50 p-6 rounded-2xl shadow-md border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-700 mb-3"> Total Sales</h2>
-            <Chart options={salesData.options} series={salesData.series} type="line" height={260} />
+            <h2 className="text-lg font-semibold text-gray-700 mb-3">Total Sales</h2>
+            <ReactApexChart
+              options={totalSalesChart.options}
+              series={totalSalesChart.series}
+              type="area"
+              height={260}
+            />
           </motion.div>
-        </div>
-
+          </div>
         {/* Reports & Expenses */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <motion.div className="bg-gray-50 p-6 rounded-2xl shadow-md border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-700 mb-2"> Reports</h2>
-            <Chart options={reportData.options} series={reportData.series} type="donut" height={300} />
-          </motion.div>
+        <motion.div className="bg-gray-50 p-6 rounded-2xl shadow-md border border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-700 mb-2"> Reports</h2>
+          <Chart
+            options={reportChartData.options}
+            series={reportChartData.series}
+            type="donut"
+            height={300}
+          />
+        </motion.div>
           <motion.div className="bg-gray-50 p-6 rounded-2xl shadow-md border border-gray-200">
             <h2 className="text-lg font-semibold text-gray-700 mb-2"> Expenses</h2>
             <Chart options={expenseData.options} series={expenseData.series} type="bar" height={300} />

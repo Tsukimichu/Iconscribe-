@@ -92,4 +92,26 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+
+// ===================================================
+// Get total sales per product
+// ===================================================
+router.get("/product-totals", async (req, res) => {
+  try {
+    const [rows] = await db
+      .promise()
+      .query(`
+        SELECT item AS product_name, SUM(amount) AS total_sales
+        FROM sales
+        GROUP BY item
+      `);
+
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Database error" });
+  }
+});
+
+
 module.exports = router;

@@ -175,10 +175,12 @@ const OrdersSection = () => {
     setNewPrice("");
   };
   const confirmAddPrice = async () => {
-    if (!selectedOrder || newPrice === "" || isNaN(newPrice)) return alert("Enter a valid price");
+    if (!selectedOrder || newPrice === "" || isNaN(newPrice)) {
+      alert("Enter a valid price");
+      return;
+    }
 
     const orderId = selectedOrder.order_id;
-    if (!orderId) return alert("Invalid order ID.");
 
     try {
       const res = await fetch(`http://localhost:5000/api/orders/${orderId}/price`, {
@@ -186,18 +188,30 @@ const OrdersSection = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ price: Number(newPrice) }),
       });
+
       const data = await res.json();
+
       if (res.ok && data.success) {
+        // Update order in state to reflect new total and manager_added
         setOrders((prev) =>
-          prev.map((o) => (o.order_id === orderId ? { ...o, price: Number(newPrice) } : o))
+          prev.map((o) =>
+            o.order_id === orderId
+              ? {
+                  ...o,
+                  manager_added: data.manager_added,
+                  total: data.total,
+                }
+              : o
+          )
         );
+
         closePriceModal();
       } else {
         alert(data.message || "Failed to update price");
       }
     } catch (err) {
-      console.error(err);
-      alert("Server error");
+      console.error("❌ Error updating price:", err);
+      alert("Server error while updating price");
     }
   };
 
@@ -464,6 +478,7 @@ const openViewModal = async (order) => {
                     { key: "urgency", label: "Urgency" },
                     { key: "status", label: "Status" },
                     { key: "price", label: "Estimated Price" },
+                    { key: "total", label: "Total Price" },
                   ].map((col) => (
                     <th
                       key={col.key}
@@ -500,6 +515,13 @@ const openViewModal = async (order) => {
                       {order.estimated_price
                         ? `₱${Number(order.estimated_price || 0).toFixed(2)}`
                         : <span className="text-gray-400 italic">Not Set</span>}
+                    </td>
+                    <td className="py-3 px-6 font-semibold text-green-600">
+                      {order.manager_added && order.manager_added > 0
+                        ? `₱${(
+                            Number(order.estimated_price || 0) + Number(order.manager_added || 0)
+                          ).toFixed(2)}`
+                        : <span className="text-gray-400 italic">—</span>}
                     </td>
                     <td className="py-3 px-6 flex justify-end gap-2">
                       <button
@@ -539,88 +561,6 @@ const openViewModal = async (order) => {
             </table>
           </div>
         </motion.div>
-
-        {/* --- Completed Orders Table --- */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-x-auto mt-10"
-        >
-          {/* Header with count */}
-          <div className="flex justify-between items-center px-6 py-4 border-b flex-wrap gap-2">
-            <h2 className="text-2xl font-bold text-green-700">
-              Completed Orders
-            </h2>
-            <span className="text-sm font-semibold text-gray-600 bg-green-100 text-green-700 px-3 py-1 rounded-full">
-              {
-                orders?.filter((o) => o.status === "Completed").length || 0
-              }{" "}
-              completed
-            </span>
-          </div>
-
-          <div className="max-h-[400px] overflow-y-auto">
-            <table className="w-full text-left border-collapse min-w-[700px] text-sm">
-              <thead className="bg-gray-100 sticky top-0 z-10">
-                <tr>
-                  <th className="py-3 px-6 font-semibold text-gray-700">Enquiry No.</th>
-                  <th className="py-3 px-6 font-semibold text-gray-700">Name</th>
-                  <th className="py-3 px-6 font-semibold text-gray-700">Service</th>
-                  <th className="py-3 px-6 font-semibold text-gray-700">Quantity</th>
-                  <th className="py-3 px-6 font-semibold text-gray-700">Total</th>
-                  <th className="py-3 px-6 font-semibold text-gray-700">Date Completed</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders && orders.filter((o) => o.status === "Completed").length > 0 ? (
-                  orders
-                    .filter((o) => o.status === "Completed")
-                    .map((order, index) => {
-                      // calculate totals safely
-                      const totalQty = order.items?.reduce(
-                        (sum, i) => sum + (Number(i.quantity) || 0),
-                        0
-                      );
-                      const totalPrice = order.items?.reduce(
-                        (sum, i) => sum + (Number(i.price) || 0),
-                        0
-                      );
-
-                      return (
-                        <tr
-                          key={order.order_id}
-                          className="border-b border-gray-200 hover:bg-gray-50 transition"
-                        >
-                          <td className="py-3 px-6">{index + 1}</td>
-                          <td className="py-3 px-6">{order.customer_name}</td>
-                          <td className="py-3 px-6">
-                            {order.items?.map((i) => i.service).join(", ")}
-                          </td>
-                          <td className="py-3 px-6">{totalQty}</td>
-                          <td className="py-3 px-6 font-medium text-green-700">
-                            ₱{(totalPrice || 0).toLocaleString()}
-                          </td>
-                          <td className="py-3 px-6">
-                            {order.completed_at
-                              ? new Date(order.completed_at).toLocaleDateString()
-                              : "-"}
-                          </td>
-                        </tr>
-                      );
-                    })
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="py-6 text-center text-gray-500 italic">
-                      No completed orders yet.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </motion.div>
-
       </motion.div>
 
       {/* --- View Modal --- */}

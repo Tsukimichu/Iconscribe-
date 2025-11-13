@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { Contact, MessageCircle, XCircle } from "lucide-react";
 import UploadSection from "../component/UploadSection.jsx";
 import { useToast } from "../component/ui/ToastProvider.jsx";
+import  { computeQuotation } from "../utils/computeQuatation.js";
 
 function Newsletters() {
   const navigate = useNavigate();
@@ -155,6 +156,7 @@ const handleConfirmOrder = async () => {
         urgency: "Normal",
         status: "Pending",
         attributes, 
+        estimated_price: estimatedPrice || 0,
       }),
     });
 
@@ -217,20 +219,39 @@ const handleConfirmOrder = async () => {
 };
 
 
-useEffect(() => {
-  if (!quantity || quantity < 100) {
-    setEstimatedPrice(0);
-    return;
-  }
+  const sizeMap = {
+    A4: { width: 8.27, height: 11.69 },
+    A5: { width: 5.83, height: 8.27 },
+    "Letter (8.5”x11”)": { width: 8.5, height: 11 },
+    "Legal (8.5”x14”)": { width: 8.5, height: 14 },
+  };
 
-  const q = Number(quantity);
-  const colorCost = priceConfig.color[paperType] || 0;
-  const layoutCost = priceConfig.layout[layout] || 0;
-  const sizeCost = priceConfig.size[size] || 0;
 
-  const total = q * (priceConfig.base + colorCost + layoutCost + sizeCost);
-  setEstimatedPrice(total);
-}, [quantity, paperType, layout, size]);
+  useEffect(() => {
+    const q = Number(quantity);
+    if (!q || !size) {
+      setEstimatedPrice(0);
+      return;
+    }
+
+    const { width, height } = sizeMap[size] || { width: 8.5, height: 11 };
+    const isColored = paperType === "Full Color";
+
+    const result = computeQuotation({
+      width,
+      height,
+      copies: q,
+      colored: isColored,
+    });
+
+    if (result) {
+      setEstimatedPrice(result.total);
+    } else {
+      setEstimatedPrice(0);
+    }
+  }, [quantity, size, paperType]);
+
+
 
 
 

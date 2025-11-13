@@ -4,7 +4,8 @@ import { ArrowBigLeft, Upload, Phone, Mail, Contact, MessageCircle, XCircle } fr
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "../component/ui/ToastProvider.jsx";
-import UploadSection from "../component/UploadSection"; // ✅ Added
+import UploadSection from "../component/UploadSection";
+import { computeQuotation } from "../utils/computeQuatation.js";
 
 function Invitation() {
   const navigate = useNavigate();
@@ -26,26 +27,6 @@ function Invitation() {
 
 
   const [estimatedPrice, setEstimatedPrice] = useState(0);
-
-  // Base prices (you can tweak these or fetch from DB later)
-  const priceConfig = {
-    base: 2.5, // base price per copy
-    size: {
-      "5x7 inches": 0.5,
-      "4x6 inches": 0.3,
-      "Custom": 1.0,
-    },
-    paperType: {
-      Carbonized: 1.2,
-      Colored: 0.8,
-      Plain: 0.5,
-    },
-    printMethod: {
-      "Computer Printout": 0.5,
-      "Offset Machine": 1.0,
-    },
-  };
-
 
   // Form fields
   const [size, setSize] = useState("");
@@ -148,6 +129,7 @@ const handleConfirmOrder = async () => {
         urgency: "Normal",
         status: "Pending",
         attributes, 
+        estimated_price: estimatedPrice || 0,
       }),
     });
 
@@ -210,20 +192,35 @@ const handleConfirmOrder = async () => {
   }
 };
 
-useEffect(() => {
-  if (!quantity || quantity < 50) {
-    setEstimatedPrice(0);
-    return;
-  }
 
-  const q = Number(quantity);
-  const sizeCost = priceConfig.size[size] || 0;
-  const paperCost = priceConfig.paperType[paperType] || 0;
-  const printCost = priceConfig.printMethod[printMethod] || 0;
+  const sizeMap = {
+    "5x7 inches": { width: 5, height: 7 },
+    "4x6 inches": { width: 4, height: 6 },
+    "Custom": { width: 6, height: 8 },
+  };
 
-  const total = q * (priceConfig.base + sizeCost + paperCost + printCost);
-  setEstimatedPrice(total);
-}, [quantity, size, paperType, printMethod]);
+
+  useEffect(() => {
+    const q = Number(quantity);
+    if (!q || !size) {
+      setEstimatedPrice(0);
+      return;
+    }
+
+    const { width, height } = sizeMap[size] || { width: 5, height: 7 };
+    const isColored = paperType === "Colored";
+
+    const result = computeQuotation({
+      width,
+      height,
+      copies: q,
+      colored: isColored,
+    });
+
+    if (result) setEstimatedPrice(result.total);
+    else setEstimatedPrice(0);
+  }, [quantity, size, paperType]);
+
 
 
 

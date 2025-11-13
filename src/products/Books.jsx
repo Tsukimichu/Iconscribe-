@@ -130,6 +130,7 @@ function Books() {
           urgency: "Normal",
           status: "Pending",
           attributes,
+          estimated_price: estimatedPrice || 0,
         }),
       });
 
@@ -198,7 +199,7 @@ function Books() {
       const result = computeBookQuotation({
         pages: Number(pages),
         copies: Number(quantity),
-        colored: colorPrinting === "Full Color", // or any label you use
+        colored: colorPrinting === "Full Color",
       });
 
       setEstimatedPrice(result.total);
@@ -423,7 +424,7 @@ function Books() {
                     <div className="mt-4 border border-blue-200 bg-blue-50 rounded-2xl shadow-sm p-5 text-right">
                       <p className="text-base text-gray-700 font-medium">Estimated Price</p>
                       <p className="text-3xl font-bold text-blue-700 mt-1">
-                           ₱{estimatedPrice ? estimatedPrice.toLocaleString() : "0"}
+                          {estimatedPrice.toLocaleString("en-PH", { style: "currency", currency: "PHP" })}
                       </p>
                       <p className="text-sm text-gray-500 italic mt-1">
                         *Final price may vary depending on specifications

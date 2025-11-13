@@ -18,26 +18,6 @@
       if (!quantity || !pages) return 0;
 
       let basePrice = 0.10 * pages;
-      // Adjust by binding type
-      switch (bindingType) {
-        case "Perfect Binding":
-          basePrice += 30;
-          break;
-        case "Saddle Stitch":
-          basePrice += 20;
-          break;
-        case "Hardcover":
-          basePrice += 80;
-          break;
-        case "Spiral":
-          basePrice += 25;
-          break;
-        case "Ring Binding":
-          basePrice += 40;
-          break;
-        default:
-          break;
-      }
 
       // Adjust by paper type
       switch (paperType) {
@@ -170,8 +150,7 @@
               quantity,
               urgency: "Normal",
               status: "Pending",
-              attributes,
-              estimated_price: estimatedPrice, 
+              attributes, 
             }),
           });
 
@@ -439,7 +418,7 @@
                         <div className="mt-4 border border-blue-200 bg-blue-50 rounded-2xl shadow-sm p-5 text-right">
                           <p className="text-base text-gray-700 font-medium">Estimated Price</p>
                           <p className="text-3xl font-bold text-blue-700 mt-1">
-                            ₱{estimatedPrice.toFixed(2)}
+                            {estimatedPrice.toLocaleString("en-PH", { style: "currency", currency: "PHP" })}
                           </p>
                           <p className="text-sm text-gray-500 italic mt-1">
                             *Final price may vary depending on specifications

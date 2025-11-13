@@ -26,7 +26,7 @@ const SalesExpenseSection = () => {
     },
     {
       key: "profit",
-      label: "Net Profit",
+      label: "Profit",
       value: "₱10,000",
       bg: "bg-blue-50",
       text: "text-blue-700",
@@ -155,7 +155,7 @@ const SalesExpenseSection = () => {
           </div>
           <div className="bg-gray-50 p-6 rounded-2xl">
             <h2 className="text-lg font-semibold text-gray-700 mb-3">
-              Net Profit Trend
+              Profit
             </h2>
             <Chart
               options={profitChart.options}

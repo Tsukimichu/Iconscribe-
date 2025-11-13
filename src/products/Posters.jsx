@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "../component/ui/ToastProvider.jsx";
 import UploadSection from "../component/UploadSection.jsx";
+import { computeQuotation } from "../utils/computeQuatation.js";
 
 function Posters() {
   const navigate = useNavigate();
@@ -127,7 +128,7 @@ function Posters() {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        showToast("⚠️ You must be logged in to place an order.", "error");
+        showToast(" You must be logged in to place an order.", "error");
         navigate("/login");
         return;
       }
@@ -161,6 +162,7 @@ function Posters() {
           urgency: "Normal",
           status: "Pending",
           attributes, 
+          estimated_price: result?.total || 0,
         }),
       });
 
@@ -220,21 +222,51 @@ function Posters() {
     }
   };
 
+  const total = computeQuotation({
+    product: "Posters",
+    quantity: Number(quantity),
+    size,
+    paperType,
+    lamination,
+    color,
+  });
+
+  // Map size selection to actual width and height in inches (or cm)
+  const sizeMap = {
+    A3: { width: 11.7, height: 16.5 },
+    A2: { width: 16.5, height: 23.4 },
+    A1: { width: 23.4, height: 33.1 },
+    Custom: { width: 20, height: 30 },
+  };
+
+  const selectedSize = sizeMap[size] || { width: 0, height: 0 };
+
+  const result = computeQuotation({
+    width: selectedSize.width,
+    height: selectedSize.height,
+    copies: Number(quantity),
+    colored: color === "Full Color",
+  });
+
+
+
   useEffect(() => {
     if (!quantity || quantity < 100) {
       setEstimatedPrice(0);
       return;
     }
 
-    const q = Number(quantity);
-    const sizeCost = priceConfig.size[size] || 0;
-    const paperCost = priceConfig.paperType[paperType] || 0;
-    const laminationCost = priceConfig.lamination[lamination] || 0;
-    const colorCost = priceConfig.color[color] || 0;
-
-    const total = q * (priceConfig.base + sizeCost + paperCost + laminationCost + colorCost);
+    const total = computeQuotation({
+      product: "Posters",
+      quantity: Number(quantity),
+      size,
+      paperType,
+      lamination,
+      color,
+    });
     setEstimatedPrice(total);
   }, [quantity, size, paperType, lamination, color]);
+
 
 
 
@@ -362,8 +394,8 @@ function Posters() {
                         Poster Size
                       </label>
                       <select
-                      value={size}
-                      onChange={(e) => setSize(e.target.value)}
+                        value={size}
+                        onChange={(e) => setSize(e.target.value)}
                         className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
                         required
                       >
@@ -452,7 +484,7 @@ function Posters() {
                     <div className="border border-blue-200 bg-blue-50 rounded-2xl shadow-sm p-5 text-right">
                       <p className="text-base text-gray-700 font-medium">Estimated Price</p>
                       <p className="text-3xl font-bold text-blue-700 mt-1">
-                        ₱{estimatedPrice.toFixed(2)}
+                        {result?.total.toLocaleString("en-PH", { style: "currency", currency: "PHP" })}
                       </p>
                       <p className="text-sm text-gray-500 italic mt-1">
                         *Final price may vary depending on specifications

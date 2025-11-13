@@ -387,7 +387,7 @@ function Brochure() {
                           <p className="text-base text-gray-700 font-medium">Estimated Price</p>
                           {result ? (
                             <p className="text-2xl font-bold text-blue-700 mt-1">
-                              ₱{result.total.toLocaleString()}
+                              {result.total.toLocaleString("en-PH", { style: "currency", currency: "PHP" })}
                             </p>
                           ) : (
                             <p className="text-lg italic text-gray-500 mt-1">

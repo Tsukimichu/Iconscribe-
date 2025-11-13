@@ -10,11 +10,18 @@ const OverviewSection = () => {
   const [activeFilter, setActiveFilter] = useState(null);
   const [orders, setOrders] = useState([]);
   const [newOrders, setNewOrders] = useState([]);
+  const previousOrderIds = useRef(new Set());
   const [showNotifications, setShowNotifications] = useState(false);
   const [orderChartData, setOrderChartData] = useState({
     categories: [],
     data: [],
   });
+
+  const [salesChartData, setSalesChartData] = useState({
+    categories: [],
+    data: [],
+  });
+
 
   const [productTotals, setProductTotals] = useState([]);
 
@@ -30,7 +37,7 @@ const OverviewSection = () => {
 
       setOrders(fetchedOrders);
 
-      // --- inside fetchOrders ---
+      // --- Sales chart logic ---
       const salesMap = {};
       fetchedOrders.forEach(order => {
         const key = order.product_name || "Unknown";
@@ -43,20 +50,27 @@ const OverviewSection = () => {
         data: Object.values(salesMap),
       });
 
-      // New orders notification
-      if (!isFirstLoad.current && fetchedOrders.length > prevOrderCount.current) {
-        const diff = fetchedOrders.length - prevOrderCount.current;
-        const recent = fetchedOrders.slice(-diff);
-        setNewOrders((prev) => [...recent, ...prev].slice(0, 5));
-        showToast(`${diff} new order${diff > 1 ? "s" : ""} received!`, "info");
-      }
+    // --- New orders notification logic  ---
+    const currentIds = new Set(fetchedOrders.map(o => o.order_id));
+    const newOnes = [...currentIds].filter(id => !previousOrderIds.current.has(id));
 
-      prevOrderCount.current = fetchedOrders.length;
-      isFirstLoad.current = false;
+    if (!isFirstLoad.current && newOnes.length > 0) {
+      const newOrdersList = fetchedOrders.filter(o => newOnes.includes(o.order_id));
+
+      setNewOrders(prev => [...newOrdersList, ...prev].slice(0, 5));
+
+      showToast(`${newOrdersList.length} new order${newOrdersList.length > 1 ? "s" : ""} received!`, "info");
+    }
+
+    // Update reference for next poll
+    previousOrderIds.current = currentIds;
+    isFirstLoad.current = false;
+
     } catch (err) {
       console.error("Error fetching orders:", err);
     }
   };
+
 
     useEffect(() => {
       const fetchProductTotals = async () => {
@@ -88,9 +102,13 @@ const OverviewSection = () => {
     const fetchOrderChartData = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/orders/product-order-counts");
+        const items = Array.isArray(res.data) ? res.data 
+                    : Array.isArray(res.data.data) ? res.data.data 
+                    : [];
+
         setOrderChartData({
-          categories: res.data.map((item) => item.product_name),
-          data: res.data.map((item) => Number(item.total_orders)),
+          categories: items.map((item) => item.product_name),
+          data: items.map((item) => Number(item.total_orders)),
         });
       } catch (err) {
         console.error("Error fetching order chart data:", err);
@@ -135,11 +153,11 @@ const OverviewSection = () => {
   ];
 
   // Chart Data
-  const orderData = {
-    series: [{ name: "Orders", data: orderChartData.data }],
+  const orderData = useMemo(() => ({
+    series: [{ name: "Orders", data: orderChartData.data || [] }],
     options: {
       chart: { type: "area", stacked: false, toolbar: { show: false }, background: "transparent" },
-      xaxis: { categories: orderChartData.categories },
+      xaxis: { categories: orderChartData.categories || [] },
       stroke: { curve: "smooth", width: 3 },
       dataLabels: { enabled: false },
       legend: { position: "top", horizontalAlign: "left" },
@@ -147,7 +165,8 @@ const OverviewSection = () => {
       grid: { borderColor: "#e5e7eb" },
       colors: ["#6366f1"],
     },
-  };
+  }), [orderChartData]);
+
 
   // After fetching orderChartData
   const reportChartData = {
@@ -316,7 +335,11 @@ const OverviewSection = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <motion.div className="bg-gray-50 p-6 rounded-2xl shadow-md border border-gray-200">
             <h2 className="text-lg font-semibold text-gray-700 mb-3"> Total Orders</h2>
-            <Chart options={orderData.options} series={orderData.series} type="area" height={260} />
+            {orderData.series[0].data.length === 0 ? (
+                <p className="text-center text-gray-500">Loading chart...</p>
+              ) : (
+                <Chart options={orderData.options} series={orderData.series} type="area" height={260} />
+              )}
           </motion.div >
           <motion.div className="bg-gray-50 p-6 rounded-2xl shadow-md border border-gray-200">
             <h2 className="text-lg font-semibold text-gray-700 mb-3">Total Sales</h2>

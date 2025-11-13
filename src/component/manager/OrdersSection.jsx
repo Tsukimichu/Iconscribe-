@@ -304,20 +304,17 @@ const OrdersSection = () => {
 
   // --- Add Walk-In Order Logic ---
   const handleAddOrder = async () => {
-  const { customer_name, service, price, urgency } = newOrder;
+    const { customer_name, service, price, urgency } = newOrder;
 
-  // Validate required fields
     if (!customer_name.trim() || !service || !price) {
-      alert("Please fill in all required fields (Customer, Service, and Price).");
-      return;
+      return alert("Please fill in all required fields (Customer, Service, and Price).");
     }
 
     try {
       const formData = new FormData();
-      formData.append("customer_name", customer_name.trim());
-      formData.append("service", service);
-      formData.append("price", Number(price)); 
-      formData.append("urgency", urgency);
+      Object.entries(newOrder).forEach(([key, value]) => {
+        if (value) formData.append(key, value);
+      });
       formData.append("source", "walk-in");
 
       orderFiles.forEach((file) => formData.append("files", file));
@@ -329,29 +326,36 @@ const OrdersSection = () => {
 
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to add order");
-      }
+      if (!res.ok) throw new Error(data.message || "Failed to add order");
 
-      // Success handling
       if (data.success) {
         setOrders((prev) => [...prev, data.order]);
         setShowAddOrderModal(false);
         setNewOrder({
           customer_name: "",
+          email: "",
+          contact_number: "",
+          location: "",
+          date_ordered: "",
+          status: "Pending",
           service: "",
+          enquiry_no: "",
           price: "",
           urgency: "Normal",
+          number_of_pages: "",
+          binding_type: "",
+          paper_type: "",
+          cover_finish: "",
+          color_printing: "",
         });
         setOrderFiles([]);
-      } else {
-        alert(data.message || "Unexpected response from server.");
       }
     } catch (err) {
       console.error("Error adding walk-in order:", err);
       alert("Server error while adding order. Please try again later.");
     }
   };
+
 
   // --- Open View Modal ---
 const openViewModal = async (order) => {

@@ -256,7 +256,7 @@ function CallingCard() {
                 >
                   <ArrowBigLeft className="w-7 h-7" />
                 </button>
-                <h2 className="text-4xl font-bold text-black ml-200">
+                <h2 className="text-4xl font-bold text-black">
                   Service Request
                 </h2>
               </div>

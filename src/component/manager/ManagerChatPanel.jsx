@@ -3,7 +3,7 @@ import io from "socket.io-client";
 import axios from "axios";
 import { Send, MessageSquare } from "lucide-react";
 
-const socket = io("http://localhost:5000");
+const socket = io("http://72.61.143.130:5000"); 
 
 function ManagerChatPanel({ managerId = 10 }) {
   const [conversations, setConversations] = useState([]);

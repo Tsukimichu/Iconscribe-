@@ -73,44 +73,6 @@ function ContactUs() {
             ></iframe>
           </div>
         </div>
-
-        
-        <div className="bg-white/5 backdrop-blur-lg p-10 rounded-2xl shadow-lg border border-white/10">
-          <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <input
-              type="text"
-              placeholder="Name"
-              className="p-3 rounded-lg bg-black/40 border border-white/10 text-white placeholder-gray-500 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 transition"
-            />
-            <input
-              type="email"
-              placeholder="Email"
-              className="p-3 rounded-lg bg-black/40 border border-white/10 text-white placeholder-gray-500 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 transition"
-            />
-            <input
-              type="text"
-              placeholder="Phone Number"
-              className="p-3 rounded-lg bg-black/40 border border-white/10 text-white placeholder-gray-500 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 transition"
-            />
-            <input
-              type="text"
-              placeholder="Subject"
-              className="p-3 rounded-lg bg-black/40 border border-white/10 text-white placeholder-gray-500 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 transition"
-            />
-            <textarea
-              placeholder="Message"
-              rows="4"
-              className="p-3 rounded-lg bg-black/40 border border-white/10 text-white placeholder-gray-500 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 transition md:col-span-2 resize-none"
-            ></textarea>
-
-            <button
-              type="submit"
-              className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 px-6 rounded-lg md:col-span-2 transition-transform transform hover:scale-105"
-            >
-              Send Message
-            </button>
-          </form>
-        </div>
       </div>
     </section>
   );

@@ -24,7 +24,7 @@ function Label() {
   const [size, setSize] = useState("2” x 2”");
   const [paperType, setPaperType] = useState("Matte");
   const [message, setMessage] = useState("");
-  const [file, setFile] = useState(null); // ✅ added file state
+  const [file, setFile] = useState(null);
   const [visible, setVisible] = useState(true);
 
 
@@ -216,8 +216,8 @@ useEffect(() => {
   return (
     <>
       <Nav />
-      <div className="w-full p-6 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-        <div className="w-full max-w-[95rem] mx-auto bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-100 p-12">
+      <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-5">
+        <div className="w-full max-w-[120rem] p-2 sm:p-2">
           {/* Header */}
           <div className="flex items-center gap-3 mb-10">
             <button
@@ -226,6 +226,9 @@ useEffect(() => {
             >
               <ArrowBigLeft className="w-5 h-5" />
             </button>
+             <h2 className="text-4xl font-bold text-black">
+                Service Request
+            </h2>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-start">

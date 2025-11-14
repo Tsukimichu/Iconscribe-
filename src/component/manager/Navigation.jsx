@@ -80,12 +80,6 @@ const Navigation = ({ selectedSection, setSelectedSection, handleLogout }) => {
           active={selectedSection === "salesExpense"}
           onClick={() => setSelectedSection("salesExpense")}
         />
-        <NavItem
-          icon={<Archive size={18} />}
-          label="Archive"
-          active={selectedSection === "archive"}
-          onClick={() => setSelectedSection("archive")}
-        />
 
         {/* Logout Button */}
         <div className="pt-6 border-t border-white/20 mt-6">

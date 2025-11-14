@@ -22,6 +22,8 @@ function Books() {
 
     const [quantity, setQuantity] = useState("");
     const [pages, setPages] = useState("");
+    const [bookType, setBookType] = useState("");
+    const [bookSize, setBookSize] = useState("");
     const [binding, setBinding] = useState("");
     const [paperType, setPaperType] = useState("");
     const [coverFinish, setCoverFinish] = useState("");
@@ -33,6 +35,7 @@ function Books() {
     const [showContactModal, setShowContactModal] = useState(false);
     const [estimatedPrice, setEstimatedPrice] = useState(0);
     const { showToast } = useToast();
+    const [agreed ,setAgreed] = useState(false);
 
 
 
@@ -109,8 +112,10 @@ function Books() {
       // Build attributes array
       const attributes = [
         { name: "Number of Pages", value: pages },
+        { name: "Book Type", value: bookType },
         { name: "Binding Type", value: binding },
         { name: "Paper Type", value: paperType },
+        { name: "Book Size", value: bookSize },
         { name: "Cover Finish", value: coverFinish },
         { name: "Color Printing", value: colorPrinting },
         { name: "Additional Notes", value: notes },
@@ -175,8 +180,10 @@ function Books() {
       setShowConfirm(false);
       setQuantity("");
       setPages("");
+      setBookType("");
       setBinding("");
       setPaperType("");
+      setBookSize("");
       setCoverFinish("");
       setColorPrinting("");
       setNotes("");
@@ -222,8 +229,8 @@ function Books() {
                 >
                   <ArrowBigLeft className="w-7 h-7" />
                 </button>
-                <h2 className="text-4xl font-bold text-black ml-200">
-                  Book Printing Request
+                <h2 className="text-4xl font-bold text-black">
+                  Service Request
                 </h2>
               </div>
 
@@ -324,6 +331,22 @@ function Books() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-base font-semibold text-black">
+                            Book Type
+                          </label>
+                            <select
+                              value={bookType}
+                              onChange={(e) => setBookType(e.target.value)}
+                              className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                              required
+                            >
+                              <option value="">Select Book Type</option>
+                              <option>Yearbook</option>
+                              <option>Coffee Table Book</option>
+                              <option>Souvenir Program</option>
+                            </select>
+                        </div>
+                        <div>
+                          <label className="block text-base font-semibold text-black">
                             Binding Type
                           </label>
                             <select
@@ -353,6 +376,24 @@ function Books() {
                               <option>Matte</option>
                               <option>Glossy</option>
                               <option>Book Paper</option>
+                            </select>
+                        </div>
+                        <div>
+                          <label className="block text-base font-semibold text-black">
+                            Book Size
+                          </label>
+                            <select
+                              value={bookSize}
+                              onChange={(e) => setBookSize(e.target.value)}
+                              className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                              required
+                            >
+                              <option value="">Select Size</option>
+                              <option>A4 (210 x 297 mm)</option>
+                              <option>Trade Paperback (13 x 20 cm)</option>
+                              <option>5.5" x 8.5" (13.97 x 21.59 cm)</option>
+                              <option>6" x 9" (15.24 x 22.86 cm)</option>
+                              <option>5" x 8" (12.7 x 20.32 cm)</option>
                             </select>
                         </div>
                       </div>
@@ -654,31 +695,136 @@ function Books() {
         </div>
       </div>
 
-      {/* ✅ Confirmation Modal */}
-      {showConfirm && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full">
-            <h2 className="text-xl font-bold text-black mb-4">Confirm Your Order</h2>
-            <p className="text-base text-black mb-6">
-              Are you sure you want to place this order?
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowConfirm(false)}
-                className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 transition text-black"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmOrder}
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition"
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                {/* Confirmation Modal */}
+                {showConfirm && (
+                  <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+                    <div className="bg-white p-6 rounded-2xl shadow-xl max-w-lg w-full">
+                      
+                      <h2 className="text-xl font-bold text-black mb-4">Confirm Your Order</h2>
+
+                      {/* TERMS AND CONDITIONS CARD */}
+                      <div className="border rounded-xl p-4 h-64 overflow-y-auto text-sm text-black bg-gray-50 mb-4">
+                        <h3 className="text-lg font-semibold mb-2">ICONScribe – Terms and Conditions</h3>
+
+                        <p className="font-semibold mt-2">1. Acceptance of Terms</p>
+                        <p>By creating an account, placing an order, or using the System, you agree to these Terms and Conditions.</p>
+
+                        <p className="font-semibold mt-2">2. User Accounts</p>
+                        <ul className="list-disc ml-5">
+                          <li>Provide accurate information when signing up.</li>
+                          <li>You are responsible for safeguarding your login details.</li>
+                          <li>Any activity under your account is your responsibility.</li>
+                        </ul>
+
+                        <p className="font-semibold mt-2">3. Ordering Process</p>
+                        <ul className="list-disc ml-5">
+                          <li>All orders are final once submitted.</li>
+                          <li>ICONScribe may accept or reject orders due to availability or policy issues.</li>
+                          <li>Order confirmation will be sent via system, email, or SMS.</li>
+                        </ul>
+
+                        <p className="font-semibold mt-2">4. Pricing and Payment</p>
+                        <ul className="list-disc ml-5">
+                          <li>Prices are in PHP and may change without notice.</li>
+                          <li>Only Cash is accepted.</li>
+                          <li>Failure to pay may result in order cancellation.</li>
+                        </ul>
+
+                        <p className="font-semibold mt-2">5. Delivery and Pick-Up</p>
+                        <ul className="list-disc ml-5">
+                          <li>Clients may choose Delivery or Pick-Up.</li>
+                          <li>Delivery: must provide complete and accurate address. Fees may apply.</li>
+                          <li>Pick-Up: orders must be claimed at the ICONScribe location.</li>
+                        </ul>
+
+                        <p className="font-semibold mt-2">6. Modifications and Cancellations</p>
+                        <ul className="list-disc ml-5">
+                          <li>Cancellations allowed within 24 hours after placing the order.</li>
+                          <li>No cancellations after 24 hours.</li>
+                          <li>Processed/printed orders may not be modified.</li>
+                        </ul>
+
+                        <p className="font-semibold mt-2">7. Refund and Return Policy</p>
+                        <p>Refunds/reprints only if:</p>
+                        <ul className="list-disc ml-5">
+                          <li>Product is damaged.</li>
+                          <li>Error was caused by ICONScribe.</li>
+                        </ul>
+
+                        <p>Not liable for errors caused by:</p>
+                        <ul className="list-disc ml-5">
+                          <li>Incorrect details provided by client.</li>
+                          <li>Low-quality or incorrect uploaded files.</li>
+                          <li>Changes requested after processing.</li>
+                        </ul>
+
+                        <p>Refund requests must be submitted within [Insert # of days].</p>
+
+                        <p className="font-semibold mt-2">8. Client Responsibilities</p>
+                        <ul className="list-disc ml-5">
+                          <li>Provide accurate details and correct files.</li>
+                          <li>No illegal, inappropriate, or copyrighted uploads.</li>
+                          <li>Use the system responsibly.</li>
+                        </ul>
+
+                        <p className="font-semibold mt-2">9. System Availability</p>
+                        <p>The system may experience downtime or updates.</p>
+
+                        <p className="font-semibold mt-2">10. Data Privacy</p>
+                        <p>Your information is protected under the ICONScribe Privacy Policy.</p>
+
+                        <p className="font-semibold mt-2">11. Limitation of Liability</p>
+                        <p>ICONScribe is not responsible for:</p>
+                        <ul className="list-disc ml-5">
+                          <li>Losses caused by incorrect client information.</li>
+                          <li>User-uploaded content issues.</li>
+                          <li>Technical delays or emergencies.</li>
+                          <li>Indirect or consequential damages.</li>
+                        </ul>
+
+                        <p className="font-semibold mt-2">12. Changes to Terms</p>
+                        <p>ICONScribe may update these Terms at any time.</p>
+
+                        <p className="font-semibold mt-2">13. Contact Information</p>
+                        <p>[iconscribe@gmail.com / Phone Number / Bantad, Boac, Marinduque]</p>
+                      </div>
+
+                      {/* AGREEMENT CHECKBOX */}
+                      <div className="flex items-center gap-2 mb-4">
+                        <input
+                          type="checkbox"
+                          id="agree"
+                          className="w-4 h-4"
+                          checked={agreed}
+                          onChange={() => setAgreed(!agreed)}
+                        />
+                        <label htmlFor="agree" className="text-sm text-black">
+                          I have read and agree to the Terms and Conditions
+                        </label>
+                      </div>
+
+                      {/* BUTTONS */}
+                      <div className="flex justify-end gap-3">
+                        <button
+                          className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 text-black"
+                          onClick={() => setShowConfirm(false)}
+                        >
+                          Cancel
+                        </button>
+
+                        <button
+                          onClick={agreed ? handleConfirmOrder : () => alert("Please agree to the Terms and Conditions first.")}
+                          className={`px-4 py-2 rounded-xl text-white transition ${
+                            agreed ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-300 cursor-not-allowed"
+                          }`}
+                        >
+                          Confirm
+                        </button>
+                      </div>
+
+                    </div>
+                  </div>
+                )}
     </>
   );
 }

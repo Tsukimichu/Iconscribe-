@@ -19,18 +19,9 @@ const API_URL = "http://localhost:5000/api/sales";
 const SalesAndExpenseSection = () => {
   const [sales, setSales] = useState([]);
   const [expenses, setExpenses] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [archivedSales, setArchivedSales] = useState([]);
-  const [archivedExpenses, setArchivedExpenses] = useState([]);
 
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("date");
-  const [selected, setSelected] = useState(null);
-  const [formData, setFormData] = useState({ id: null, item: "", amount: "", date: "" });
-  const [isNew, setIsNew] = useState(false);
-  const [isArchiveOpen, setIsArchiveOpen] = useState(false);
-  const [archiveType, setArchiveType] = useState(null);
-  const [confirmDelete, setConfirmDelete] = useState(null);
 
   // =====================================================
   // Fetch sales data from backend
@@ -87,93 +78,6 @@ const SalesAndExpenseSection = () => {
   ); 
   const profit = totalSales - totalExpenses;
 
-
-  // =====================================================
-  // Add or Edit
-  // =====================================================
-  const openEdit = (source, record) => {
-    setSelected({ source, id: record.id });
-    setIsNew(false);
-    setFormData({ ...record });
-  };
-
-  const openAdd = (source) => {
-    setSelected({ source, id: null }); 
-    setIsNew(true);
-    const today = new Date().toISOString().split("T")[0];
-    setFormData({ id: null, item: "", amount: "", date: today });
-  };
-
-
-
-  const closeEdit = () => {
-    setSelected(null);
-    setFormData({ id: null, item: "", amount: "", date: "" });
-    setIsNew(false);
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((p) => ({ ...p, [name]: name === "amount" ? Number(value) : value }));
-  };
-
-  const handleSave = async () => {
-    if (!formData.item.trim() || formData.amount === "" || !formData.date) {
-      return alert("All fields are required");
-    }
-
-    // Decide API based on type
-    const url = selected.source === "expense"
-      ? "http://localhost:5000/api/expenses"
-      : "http://localhost:5000/api/sales";
-
-    try {
-      if (isNew) {
-        await axios.post(url, {
-          item: formData.item,
-          amount: Number(formData.amount),
-          date: formData.date,
-        });
-      } else {
-        await axios.put(`${url}/${formData.id}`, {
-          item: formData.item,
-          amount: Number(formData.amount),
-          date: formData.date,
-        });
-      }
-
-      // Refresh data based on type
-      if (selected.source === "expense") {
-        fetchExpenses();
-      } else {
-        fetchSales();
-      }
-
-      closeEdit();
-    } catch (err) {
-      console.error("Error saving record:", err);
-      alert("Failed to save record.");
-    }
-  };
-
-
-  // =====================================================
-  // Delete sale
-  // =====================================================
-  const handleDelete = (source, record) => {
-    setConfirmDelete({ source, record });
-  };
-
-  const confirmDeleteAction = async () => {
-    const { source, record } = confirmDelete;
-    try {
-      await axios.delete(`${API_URL}/${record.id}`);
-      fetchSales();
-      setConfirmDelete(null);
-    } catch (err) {
-      console.error("Error deleting sale:", err);
-    }
-  };
 
   // =====================================================
   // Filter + Sort
@@ -316,13 +220,6 @@ const SalesAndExpenseSection = () => {
         data={filteredSales}
         color="text-green-600"
         source="sale"
-        openAdd={openAdd}
-        openEdit={openEdit}
-        handleDelete={handleDelete}
-        openArchive={() => {
-          setArchiveType("sale");
-          setIsArchiveOpen(true);
-        }}
       />
 
       {/* Expenses Section */}
@@ -332,64 +229,8 @@ const SalesAndExpenseSection = () => {
         color="text-red-600"
         source="expense"
         type="expense"            
-        openAdd={openAdd}
-        openEdit={openEdit}
-        handleDelete={handleDelete}
       />
 
-
-      {/* Modal for Add/Edit */}
-      <AnimatePresence>
-        {selected && (
-          <Modal onClose={closeEdit}>
-            <h2 className="text-lg font-semibold mb-4">
-              {isNew
-                ? `Add ${selected.source === "sale" ? "Sale" : "Expense"}`
-                : `Edit ${selected.source === "sale" ? "Sale" : "Expense"}`}
-            </h2>
-
-            <FormInput label="Item" name="item" value={formData.item} onChange={handleChange} />
-            <FormInput
-              label="Amount (₱)"
-              type="number"
-              min="1"
-              name="amount"
-              value={formData.amount}
-              onChange={handleChange}
-            />
-
-            <div className="flex justify-end gap-3 mt-6">
-              <Button variant="secondary" onClick={closeEdit}>
-                Cancel
-              </Button>
-              <Button variant="primary" onClick={handleSave}>
-                {isNew ? "Add" : "Save"}
-              </Button>
-            </div>
-          </Modal>
-        )}
-      </AnimatePresence>
-
-      {/* Confirm Delete */}
-      <AnimatePresence>
-        {confirmDelete && (
-          <Modal onClose={() => setConfirmDelete(null)}>
-            <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
-            <p className="mb-6">
-              Are you sure you want to delete{" "}
-              <span className="font-semibold">{confirmDelete.record.item}</span>?
-            </p>
-            <div className="flex justify-end gap-3">
-              <Button variant="secondary" onClick={() => setConfirmDelete(null)}>
-                Cancel
-              </Button>
-              <Button variant="danger" onClick={confirmDeleteAction}>
-                Delete
-              </Button>
-            </div>
-          </Modal>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
@@ -412,95 +253,89 @@ const SummaryCard = ({ title, value, color }) => (
 // =====================================================
 // Section and Table Components
 // =====================================================
-  const Section = ({ title, data, color, source, openAdd, openEdit, handleDelete, type }) => (
-    <div className="mb-10">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className={`text-2xl font-bold ${color}`}>{title}</h2>
+  const Section = ({ title, data, color, source, type }) => {
+    return (
+      <div className="mb-10">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className={`text-2xl font-bold ${color}`}>{title}</h2>
 
-        {/* Render Add button only for expenses */}
-        {type === "expense" && (
-          <Button variant="primary" onClick={() => openAdd(source)} icon={<Plus size={16} />}>
-            Add
-          </Button>
-        )}
+          {/* Render Add button only for expenses */}
+          {type === "expense" && (
+            <Button variant="primary" onClick={() => openAdd(source)} icon={<Plus size={16} />}>
+              Add
+            </Button>
+          )}
+        </div>
+
+        <Table
+          data={data}
+          color={color}
+          source={source}
+          type={type} />
       </div>
-
-      <Table
-        data={data}
-        color={color}
-        source={source}
-        type={type}
-        onEdit={openEdit}
-        onDelete={handleDelete}
-      />
-    </div>
-  );
+    );
+  };
 
 
 
 // =====================================================
 // Table Component
 // =====================================================
-  const Table = ({ data, color, onEdit, onDelete, type }) => (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-x-auto mt-6">
-      <table className="w-full text-left border-collapse min-w-[600px] text-sm">
-        <thead className="bg-gray-100 sticky top-0 z-10">
-          <tr>
-            <th className="py-3 px-6 font-semibold text-gray-700">Item</th>
-            {type === "expense" && <th className="py-3 px-6 font-semibold text-gray-700">Quantity</th>}
-            <th className="py-3 px-6 font-semibold text-gray-700 text-right">Amount</th>
-            <th className="py-3 px-6 font-semibold text-gray-700">Date</th>
-            <th className="py-3 px-6 font-semibold text-gray-700 text-right">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.length > 0 ? (
-            data.map((row, index) => (
-              <tr key={row.id || index} className="border-b border-gray-200 hover:bg-gray-50 transition">
-                <td className="py-3 px-6 font-medium text-gray-800">{row.item || row.supply_name}</td>
+const Table = ({ data, color, type }) => (
+  <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-x-auto mt-6">
+    <table className="w-full text-left border-collapse min-w-[600px] text-sm">
+      <thead className="bg-gray-100 sticky top-0 z-10">
+        <tr>
+          <th className="py-3 px-6 font-semibold text-gray-700">Item</th>
+          {type === "expense" && (
+            <th className="py-3 px-6 font-semibold text-gray-700">Quantity</th>
+          )}
+          <th className="py-3 px-6 font-semibold text-gray-700 text-right">Amount</th>
+          <th className="py-3 px-6 font-semibold text-gray-700">Date</th>
+        </tr>
+      </thead>
 
-                {type === "expense" && (
-                  <td className="py-3 px-6">{row.quantity || 0}</td>
-                )}
+      <tbody>
+        {data.length > 0 ? (
+          data.map((row, index) => (
+            <tr key={row.id || index} className="border-b border-gray-200 hover:bg-gray-50 transition">
+              <td className="py-3 px-6 font-medium text-gray-800">
+                {row.item || row.supply_name}
+              </td>
 
-                <td className={`py-3 px-6 font-semibold text-right ${color}`}>
-                  ₱{type === "expense"
-                    ? ((Number(row.quantity) || 0) * (Number(row.price) || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                    : Number(row.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                  }
-                </td>
+              {type === "expense" && (
+                <td className="py-3 px-6">{row.quantity || 0}</td>
+              )}
 
-                <td className="py-3 px-6">{row.date ? new Date(row.date).toLocaleDateString() : "—"}</td>
+              <td className={`py-3 px-6 font-semibold text-right ${color}`}>
+                ₱{type === "expense"
+                  ? ((Number(row.quantity) || 0) * (Number(row.price) || 0)).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })
+                  : Number(row.amount).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })}
+              </td>
 
-                <td className="py-3 px-6 text-right">
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => onEdit(row)}
-                      className="flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-200 transition"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button
-                      onClick={() => onDelete(row)}
-                      className="flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-lg hover:bg-red-200 transition"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={type === "expense" ? 4 : 5} className="py-6 text-center text-gray-500 italic">
-                No records found.
+              <td className="py-3 px-6">
+                {row.date ? new Date(row.date).toLocaleDateString() : "—"}
               </td>
             </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
+          ))
+        ) : (
+          <tr>
+            <td colSpan={type === "expense" ? 3 : 4} className="py-6 text-center text-gray-500 italic">
+              No records found.
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+);
+
 
 
 

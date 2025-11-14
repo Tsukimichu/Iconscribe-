@@ -21,10 +21,8 @@ const OverviewSection = () => {
     categories: [],
     data: [],
   });
-
-
   const [productTotals, setProductTotals] = useState([]);
-
+  const [expenses, setExpenses] = useState([]);
   const { showToast } = useToast();
   const prevOrderCount = useRef(0); 
   const isFirstLoad = useRef(true);
@@ -70,8 +68,7 @@ const OverviewSection = () => {
       console.error("Error fetching orders:", err);
     }
   };
-
-
+    // Fetch product totals for sales chart
     useEffect(() => {
       const fetchProductTotals = async () => {
         try {
@@ -85,17 +82,12 @@ const OverviewSection = () => {
       fetchProductTotals();
     }, []);
 
-
-
-
-
   // Fetch on mount and poll every 5s
   useEffect(() => {
     fetchOrders();
     const interval = setInterval(fetchOrders, 5000);
     return () => clearInterval(interval);
   }, []);
-
 
   // Fetch product order counts for chart
   useEffect(() => {
@@ -117,6 +109,58 @@ const OverviewSection = () => {
     fetchOrderChartData();
   }, []);
 
+  // Fetch supplies as expenses
+  const fetchExpenses = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/supplies");
+      if (Array.isArray(res.data)) {
+        const mapped = res.data.map((s) => ({
+          id: s.supply_id,
+          supply_name: s.supply_name,
+          quantity: s.quantity,
+          unit: s.unit,
+          price: s.price,
+          date: s.created_at || new Date().toISOString(),
+        }));
+        setExpenses(mapped);
+      }
+    } catch (err) {
+      console.error("Error fetching supplies as expenses:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchExpenses();
+  }, []);
+
+  // Prepare series for stacked column chart
+  const dynamicExpenseSeries = useMemo(() => {
+    if (!expenses.length) return [];
+
+    const monthList = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const grouped = {};
+
+    expenses.forEach((exp) => {
+      const supply = exp.supply_name;
+      const month = new Date(exp.date).toLocaleString("en-US", { month: "short" });
+
+      if (!grouped[supply]) {
+        grouped[supply] = monthList.reduce((acc, m) => ({ ...acc, [m]: 0 }), {});
+      }
+
+      grouped[supply][month] += Number(exp.price) || 0;
+    });
+
+    return Object.entries(grouped).map(([name, monthValues]) => ({
+      name,
+      data: monthList.map((m) => monthValues[m]),
+    }));
+  }, [expenses]);
+
+
+
+
+
  const totalSalesChart = useMemo(() => {
   return {
     series: [{ name: "Total Sales", data: productTotals.map((p) => Number(p.total_sales) || 0),},],
@@ -130,8 +174,6 @@ const OverviewSection = () => {
     },
   };
 }, [productTotals]);
-
-
 
   // Group orders by status for popup display
   const groupByStatus = (status) =>
@@ -167,7 +209,6 @@ const OverviewSection = () => {
     },
   }), [orderChartData]);
 
-
   // After fetching orderChartData
   const reportChartData = {
     series: orderChartData.data,
@@ -180,23 +221,23 @@ const OverviewSection = () => {
     },
   };
 
-
-  const expenseData = {
-    series: [
-      { name: "Paper", data: [80, 95, 70, 85] },
-      { name: "Ink", data: [60, 75, 65, 70] },
-      { name: "Salary", data: [120, 110, 130, 125] },
-      { name: "Misc", data: [30, 45, 25, 40] },
-    ],
-    options: {
-      chart: { type: "bar", stacked: true, toolbar: { show: false }, background: "transparent" },
-      xaxis: { categories: ["Jan", "Feb", "Mar", "Apr"] },
-      legend: { position: "bottom" },
-      plotOptions: { bar: { borderRadius: 8 } },
-      colors: ["#6366f1", "#f97316", "#10b981", "#f43f5e"],
-      grid: { borderColor: "#e5e7eb" },
+  const chartOptions = useMemo(() => ({
+    chart: {
+      type: "bar",
+      stacked: true,
+      toolbar: { show: false },
+      background: "transparent",
     },
-  };
+    plotOptions: { bar: { borderRadius: 8 } },
+    xaxis: { categories: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"] },
+    colors: ["#6366f1", "#f97316", "#10b981", "#f43f5e", "#3b82f6", "#8b5cf6", "#f59e0b"],
+    legend: { position: "bottom" },
+    grid: { borderColor: "#e5e7eb" },
+    dataLabels: { enabled: false },
+    yaxis: { title: { text: "Amount (₱)" } },
+    tooltip: { y: { formatter: (val) => `₱${val.toLocaleString()}` } },
+  }), []);
+
 
   const handleExportAll = () => {
   if (!orders || orders.length === 0) {
@@ -228,8 +269,7 @@ const OverviewSection = () => {
   showToast({ type: "success", message: "All orders exported successfully!" });
 };
 
-
-  return (
+return (
     <>
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -237,7 +277,7 @@ const OverviewSection = () => {
         transition={{ duration: 0.6 }}
         className="p-8 rounded-3xl bg-white shadow-xl space-y-8 text-gray-900 min-h-screen"
       >
- {/* Header */}
+      {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 relative">
           <div>
             <h1 className="text-4xl font-extrabold text-cyan-700">Dashboard</h1>
@@ -355,16 +395,11 @@ const OverviewSection = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <motion.div className="bg-gray-50 p-6 rounded-2xl shadow-md border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-700 mb-2"> Reports</h2>
-          <Chart
-            options={reportChartData.options}
-            series={reportChartData.series}
-            type="donut"
-            height={300}
-          />
+          <Chart options={reportChartData.options} series={reportChartData.series} type="donut" height={300} />
         </motion.div>
           <motion.div className="bg-gray-50 p-6 rounded-2xl shadow-md border border-gray-200">
             <h2 className="text-lg font-semibold text-gray-700 mb-2"> Expenses</h2>
-            <Chart options={expenseData.options} series={expenseData.series} type="bar" height={300} />
+              <ReactApexChart options={chartOptions} series={dynamicExpenseSeries} type="bar" height={300} />
           </motion.div>
         </div>
       </motion.div>

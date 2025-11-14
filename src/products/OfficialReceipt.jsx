@@ -436,6 +436,16 @@ function OfficialReceipt() {
                           <option>Full Page</option>
                         </select>
                       </div>
+                       <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          id="backToBack"
+                          className="w-5 h-5 scale-125 cursor-pointer"
+                        />
+                        <label htmlFor="backToBack" className="cursor-pointer">
+                         <span className=" font-medium">Check this box if you want us to pick up your requirements personally.</span>
+                        </label>
+                      </div>
                       <div>
                         <label className="block text-base font-semibold text-black">
                           Message{" "}

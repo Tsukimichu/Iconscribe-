@@ -4,7 +4,6 @@ import axios from "axios";
 import logo from "../assets/ICONS.png";
 import orgImage from "../assets/org.jpg";
 import { Eye, EyeOff, ArrowBigLeft, CheckCircle } from "lucide-react";
-// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "./ui/ToastProvider.jsx";
 
@@ -203,10 +202,6 @@ function Signup() {
                       ))}
                     </motion.div>
 
-                    <p className="text-xs text-gray-500">
-                      (For testing: OTP is {generatedOtp})
-                    </p>
-
                     <motion.button
                       type="submit"
                       whileHover={{ scale: 1.03 }}
@@ -283,7 +278,7 @@ function Signup() {
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 top-2.5"
                       >
-                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
                       </button>
                     </div>
 
@@ -302,7 +297,7 @@ function Signup() {
                         onClick={() => setShowConfirm(!showConfirm)}
                         className="absolute right-3 top-2.5"
                       >
-                        {showConfirm ? <EyeOff size={20} /> : <Eye size={20} />}
+                        {showConfirm ? <Eye size={20} /> : <EyeOff size={20} />}
                       </button>
                     </div>
 

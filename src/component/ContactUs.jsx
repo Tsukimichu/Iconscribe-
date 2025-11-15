@@ -1,4 +1,3 @@
-import React from "react";
 import { MdEmail, MdPhone, MdLocationOn, MdAccessTime } from "react-icons/md";
 
 function ContactUs() {
@@ -54,15 +53,13 @@ function ContactUs() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 relative z-10">
         
         <div>
-          <h3 className="text-3xl font-bold mb-6">
+          <h1 className="text-5xl font-bold">
             Get in <span className="text-yellow-400">touch</span> with us
-          </h3>
-          <p className="text-gray-300 leading-relaxed mb-8">
-            Have a project in mind or need printing assistance? Send us a
-            message and our team will get back to you as soon as possible.
-          </p>
-
-          <div className="w-full h-64 rounded-2xl overflow-hidden shadow-lg border border-white/10">
+          </h1>
+        </div>
+        <div>
+          
+        <div className="w-full h-70 rounded-2xl overflow-hidden shadow-lg border border-white/10">
             <iframe
               title="Google Maps – Bantad, Boac, Marinduque"
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3922.611808739326!2d121.8406!3d13.4614!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33bc7e7b8f3e76a9%3A0x6e2f8f1a34e02f9f!2sBantad%2C%20Boac%2C%20Marinduque%2C%20Philippines!5e0!3m2!1sen!2sph!4v1700000000000"
@@ -71,7 +68,7 @@ function ContactUs() {
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
             ></iframe>
-          </div>
+        </div>
         </div>
       </div>
     </section>

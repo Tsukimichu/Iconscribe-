@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { Download, Trash2, UploadCloud, Database } from "lucide-react";
 import { useToast } from "../ui/ToastProvider.jsx";
@@ -15,29 +14,29 @@ const BackupRestoreSection = () => {
   const { showToast } = useToast();
 
   const backupListUrl = "http://localhost:5000/api/backup/list-db";
+  const restoreListUrl = "http://localhost:5000/api/backup/restore/list-db";
+
+  // Fetch function must be defined BEFORE useEffect
+  const fetchData = async () => {
+    try {
+      const [backupRes, restoreRes] = await Promise.all([
+        fetch(backupListUrl),
+        fetch(restoreListUrl),
+      ]);
+
+      const backupData = await backupRes.json();
+      const restoreData = await restoreRes.json();
+
+      setBackups(Array.isArray(backupData) ? backupData : backupData.data || []);
+      setRestores(Array.isArray(restoreData) ? restoreData : restoreData.data || []);
+    } catch (error) {
+      console.error("Error fetching backup/restore data:", error);
+    }
+  };
 
   useEffect(() => {
     fetchData();
   }, []);
-  const restoreListUrl = "http://localhost:5000/api/backup/restore/list-db";
-
-  // Fetch all backups and restore history on load
-const fetchData = async () => {
-  try {
-    const [backupRes, restoreRes] = await Promise.all([
-      fetch(backupListUrl),
-      fetch(restoreListUrl),
-    ]);
-
-    const backupData = await backupRes.json();
-    const restoreData = await restoreRes.json();
-
-    setBackups(backupData);
-    setRestores(restoreData);
-  } catch (error) {
-    console.error("Error fetching backup/restore data:", error);
-  }
-};
 
   // Create Backup
   const handleCreateBackup = async () => {
@@ -51,8 +50,8 @@ const fetchData = async () => {
 
       if (data.success) {
         showToast("Backup created successfully", "success");
-        // Add the new backup entry to the table
-        setBackups([
+
+        setBackups((prev) => [
           {
             created_at: new Date().toLocaleString(),
             filename: data.filename,
@@ -60,7 +59,7 @@ const fetchData = async () => {
             status: "Success",
             scope,
           },
-          ...backups,
+          ...prev,
         ]);
       } else {
         showToast("Backup failed", "error");
@@ -73,7 +72,10 @@ const fetchData = async () => {
 
   // Download Backup File
   const handleDownload = (filename) => {
-    window.open(`http://localhost:5000/api/backup/download/${filename}`, "_blank");
+    window.open(
+      `http://localhost:5000/api/backup/download/${filename}`,
+      "_blank"
+    );
   };
 
   // Delete Backup
@@ -84,9 +86,10 @@ const fetchData = async () => {
         method: "DELETE",
       });
       const data = await res.json();
+
       if (data.success) {
         showToast("Backup deleted", "success");
-        setBackups(backups.filter((b) => b.id !== id));
+        setBackups((prev) => prev.filter((b) => b.id !== id));
       } else {
         showToast("Failed to delete backup", "error");
       }
@@ -109,13 +112,13 @@ const fetchData = async () => {
 
       const data = await res.json();
 
-      setRestores([
+      setRestores((prev) => [
         {
           restored_at: new Date().toLocaleString(),
           performed_by: "Admin",
           status: data.success ? "Success" : "Failed",
         },
-        ...restores,
+        ...prev,
       ]);
 
       showToast(data.message, data.success ? "success" : "error");
@@ -285,7 +288,7 @@ const fetchData = async () => {
         <h2 className="text-xl font-semibold text-gray-800 mb-4">Restore</h2>
         <label
           htmlFor="upload"
-          className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-5 py-2 rounded-lg cursor-pointer transition"
+          className="flex w-[250px] items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-5 py-2 rounded-lg cursor-pointer transition"
         >
           <UploadCloud size={18} />
           Upload Backup File

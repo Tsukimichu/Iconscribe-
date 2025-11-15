@@ -31,6 +31,9 @@ import TemplateGallery from "./component/TemplateGallery.jsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ToastProvider } from "./component/ui/ToastProvider.jsx";
 import { AuthProvider } from "./context/authContext.jsx";
+import ForgotPassword from "./pages/ForgotPassword.jsx";
+import ResetPassword from "./pages/ResetPassword.jsx";
+
 
 // Canva-style Editor imports
 import EditorPage from "./pages/EditorPage.jsx";
@@ -45,6 +48,10 @@ const router = createBrowserRouter([
   { path: "/auth", element: <Authenticate /> },
   { path: "/signup", element: <Signup /> },
   { path: "/login", element: <Login /> },
+
+    //Forgot + Reset password routes
+  { path: "/forgot-password", element: <ForgotPassword /> },
+  { path: "/reset-password", element: <ResetPassword /> },
 
   // Protected customer pages
   {

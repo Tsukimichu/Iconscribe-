@@ -1,11 +1,3 @@
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-
 # ------------------------------------------------------------
 # SCHEMA DUMP FOR TABLE: attribute_options
 # ------------------------------------------------------------
@@ -15,7 +7,7 @@ CREATE TABLE IF NOT EXISTS `attribute_options` (
   `attribute_name` varchar(150) NOT NULL,
   `option_value` varchar(100) NOT NULL,
   PRIMARY KEY (`option_id`)
-) ENGINE = InnoDB AUTO_INCREMENT = 69 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 78 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
 # ------------------------------------------------------------
 # SCHEMA DUMP FOR TABLE: backup_history
@@ -29,7 +21,7 @@ CREATE TABLE IF NOT EXISTS `backup_history` (
   `status` enum('Success', 'Failed') DEFAULT 'Success',
   `created_at` datetime DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 3 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
 # ------------------------------------------------------------
 # SCHEMA DUMP FOR TABLE: conversations
@@ -41,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `conversations` (
   `managerId` int(11) DEFAULT NULL,
   `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE = InnoDB AUTO_INCREMENT = 8 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 27 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
 # ------------------------------------------------------------
 # SCHEMA DUMP FOR TABLE: maintenance
@@ -76,7 +68,7 @@ CREATE TABLE IF NOT EXISTS `messages` (
   PRIMARY KEY (`id`),
   KEY `conversationId` (`conversationId`),
   CONSTRAINT `messages_ibfk_1` FOREIGN KEY (`conversationId`) REFERENCES `conversations` (`id`) ON DELETE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 18 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 44 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
 # ------------------------------------------------------------
 # SCHEMA DUMP FOR TABLE: order_item_attributes
@@ -91,7 +83,7 @@ CREATE TABLE IF NOT EXISTS `order_item_attributes` (
   KEY `fk_order_item_attributes_orderitems` (`order_item_id`),
   CONSTRAINT `fk_order_item_attributes_orderitems` FOREIGN KEY (`order_item_id`) REFERENCES `orderitems` (`order_item_id`) ON DELETE CASCADE,
   CONSTRAINT `order_item_attributes_ibfk_1` FOREIGN KEY (`order_item_id`) REFERENCES `orderitems` (`order_item_id`) ON DELETE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 821 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 967 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
 # ------------------------------------------------------------
 # SCHEMA DUMP FOR TABLE: orderitems
@@ -102,16 +94,17 @@ CREATE TABLE IF NOT EXISTS `orderitems` (
   `order_id` int(11) NOT NULL,
   `product_id` int(11) NOT NULL,
   `quantity` int(11) NOT NULL,
-  `urgency` varchar(50) DEFAULT 'Normal',
+  `urgency` varchar(50) DEFAULT 'Not Rush',
   `status` varchar(50) DEFAULT 'Pending',
   `file1` varchar(255) DEFAULT NULL,
   `file2` varchar(255) DEFAULT NULL,
+  `estimated_price` decimal(10, 2) DEFAULT 0.00,
   PRIMARY KEY (`order_item_id`),
   KEY `order_id` (`order_id`),
   KEY `product_id` (`product_id`),
   CONSTRAINT `orderitems_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `orderitems_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 167 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 188 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
 # ------------------------------------------------------------
 # SCHEMA DUMP FOR TABLE: orders
@@ -122,10 +115,11 @@ CREATE TABLE IF NOT EXISTS `orders` (
   `user_id` int(11) NOT NULL,
   `order_date` timestamp NOT NULL DEFAULT current_timestamp(),
   `total` decimal(10, 2) DEFAULT 0.00,
+  `manager_added` decimal(10, 2) DEFAULT 0.00,
   PRIMARY KEY (`order_id`),
   KEY `user_id` (`user_id`),
   CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 153 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 174 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
 # ------------------------------------------------------------
 # SCHEMA DUMP FOR TABLE: product_attributes
@@ -164,7 +158,7 @@ CREATE TABLE IF NOT EXISTS `restore_history` (
   `status` enum('Success', 'Failed') DEFAULT 'Success',
   `restored_at` datetime DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 2 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
 # ------------------------------------------------------------
 # SCHEMA DUMP FOR TABLE: sales
@@ -179,7 +173,7 @@ CREATE TABLE IF NOT EXISTS `sales` (
   PRIMARY KEY (`id`),
   KEY `order_item_id` (`order_item_id`),
   CONSTRAINT `sales_ibfk_1` FOREIGN KEY (`order_item_id`) REFERENCES `orderitems` (`order_item_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 23 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 28 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
 # ------------------------------------------------------------
 # SCHEMA DUMP FOR TABLE: sessions
@@ -202,14 +196,12 @@ CREATE TABLE IF NOT EXISTS `sessions` (
 CREATE TABLE IF NOT EXISTS `supplies` (
   `supply_id` int(11) NOT NULL AUTO_INCREMENT,
   `supply_name` varchar(100) NOT NULL,
-  `status` enum('Sufficient', 'Low on Stock', 'Out of Stock') NOT NULL DEFAULT 'Sufficient',
   `quantity` int(11) NOT NULL,
-  `unit_label` varchar(20) DEFAULT 'in stock',
+  `unit` varchar(50) DEFAULT NULL,
   `price` decimal(10, 2) NOT NULL,
-  `total` decimal(10, 2) GENERATED ALWAYS AS (`quantity` * `price`) STORED,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`supply_id`)
-) ENGINE = InnoDB AUTO_INCREMENT = 11 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 14 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
 # ------------------------------------------------------------
 # SCHEMA DUMP FOR TABLE: users
@@ -229,9 +221,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `is_archived` tinyint(1) DEFAULT 0,
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `email` (`email`)
-) ENGINE = InnoDB AUTO_INCREMENT = 16 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
-
-# ------------------------------------------------------------
+) ENGINE = InnoDB AUTO_INCREMENT = 32 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;# ------------------------------------------------------------
 # DATA DUMP FOR TABLE: attribute_options
 # ------------------------------------------------------------
 
@@ -507,6 +497,42 @@ INSERT INTO
   `attribute_options` (`option_id`, `attribute_name`, `option_value`)
 VALUES
   (68, 'With Stub', 'No');
+INSERT INTO
+  `attribute_options` (`option_id`, `attribute_name`, `option_value`)
+VALUES
+  (69, 'Book Size', 'A4 (210 x 297 mm)');
+INSERT INTO
+  `attribute_options` (`option_id`, `attribute_name`, `option_value`)
+VALUES
+  (70, 'Book Size', 'Trade Paperback (13 x 20 cm)');
+INSERT INTO
+  `attribute_options` (`option_id`, `attribute_name`, `option_value`)
+VALUES
+  (
+    71,
+    'Book Size',
+    '5.5\" x 8.5\" (13.97 x 21.59 cm)'
+  );
+INSERT INTO
+  `attribute_options` (`option_id`, `attribute_name`, `option_value`)
+VALUES
+  (72, 'Book Size', '6\" x 9\" (15.24 x 22.86 cm)');
+INSERT INTO
+  `attribute_options` (`option_id`, `attribute_name`, `option_value`)
+VALUES
+  (73, 'Book Size', '5\" x 8\" (12.7 x 20.32 cm)');
+INSERT INTO
+  `attribute_options` (`option_id`, `attribute_name`, `option_value`)
+VALUES
+  (74, 'Book Type', 'Yearbook');
+INSERT INTO
+  `attribute_options` (`option_id`, `attribute_name`, `option_value`)
+VALUES
+  (75, 'Book Type', 'Coffee Table Book');
+INSERT INTO
+  `attribute_options` (`option_id`, `attribute_name`, `option_value`)
+VALUES
+  (76, 'Book Type', 'Souvenir Program');
 
 # ------------------------------------------------------------
 # DATA DUMP FOR TABLE: backup_history
@@ -520,31 +546,59 @@ VALUES
 INSERT INTO
   `conversations` (`id`, `clientId`, `managerId`, `createdAt`)
 VALUES
-  (1, 6, 1, '2025-10-30 20:09:32');
+  (11, 6, 10, '2025-11-03 17:56:38');
 INSERT INTO
   `conversations` (`id`, `clientId`, `managerId`, `createdAt`)
 VALUES
-  (2, 1, 1, '2025-10-30 20:21:17');
+  (13, 11, 10, '2025-11-03 18:08:10');
 INSERT INTO
   `conversations` (`id`, `clientId`, `managerId`, `createdAt`)
 VALUES
-  (3, 6, 10, '2025-10-30 20:31:59');
+  (15, 12, 10, '2025-11-03 23:36:55');
 INSERT INTO
   `conversations` (`id`, `clientId`, `managerId`, `createdAt`)
 VALUES
-  (4, 1, 10, '2025-11-01 21:32:55');
+  (16, 12, 10, '2025-11-03 23:36:55');
 INSERT INTO
   `conversations` (`id`, `clientId`, `managerId`, `createdAt`)
 VALUES
-  (5, 11, 10, '2025-11-01 21:45:22');
+  (17, 10, 10, '2025-11-03 23:37:30');
 INSERT INTO
   `conversations` (`id`, `clientId`, `managerId`, `createdAt`)
 VALUES
-  (6, 11, 10, '2025-11-01 21:45:22');
+  (18, 9, 10, '2025-11-03 23:54:30');
 INSERT INTO
   `conversations` (`id`, `clientId`, `managerId`, `createdAt`)
 VALUES
-  (7, 10, 10, '2025-11-02 21:25:51');
+  (19, 14, 10, '2025-11-04 15:21:36');
+INSERT INTO
+  `conversations` (`id`, `clientId`, `managerId`, `createdAt`)
+VALUES
+  (20, 14, 10, '2025-11-04 15:21:36');
+INSERT INTO
+  `conversations` (`id`, `clientId`, `managerId`, `createdAt`)
+VALUES
+  (21, 20, 10, '2025-11-07 15:54:13');
+INSERT INTO
+  `conversations` (`id`, `clientId`, `managerId`, `createdAt`)
+VALUES
+  (22, 20, 10, '2025-11-07 15:54:13');
+INSERT INTO
+  `conversations` (`id`, `clientId`, `managerId`, `createdAt`)
+VALUES
+  (23, 21, 10, '2025-11-07 16:13:56');
+INSERT INTO
+  `conversations` (`id`, `clientId`, `managerId`, `createdAt`)
+VALUES
+  (24, 1, 10, '2025-11-12 01:13:48');
+INSERT INTO
+  `conversations` (`id`, `clientId`, `managerId`, `createdAt`)
+VALUES
+  (25, 30, 10, '2025-11-15 16:18:39');
+INSERT INTO
+  `conversations` (`id`, `clientId`, `managerId`, `createdAt`)
+VALUES
+  (26, 30, 10, '2025-11-15 16:18:40');
 
 # ------------------------------------------------------------
 # DATA DUMP FOR TABLE: maintenance
@@ -590,7 +644,7 @@ INSERT INTO
     `createdAt`
   )
 VALUES
-  (1, 1, 6, 'hello', '2025-10-30 20:09:41');
+  (23, 11, 6, 'dsa', '2025-11-03 18:07:13');
 INSERT INTO
   `messages` (
     `id`,
@@ -600,7 +654,7 @@ INSERT INTO
     `createdAt`
   )
 VALUES
-  (2, 1, 6, 'ds', '2025-10-30 20:10:10');
+  (26, 13, 11, 'sad', '2025-11-03 18:09:20');
 INSERT INTO
   `messages` (
     `id`,
@@ -610,7 +664,7 @@ INSERT INTO
     `createdAt`
   )
 VALUES
-  (3, 1, 6, 'df', '2025-10-30 20:16:17');
+  (27, 13, 11, 'ad', '2025-11-03 18:09:32');
 INSERT INTO
   `messages` (
     `id`,
@@ -620,7 +674,7 @@ INSERT INTO
     `createdAt`
   )
 VALUES
-  (4, 2, 1, 'dsad', '2025-10-30 20:21:24');
+  (29, 13, 10, 'da', '2025-11-03 18:09:40');
 INSERT INTO
   `messages` (
     `id`,
@@ -630,7 +684,7 @@ INSERT INTO
     `createdAt`
   )
 VALUES
-  (5, 2, 1, 'sda', '2025-10-30 20:21:27');
+  (30, 19, 14, 'hello', '2025-11-04 15:24:03');
 INSERT INTO
   `messages` (
     `id`,
@@ -640,7 +694,7 @@ INSERT INTO
     `createdAt`
   )
 VALUES
-  (6, 2, 1, 'sad', '2025-10-30 20:24:37');
+  (31, 19, 10, 'hello', '2025-11-04 15:24:18');
 INSERT INTO
   `messages` (
     `id`,
@@ -650,7 +704,7 @@ INSERT INTO
     `createdAt`
   )
 VALUES
-  (7, 3, 6, 'fsdf', '2025-10-30 20:32:14');
+  (32, 11, 6, 'hello', '2025-11-06 13:04:02');
 INSERT INTO
   `messages` (
     `id`,
@@ -660,7 +714,7 @@ INSERT INTO
     `createdAt`
   )
 VALUES
-  (8, 3, 6, 'hello', '2025-10-30 20:34:02');
+  (33, 11, 10, 'hello', '2025-11-06 13:04:14');
 INSERT INTO
   `messages` (
     `id`,
@@ -670,13 +724,7 @@ INSERT INTO
     `createdAt`
   )
 VALUES
-  (
-    9,
-    3,
-    6,
-    'hello (test message)',
-    '2025-10-30 20:38:48'
-  );
+  (34, 13, 11, 'dfdsa', '2025-11-11 13:22:56');
 INSERT INTO
   `messages` (
     `id`,
@@ -686,7 +734,7 @@ INSERT INTO
     `createdAt`
   )
 VALUES
-  (10, 3, 6, 'dsas', '2025-10-30 20:41:07');
+  (35, 13, 10, 'sddsaf', '2025-11-11 13:23:01');
 INSERT INTO
   `messages` (
     `id`,
@@ -696,7 +744,7 @@ INSERT INTO
     `createdAt`
   )
 VALUES
-  (11, 3, 10, 'hello', '2025-10-30 20:54:01');
+  (36, 13, 10, 'fsdfs', '2025-11-11 18:52:04');
 INSERT INTO
   `messages` (
     `id`,
@@ -706,7 +754,7 @@ INSERT INTO
     `createdAt`
   )
 VALUES
-  (12, 3, 6, 'kkkkkl', '2025-10-30 20:55:13');
+  (37, 13, 11, 'hello', '2025-11-11 20:20:19');
 INSERT INTO
   `messages` (
     `id`,
@@ -716,7 +764,7 @@ INSERT INTO
     `createdAt`
   )
 VALUES
-  (13, 3, 10, 'k;mm', '2025-10-30 20:55:28');
+  (38, 13, 10, 'sdf', '2025-11-11 20:21:10');
 INSERT INTO
   `messages` (
     `id`,
@@ -726,7 +774,7 @@ INSERT INTO
     `createdAt`
   )
 VALUES
-  (14, 3, 10, 'hello', '2025-10-31 21:44:13');
+  (39, 13, 11, 'hello', '2025-11-11 21:36:27');
 INSERT INTO
   `messages` (
     `id`,
@@ -736,7 +784,7 @@ INSERT INTO
     `createdAt`
   )
 VALUES
-  (15, 3, 6, 'hi', '2025-10-31 21:56:24');
+  (40, 13, 11, 'sda', '2025-11-14 23:24:14');
 INSERT INTO
   `messages` (
     `id`,
@@ -746,7 +794,7 @@ INSERT INTO
     `createdAt`
   )
 VALUES
-  (16, 4, 1, 'hello', '2025-11-01 21:33:36');
+  (41, 13, 10, 'dsad', '2025-11-14 23:24:27');
 INSERT INTO
   `messages` (
     `id`,
@@ -756,7 +804,17 @@ INSERT INTO
     `createdAt`
   )
 VALUES
-  (17, 3, 10, 'hello', '2025-11-02 21:58:45');
+  (42, 13, 10, 'hello', '2025-11-15 13:22:26');
+INSERT INTO
+  `messages` (
+    `id`,
+    `conversationId`,
+    `senderId`,
+    `text`,
+    `createdAt`
+  )
+VALUES
+  (43, 13, 11, 'hello', '2025-11-15 13:22:38');
 
 # ------------------------------------------------------------
 # DATA DUMP FOR TABLE: order_item_attributes
@@ -8136,6 +8194,1325 @@ INSERT INTO
   )
 VALUES
   (820, 166, 'Paper Type', 'Glossy');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (821, 167, 'Customization', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (822, 167, 'Number of Copies', '1000');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (823, 167, 'Size', '22”x34”');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (824, 167, 'Type of Paper', 'Book Paper');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (825, 167, 'Colored', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (826, 167, 'Lamination', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (827, 167, 'Print', 'Back to back');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (828, 168, 'Page Count', '100');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (829, 168, 'Binding Type', 'Saddle Stitch');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (830, 168, 'Paper Type', 'Glossy');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (831, 169, 'Customization', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (832, 169, 'Number of Copies', '1000');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (833, 169, 'Size', '22”x34”');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (834, 169, 'Type of Paper', 'Glossy');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (835, 169, 'Colored', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (836, 169, 'Lamination', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (837, 169, 'Print', 'Back to back');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (838, 170, 'Customization', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (839, 170, 'Number of Copies', '1000');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (840, 170, 'Size', '22”x34”');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (841, 170, 'Type of Paper', 'Matte');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (842, 170, 'Colored', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (843, 170, 'Lamination', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (844, 170, 'Print', 'Back to back');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (845, 171, 'Customization', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (846, 171, 'Number of Copies', '1200');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (847, 171, 'Size', '22”x34”');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (848, 171, 'Type of Paper', 'Glossy');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (849, 171, 'Colored', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (850, 171, 'Lamination', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (851, 171, 'Print', 'Back to back');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (852, 172, 'Name', 'Joshua Valenzuela');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (853, 172, 'Email', 'joshua@gmail.com');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (854, 172, 'Address', 'Mahunig, Gasan, Marinduque');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (855, 172, 'Phone', '09083705595');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (856, 172, 'Business Name', 'GadgetY');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (857, 172, 'Number of Tickets', '100');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (858, 172, 'Size', '2” x 5” (Standard)');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (859, 172, 'With Stub', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (860, 173, 'Number of Pages', '200');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (861, 173, 'Binding Type', 'Perfect Binding');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (862, 173, 'Paper Type', 'Matte');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (863, 173, 'Cover Finish', 'Matte');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (864, 173, 'Color Printing', 'Full Color');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (865, 174, 'Customization', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (866, 174, 'Flyer Size', 'DL');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (867, 174, 'Paper Type', 'Premium Card');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (868, 174, 'Color', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (869, 174, 'Lamination', 'Matte');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (870, 174, 'Print', 'Single side');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (871, 175, 'Customization', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (872, 175, 'Number of Copies', '1000');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (873, 175, 'Size', '22”x34”');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (874, 175, 'Type of Paper', 'Matte');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (875, 175, 'Colored', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (876, 175, 'Lamination', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (877, 175, 'Print', 'Back to back');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (878, 176, 'Name', 'Joshua Valenzuela');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (879, 176, 'Email', 'joshua@gmail.com');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (880, 176, 'Address', 'Mahunig, Gasan, Marinduque');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (881, 176, 'Phone', '09083705595');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (882, 176, 'Event Name', 'Wedding');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (883, 176, 'Size', '5x7 inches');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (884, 176, 'Paper Type', 'Colored');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (885, 176, 'Print Method', 'Computer Printout');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (886, 177, 'Name', 'manager');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (887, 177, 'Email', 'manager@gmail.com');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (888, 177, 'Address', 'HQ');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (889, 177, 'Phone', '0');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (890, 177, 'Event Name', 'Wedding');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (891, 177, 'Size', '5x7 inches');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (892, 177, 'Paper Type', 'Colored');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (893, 177, 'Print Method', 'Computer Printout');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (894, 178, 'Name', 'Joshua Valenzuela');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (895, 178, 'Email', 'joshua@gmail.com');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (896, 178, 'Address', 'Mahunig, Gasan, Marinduque');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (897, 178, 'Phone', '09083705595');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (898, 178, 'Number of Posters', '120');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (899, 178, 'Size', 'Custom');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (900, 178, 'Paper Type', 'Matte');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (901, 178, 'Lamination', 'Gloss');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (902, 178, 'Color', 'Full Color');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (903, 178, 'Customization', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (904, 179, 'Customization', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (905, 179, 'Number of Copies', '1000');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (906, 179, 'Size', '17”x22”');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (907, 179, 'Type of Paper', 'Glossy');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (908, 179, 'Colored', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (909, 179, 'Lamination', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (910, 179, 'Print', 'Back to back');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (911, 180, 'Customization', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (912, 180, 'Number of Copies', '1000');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (913, 180, 'Size', '22”x34”');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (914, 180, 'Type of Paper', 'Matte');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (915, 180, 'Colored', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (916, 180, 'Lamination', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (917, 180, 'Print', 'Back to back');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (918, 181, 'Number of Pages', '100');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (919, 181, 'Book Type', 'Souvenir Program');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (920, 181, 'Binding Type', 'Saddle Stitch');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (921, 181, 'Paper Type', 'Matte');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (
+    922,
+    181,
+    'Book Size',
+    '5.5\" x 8.5\" (13.97 x 21.59 cm)'
+  );
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (923, 181, 'Cover Finish', 'Glossy');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (924, 181, 'Color Printing', 'Black & White');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (925, 182, 'Customization', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (926, 182, 'Number of Copies', '1000');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (927, 182, 'Size', '22”x34”');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (928, 182, 'Type of Paper', 'Glossy');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (929, 182, 'Colored', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (930, 182, 'Lamination', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (931, 182, 'Print', 'Back to back');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (932, 183, 'Customization', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (933, 183, 'Number of Copies', '1000');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (934, 183, 'Size', '22”x34”');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (935, 183, 'Type of Paper', 'Glossy');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (936, 183, 'Colored', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (937, 183, 'Lamination', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (938, 183, 'Print', 'Back to back');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (939, 184, 'Customization', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (940, 184, 'Number of Copies', '1000');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (941, 184, 'Size', '17”x22”');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (942, 184, 'Type of Paper', 'Matte');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (943, 184, 'Colored', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (944, 184, 'Lamination', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (945, 184, 'Print', 'Back to back');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (946, 185, 'Customization', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (947, 185, 'Number of Copies', '1000');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (948, 185, 'Size', '17”x22”');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (949, 185, 'Type of Paper', 'Matte');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (950, 185, 'Colored', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (951, 185, 'Lamination', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (952, 185, 'Print', 'Back to back');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (953, 186, 'Customization', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (954, 186, 'Number of Copies', '1200');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (955, 186, 'Size', '22”x34”');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (956, 186, 'Type of Paper', 'Glossy');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (957, 186, 'Colored', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (958, 186, 'Lamination', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (959, 186, 'Print', 'Back to back');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (960, 187, 'Customization', 'No');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (961, 187, 'Number of Copies', '1000');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (962, 187, 'Size', '17”x22”');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (963, 187, 'Type of Paper', 'Matte');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (964, 187, 'Colored', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (965, 187, 'Lamination', 'Yes');
+INSERT INTO
+  `order_item_attributes` (
+    `order_item_attribute_id`,
+    `order_item_id`,
+    `attribute_name`,
+    `attribute_value`
+  )
+VALUES
+  (966, 187, 'Print', 'Back to back');
 
 # ------------------------------------------------------------
 # DATA DUMP FOR TABLE: orderitems
@@ -8150,10 +9527,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (21, 1, 1, 200, 'Normal', 'Pending', NULL, NULL);
+  (21, 1, 1, 200, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8163,10 +9541,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (22, 2, 1, 250, 'Normal', 'Pending', NULL, NULL);
+  (22, 2, 1, 250, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8176,10 +9555,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (23, 3, 2, 250, 'Normal', 'Pending', NULL, NULL);
+  (23, 3, 2, 250, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8189,10 +9569,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (24, 4, 1, 500, 'Normal', 'Pending', NULL, NULL);
+  (24, 4, 1, 500, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8202,10 +9583,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (25, 5, 2, 200, 'Normal', 'Pending', NULL, NULL);
+  (25, 5, 2, 200, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8215,10 +9597,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (26, 6, 2, 1000, 'Normal', 'Pending', NULL, NULL);
+  (26, 6, 2, 1000, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8228,10 +9611,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (27, 7, 1, 1000, 'Normal', 'Pending', NULL, NULL);
+  (27, 7, 1, 1000, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8241,10 +9625,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (28, 8, 1, 450, 'Normal', 'Pending', NULL, NULL);
+  (28, 8, 1, 450, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8254,10 +9639,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (29, 9, 3, 1200, 'Normal', 'Pending', NULL, NULL);
+  (29, 9, 3, 1200, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8267,10 +9653,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (30, 10, 4, 150, 'Normal', 'Pending', NULL, NULL);
+  (30, 10, 4, 150, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8280,10 +9667,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (31, 11, 2, 120, 'Normal', 'Pending', NULL, NULL);
+  (31, 11, 2, 120, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8293,10 +9681,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (32, 12, 4, 120, 'Normal', 'Pending', NULL, NULL);
+  (32, 12, 4, 120, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8306,10 +9695,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (33, 13, 4, 150, 'Normal', 'Pending', NULL, NULL);
+  (33, 13, 4, 150, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8319,10 +9709,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (34, 14, 6, 1200, 'Normal', 'Pending', NULL, NULL);
+  (34, 14, 6, 1200, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8332,10 +9723,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (35, 15, 7, 60, 'Normal', 'Pending', NULL, NULL);
+  (35, 15, 7, 60, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8345,10 +9737,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (36, 16, 8, 120, 'Normal', 'Pending', NULL, NULL);
+  (36, 16, 8, 120, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8358,10 +9751,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (37, 17, 8, 300, 'Normal', 'Pending', NULL, NULL);
+  (37, 17, 8, 300, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8371,10 +9765,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (38, 18, 9, 1210, 'Normal', 'Pending', NULL, NULL);
+  (38, 18, 9, 1210, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8384,10 +9779,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (39, 19, 9, 120, 'Normal', 'Pending', NULL, NULL);
+  (39, 19, 9, 120, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8397,10 +9793,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (40, 20, 10, 150, 'Normal', 'Pending', NULL, NULL);
+  (40, 20, 10, 150, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8410,10 +9807,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (41, 21, 11, 1000, 'Normal', 'Pending', NULL, NULL);
+  (41, 21, 11, 1000, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8423,10 +9821,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (42, 22, 11, 1000, 'Normal', 'Pending', NULL, NULL);
+  (42, 22, 11, 1000, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8436,10 +9835,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (43, 23, 12, 55, 'Normal', 'Pending', NULL, NULL);
+  (43, 23, 12, 55, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8449,10 +9849,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (44, 24, 4, 110, 'Normal', 'Pending', NULL, NULL);
+  (44, 24, 4, 110, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8462,10 +9863,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (45, 25, 11, 110, 'Normal', 'Pending', NULL, NULL);
+  (45, 25, 11, 110, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8475,10 +9877,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (46, 26, 1, 600, 'Normal', 'Pending', NULL, NULL);
+  (46, 26, 1, 600, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8488,10 +9891,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (47, 27, 4, 800, 'Normal', 'Pending', NULL, NULL);
+  (47, 27, 4, 800, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8501,10 +9905,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (48, 28, 6, 1500, 'Normal', 'Pending', NULL, NULL);
+  (48, 28, 6, 1500, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8514,10 +9919,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (49, 29, 1, 500, 'Normal', 'Pending', NULL, NULL);
+  (49, 29, 1, 500, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8527,10 +9933,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (50, 30, 12, 90, 'Normal', 'Pending', NULL, NULL);
+  (50, 30, 12, 90, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8540,10 +9947,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (51, 31, 1, 200, 'Normal', 'Pending', NULL, NULL);
+  (51, 31, 1, 200, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8553,10 +9961,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (52, 32, 1, 100, 'Normal', 'Pending', NULL, NULL);
+  (52, 32, 1, 100, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8566,10 +9975,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (53, 33, 2, 390, 'Normal', 'Pending', NULL, NULL);
+  (53, 33, 2, 390, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8579,10 +9989,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (54, 34, 1, 120, 'Normal', 'Pending', NULL, NULL);
+  (54, 34, 1, 120, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8592,10 +10003,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (55, 35, 1, 200, 'Normal', 'Pending', NULL, NULL);
+  (55, 35, 1, 200, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8605,10 +10017,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (56, 36, 1, 200, 'Normal', 'Pending', NULL, NULL);
+  (56, 36, 1, 200, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8618,10 +10031,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (57, 37, 1, 900, 'Normal', 'Pending', NULL, NULL);
+  (57, 37, 1, 900, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8631,10 +10045,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (58, 38, 1, 300, 'Normal', 'Pending', NULL, NULL);
+  (58, 38, 1, 300, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8644,10 +10059,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (59, 39, 1, 200, 'Normal', 'Pending', NULL, NULL);
+  (59, 39, 1, 200, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8657,10 +10073,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (60, 40, 1, 900, 'Normal', 'Pending', NULL, NULL);
+  (60, 40, 1, 900, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8670,10 +10087,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (61, 41, 1, 1111, 'Normal', 'Pending', NULL, NULL);
+  (61, 41, 1, 1111, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8683,10 +10101,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (62, 42, 1, 2122, 'Normal', 'Pending', NULL, NULL);
+  (62, 42, 1, 2122, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8696,10 +10115,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (63, 43, 1, 111, 'Normal', 'Pending', NULL, NULL);
+  (63, 43, 1, 111, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8709,10 +10129,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (64, 44, 1, 2000, 'Normal', 'Pending', NULL, NULL);
+  (64, 44, 1, 2000, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8722,7 +10143,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -8733,7 +10155,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760092740285.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -8744,7 +10167,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -8755,7 +10179,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760093696688.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -8766,7 +10191,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -8777,7 +10203,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760094064963.pdf',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -8788,10 +10215,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (68, 48, 1, 2222, 'Normal', 'Pending', NULL, NULL);
+  (68, 48, 1, 2222, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8801,7 +10229,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -8812,7 +10241,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760100450029.pdf',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -8823,10 +10253,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (70, 50, 2, 566, 'Normal', 'Pending', NULL, NULL);
+  (70, 50, 2, 566, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8836,10 +10267,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (71, 51, 2, 1111, 'Normal', 'Pending', NULL, NULL);
+  (71, 51, 2, 1111, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8849,10 +10281,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (72, 52, 2, 11112, 'Normal', 'Pending', NULL, NULL);
+  (72, 52, 2, 11112, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8862,10 +10295,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (73, 53, 2, 1212, 'Normal', 'Pending', NULL, NULL);
+  (73, 53, 2, 1212, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8875,10 +10309,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (74, 54, 2, 111, 'Normal', 'Pending', NULL, NULL);
+  (74, 54, 2, 111, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8888,10 +10323,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (75, 55, 1, 123, 'Normal', 'Pending', NULL, NULL);
+  (75, 55, 1, 123, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8901,10 +10337,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (76, 56, 2, 1111, 'Normal', 'Pending', NULL, NULL);
+  (76, 56, 2, 1111, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8914,10 +10351,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (77, 57, 1, 1234, 'Normal', 'Pending', NULL, NULL);
+  (77, 57, 1, 1234, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8927,10 +10365,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (78, 58, 1, 123, 'Normal', 'Pending', NULL, NULL);
+  (78, 58, 1, 123, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -8940,7 +10379,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -8951,7 +10391,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760109588560.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -8962,7 +10403,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -8973,7 +10415,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760109615026.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -8984,7 +10427,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -8995,7 +10439,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760109616191.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9006,7 +10451,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9017,7 +10463,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760109629213.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9028,7 +10475,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9039,7 +10487,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760109681260.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9050,7 +10499,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9061,7 +10511,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760109687151.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9072,7 +10523,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9083,7 +10535,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760109716625.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9094,10 +10547,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (86, 66, 1, 213, 'Normal', 'Pending', NULL, NULL);
+  (86, 66, 1, 213, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -9107,7 +10561,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9118,7 +10573,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760109991453.pdf',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9129,7 +10585,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9140,7 +10597,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760110005692.pdf',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9151,10 +10609,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (89, 69, 1, 211, 'Normal', 'Pending', NULL, NULL);
+  (89, 69, 1, 211, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -9164,7 +10623,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9175,7 +10635,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760110155885.docx',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9186,7 +10647,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9197,7 +10659,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760110327697.docx',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9208,10 +10671,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (92, 72, 2, 213, 'Normal', 'Pending', NULL, NULL);
+  (92, 72, 2, 213, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -9221,7 +10685,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9232,7 +10697,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760111756102.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9243,10 +10709,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (94, 74, 2, 342, 'Normal', 'Pending', NULL, NULL);
+  (94, 74, 2, 342, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -9256,10 +10723,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (95, 75, 2, 342, 'Normal', 'Pending', NULL, NULL);
+  (95, 75, 2, 342, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -9269,10 +10737,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (96, 76, 2, 233, 'Normal', 'Pending', NULL, NULL);
+  (96, 76, 2, 233, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -9282,7 +10751,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9293,7 +10763,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760114026321.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9304,7 +10775,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9315,7 +10787,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760115276423.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9326,7 +10799,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9337,7 +10811,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760115358473.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9348,7 +10823,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9359,7 +10835,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760180325187.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9370,7 +10847,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9381,7 +10859,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760180362086.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9392,7 +10871,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9403,7 +10883,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760180469793.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9414,7 +10895,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9425,7 +10907,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760186463936.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9436,7 +10919,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9447,7 +10931,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760188204185.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9458,7 +10943,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9469,7 +10955,8 @@ VALUES
     'Normal',
     'Ongoing',
     '/uploads/orderfiles/1760189524358.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9480,7 +10967,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9491,7 +10979,8 @@ VALUES
     'Normal',
     'Out for delivery',
     '/uploads/orderfiles/1760189777640.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9502,7 +10991,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9513,7 +11003,8 @@ VALUES
     'Normal',
     'Ongoing',
     '/uploads/orderfiles/1760189839338.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9524,7 +11015,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9535,7 +11027,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760254536433.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9546,7 +11039,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9557,7 +11051,8 @@ VALUES
     'Normal',
     'Completed',
     '/uploads/orderfiles/1760255125140.jpg',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9568,7 +11063,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9579,7 +11075,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760256220401.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9590,7 +11087,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9601,7 +11099,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760256991895.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9612,7 +11111,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9623,7 +11123,8 @@ VALUES
     'Normal',
     'Completed',
     '/uploads/orderfiles/1760257943653.jpg',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9634,7 +11135,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9645,7 +11147,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760258532402.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9656,7 +11159,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9667,7 +11171,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760259985933.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9678,7 +11183,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9689,7 +11195,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760260379060.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9700,7 +11207,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9711,7 +11219,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760267744789.png',
-    '/uploads/orderfiles/1760267744800.png'
+    '/uploads/orderfiles/1760267744800.png',
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9722,7 +11231,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9733,7 +11243,8 @@ VALUES
     'Normal',
     'Ongoing',
     '/uploads/orderfiles/1760269093746.jpg',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9744,7 +11255,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9755,7 +11267,8 @@ VALUES
     'Normal',
     'Ongoing',
     '/uploads/orderfiles/1760270125658.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9766,10 +11279,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (119, 99, 1, 1111, 'Normal', 'Pending', NULL, NULL);
+  (119, 99, 1, 1111, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -9779,10 +11293,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (120, 100, 1, 1111, 'Normal', 'Pending', NULL, NULL);
+  (120, 100, 1, 1111, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -9792,10 +11307,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (121, 101, 1, 111, 'Normal', 'Ongoing', NULL, NULL);
+  (121, 101, 1, 111, 'Normal', 'Ongoing', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -9805,10 +11321,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (122, 102, 1, 1111, 'Normal', 'Pending', NULL, NULL);
+  (122, 102, 1, 1111, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -9818,10 +11335,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (123, 103, 1, 1111, 'Normal', 'Pending', NULL, NULL);
+  (123, 103, 1, 1111, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -9831,10 +11349,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (124, 104, 1, 1111, 'Normal', 'Ongoing', NULL, NULL);
+  (124, 104, 1, 1111, 'Normal', 'Ongoing', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -9844,10 +11363,21 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (125, 105, 1, 111, 'Normal', 'Completed', NULL, NULL);
+  (
+    125,
+    105,
+    1,
+    111,
+    'Normal',
+    'Completed',
+    NULL,
+    NULL,
+    0.00
+  );
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -9857,7 +11387,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9868,7 +11399,8 @@ VALUES
     'Normal',
     'Completed',
     '/uploads/orderfiles/1760287835686.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9879,7 +11411,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9890,7 +11423,8 @@ VALUES
     'Normal',
     'Completed',
     '/uploads/orderfiles/1760287867945.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9901,7 +11435,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9912,7 +11447,8 @@ VALUES
     'Normal',
     'Ongoing',
     '/uploads/orderfiles/1760421683704.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9923,10 +11459,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (129, 109, 1, 111, 'Normal', 'Pending', NULL, NULL);
+  (129, 109, 1, 111, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -9936,7 +11473,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9947,7 +11485,8 @@ VALUES
     'Normal',
     'Completed',
     '/uploads/orderfiles/1760454443929.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9958,7 +11497,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9969,7 +11509,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760501796867.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -9980,7 +11521,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -9991,7 +11533,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760502506026.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10002,7 +11545,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10013,7 +11557,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760503982934.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10024,7 +11569,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10035,7 +11581,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760504146403.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10046,7 +11593,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10057,7 +11605,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760504311143.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10068,10 +11617,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (136, 122, 2, 211, 'Normal', 'Pending', NULL, NULL);
+  (136, 122, 2, 211, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -10081,10 +11631,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (137, 123, 2, 312, 'Normal', 'Pending', NULL, NULL);
+  (137, 123, 2, 312, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -10094,10 +11645,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (138, 124, 2, 4444, 'Normal', 'Pending', NULL, NULL);
+  (138, 124, 2, 4444, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -10107,7 +11659,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10118,7 +11671,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760505691201.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10129,10 +11683,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (140, 126, 2, 412, 'Normal', 'Pending', NULL, NULL);
+  (140, 126, 2, 412, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -10142,10 +11697,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (141, 127, 5, 120, 'Normal', 'Pending', NULL, NULL);
+  (141, 127, 5, 120, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -10155,7 +11711,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10166,7 +11723,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760506200503.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10177,7 +11735,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10188,7 +11747,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760506303267.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10199,7 +11759,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10210,7 +11771,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760506445539.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10221,7 +11783,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10232,7 +11795,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760506582083.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10243,7 +11807,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10254,7 +11819,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760506735489.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10265,7 +11831,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10276,7 +11843,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760506827326.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10287,7 +11855,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10298,7 +11867,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760507131234.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10309,7 +11879,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10320,7 +11891,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760507180539.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10331,7 +11903,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10342,7 +11915,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760507236234.png',
-    '/uploads/orderfiles/1760507236237.png'
+    '/uploads/orderfiles/1760507236237.png',
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10353,7 +11927,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10364,7 +11939,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760507383667.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10375,7 +11951,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10386,7 +11963,8 @@ VALUES
     'Normal',
     'Completed',
     '/uploads/orderfiles/1760507483215.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10397,7 +11975,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10408,7 +11987,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760507701948.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10419,7 +11999,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10430,7 +12011,8 @@ VALUES
     'Normal',
     'Completed',
     '/uploads/orderfiles/1760507766804.pdf',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10441,7 +12023,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10452,7 +12035,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760508509001.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10463,7 +12047,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10474,7 +12059,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760509465298.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10485,10 +12071,11 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
-  (157, 143, 1, 123, 'Normal', 'Pending', NULL, NULL);
+  (157, 143, 1, 123, 'Normal', 'Pending', NULL, NULL, 0.00);
 INSERT INTO
   `orderitems` (
     `order_item_id`,
@@ -10498,7 +12085,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10509,7 +12097,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760509726967.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10520,7 +12109,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10531,7 +12121,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760509763758.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10542,7 +12133,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10553,7 +12145,8 @@ VALUES
     'Normal',
     'Pending',
     '/uploads/orderfiles/1760509805716.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10564,7 +12157,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10575,7 +12169,8 @@ VALUES
     'Normal',
     'Ongoing',
     '/uploads/orderfiles/1760509830855.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10586,7 +12181,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10595,9 +12191,10 @@ VALUES
     1,
     10,
     'Normal',
-    'Pending',
+    'Ongoing',
     '/uploads/orderfiles/1760512112422.png',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10608,7 +12205,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10617,9 +12215,10 @@ VALUES
     10,
     100,
     'Normal',
-    'Pending',
+    'Ongoing',
     '/uploads/orderfiles/1760512275432.png',
-    '/uploads/orderfiles/1760512275443.png'
+    '/uploads/orderfiles/1760512275443.png',
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10630,7 +12229,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10639,9 +12239,10 @@ VALUES
     1,
     111,
     'Normal',
-    'Pending',
+    'Completed',
     '/uploads/orderfiles/1760512550750.docx',
-    NULL
+    NULL,
+    0.00
   );
 INSERT INTO
   `orderitems` (
@@ -10652,7 +12253,8 @@ INSERT INTO
     `urgency`,
     `status`,
     `file1`,
-    `file2`
+    `file2`,
+    `estimated_price`
   )
 VALUES
   (
@@ -10663,7 +12265,492 @@ VALUES
     'Normal',
     'Completed',
     '/uploads/orderfiles/1760512575038.pdf',
-    NULL
+    NULL,
+    0.00
+  );
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (167, 153, 3, 1000, 'Normal', 'Pending', NULL, NULL, 0.00);
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (
+    168,
+    154,
+    1,
+    112,
+    'Normal',
+    'Pending',
+    '/uploads/orderfiles/1762838640897.png',
+    NULL,
+    0.00
+  );
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (
+    169,
+    155,
+    3,
+    1000,
+    'Normal',
+    'Pending',
+    '/uploads/orderfiles/1762866696627.png',
+    NULL,
+    0.00
+  );
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (
+    170,
+    156,
+    3,
+    1000,
+    'Normal',
+    'Pending',
+    '/uploads/orderfiles/1762951858091.png',
+    NULL,
+    0.00
+  );
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (
+    171,
+    157,
+    3,
+    1200,
+    'Normal',
+    'Pending',
+    '/uploads/orderfiles/1762952224510.png',
+    NULL,
+    0.00
+  );
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (
+    172,
+    158,
+    12,
+    100,
+    'Normal',
+    'Pending',
+    '/uploads/orderfiles/1763041554755.png',
+    NULL,
+    0.00
+  );
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (
+    173,
+    159,
+    2,
+    100,
+    'Normal',
+    'Pending',
+    '/uploads/orderfiles/1763043292180.png',
+    NULL,
+    220000.00
+  );
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (
+    174,
+    160,
+    6,
+    1000,
+    'Normal',
+    'Completed',
+    '/uploads/orderfiles/1763044225993.png',
+    NULL,
+    21800.00
+  );
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (
+    175,
+    161,
+    3,
+    1000,
+    'Normal',
+    'Pending',
+    NULL,
+    NULL,
+    47200.00
+  );
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (176, 162, 7, 55, 'Normal', 'Pending', NULL, NULL, 0.00);
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (
+    177,
+    163,
+    7,
+    55,
+    'Normal',
+    'Completed',
+    NULL,
+    NULL,
+    7320.00
+  );
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (
+    178,
+    164,
+    11,
+    120,
+    'Normal',
+    'Completed',
+    NULL,
+    NULL,
+    12000.00
+  );
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (
+    179,
+    165,
+    3,
+    1000,
+    'Normal',
+    'Pending',
+    NULL,
+    NULL,
+    41800.00
+  );
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (
+    180,
+    166,
+    3,
+    1000,
+    'Normal',
+    'Pending',
+    NULL,
+    NULL,
+    47200.00
+  );
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (
+    181,
+    167,
+    2,
+    119,
+    'Normal',
+    'Pending',
+    NULL,
+    NULL,
+    31425.00
+  );
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (
+    182,
+    168,
+    3,
+    1000,
+    'Normal',
+    'Completed',
+    '/uploads/orderfiles/1763128381678.png',
+    NULL,
+    47200.00
+  );
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (
+    183,
+    169,
+    3,
+    1000,
+    'Normal',
+    'Pending',
+    NULL,
+    NULL,
+    41800.00
+  );
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (
+    184,
+    170,
+    3,
+    1000,
+    'Normal',
+    'Pending',
+    '/uploads/orderfiles/1763207183206.png',
+    NULL,
+    47200.00
+  );
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (
+    185,
+    171,
+    3,
+    1000,
+    'Normal',
+    'Pending',
+    NULL,
+    NULL,
+    47200.00
+  );
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (
+    186,
+    172,
+    3,
+    1200,
+    'Normal',
+    'Pending',
+    NULL,
+    NULL,
+    49800.00
+  );
+INSERT INTO
+  `orderitems` (
+    `order_item_id`,
+    `order_id`,
+    `product_id`,
+    `quantity`,
+    `urgency`,
+    `status`,
+    `file1`,
+    `file2`,
+    `estimated_price`
+  )
+VALUES
+  (
+    187,
+    173,
+    3,
+    1000,
+    'Normal',
+    'Pending',
+    NULL,
+    NULL,
+    47200.00
   );
 
 # ------------------------------------------------------------
@@ -10671,613 +12758,1725 @@ VALUES
 # ------------------------------------------------------------
 
 INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (1, 11, '2025-10-06 20:27:12', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (2, 11, '2025-10-06 20:36:35', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (3, 11, '2025-10-06 20:47:05', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (4, 6, '2025-10-06 20:51:51', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (5, 6, '2025-10-06 20:52:23', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (6, 6, '2025-10-06 22:45:22', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (7, 6, '2025-10-06 22:45:48', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (8, 6, '2025-10-07 08:28:55', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (9, 6, '2025-10-07 17:20:36', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (10, 6, '2025-10-07 20:50:35', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (11, 12, '2025-10-07 21:04:02', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (12, 12, '2025-10-07 21:05:50', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (13, 12, '2025-10-07 21:35:47', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (14, 12, '2025-10-07 21:37:21', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (15, 12, '2025-10-07 21:58:12', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (16, 11, '2025-10-07 22:14:39', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (17, 11, '2025-10-07 23:00:17', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (18, 6, '2025-10-07 23:17:29', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (19, 6, '2025-10-08 10:07:27', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (20, 6, '2025-10-08 12:55:19', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (21, 6, '2025-10-08 13:48:54', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (22, 12, '2025-10-08 14:18:40', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (23, 12, '2025-10-08 14:40:38', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (24, 12, '2025-10-08 14:41:04', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (25, 12, '2025-10-08 14:43:19', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (26, 11, '2025-10-08 18:40:53', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (27, 6, '2025-10-08 21:24:27', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (28, 11, '2025-10-08 22:10:24', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (29, 12, '2025-10-09 16:13:21', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (30, 11, '2025-10-09 17:17:24', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (31, 6, '2025-10-09 21:22:43', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (32, 12, '2025-10-10 10:42:00', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (33, 12, '2025-10-10 10:53:04', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (34, 11, '2025-10-10 11:44:15', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (35, 11, '2025-10-10 11:46:10', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (36, 11, '2025-10-10 11:55:14', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (37, 12, '2025-10-10 16:09:39', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (38, 12, '2025-10-10 16:31:07', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (39, 12, '2025-10-10 17:03:01', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (40, 6, '2025-10-10 18:20:52', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (41, 6, '2025-10-10 18:28:04', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (42, 6, '2025-10-10 18:30:45', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (43, 6, '2025-10-10 18:32:45', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (44, 6, '2025-10-10 18:33:11', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (45, 6, '2025-10-10 18:39:00', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (46, 6, '2025-10-10 18:54:56', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (47, 6, '2025-10-10 19:01:04', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (48, 6, '2025-10-10 19:46:51', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (49, 6, '2025-10-10 20:47:29', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (50, 11, '2025-10-10 21:45:51', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (51, 11, '2025-10-10 21:53:29', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (52, 11, '2025-10-10 21:58:14', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (53, 11, '2025-10-10 22:06:08', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (54, 11, '2025-10-10 22:09:51', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (55, 11, '2025-10-10 22:19:58', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (56, 6, '2025-10-10 23:10:17', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (57, 6, '2025-10-10 23:12:55', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (58, 6, '2025-10-10 23:16:23', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (59, 6, '2025-10-10 23:19:48', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (60, 6, '2025-10-10 23:20:15', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (61, 6, '2025-10-10 23:20:16', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (62, 6, '2025-10-10 23:20:29', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (63, 6, '2025-10-10 23:21:21', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (64, 6, '2025-10-10 23:21:27', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (65, 6, '2025-10-10 23:21:56', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (66, 6, '2025-10-10 23:22:46', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (67, 6, '2025-10-10 23:26:31', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (68, 6, '2025-10-10 23:26:45', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (69, 6, '2025-10-10 23:28:01', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (70, 11, '2025-10-10 23:29:15', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (71, 11, '2025-10-10 23:32:07', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (72, 11, '2025-10-10 23:33:50', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (73, 11, '2025-10-10 23:55:56', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (74, 11, '2025-10-10 23:56:36', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (75, 11, '2025-10-10 23:56:43', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (76, 11, '2025-10-11 00:27:11', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (77, 11, '2025-10-11 00:33:46', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (78, 11, '2025-10-11 00:54:36', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (79, 11, '2025-10-11 00:55:58', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (80, 11, '2025-10-11 18:58:45', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (81, 11, '2025-10-11 18:59:22', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (82, 11, '2025-10-11 19:01:09', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (83, 11, '2025-10-11 20:41:03', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (84, 11, '2025-10-11 21:10:04', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (85, 11, '2025-10-11 21:32:04', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (86, 11, '2025-10-11 21:36:17', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (87, 11, '2025-10-11 21:37:19', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (88, 12, '2025-10-12 15:35:36', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (89, 12, '2025-10-12 15:45:25', 5000.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (90, 12, '2025-10-12 16:03:40', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (91, 12, '2025-10-12 16:16:31', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (92, 12, '2025-10-12 16:32:23', 2500.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (93, 12, '2025-10-12 16:42:12', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (94, 12, '2025-10-12 17:06:25', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (95, 12, '2025-10-12 17:12:59', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (96, 11, '2025-10-12 19:15:44', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (97, 11, '2025-10-12 19:38:13', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (98, 11, '2025-10-12 19:55:25', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (99, 11, '2025-10-12 23:48:55', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (100, 11, '2025-10-13 00:10:10', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (101, 11, '2025-10-13 00:12:17', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (102, 11, '2025-10-13 00:22:48', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (103, 11, '2025-10-13 00:33:39', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (104, 11, '2025-10-13 00:38:42', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (105, 11, '2025-10-13 00:40:38', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (106, 11, '2025-10-13 00:50:35', 4000.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (107, 11, '2025-10-13 00:51:07', 10.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (108, 11, '2025-10-14 14:01:23', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (109, 11, '2025-10-14 23:01:57', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (110, 11, '2025-10-14 23:07:23', 4500.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (111, 14, '2025-10-15 11:50:01', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (112, 14, '2025-10-15 11:50:11', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (113, 14, '2025-10-15 11:50:51', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (114, 14, '2025-10-15 11:51:33', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (115, 14, '2025-10-15 11:56:56', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (116, 11, '2025-10-15 12:11:11', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (117, 11, '2025-10-15 12:16:36', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (118, 11, '2025-10-15 12:28:25', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (119, 11, '2025-10-15 12:53:02', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (120, 11, '2025-10-15 12:55:46', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (121, 11, '2025-10-15 12:58:31', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (122, 11, '2025-10-15 13:02:57', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (123, 11, '2025-10-15 13:06:26', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (124, 11, '2025-10-15 13:14:05', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (125, 11, '2025-10-15 13:21:31', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (126, 6, '2025-10-15 13:24:40', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (127, 6, '2025-10-15 13:25:31', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (128, 6, '2025-10-15 13:30:00', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (129, 6, '2025-10-15 13:31:43', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (130, 6, '2025-10-15 13:34:05', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (131, 6, '2025-10-15 13:36:22', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (132, 6, '2025-10-15 13:38:55', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (133, 6, '2025-10-15 13:40:27', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (134, 6, '2025-10-15 13:45:31', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (135, 6, '2025-10-15 13:46:20', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (136, 6, '2025-10-15 13:47:16', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (137, 6, '2025-10-15 13:49:43', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (138, 6, '2025-10-15 13:51:23', 825.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (139, 11, '2025-10-15 13:55:01', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (140, 11, '2025-10-15 13:56:06', 550.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (141, 11, '2025-10-15 14:08:28', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (142, 11, '2025-10-15 14:24:25', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (143, 11, '2025-10-15 14:26:06', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (144, 11, '2025-10-15 14:28:46', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (145, 11, '2025-10-15 14:29:23', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (146, 11, '2025-10-15 14:30:05', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (147, 11, '2025-10-15 14:30:30', 1500.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (148, 15, '2025-10-15 14:51:47', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (149, 14, '2025-10-15 15:08:32', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (150, 14, '2025-10-15 15:11:15', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (151, 14, '2025-10-15 15:15:50', 0.00);
-INSERT INTO
-  `orders` (`order_id`, `user_id`, `order_date`, `total`)
-VALUES
-  (152, 14, '2025-10-15 15:16:15', 0.00);
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (1, 11, '2025-10-06 20:27:12', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (2, 11, '2025-10-06 20:36:35', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (3, 11, '2025-10-06 20:47:05', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (4, 6, '2025-10-06 20:51:51', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (5, 6, '2025-10-06 20:52:23', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (6, 6, '2025-10-06 22:45:22', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (7, 6, '2025-10-06 22:45:48', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (8, 6, '2025-10-07 08:28:55', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (9, 6, '2025-10-07 17:20:36', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (10, 6, '2025-10-07 20:50:35', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (11, 12, '2025-10-07 21:04:02', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (12, 12, '2025-10-07 21:05:50', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (13, 12, '2025-10-07 21:35:47', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (14, 12, '2025-10-07 21:37:21', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (15, 12, '2025-10-07 21:58:12', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (16, 11, '2025-10-07 22:14:39', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (17, 11, '2025-10-07 23:00:17', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (18, 6, '2025-10-07 23:17:29', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (19, 6, '2025-10-08 10:07:27', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (20, 6, '2025-10-08 12:55:19', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (21, 6, '2025-10-08 13:48:54', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (22, 12, '2025-10-08 14:18:40', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (23, 12, '2025-10-08 14:40:38', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (24, 12, '2025-10-08 14:41:04', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (25, 12, '2025-10-08 14:43:19', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (26, 11, '2025-10-08 18:40:53', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (27, 6, '2025-10-08 21:24:27', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (28, 11, '2025-10-08 22:10:24', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (29, 12, '2025-10-09 16:13:21', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (30, 11, '2025-10-09 17:17:24', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (31, 6, '2025-10-09 21:22:43', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (32, 12, '2025-10-10 10:42:00', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (33, 12, '2025-10-10 10:53:04', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (34, 11, '2025-10-10 11:44:15', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (35, 11, '2025-10-10 11:46:10', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (36, 11, '2025-10-10 11:55:14', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (37, 12, '2025-10-10 16:09:39', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (38, 12, '2025-10-10 16:31:07', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (39, 12, '2025-10-10 17:03:01', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (40, 6, '2025-10-10 18:20:52', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (41, 6, '2025-10-10 18:28:04', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (42, 6, '2025-10-10 18:30:45', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (43, 6, '2025-10-10 18:32:45', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (44, 6, '2025-10-10 18:33:11', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (45, 6, '2025-10-10 18:39:00', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (46, 6, '2025-10-10 18:54:56', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (47, 6, '2025-10-10 19:01:04', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (48, 6, '2025-10-10 19:46:51', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (49, 6, '2025-10-10 20:47:29', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (50, 11, '2025-10-10 21:45:51', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (51, 11, '2025-10-10 21:53:29', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (52, 11, '2025-10-10 21:58:14', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (53, 11, '2025-10-10 22:06:08', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (54, 11, '2025-10-10 22:09:51', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (55, 11, '2025-10-10 22:19:58', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (56, 6, '2025-10-10 23:10:17', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (57, 6, '2025-10-10 23:12:55', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (58, 6, '2025-10-10 23:16:23', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (59, 6, '2025-10-10 23:19:48', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (60, 6, '2025-10-10 23:20:15', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (61, 6, '2025-10-10 23:20:16', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (62, 6, '2025-10-10 23:20:29', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (63, 6, '2025-10-10 23:21:21', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (64, 6, '2025-10-10 23:21:27', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (65, 6, '2025-10-10 23:21:56', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (66, 6, '2025-10-10 23:22:46', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (67, 6, '2025-10-10 23:26:31', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (68, 6, '2025-10-10 23:26:45', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (69, 6, '2025-10-10 23:28:01', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (70, 11, '2025-10-10 23:29:15', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (71, 11, '2025-10-10 23:32:07', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (72, 11, '2025-10-10 23:33:50', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (73, 11, '2025-10-10 23:55:56', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (74, 11, '2025-10-10 23:56:36', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (75, 11, '2025-10-10 23:56:43', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (76, 11, '2025-10-11 00:27:11', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (77, 11, '2025-10-11 00:33:46', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (78, 11, '2025-10-11 00:54:36', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (79, 11, '2025-10-11 00:55:58', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (80, 11, '2025-10-11 18:58:45', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (81, 11, '2025-10-11 18:59:22', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (82, 11, '2025-10-11 19:01:09', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (83, 11, '2025-10-11 20:41:03', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (84, 11, '2025-10-11 21:10:04', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (85, 11, '2025-10-11 21:32:04', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (86, 11, '2025-10-11 21:36:17', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (87, 11, '2025-10-11 21:37:19', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (88, 12, '2025-10-12 15:35:36', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (89, 12, '2025-10-12 15:45:25', 5000.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (90, 12, '2025-10-12 16:03:40', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (91, 12, '2025-10-12 16:16:31', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (92, 12, '2025-10-12 16:32:23', 2500.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (93, 12, '2025-10-12 16:42:12', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (94, 12, '2025-10-12 17:06:25', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (95, 12, '2025-10-12 17:12:59', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (96, 11, '2025-10-12 19:15:44', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (97, 11, '2025-10-12 19:38:13', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (98, 11, '2025-10-12 19:55:25', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (99, 11, '2025-10-12 23:48:55', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (100, 11, '2025-10-13 00:10:10', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (101, 11, '2025-10-13 00:12:17', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (102, 11, '2025-10-13 00:22:48', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (103, 11, '2025-10-13 00:33:39', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (104, 11, '2025-10-13 00:38:42', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (105, 11, '2025-10-13 00:40:38', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (106, 11, '2025-10-13 00:50:35', 4000.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (107, 11, '2025-10-13 00:51:07', 10.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (108, 11, '2025-10-14 14:01:23', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (109, 11, '2025-10-14 23:01:57', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (110, 11, '2025-10-14 23:07:23', 4500.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (111, 14, '2025-10-15 11:50:01', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (112, 14, '2025-10-15 11:50:11', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (113, 14, '2025-10-15 11:50:51', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (114, 14, '2025-10-15 11:51:33', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (115, 14, '2025-10-15 11:56:56', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (116, 11, '2025-10-15 12:11:11', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (117, 11, '2025-10-15 12:16:36', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (118, 11, '2025-10-15 12:28:25', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (119, 11, '2025-10-15 12:53:02', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (120, 11, '2025-10-15 12:55:46', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (121, 11, '2025-10-15 12:58:31', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (122, 11, '2025-10-15 13:02:57', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (123, 11, '2025-10-15 13:06:26', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (124, 11, '2025-10-15 13:14:05', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (125, 11, '2025-10-15 13:21:31', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (126, 6, '2025-10-15 13:24:40', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (127, 6, '2025-10-15 13:25:31', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (128, 6, '2025-10-15 13:30:00', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (129, 6, '2025-10-15 13:31:43', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (130, 6, '2025-10-15 13:34:05', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (131, 6, '2025-10-15 13:36:22', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (132, 6, '2025-10-15 13:38:55', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (133, 6, '2025-10-15 13:40:27', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (134, 6, '2025-10-15 13:45:31', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (135, 6, '2025-10-15 13:46:20', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (136, 6, '2025-10-15 13:47:16', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (137, 6, '2025-10-15 13:49:43', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (138, 6, '2025-10-15 13:51:23', 825.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (139, 11, '2025-10-15 13:55:01', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (140, 11, '2025-10-15 13:56:06', 550.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (141, 11, '2025-10-15 14:08:28', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (142, 11, '2025-10-15 14:24:25', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (143, 11, '2025-10-15 14:26:06', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (144, 11, '2025-10-15 14:28:46', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (145, 11, '2025-10-15 14:29:23', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (146, 11, '2025-10-15 14:30:05', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (147, 11, '2025-10-15 14:30:30', 1500.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (149, 14, '2025-10-15 15:08:32', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (150, 14, '2025-10-15 15:11:15', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (151, 14, '2025-10-15 15:15:50', 5000.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (152, 14, '2025-10-15 15:16:15', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (153, 6, '2025-11-08 23:07:27', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (154, 11, '2025-11-11 13:24:00', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (155, 11, '2025-11-11 21:11:36', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (156, 11, '2025-11-12 20:50:57', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (157, 11, '2025-11-12 20:57:04', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (158, 11, '2025-11-13 21:45:54', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (159, 11, '2025-11-13 22:14:52', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (160, 11, '2025-11-13 22:30:25', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (161, 11, '2025-11-13 22:37:06', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (162, 11, '2025-11-13 22:54:49', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (163, 10, '2025-11-13 22:55:48', 10920.00, 3600.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (164, 11, '2025-11-13 23:19:31', 13000.00, 1000.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (165, 11, '2025-11-14 01:22:45', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (166, 11, '2025-11-14 07:17:34', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (167, 11, '2025-11-14 19:37:31', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (168, 11, '2025-11-14 21:53:01', 52200.00, 5000.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (169, 11, '2025-11-15 13:23:57', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (170, 30, '2025-11-15 19:46:23', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (171, 30, '2025-11-15 19:47:30', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (172, 30, '2025-11-15 19:49:01', 0.00, 0.00);
+INSERT INTO
+  `orders` (
+    `order_id`,
+    `user_id`,
+    `order_date`,
+    `total`,
+    `manager_added`
+  )
+VALUES
+  (173, 11, '2025-11-15 20:38:54', 0.00, 0.00);
 
 # ------------------------------------------------------------
 # DATA DUMP FOR TABLE: product_attributes
@@ -11917,7 +15116,7 @@ INSERT INTO
     `attributes`
   )
 VALUES
-  (1, 'Binding', 'Inactive', NULL);
+  (1, 'Binding', 'Active', NULL);
 INSERT INTO
   `products` (
     `product_id`,
@@ -12022,6 +15221,22 @@ VALUES
 # DATA DUMP FOR TABLE: restore_history
 # ------------------------------------------------------------
 
+INSERT INTO
+  `restore_history` (
+    `id`,
+    `filename`,
+    `performed_by`,
+    `status`,
+    `restored_at`
+  )
+VALUES
+  (
+    1,
+    'backup-2025-11-02T15-52-34-860Z.sql',
+    'Admin',
+    'Failed',
+    '2025-11-02 23:53:38'
+  );
 
 # ------------------------------------------------------------
 # DATA DUMP FOR TABLE: sales
@@ -12073,6 +15288,26 @@ INSERT INTO
   `sales` (`id`, `order_item_id`, `item`, `amount`, `date`)
 VALUES
   (22, 152, 'Binding x123', 0.00, '2025-10-28');
+INSERT INTO
+  `sales` (`id`, `order_item_id`, `item`, `amount`, `date`)
+VALUES
+  (23, 151, 'Binding x111', 5000.00, '2025-11-04');
+INSERT INTO
+  `sales` (`id`, `order_item_id`, `item`, `amount`, `date`)
+VALUES
+  (24, 160, 'Flyers x1000', 0.00, '2025-11-14');
+INSERT INTO
+  `sales` (`id`, `order_item_id`, `item`, `amount`, `date`)
+VALUES
+  (25, 163, 'Invitation x55', 2400.00, '2025-11-14');
+INSERT INTO
+  `sales` (`id`, `order_item_id`, `item`, `amount`, `date`)
+VALUES
+  (26, 164, 'Posters x120', 13000.00, '2025-11-14');
+INSERT INTO
+  `sales` (`id`, `order_item_id`, `item`, `amount`, `date`)
+VALUES
+  (27, 168, 'Brochure x1000', 52200.00, '2025-11-15');
 
 # ------------------------------------------------------------
 # DATA DUMP FOR TABLE: sessions
@@ -12087,133 +15322,102 @@ INSERT INTO
   `supplies` (
     `supply_id`,
     `supply_name`,
-    `status`,
     `quantity`,
-    `unit_label`,
+    `unit`,
     `price`,
-    `total`,
     `created_at`
   )
 VALUES
   (
     1,
     'Bond Paper',
-    'Sufficient',
-    300,
-    'in stock',
-    2.80,
-    840.00,
+    59,
+    'Ream',
+    220.00,
     '2025-10-08 17:47:47'
   );
 INSERT INTO
   `supplies` (
     `supply_id`,
     `supply_name`,
-    `status`,
     `quantity`,
-    `unit_label`,
+    `unit`,
     `price`,
-    `total`,
     `created_at`
   )
 VALUES
   (
     3,
     'Ink Cartridge',
-    'Low on Stock',
     10,
-    'in stock',
+    'Bottle',
     180.00,
-    1800.00,
     '2025-10-08 17:47:47'
   );
 INSERT INTO
   `supplies` (
     `supply_id`,
     `supply_name`,
-    `status`,
     `quantity`,
-    `unit_label`,
+    `unit`,
     `price`,
-    `total`,
-    `created_at`
-  )
-VALUES
-  (
-    5,
-    'Staple Wires',
-    'Sufficient',
-    75,
-    'in stock',
-    35.00,
-    2625.00,
-    '2025-10-08 17:47:47'
-  );
-INSERT INTO
-  `supplies` (
-    `supply_id`,
-    `supply_name`,
-    `status`,
-    `quantity`,
-    `unit_label`,
-    `price`,
-    `total`,
-    `created_at`
-  )
-VALUES
-  (
-    6,
-    'Receipt Book',
-    'Low on Stock',
-    12,
-    'in stock',
-    55.00,
-    660.00,
-    '2025-10-08 17:47:47'
-  );
-INSERT INTO
-  `supplies` (
-    `supply_id`,
-    `supply_name`,
-    `status`,
-    `quantity`,
-    `unit_label`,
-    `price`,
-    `total`,
-    `created_at`
-  )
-VALUES
-  (
-    7,
-    'Carbon Paper',
-    'Out of Stock',
-    0,
-    'in stock',
-    10.00,
-    0.00,
-    '2025-10-08 17:47:47'
-  );
-INSERT INTO
-  `supplies` (
-    `supply_id`,
-    `supply_name`,
-    `status`,
-    `quantity`,
-    `unit_label`,
-    `price`,
-    `total`,
     `created_at`
   )
 VALUES
   (
     8,
-    'Envelope',
-    'Sufficient',
-    100,
-    'in stock',
+    'Paper Tape',
+    40,
+    'Roll',
     3.00,
-    300.00,
     '2025-10-08 17:47:47'
+  );
+INSERT INTO
+  `supplies` (
+    `supply_id`,
+    `supply_name`,
+    `quantity`,
+    `unit`,
+    `price`,
+    `created_at`
+  )
+VALUES
+  (
+    11,
+    'Staple Wire',
+    20,
+    'Box',
+    20.00,
+    '2025-11-11 22:47:15'
+  );
+INSERT INTO
+  `supplies` (
+    `supply_id`,
+    `supply_name`,
+    `quantity`,
+    `unit`,
+    `price`,
+    `created_at`
+  )
+VALUES
+  (12, 'Tape', 10, 'Roll', 100.00, '2025-11-12 02:56:12');
+INSERT INTO
+  `supplies` (
+    `supply_id`,
+    `supply_name`,
+    `quantity`,
+    `unit`,
+    `price`,
+    `created_at`
+  )
+VALUES
+  (
+    13,
+    'Gas (Fee)',
+    1,
+    '1',
+    500.00,
+    '2025-11-13 08:31:19'
   );
 
 # ------------------------------------------------------------
@@ -12326,7 +15530,7 @@ VALUES
     'Mahunig, Gasan, Marinduque',
     'GadgetY',
     'Active',
-    '$2b$12$6iNJWYxBrrZ9CAmxq2v5V.qLmoGBE9sJCS1MGPNkmPF9qssk4uN1u',
+    '$2b$12$5sXqfKpjNqmju.G3Hgffi.dRSoOQ6r1uBWUx10aKcfYQ9fk26QeMe',
     '09083705595',
     '2025-10-06 17:19:47',
     'user',
@@ -12432,22 +15636,71 @@ INSERT INTO
   )
 VALUES
   (
-    15,
-    'bayag',
-    'bayag@gmail.com',
-    'Tabo, Boac, Marinduque',
+    22,
+    'John Lloyd  Tesio',
+    'jltesio23@gmail.com',
+    'Gasan',
     NULL,
-    'Banned',
-    '$2b$12$fhccNOPuKMFq0n0RIz4Lpe.52ysyCJPGAvdO.Vn0Q2FCPIOwg7hKa',
-    '09833222113',
-    '2025-10-15 14:50:31',
+    'Active',
+    '$2b$12$Uirg0Ez1Qv89CPwuxWERxOsdrCMA0OLwdDkPa1tfSG9d3b0UT/ef.',
+    '09342332213',
+    '2025-11-11 13:21:09',
     'user',
-    1
+    0
   );
-
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+INSERT INTO
+  `users` (
+    `user_id`,
+    `name`,
+    `email`,
+    `address`,
+    `business`,
+    `status`,
+    `password`,
+    `phone`,
+    `createdAt`,
+    `role`,
+    `is_archived`
+  )
+VALUES
+  (
+    24,
+    'test name ',
+    'a@H.com',
+    'gasan',
+    NULL,
+    'Active',
+    '$2b$12$mWgXg0d4cnLkdHccTundpufEsaE718434HbiPYj/gMMJSffcReyv.',
+    '09083705595',
+    '2025-11-12 23:11:18',
+    'user',
+    0
+  );
+INSERT INTO
+  `users` (
+    `user_id`,
+    `name`,
+    `email`,
+    `address`,
+    `business`,
+    `status`,
+    `password`,
+    `phone`,
+    `createdAt`,
+    `role`,
+    `is_archived`
+  )
+VALUES
+  (
+    30,
+    'Joshua S. Valenzuela',
+    'valenzuelajoshua759@gmail.com',
+    'mahunig, gasan, marinduque',
+    NULL,
+    'Active',
+    '$2b$12$bLbs6nFIVpsA6wZWo5RmI.RNN1Cmm4LFta4hlPFoXMe3B2qSgEh8e',
+    '09083705595',
+    '2025-11-15 16:17:18',
+    'user',
+    0
+  );

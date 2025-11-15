@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
 async function sendEmail(to, subject, html) {
   try {
     await transporter.sendMail({
-      from: `"Capstone System" <${process.env.EMAIL_USER}>`,
+      from: `"Iconscribe" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       html,

@@ -3,9 +3,14 @@ const router = express.Router();
 const db = require("../models/db");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const sendEmail = require("../utils/sendEmail");
+
 
 const SECRET_KEY = process.env.JWT_SECRET || "your-secret-key";
 const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS, 10) || 12;
+// In-memory OTP store
+const userOtpStore = {};
+
 
 /* =================== SIGNUP =================== */
 router.post("/signup", async (req, res) => {
@@ -288,6 +293,118 @@ router.get("/users/archived", (req, res) => {
     res.json({ success: true, message: "Archived users fetched", data: results });
   });
 });
+
+/*============== REQUEST PASSWORD RESET OTP =================== */
+router.post("/request-reset-otp", async (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ success: false, message: "Username is required" });
+
+  const query = "SELECT * FROM users WHERE name = ?";
+  db.query(query, [name], async (err, results) => { 
+    if (err) {
+      console.error("DB error:", err);
+      return res.status(500).json({ success: false, message: "Database error" });
+    }
+    if (results.length === 0) return res.status(404).json({ success: false, message: "User not found" });
+
+    const user = results[0];
+    const otp = Math.floor(100000 + Math.random() * 900000);
+
+    userOtpStore[user.user_id] = { otp, expires: Date.now() + 10 * 60 * 1000 };
+
+    const html = `
+      <div style="font-family: Arial; padding: 20px;">
+        <h2>🔐 Password Reset OTP</h2>
+        <p>Hello ${user.name},</p>
+        <p>Your password reset code is:</p>
+        <h1 style="color: #4CAF50;">${otp}</h1>
+        <p>This code will expire in 10 minutes.</p>
+      </div>
+    `;
+
+    try {
+      const success = await sendEmail(user.email, "Your Password Reset OTP", html);
+      if (success) {
+        res.json({ success: true, message: "OTP sent to your email" });
+      } else {
+        res.status(500).json({ success: false, message: "Failed to send OTP" });
+      }
+    } catch (emailErr) {
+      console.error("Email error:", emailErr);
+      res.status(500).json({ success: false, message: "Failed to send OTP" });
+    }
+  });
+});
+
+/*================= VERIFY OTP ==================== */
+router.post("/verify-reset-otp", (req, res) => {
+  const { name, otp } = req.body;
+  if (!name || !otp) return res.status(400).json({ success: false, message: "Name and OTP are required" });
+
+  const query = "SELECT * FROM users WHERE name = ?";
+  db.query(query, [name], (err, results) => { 
+    if (err) return res.status(500).json({ success: false, message: "Database error" });
+    if (results.length === 0) return res.status(404).json({ success: false, message: "User not found" });
+
+    const user = results[0];
+    const record = userOtpStore[user.user_id];
+    if (!record) return res.status(400).json({ success: false, message: "No OTP requested" });
+    if (record.expires < Date.now()) {
+      delete userOtpStore[user.user_id];
+      return res.status(400).json({ success: false, message: "OTP expired" });
+    }
+
+    if (record.otp !== Number(otp)) return res.status(400).json({ success: false, message: "Invalid OTP" });
+
+    res.json({ success: true, message: "OTP verified successfully" });
+  });
+});
+
+/*================= RESET PASSWORD USING OTP ==================== */
+router.post("/reset-password-otp", async (req, res) => {
+  const { name, password, otp } = req.body;
+  if (!name || !password || !otp) 
+    return res.status(400).json({ message: "Name, OTP, and password are required" });
+
+  const query = "SELECT * FROM users WHERE name = ?";
+  db.query(query, [name], async (err, results) => {
+    if (err) {
+      console.error("DB error:", err);
+      return res.status(500).json({ message: "Database error" });
+    }
+    if (results.length === 0) return res.status(404).json({ message: "User not found" });
+
+    const user = results[0];
+    const record = userOtpStore[user.user_id];
+    if (!record) return res.status(400).json({ message: "No OTP requested" });
+    if (record.expires < Date.now()) {
+      delete userOtpStore[user.user_id];
+      return res.status(400).json({ message: "OTP expired" });
+    }
+    if (record.otp !== Number(otp)) return res.status(400).json({ message: "Invalid OTP" });
+
+    try {
+      const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+      db.query(
+        "UPDATE users SET password = ? WHERE user_id = ?",
+        [hashedPassword, user.user_id],
+        (err2) => {
+          if (err2) {
+            console.error("DB error updating password:", err2);
+            return res.status(500).json({ message: "Database error" });
+          }
+          delete userOtpStore[user.user_id];
+          res.json({ success: true, message: "Password updated successfully" });
+        }
+      );
+    } catch (hashErr) {
+      console.error("Hash error:", hashErr);
+      return res.status(500).json({ message: "Server error" });
+    }
+  });
+});
+
+
 
 
 module.exports = router;

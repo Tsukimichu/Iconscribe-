@@ -158,9 +158,6 @@ const OverviewSection = () => {
   }, [expenses]);
 
 
-
-
-
  const totalSalesChart = useMemo(() => {
   return {
     series: [{ name: "Total Sales", data: productTotals.map((p) => Number(p.total_sales) || 0),},],

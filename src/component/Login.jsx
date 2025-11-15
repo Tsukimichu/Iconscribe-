@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/ICONS.png";
 import orgImage from "../assets/org.jpg";
-import { User, Lock } from "lucide-react";
-// eslint-disable-next-line no-unused-vars
+import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "./ui/ToastProvider.jsx";
 import { useAuth } from "../context/authContext.jsx";
@@ -13,8 +12,18 @@ function Login() {
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { showToast } = useToast();
   const { login } = useAuth(); 
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetUsername, setResetUsername] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [step, setStep] = useState(1);
+  const [otp, setOtp] = useState("");
+  const [generatedOtp, setGeneratedOtp] = useState(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [otpVerified, setOtpVerified] = useState(false);
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -52,6 +61,101 @@ function Login() {
       setLoading(false);
     }
   };
+
+  // Step 1: Request OTP
+  const requestResetOtp = async () => {
+    if (!resetUsername) {
+      showToast("Please enter your username", "error");
+      return;
+    }
+    setResetLoading(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/request-reset-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: resetUsername }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast(`OTP sent to your email`, "success");
+        setStep(2); // Go to OTP input
+      } else {
+        showToast(data.message || "User not found", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Something went wrong", "error");
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  // Step 2a: Verify OTP
+  const verifyOtp = async () => {
+    if (!otp) {
+      showToast("Enter the OTP", "error");
+      return;
+    }
+    setResetLoading(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/verify-reset-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: resetUsername, otp }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast("OTP verified! You can now set a new password.", "success");
+        setOtpVerified(true); // Allow password input
+      } else {
+        showToast(data.message || "Invalid OTP", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Something went wrong", "error");
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  // Step 2b: Set new password
+  const submitNewPassword = async () => {
+    if (!newPassword || !otp) {
+      showToast("Enter both OTP and new password", "error");
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/reset-password-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          name: resetUsername, 
+          password: newPassword, 
+          otp 
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast("Password updated successfully!", "success");
+        setShowResetModal(false);
+        setStep(1);
+        setResetUsername("");
+        setOtp("");
+        setNewPassword("");
+        setOtpVerified(false);
+      } else {
+        showToast(data.message || "Failed to reset password", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Something went wrong", "error");
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center relative">
@@ -97,15 +201,27 @@ function Login() {
               <div className="relative">
                 <Lock className="absolute left-3 top-2.5 text-gray-600" size={18} />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Password"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+                 <button
+                   type="button"
+                   onClick={() => setShowPassword(!showPassword)}
+                   className="absolute right-3 top-2.5"
+                  >
+                    {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
+                  </button>
               </div>
-
+                <p
+                  className="text-xs text-gray-500 hover:text-yellow-500 cursor-pointer mb-4"
+                  onClick={() => setShowResetModal(true)}
+                >
+                  Forgot Password?
+                </p>
               <motion.button
                 type="submit"
                 whileHover={{ scale: 1.03 }}
@@ -138,11 +254,130 @@ function Login() {
               </a>
               .
             </p>
+
+            {showResetModal && (
+              <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl relative"
+                >
+                  <button
+                    onClick={() => { setShowResetModal(false); setStep(1); }}
+                    className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+                  >
+                    ✕
+                  </button>
+
+                  {step === 1 && (
+                    <>
+                      <h2 className="text-xl font-semibold text-center mb-4">Reset Password</h2>
+                      <p className="text-gray-600 text-sm text-center mb-4">
+                        Enter your username to receive a password reset OTP.
+                      </p>
+                      <input
+                        type="text"
+                        placeholder="Username"
+                        value={resetUsername}
+                        onChange={(e) => setResetUsername(e.target.value)}
+                        className="w-full px-4 py-2 border rounded-xl mb-4 focus:ring-2 focus:ring-yellow-400"
+                      />
+                      <motion.button
+                        onClick={requestResetOtp}  // ✅ replaced
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full bg-yellow-500 text-black py-2.5 rounded-xl font-semibold shadow-md hover:shadow-lg"
+                        disabled={resetLoading}
+                      >
+                        {resetLoading ? "Sending..." : "Send OTP"}
+                      </motion.button>
+                    </>
+                  )}
+
+                  {step === 2 && (
+                    <>
+                      <h2 className="text-xl font-semibold text-center mb-4">
+                        {otpVerified ? "Set New Password" : "Verify OTP"}
+                      </h2>
+
+                      {!otpVerified && (
+                        <>
+                          {/* Replace your single OTP input with this component */}
+                          <div className="flex justify-center gap-2 mb-4">
+                            {Array(6).fill(0).map((_, index) => (
+                              <input
+                                key={index}
+                                type="text"
+                                maxLength={1}
+                                value={otp[index] || ""}
+                                onChange={(e) => {
+                                  const val = e.target.value.replace(/\D/, ""); // only digits
+                                  if (!val) return;
+
+                                  const newOtp = otp.split("");
+                                  newOtp[index] = val;
+                                  setOtp(newOtp.join(""));
+
+                                  // focus next input
+                                  const nextInput = document.getElementById(`otp-${index + 1}`);
+                                  if (nextInput) nextInput.focus();
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Backspace" && !otp[index] && index > 0) {
+                                    const prevInput = document.getElementById(`otp-${index - 1}`);
+                                    if (prevInput) prevInput.focus();
+                                    const newOtp = otp.split("");
+                                    newOtp[index - 1] = "";
+                                    setOtp(newOtp.join(""));
+                                  }
+                                }}
+                                id={`otp-${index}`}
+                                className="w-12 h-12 text-center border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-400 text-lg"
+                              />
+                            ))}
+                          </div>
+                          <motion.button
+                            onClick={verifyOtp}
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="w-full bg-yellow-500 text-black py-2.5 rounded-xl font-semibold shadow-md hover:shadow-lg"
+                            disabled={resetLoading}
+                          >
+                            {resetLoading ? "Verifying..." : "Verify OTP"}
+                          </motion.button>
+                        </>
+                      )}
+
+                      {otpVerified && (
+                        <>
+                          <input
+                            type="password"
+                            placeholder="New password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className="w-full px-4 py-2 border rounded-xl mb-4 focus:ring-2 focus:ring-yellow-400"
+                          />
+                          <motion.button
+                            onClick={submitNewPassword}
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="w-full bg-yellow-500 text-black py-2.5 rounded-xl font-semibold shadow-md hover:shadow-lg"
+                            disabled={resetLoading}
+                          >
+                            {resetLoading ? "Updating..." : "Update Password"}
+                          </motion.button>
+                        </>
+                      )}
+                    </>
+                  )}
+                </motion.div>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
 }
-
 export default Login;

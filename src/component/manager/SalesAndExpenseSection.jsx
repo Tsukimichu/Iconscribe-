@@ -2,12 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import {
   X,
-  Edit2,
   Search,
-  Plus,
-  Archive,
-  Trash2,
-  RotateCcw,
   ChevronDown,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -61,8 +56,6 @@ const SalesAndExpenseSection = () => {
     }
   };
 
-
-
   useEffect(() => {
     fetchExpenses();
   }, []);
@@ -77,7 +70,6 @@ const SalesAndExpenseSection = () => {
     [expenses]
   ); 
   const profit = totalSales - totalExpenses;
-
 
   // =====================================================
   // Filter + Sort
@@ -98,7 +90,6 @@ const SalesAndExpenseSection = () => {
       return (a.item || a.supply_name || "").localeCompare(b.item || b.supply_name || "");
     });
   };
-
 
   const filteredSales = useMemo(() => filterAndSort(sales), [sales, search, sortBy]);
   const filteredExpenses = useMemo(() => filterAndSort(expenses), [expenses, search, sortBy]);
@@ -145,7 +136,7 @@ const SalesAndExpenseSection = () => {
     tooltip: {
       y: { formatter: (val) => `₱${val.toLocaleString()}` },
     },
-    colors: ["#00BFFF", "#FF6347"], // blue for sales, red for expenses
+    colors: ["#00BFFF", "#FF6347"],
     legend: { position: "top" },
   }), [monthlyData]);
 
@@ -153,9 +144,6 @@ const SalesAndExpenseSection = () => {
     { name: "Sales", data: monthlyData.salesByMonth },
     { name: "Expenses", data: monthlyData.expensesByMonth },
   ], [monthlyData]);
-
-
-
 
   // =====================================================
   // UI Rendering
@@ -205,7 +193,6 @@ const SalesAndExpenseSection = () => {
         />
       </div>
 
-      
         {/* Comparison Chart */}
         <div className="bg-white p-6 rounded-2xl shadow-md mb-10">
           <h2 className="text-xl font-semibold mb-4 text-gray-700">
@@ -230,7 +217,6 @@ const SalesAndExpenseSection = () => {
         source="expense"
         type="expense"            
       />
-
     </div>
   );
 };
@@ -258,13 +244,6 @@ const SummaryCard = ({ title, value, color }) => (
       <div className="mb-10">
         <div className="flex justify-between items-center mb-4">
           <h2 className={`text-2xl font-bold ${color}`}>{title}</h2>
-
-          {/* Render Add button only for expenses */}
-          {type === "expense" && (
-            <Button variant="primary" onClick={() => openAdd(source)} icon={<Plus size={16} />}>
-              Add
-            </Button>
-          )}
         </div>
 
         <Table
@@ -276,8 +255,6 @@ const SummaryCard = ({ title, value, color }) => (
     );
   };
 
-
-
 // =====================================================
 // Table Component
 // =====================================================
@@ -287,9 +264,7 @@ const Table = ({ data, color, type }) => (
       <thead className="bg-gray-100 sticky top-0 z-10">
         <tr>
           <th className="py-3 px-6 font-semibold text-gray-700">Item</th>
-          {type === "expense" && (
-            <th className="py-3 px-6 font-semibold text-gray-700">Quantity</th>
-          )}
+          <th className="py-3 px-6 font-semibold text-gray-700">Quantity</th>
           <th className="py-3 px-6 font-semibold text-gray-700 text-right">Amount</th>
           <th className="py-3 px-6 font-semibold text-gray-700">Date</th>
         </tr>
@@ -297,36 +272,39 @@ const Table = ({ data, color, type }) => (
 
       <tbody>
         {data.length > 0 ? (
-          data.map((row, index) => (
-            <tr key={row.id || index} className="border-b border-gray-200 hover:bg-gray-50 transition">
-              <td className="py-3 px-6 font-medium text-gray-800">
-                {row.item || row.supply_name}
-              </td>
+          data.map((row, index) => {
+            let itemName = row.item || row.supply_name;
+            let quantity = row.quantity || 1;
 
-              {type === "expense" && (
-                <td className="py-3 px-6">{row.quantity || 0}</td>
-              )}
+            // Extract quantity from "Item x1000" format
+            const match = itemName.match(/(.*)\s+x(\d+)$/i);
+            if (match) {
+              itemName = match[1]; // e.g., "Brochure"
+              quantity = Number(match[2]); // e.g., 1000
+            }
 
-              <td className={`py-3 px-6 font-semibold text-right ${color}`}>
-                ₱{type === "expense"
-                  ? ((Number(row.quantity) || 0) * (Number(row.price) || 0)).toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    })
-                  : Number(row.amount).toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    })}
-              </td>
-
-              <td className="py-3 px-6">
-                {row.date ? new Date(row.date).toLocaleDateString() : "—"}
-              </td>
-            </tr>
-          ))
+            return (
+              <tr key={row.id || index} className="border-b border-gray-200 hover:bg-gray-50 transition">
+                <td className="py-3 px-6 font-medium text-gray-800">{itemName}</td>
+                <td className="py-3 px-6">{quantity}</td>
+                <td className={`py-3 px-6 font-semibold text-right ${color}`}>
+                  ₱{type === "expense"
+                    ? ((Number(quantity) || 0) * (Number(row.price) || 0)).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })
+                    : Number(row.amount).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })}
+                </td>
+                <td className="py-3 px-6">{row.date ? new Date(row.date).toLocaleDateString() : "—"}</td>
+              </tr>
+            );
+          })
         ) : (
           <tr>
-            <td colSpan={type === "expense" ? 3 : 4} className="py-6 text-center text-gray-500 italic">
+            <td colSpan={4} className="py-6 text-center text-gray-500 italic">
               No records found.
             </td>
           </tr>
@@ -335,10 +313,6 @@ const Table = ({ data, color, type }) => (
     </table>
   </div>
 );
-
-
-
-
 
 // =====================================================
 // Reusable UI Components

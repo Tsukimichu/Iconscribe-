@@ -237,34 +237,117 @@ const OverviewSection = () => {
 
 
   const handleExportAll = () => {
-  if (!orders || orders.length === 0) {
-    showToast({ type: "info", message: "No orders to export." });
-    return;
-  }
+    const reportSections = [];
 
-  const header = ["Order ID", "Customer", "Product", "Date", "Status"];
-  const rows = orders.map((order) => [
-    order.order_id,
-    order.customer_name,
-    order.product_name,
-    new Date(order.created_at).toLocaleDateString(),
-    order.status,
-  ]);
+    // --- ORDERS ---
+    reportSections.push("=== ORDERS ===");
+    if (orders.length > 0) {
+      reportSections.push("Order ID,Customer,Product,Date,Status");
+      orders.forEach(order => {
+        reportSections.push([
+          order.order_id,
+          order.customer_name,
+          order.product_name,
+          new Date(order.created_at).toLocaleDateString(),
+          order.status
+        ].join(","));
+      });
+    } else {
+      reportSections.push("No orders found.");
+    }
 
-  const csvContent =
-    "data:text/csv;charset=utf-8," +
-    [header, ...rows].map((row) => row.join(",")).join("\n");
+    reportSections.push("\n");
 
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "All_Orders.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+    // --- SALES / PRODUCT TOTALS ---
+    reportSections.push("=== SALES TOTALS ===");
+    if (productTotals.length > 0) {
+      reportSections.push("Product,Total Sales");
+      productTotals.forEach(p => {
+        reportSections.push([
+          p.product_name,
+          Number(p.total_sales || 0)
+        ].join(","));
+      });
+    } else {
+      reportSections.push("No sales data found.");
+    }
 
-  showToast({ type: "success", message: "All orders exported successfully!" });
-};
+    reportSections.push("\n");
+
+    // --- ORDER COUNTS PER PRODUCT (Report Donut Chart Data) ---
+    reportSections.push("=== TOTAL ORDERS PER PRODUCT ===");
+    if (orderChartData.categories.length > 0) {
+      reportSections.push("Product,Total Orders");
+      orderChartData.categories.forEach((name, index) => {
+        reportSections.push([name, orderChartData.data[index]].join(","));
+      });
+    } else {
+      reportSections.push("No order count data found.");
+    }
+
+    reportSections.push("\n");
+
+    // --- EXPENSES ---
+    reportSections.push("=== EXPENSES ===");
+    if (expenses.length > 0) {
+      reportSections.push("ID,Supply Name,Quantity,Unit,Price,Date");
+      expenses.forEach(exp => {
+        reportSections.push([
+          exp.id,
+          exp.supply_name,
+          exp.quantity,
+          exp.unit,
+          exp.price,
+          new Date(exp.date).toLocaleDateString()
+        ].join(","));
+      });
+    } else {
+      reportSections.push("No expenses found.");
+    }
+
+    // Combine all sections into CSV
+    const csvContent = "data:text/csv;charset=utf-8," + reportSections.join("\n");
+    const encodedUri = encodeURI(csvContent);
+
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "Full_Report.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast({ type: "success", message: "Full report exported successfully!" });
+  };
+
+  const aggregatedSales = useMemo(() => {
+    const map = {};
+
+    orders.forEach(order => {
+      let productName = order.product_name || "Unknown";
+      let quantity = order.quantity || 1;
+
+      // Check if product name has "x1000" style
+      const match = productName.match(/(.*)\s+x(\d+)$/i);
+      if (match) {
+        productName = match[1];
+        quantity = Number(match[2]);
+      }
+
+      if (!map[productName]) {
+        map[productName] = { totalSales: 0, totalQuantity: 0 };
+      }
+
+      map[productName].totalSales += Number(order.total_price || 0);
+      map[productName].totalQuantity += quantity;
+    });
+
+    return Object.entries(map).map(([name, values]) => ({
+      product_name: name,
+      total_sales: values.totalSales,
+      total_quantity: values.totalQuantity,
+    }));
+  }, [orders]);
+
 
 return (
     <>
@@ -347,7 +430,7 @@ return (
               onClick={handleExportAll}
               className="px-5 py-2 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition"
             >
-              Export All Orders
+              Generate Report
             </button>
           </div>
         </div>

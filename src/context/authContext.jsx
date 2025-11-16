@@ -1,19 +1,19 @@
 // src/context/authContext.jsx
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
+  // Load user immediately on first render (no flicker / no auto logout)
+  const [user, setUser] = useState(() => {
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
 
     if (token && storedUser) {
-      setUser({ ...JSON.parse(storedUser), token });
+      return { ...JSON.parse(storedUser), token };
     }
-  }, []);
+    return null;
+  });
 
   const login = (token, userData) => {
     localStorage.setItem("token", token);
@@ -35,5 +35,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);

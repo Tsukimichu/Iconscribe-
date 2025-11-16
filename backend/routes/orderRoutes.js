@@ -636,4 +636,48 @@ router.get("/user/:id", async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 });
+
+// ===================================================
+// Cancel Order within 24 hours
+// ===================================================
+router.post("/:id/cancel", async (req, res) => {
+  const { id } = req.params;
+  if (!id) return res.status(400).json({ message: "Invalid order ID" });
+
+  try {
+    // Get order items for this order
+    const [items] = await db.promise().query(
+      `
+      SELECT 
+        oi.order_item_id, 
+        oi.status, 
+        o.order_date 
+      FROM orderitems oi
+      JOIN orders o ON oi.order_id = o.order_id
+      WHERE oi.order_id = ?
+      `,
+      [id]
+    );
+
+    if (items.length === 0) return res.status(404).json({ message: "Order not found" });
+
+    const orderTime = new Date(items[0].order_date);
+    const now = new Date();
+
+    if (now - orderTime > 24 * 60 * 60 * 1000) {
+      return res.status(400).json({ message: "Cannot cancel order after 24 hours" });
+    }
+
+    // Update all order items for this order
+    await db.promise().query(
+      "UPDATE orderitems SET status = ? WHERE order_id = ?",
+      ["Cancelled", id]
+    );
+
+    res.json({ message: "Order cancelled successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 module.exports = router;

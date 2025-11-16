@@ -43,17 +43,18 @@ import { EditorProvider } from "./context/EditorContext.jsx";
 import Unauthorized from "./component/Unauthorized.jsx";
 
 const router = createBrowserRouter([
-  // Public routes
+  // Splash
   { path: "/", element: <Splash /> },
+
+  // Public UserPage (guests)
+  { path: "/user", element: <Userpage /> },
+
+  // Authentication
   { path: "/auth", element: <Authenticate /> },
   { path: "/signup", element: <Signup /> },
   { path: "/login", element: <Login /> },
 
-    //Forgot + Reset password routes
-  { path: "/forgot-password", element: <ForgotPassword /> },
-  { path: "/reset-password", element: <ResetPassword /> },
-
-  // Protected customer pages
+  // Protected customer dashboard
   {
     path: "/dashboard",
     element: (
@@ -62,6 +63,8 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
+
+  // Protected routes
   {
     path: "/transactions",
     element: (
@@ -79,7 +82,7 @@ const router = createBrowserRouter([
     ),
   },
 
-  // Products (public or protected — up to you)
+  // Products (public)
   { path: "/books", element: <Books /> },
   { path: "/brochure", element: <Brochure /> },
   { path: "/calling-card", element: <CallingCard /> },
@@ -98,7 +101,7 @@ const router = createBrowserRouter([
   { path: "/maintenance", element: <MaintenanceUser /> },
   { path: "/template-gallery", element: <TemplateGallery /> },
 
-  // Admin routes (locked)
+  // Admin routes
   {
     path: "/admin",
     element: (
@@ -116,7 +119,7 @@ const router = createBrowserRouter([
     ),
   },
 
-  // Manager routes (locked)
+  // Manager routes
   {
     path: "/manager",
     element: (
@@ -126,7 +129,7 @@ const router = createBrowserRouter([
     ),
   },
 
-  // Canva-style Editor (for all logged-in users)
+  // Canva-style Editor (all logged-in users)
   {
     path: "/editor",
     element: (
@@ -141,6 +144,7 @@ const router = createBrowserRouter([
   // Unauthorized page
   { path: "/unauthorized", element: <Unauthorized /> },
 ]);
+
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

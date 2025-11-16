@@ -124,7 +124,7 @@ function Transactions() {
       if ("Notification" in window && Notification.permission === "granted") {
         new Notification("Order Update", {
           body: `Your order "${data.service}" is now "${data.status}"`,
-          icon: "/icons/ICONS.png", // Public path
+          icon: "/icons/ICONS.png",
         });
       }
 

@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Eye, CheckCircle, Clock, Truck, X } from "lucide-react";
+import { Bell, CheckCircle, Clock, Truck, X } from "lucide-react";
 import { useAuth } from "../context/authContext.jsx";
 import { useToast } from "../component/ui/ToastProvider.jsx";
+import io from "socket.io-client";
+
+const socket = io("http://localhost:5000");
 
 function Transactions() {
   const { user } = useAuth();
@@ -30,15 +33,22 @@ function Transactions() {
     return now - orderTime <= 24 * 60 * 60 * 1000;
   };
 
-  const handleCancelOrder = async (orderId) => {
+  const handleCancelOrder = async (orderItemId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/${orderId}/cancel`, {
+      const res = await fetch(`http://localhost:5000/api/orders/${orderItemId}/cancel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
       showToast("Order cancelled successfully!");
-      setOrders(prev => prev.filter(o => o.id !== orderId));
+
+      setOrders(prev => prev.map(o =>
+        o.enquiryNo === orderItemId
+          ? { ...o, status: "Cancelled" }
+          : o
+      ));
     } catch (err) {
       console.error(err);
       showToast("Failed to cancel order.");
@@ -78,6 +88,54 @@ function Transactions() {
     fetchOrders();
   }, [isLoggedIn, userId]);
 
+  // Request notification permission on mount
+    useEffect(() => {
+      if ("Notification" in window) {
+        if (Notification.permission === "default") {
+          Notification.requestPermission().then(permission => {
+            console.log("Notification permission:", permission);
+          });
+        }
+      }
+    }, []);  
+
+ // Real-time Socket.IO updates
+  useEffect(() => {
+    if (!userId) return;
+
+    // Join personal room
+    socket.emit("joinUserRoom", userId);
+
+    // Listen for order updates
+    socket.on("orderStatusUpdated", (data) => {
+      console.log(" Real-time update:", data);
+
+      showToast(`Your order for "${data.service}" is now: ${data.status}`);
+
+      setOrders(prev =>
+        prev.map(o =>
+          o.order_id === data.order_id
+            ? { ...o, status: data.status }
+            : o
+        )
+      );
+
+      // --- Push Notification ---
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification("Order Update", {
+          body: `Your order "${data.service}" is now "${data.status}"`,
+          icon: "/icons/ICONS.png", // Public path
+        });
+      }
+
+    });
+
+    return () => {
+      socket.off("orderStatusUpdated");
+    };
+  }, [userId]);
+
+
   if (!isLoggedIn) return null;
 
   // Build notifications (latest 5, excluding cancelled)
@@ -103,11 +161,11 @@ function Transactions() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Orders Table */}
         <motion.div
-          className="md:col-span-2 h-[350px] rounded-2xl backdrop-blur-xl bg-white/50 shadow-lg border border-gray-200 p-6 flex flex-col"
+          className="md:col-span-2 h-[450px] rounded-2xl backdrop-blur-xl bg-white/50 shadow-lg border border-gray-200 p-6 flex flex-col"
           initial={{ opacity: 0, x: -40 }}
           animate={{ opacity: 1, x: 0 }}
         >
-          <h3 className="text-2xl font-semibold mb-6">Project Summary</h3>
+          <h3 className="text-2xl font-bold mb-6 flex items-center">Project Summary</h3>
           <div className="overflow-x-auto overflow-y-auto max-h-[450px]">
             <table className="min-w-full table-fixed border-collapse text-sm md:text-base">
               <thead className="bg-white sticky top-0 z-10 border-b border-gray-300">
@@ -165,7 +223,7 @@ function Transactions() {
                             </button>
 
                             <button
-                              onClick={() => handleCancelOrder(item.id)}
+                              onClick={() => handleCancelOrder(item.enquiryNo)}
                               disabled={isCancelled || !canCancelOrder(item.dateOrdered || item.created_at)}
                               className={`bg-red-600 text-white text-xs px-3 py-1 rounded-lg shadow transition ${
                                 isCancelled || !canCancelOrder(item.dateOrdered || item.created_at)
@@ -188,23 +246,48 @@ function Transactions() {
 
         {/* Notifications */}
         <motion.div
-          className="rounded-2xl backdrop-blur-xl bg-white/50 shadow-lg border border-gray-200 p-6 flex flex-col"
+          className="rounded-2xl backdrop-blur-xl bg-white/60 shadow-xl border border-gray-300 p-6 flex flex-col"
           initial={{ opacity: 0, x: 40 }}
           animate={{ opacity: 1, x: 0 }}
         >
-          <h3 className="text-2xl font-semibold mb-6">Notifications</h3>
-          <ul className="space-y-3 text-sm flex-1">
+          <h3 className="text-2xl font-bold mb-6 flex items-center">
+            Notifications
+          </h3>
+
+          <ul className="space-y-3 text-xs flex-1 overflow-y-auto pr-1">
             {notifications.length === 0 ? (
               <li className="text-center py-2 text-gray-500">No notifications yet.</li>
             ) : (
               notifications.map((note, index) => (
-                <li
+                <motion.li
                   key={index}
-                  className="flex justify-between bg-white/40 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-100 transition"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="flex justify-between items-center bg-white p-2 rounded-lg shadow transition hover:shadow-md duration-200 border border-gray-200 text-xs gap-2"
                 >
-                  <span>{note.title} ({note.status})</span>
-                  <span>{note.date}</span>
-                </li>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-gray-700">{note.title}</span>
+                   
+                    <span
+                      className={`mt-1 inline-block px-2 py-0.5 text-xs rounded-full font-medium ${
+                        note.status === "Pending"
+                          ? "bg-[#D6ECFF] text-[#0057A8]"
+                          : note.status === "Completed"
+                          ? "bg-green-100 text-green-700"
+                          : note.status === "Out for Delivery"
+                          ? "bg-[#FFE1D8] text-[#B2401F]"
+                          : note.status === "Ongoing"
+                          ? "bg-[#FFF4CC] text-[#A07900]"
+                          : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {note.status}
+                    </span>
+                  </div>
+
+                  <span className="text-gray-500 text-xs">{note.date}</span>
+                </motion.li>
               ))
             )}
           </ul>

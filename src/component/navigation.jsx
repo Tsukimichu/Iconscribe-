@@ -181,18 +181,6 @@ function Navigation() {
                       Soft Bound Service
                     </Link>
                   </li>
-                  <li>
-                    <Link
-                      to="/quotation/history"
-                      className="block px-4 py-2 hover:bg-yellow-100"
-                      onClick={() => {
-                        setDropdownOpen(false);
-                        setMenuOpen(false);
-                      }}
-                    >
-                      Hard Bound Service
-                    </Link>
-                  </li>
                 </ul>
               )}
             </li>

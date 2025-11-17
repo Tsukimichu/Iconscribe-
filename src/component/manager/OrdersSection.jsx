@@ -499,68 +499,108 @@ const openViewModal = async (order) => {
                 </tr>
               </thead>
               <tbody>
-                {sortedOrders.map((order, idx) => (
-                  <motion.tr
-                    key={order.enquiryNo}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="border-b border-gray-200 hover:bg-gray-50 transition"
-                  >
-                    <td className="py-3 px-6">{order.enquiryNo}</td>
-                    <td className="py-3 px-6">{order.service}</td>
-                    <td className="py-3 px-6">{order.customer_name}</td>
-                    <td className="py-3 px-6">
-                      {new Date(order.dateOrdered).toLocaleDateString()}
-                    </td>
-                    <td className="py-3 px-6">{order.urgency || "—"}</td>
-                    <td className="py-3 px-6">{order.status || "Pending"}</td>
-                    <td className="py-3 px-6">
-                      {order.estimated_price
-                        ? `₱${Number(order.estimated_price || 0).toFixed(2)}`
-                        : <span className="text-gray-400 italic">Not Set</span>}
-                    </td>
-                    <td className="py-3 px-6 font-semibold text-green-600">
-                      {order.manager_added && order.manager_added > 0
-                        ? `₱${(
-                            Number(order.estimated_price || 0) + Number(order.manager_added || 0)
-                          ).toFixed(2)}`
-                        : <span className="text-gray-400 italic">—</span>}
-                    </td>
-                    <td className="py-3 px-6 flex justify-end gap-2">
-                      <button
-                        onClick={() => openViewModal(order)}
-                        className="flex items-center justify-center gap-1 bg-blue-100 text-blue-700 px-2 py-2 rounded-lg hover:bg-blue-200 transition text-sm font-medium"
-                      >
-                        <Search size={16} />
-                      </button>
-                      <button
-                        onClick={() => openStatusModal(order)}
-                        className="flex items-center justify-center gap-1 bg-yellow-100 text-yellow-700 px-2 py-2 rounded-lg hover:bg-yellow-200 transition text-sm font-medium"
-                      >
-                        <Truck size={16} />
-                      </button>
-                      <button
-                        onClick={() => openPriceModal(order)}
-                        className="flex items-center justify-center gap-1 bg-cyan-100 text-cyan-700 px-2 py-2 rounded-lg hover:bg-cyan-200 transition text-sm font-medium"
-                      >
-                        <PlusCircle size={16} />
-                      </button>
-                      <button
-                        onClick={() => openArchiveModal(order)}
-                        className="flex items-center justify-center gap-1 bg-red-100 text-red-700 px-2 py-2 rounded-lg hover:bg-red-200 transition text-sm font-medium"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                      <button
-                        onClick={() => openUrgencyModal(order)}
-                        className="flex items-center justify-center gap-1 bg-orange-100 text-orange-700 px-2 py-2 rounded-lg hover:bg-yellow-200 transition text-sm font-medium"
-                      >
-                        <Shield size={16} />
-                      </button>
-                    </td>
-                  </motion.tr>
-                ))}
+                {sortedOrders.map((order, idx) => {
+                  const isCancelled = order.status === "Cancelled";
+
+                  return (
+                    <motion.tr
+                      key={order.enquiryNo}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className={`border-b border-gray-200 transition ${
+                        isCancelled ? "bg-gray-200" : "hover:bg-gray-50"
+                      }`}
+                    >
+                      <td className="py-3 px-6">{order.enquiryNo}</td>
+                      <td className="py-3 px-6">{order.service}</td>
+                      <td className="py-3 px-6">{order.customer_name}</td>
+                      <td className="py-3 px-6">
+                        {new Date(order.dateOrdered).toLocaleDateString()}
+                      </td>
+                      <td className="py-3 px-6">{order.urgency || "—"}</td>
+                      <td className="py-3 px-6">{order.status || "Pending"}</td>
+                      <td className="py-3 px-6">
+                        {order.estimated_price
+                          ? `₱${Number(order.estimated_price || 0).toFixed(2)}`
+                          : <span className="text-gray-400 italic">Not Set</span>}
+                      </td>
+                      <td className="py-3 px-6 font-semibold text-green-600">
+                        {order.manager_added && order.manager_added > 0
+                          ? `₱${(
+                              Number(order.estimated_price || 0) +
+                              Number(order.manager_added || 0)
+                            ).toFixed(2)}`
+                          : <span className="text-gray-400 italic">—</span>}
+                      </td>
+
+                      <td className="py-3 px-6 flex justify-end gap-2">
+
+                        {/* VIEW — always enabled */}
+                        <button
+                          onClick={() => openViewModal(order)}
+                          className="flex items-center justify-center gap-1 bg-blue-100 text-blue-700 px-2 py-2 rounded-lg hover:bg-blue-200 transition text-sm font-medium"
+                        >
+                          <Search size={16} />
+                        </button>
+
+                        {/* STATUS BUTTON */}
+                        <button
+                          onClick={() => !isCancelled && openStatusModal(order)}
+                          disabled={isCancelled}
+                          className={`flex items-center justify-center gap-1 px-2 py-2 rounded-lg text-sm font-medium transition
+                            ${isCancelled
+                              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                              : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+                            }`}
+                        >
+                          <Truck size={16} />
+                        </button>
+
+                        {/* ADD PRICE BUTTON */}
+                        <button
+                          onClick={() => !isCancelled && openPriceModal(order)}
+                          disabled={isCancelled}
+                          className={`flex items-center justify-center gap-1 px-2 py-2 rounded-lg text-sm font-medium transition
+                            ${isCancelled
+                              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                              : "bg-cyan-100 text-cyan-700 hover:bg-cyan-200"
+                            }`}
+                        >
+                          <PlusCircle size={16} />
+                        </button>
+
+                        {/* ARCHIVE BUTTON */}
+                        <button
+                          onClick={() => !isCancelled && openArchiveModal(order)}
+                          disabled={isCancelled}
+                          className={`flex items-center justify-center gap-1 px-2 py-2 rounded-lg text-sm font-medium transition
+                            ${isCancelled
+                              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                              : "bg-red-100 text-red-700 hover:bg-red-200"
+                            }`}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+
+                        {/* URGENCY BUTTON */}
+                        <button
+                          onClick={() => !isCancelled && openUrgencyModal(order)}
+                          disabled={isCancelled}
+                          className={`flex items-center justify-center gap-1 px-2 py-2 rounded-lg text-sm font-medium transition
+                            ${isCancelled
+                              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                              : "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                            }`}
+                        >
+                          <Shield size={16} />
+                        </button>
+
+                      </td>
+
+                    </motion.tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

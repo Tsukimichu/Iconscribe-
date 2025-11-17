@@ -17,6 +17,7 @@ function Signup() {
   const [otp, setOtp] = useState("");
   const [generatedOtp, setGeneratedOtp] = useState(null);
   const [shake, setShake] = useState(false);
+  const [userNotifs, setUserNotifs] = useState([]);
 
   const [formData, setFormData] = useState({
     name: "",

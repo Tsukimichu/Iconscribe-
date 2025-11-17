@@ -1,27 +1,92 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef,useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Bell } from "lucide-react";
 import Chart from "react-apexcharts";
+import ReactApexChart from "react-apexcharts";
 import axios from "axios";
+import { useToast } from "../ui/ToastProvider.jsx";
 
 const OverviewSection = () => {
   const [activeFilter, setActiveFilter] = useState(null);
   const [orders, setOrders] = useState([]);
+  const [newOrders, setNewOrders] = useState([]);
+  const previousOrderIds = useRef(new Set());
+  const [showNotifications, setShowNotifications] = useState(false);
   const [orderChartData, setOrderChartData] = useState({
     categories: [],
     data: [],
   });
 
-  // Fetch all orders from backend
+  const [salesChartData, setSalesChartData] = useState({
+    categories: [],
+    data: [],
+  });
+  const [productTotals, setProductTotals] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const { showToast } = useToast();
+  const prevOrderCount = useRef(0); 
+  const isFirstLoad = useRef(true);
+
+  // Fetch all orders
+  const fetchOrders = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/orders");
+      const fetchedOrders = Array.isArray(res.data) ? res.data : res.data.data || [];
+
+      setOrders(fetchedOrders);
+
+      // --- Sales chart logic ---
+      const salesMap = {};
+      fetchedOrders.forEach(order => {
+        const key = order.product_name || "Unknown";
+        const saleAmount = Number(order.total_price || 0);
+        salesMap[key] = (salesMap[key] || 0) + saleAmount;
+      });
+
+      setSalesChartData({
+        categories: Object.keys(salesMap),
+        data: Object.values(salesMap),
+      });
+
+    // --- New orders notification logic  ---
+    const currentIds = new Set(fetchedOrders.map(o => o.order_id));
+    const newOnes = [...currentIds].filter(id => !previousOrderIds.current.has(id));
+
+    if (!isFirstLoad.current && newOnes.length > 0) {
+      const newOrdersList = fetchedOrders.filter(o => newOnes.includes(o.order_id));
+
+      setNewOrders(prev => [...newOrdersList, ...prev].slice(0, 5));
+
+      showToast(`${newOrdersList.length} new order${newOrdersList.length > 1 ? "s" : ""} received!`, "info");
+    }
+
+    // Update reference for next poll
+    previousOrderIds.current = currentIds;
+    isFirstLoad.current = false;
+
+    } catch (err) {
+      console.error("Error fetching orders:", err);
+    }
+  };
+    // Fetch product totals for sales chart
+    useEffect(() => {
+      const fetchProductTotals = async () => {
+        try {
+          const res = await axios.get("http://localhost:5000/api/sales/product-totals");
+          setProductTotals(res.data);
+        } catch (err) {
+          console.error("❌ Error fetching product totals:", err);
+        }
+      };
+
+      fetchProductTotals();
+    }, []);
+
+  // Fetch on mount and poll every 5s
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const res = await axios.get("http://localhost:5000/api/orders");
-        setOrders(res.data);
-      } catch (err) {
-        console.error("Error fetching orders:", err);
-      }
-    };
     fetchOrders();
+    const interval = setInterval(fetchOrders, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   // Fetch product order counts for chart
@@ -29,9 +94,13 @@ const OverviewSection = () => {
     const fetchOrderChartData = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/orders/product-order-counts");
+        const items = Array.isArray(res.data) ? res.data 
+                    : Array.isArray(res.data.data) ? res.data.data 
+                    : [];
+
         setOrderChartData({
-          categories: res.data.map((item) => item.product_name),
-          data: res.data.map((item) => Number(item.total_orders)),
+          categories: items.map((item) => item.product_name),
+          data: items.map((item) => Number(item.total_orders)),
         });
       } catch (err) {
         console.error("Error fetching order chart data:", err);
@@ -39,6 +108,69 @@ const OverviewSection = () => {
     };
     fetchOrderChartData();
   }, []);
+
+  // Fetch supplies as expenses
+  const fetchExpenses = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/supplies");
+      if (Array.isArray(res.data)) {
+        const mapped = res.data.map((s) => ({
+          id: s.supply_id,
+          supply_name: s.supply_name,
+          quantity: s.quantity,
+          unit: s.unit,
+          price: s.price,
+          date: s.created_at || new Date().toISOString(),
+        }));
+        setExpenses(mapped);
+      }
+    } catch (err) {
+      console.error("Error fetching supplies as expenses:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchExpenses();
+  }, []);
+
+  // Prepare series for stacked column chart
+  const dynamicExpenseSeries = useMemo(() => {
+    if (!expenses.length) return [];
+
+    const monthList = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const grouped = {};
+
+    expenses.forEach((exp) => {
+      const supply = exp.supply_name;
+      const month = new Date(exp.date).toLocaleString("en-US", { month: "short" });
+
+      if (!grouped[supply]) {
+        grouped[supply] = monthList.reduce((acc, m) => ({ ...acc, [m]: 0 }), {});
+      }
+
+      grouped[supply][month] += Number(exp.price) || 0;
+    });
+
+    return Object.entries(grouped).map(([name, monthValues]) => ({
+      name,
+      data: monthList.map((m) => monthValues[m]),
+    }));
+  }, [expenses]);
+
+
+ const totalSalesChart = useMemo(() => {
+  return {
+    series: [{ name: "Total Sales", data: productTotals.map((p) => Number(p.total_sales) || 0),},],
+    options: { chart: { type: "area",stacked: false, toolbar: { show: false }, background: "transparent",},
+      xaxis: { categories: productTotals.map((p) => p.product_name), },
+      stroke: {curve: "smooth",width: 3,}, dataLabels: { enabled: false,},
+      legend: { position: "top", horizontalAlign: "left", },
+      fill: { opacity: 0.25, gradient: { shade: "light", type: "vertical",},},
+      grid: { borderColor: "#e5e7eb",},
+      colors: ["#22c55e"],
+    },
+  };
+}, [productTotals]);
 
   // Group orders by status for popup display
   const groupByStatus = (status) =>
@@ -59,14 +191,12 @@ const OverviewSection = () => {
     { label: "Completed", count: statusCounts["Completed"], color: "from-green-500 to-emerald-400" },
   ];
 
-  // Chart Data (now dynamic)
-  const orderData = {
-    series: [
-      { name: "Orders", data: orderChartData.data },
-    ],
+  // Chart Data
+  const orderData = useMemo(() => ({
+    series: [{ name: "Orders", data: orderChartData.data || [] }],
     options: {
       chart: { type: "area", stacked: false, toolbar: { show: false }, background: "transparent" },
-      xaxis: { categories: orderChartData.categories },
+      xaxis: { categories: orderChartData.categories || [] },
       stroke: { curve: "smooth", width: 3 },
       dataLabels: { enabled: false },
       legend: { position: "top", horizontalAlign: "left" },
@@ -74,50 +204,38 @@ const OverviewSection = () => {
       grid: { borderColor: "#e5e7eb" },
       colors: ["#6366f1"],
     },
-  };
+  }), [orderChartData]);
 
-  const salesData = {
-    series: [{ name: "Sales", data: [180, 140, 110, 90, 70] }],
-    options: {
-      chart: { type: "line", toolbar: { show: false }, background: "transparent" },
-      xaxis: { categories: ["Official Receipt", "Calendar", "Yearbook", "Book", "Mug"] },
-      stroke: { curve: "smooth", width: 3 },
-      dataLabels: { enabled: false },
-      colors: ["#22c55e"],
-      markers: { size: 5, colors: ["#22c55e"], strokeColors: "#fff", strokeWidth: 2 },
-      grid: { borderColor: "#e5e7eb" },
-    },
-  };
-
-  const reportData = {
-    series: [264.64, 230.12, 175.5, 90.2, 250.2],
+  // After fetching orderChartData
+  const reportChartData = {
+    series: orderChartData.data,
     options: {
       chart: { type: "donut", background: "transparent" },
-      labels: ["Official Receipt", "Calendar", "Book", "Mug", "Yearbook"],
+      labels: orderChartData.categories, 
       legend: { position: "bottom" },
-      colors: ["#3b82f6", "#facc15", "#ef4444", "#10b981", "#a855f7"],
+      colors: ["#3b82f6", "#facc15", "#ef4444", "#10b981", "#a855f7", "#f97316", "#8b5cf6"], // extend colors if more products
       plotOptions: { pie: { donut: { size: "70%" } } },
     },
   };
 
-  const expenseData = {
-    series: [
-      { name: "Paper", data: [80, 95, 70, 85] },
-      { name: "Ink", data: [60, 75, 65, 70] },
-      { name: "Salary", data: [120, 110, 130, 125] },
-      { name: "Misc", data: [30, 45, 25, 40] },
-    ],
-    options: {
-      chart: { type: "bar", stacked: true, toolbar: { show: false }, background: "transparent" },
-      xaxis: { categories: ["Jan", "Feb", "Mar", "Apr"] },
-      legend: { position: "bottom" },
-      plotOptions: { bar: { borderRadius: 8 } },
-      colors: ["#6366f1", "#f97316", "#10b981", "#f43f5e"],
-      grid: { borderColor: "#e5e7eb" },
+  const chartOptions = useMemo(() => ({
+    chart: {
+      type: "bar",
+      stacked: true,
+      toolbar: { show: false },
+      background: "transparent",
     },
-  };
-
-  return (
+    plotOptions: { bar: { borderRadius: 8 } },
+    xaxis: { categories: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"] },
+    colors: ["#6366f1", "#f97316", "#10b981", "#f43f5e", "#3b82f6", "#8b5cf6", "#f59e0b"],
+    legend: { position: "bottom" },
+    grid: { borderColor: "#e5e7eb" },
+    dataLabels: { enabled: false },
+    yaxis: { title: { text: "Amount (₱)" } },
+    tooltip: { y: { formatter: (val) => `₱${val.toLocaleString()}` } },
+  }), []);
+  
+return (
     <>
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -125,8 +243,8 @@ const OverviewSection = () => {
         transition={{ duration: 0.6 }}
         className="p-8 rounded-3xl bg-white shadow-xl space-y-8 text-gray-900 min-h-screen"
       >
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+      {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 relative">
           <div>
             <h1 className="text-4xl font-extrabold text-cyan-700">Dashboard</h1>
             <p className="text-gray-600 text-lg">Hello, Admin</p>
@@ -152,29 +270,37 @@ const OverviewSection = () => {
         {/* Orders & Sales */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <motion.div className="bg-gray-50 p-6 rounded-2xl shadow-md border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-700 mb-3">📦 Total Orders</h2>
-            <Chart options={orderData.options} series={orderData.series} type="area" height={260} />
-          </motion.div>
+            <h2 className="text-lg font-semibold text-gray-700 mb-3"> Total Orders</h2>
+            {orderData.series[0].data.length === 0 ? (
+                <p className="text-center text-gray-500">Loading chart...</p>
+              ) : (
+                <Chart options={orderData.options} series={orderData.series} type="area" height={260} />
+              )}
+          </motion.div >
           <motion.div className="bg-gray-50 p-6 rounded-2xl shadow-md border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-700 mb-3">💰 Total Sales</h2>
-            <Chart options={salesData.options} series={salesData.series} type="line" height={260} />
+            <h2 className="text-lg font-semibold text-gray-700 mb-3">Total Sales</h2>
+            <ReactApexChart
+              options={totalSalesChart.options}
+              series={totalSalesChart.series}
+              type="area"
+              height={260}
+            />
           </motion.div>
-        </div>
-
+          </div>
         {/* Reports & Expenses */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <motion.div className="bg-gray-50 p-6 rounded-2xl shadow-md border border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-700 mb-2"> Reports</h2>
+          <Chart options={reportChartData.options} series={reportChartData.series} type="donut" height={300} />
+        </motion.div>
           <motion.div className="bg-gray-50 p-6 rounded-2xl shadow-md border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-700 mb-2">📊 Reports</h2>
-            <Chart options={reportData.options} series={reportData.series} type="donut" height={300} />
-          </motion.div>
-          <motion.div className="bg-gray-50 p-6 rounded-2xl shadow-md border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-700 mb-2">💸 Expenses</h2>
-            <Chart options={expenseData.options} series={expenseData.series} type="bar" height={300} />
+            <h2 className="text-lg font-semibold text-gray-700 mb-2"> Expenses</h2>
+              <ReactApexChart options={chartOptions} series={dynamicExpenseSeries} type="bar" height={300} />
           </motion.div>
         </div>
       </motion.div>
 
-      {/* Orders Popup (Dynamic from Database) */}
+      {/* Orders Popup */}
       <AnimatePresence>
         {activeFilter && (
           <motion.div

@@ -33,11 +33,16 @@ app.use(express.json());
 // Serve uploaded files publicly
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+// Attach io to req for routes that need it
+app.use("/api/orders", (req, res, next) => {
+  req.io = io;
+  next();
+}, orderRoutes);
+
 // Routes
 app.use("/api", userRoutes);
 app.use("/api", maintenanceRoutes);
 app.use("/api/products", productRoutes);
-app.use("/api/orders", orderRoutes);
 app.use("/api/supplies", supplyRoutes);
 app.use("/api/sales", salesRoutes);
 app.use("/api/chat", chatRoutes);
@@ -51,27 +56,35 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: "Internal Server Error" });
 });
 
-// Socket.IO chat logic
+// Socket.IO logic
 io.on("connection", (socket) => {
-  console.log(" User connected:", socket.id);
+  console.log("User connected:", socket.id);
 
+  // Join a room (e.g., for chat)
   socket.on("joinRoom", (room) => {
     socket.join(room);
     console.log(`User joined room: ${room}`);
   });
 
+  // Join personal room for order notifications
+  socket.on("joinUserRoom", (userId) => {
+    socket.join(userId.toString());
+    console.log(`User joined personal room: ${userId}`);
+  });
+
+  // Chat messages
   socket.on("sendMessage", (data) => {
-    console.log(" Message received:", data);
+    console.log("Message received:", data);
     io.to(data.conversationId).emit("receiveMessage", data);
   });
 
   socket.on("disconnect", () => {
-    console.log(" User disconnected:", socket.id);
+    console.log("User disconnected:", socket.id);
   });
 });
 
 // Start both Express + Socket.IO on same port
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`✅ Server + Socket.IO running at http://localhost:${PORT}`);
+  console.log(`Server + Socket.IO running at http://localhost:${PORT}`);
 });

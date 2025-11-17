@@ -47,47 +47,35 @@ router.use("/uploads", express.static(uploadDir));
 // Serve uploads folder so images are accessible
 // ===================================================
 router.use("/uploads", express.static(uploadDir));
+
 // ===================================================
-// CREATE NEW ORDER 
+// CREATE NEW ORDER
 // ===================================================
 router.post("/create", async (req, res) => {
   try {
     const { user_id, product_id, quantity, urgency, status, attributes, estimated_price } = req.body;
 
     if (!user_id || !product_id || !quantity) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required fields (user_id, product_id, quantity)",
-      });
+      return res.status(400).json({ success: false, message: "Missing required fields" });
     }
 
-    // Parse attributes if sent as string
     let parsedAttributes = attributes;
     if (typeof attributes === "string") {
-      try {
-        parsedAttributes = JSON.parse(attributes);
-      } catch {
-        parsedAttributes = [];
-      }
+      try { parsedAttributes = JSON.parse(attributes); } catch { parsedAttributes = []; }
     }
 
-    // Insert into orders (without estimated_price)
     const [orderResult] = await db.promise().execute(
       "INSERT INTO orders (user_id, order_date, total) VALUES (?, NOW(), 0)",
       [user_id]
     );
     const order_id = orderResult.insertId;
 
-    // Insert into orderitems (with estimated_price)
     const [orderItemResult] = await db.promise().execute(
-      `INSERT INTO orderitems 
-       (order_id, product_id, quantity, urgency, status, estimated_price) 
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      "INSERT INTO orderitems (order_id, product_id, quantity, urgency, status, estimated_price) VALUES (?, ?, ?, ?, ?, ?)",
       [order_id, product_id, quantity, urgency || "Normal", status || "Pending", estimated_price || 0]
     );
     const order_item_id = orderItemResult.insertId;
 
-    // Insert attributes into order_item_attributes
     if (Array.isArray(parsedAttributes)) {
       for (const attr of parsedAttributes) {
         if (attr.name && attr.value) {
@@ -103,26 +91,12 @@ router.post("/create", async (req, res) => {
       }
     }
 
-    res.json({
-      success: true,
-      message: "Order placed successfully!",
-      order_id,
-      order_item_id,
-      estimated_price,
-    });
+    res.json({ success: true, message: "Order placed successfully!", order_id, order_item_id, estimated_price });
   } catch (error) {
     console.error("❌ Error placing order:", error);
-    res.status(500).json({
-      success: false,
-      message: "Database error",
-      error: error.message,
-    });
+    res.status(500).json({ success: false, message: "Database error", error: error.message });
   }
 });
-
-
-
-
 
 
 // ===================================================
@@ -253,9 +227,6 @@ router.get("/", async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to load orders" });
   }
 });
-
-
-
 
 
 // ===================================================
@@ -413,24 +384,37 @@ router.put("/:orderId/price", async (req, res) => {
 
 
 // ===================================================
-// Update Order Status
+// UPDATE ORDER STATUS + Emit Notification + Sales
 // ===================================================
 router.put("/:id/status", async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
-  if (!status) {
-    return res.status(400).json({ success: false, message: "Status is required" });
-  }
+  if (!status) return res.status(400).json({ success: false, message: "Status is required" });
 
   try {
-    // Update all orderitems status for this order
-    await db.promise().query(
-      "UPDATE orderitems SET status=? WHERE order_id=?",
-      [status, id]
+    // Update order status
+    await db.promise().query("UPDATE orderitems SET status=? WHERE order_id=?", [status, id]);
+
+    // Fetch updated order info
+    const [updated] = await db.promise().query(
+      `SELECT oi.order_item_id AS enquiryNo, o.order_id, o.user_id, p.product_name AS service, oi.status
+       FROM orderitems oi
+       JOIN orders o ON oi.order_id = o.order_id
+       JOIN products p ON oi.product_id = p.product_id
+       WHERE o.order_id = ?
+       LIMIT 1`,
+      [id]
     );
 
-    // Only if status is Completed, add to sales
+    // Emit real-time notification to the user
+    if (updated.length > 0 && req.io) {
+      req.io.to(updated[0].user_id.toString()).emit("orderStatusUpdated", updated[0]);
+    }
+
+    // ===================================================
+    // SALES INSERTION IF COMPLETED
+    // ===================================================
     if (status === "Completed") {
       const [order] = await db.promise().query(
         `SELECT o.order_id, o.manager_added, SUM(oi.estimated_price) AS items_total
@@ -446,11 +430,8 @@ router.put("/:id/status", async (req, res) => {
 
       const finalTotal = Number(order[0].items_total || 0) + Number(order[0].manager_added || 0);
 
-      // Insert into sales if not exists
-      const [existingSale] = await db.promise().query(
-        "SELECT * FROM sales WHERE order_item_id = ?",
-        [id]
-      );
+      // Check if sale already exists
+      const [existingSale] = await db.promise().query("SELECT * FROM sales WHERE order_item_id = ?", [id]);
 
       if (existingSale.length === 0) {
         const [orderItems] = await db.promise().query(
@@ -476,6 +457,7 @@ router.put("/:id/status", async (req, res) => {
     res.status(500).json({ success: false, message: "Database error" });
   }
 });
+
 
 // ===================================================
 // Archive Order
@@ -636,4 +618,52 @@ router.get("/user/:id", async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 });
+
+// ===================================================
+// CANCEL ORDER within 24 hours + Emit Notification
+// ===================================================
+router.post("/:id/cancel", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [item] = await db.promise().query(
+      `SELECT oi.order_item_id, oi.status, o.order_date, o.user_id, p.product_name
+       FROM orderitems oi
+       JOIN orders o ON oi.order_id = o.order_id
+       JOIN products p ON oi.product_id = p.product_id
+       WHERE oi.order_item_id = ?`,
+      [id]
+    );
+
+    if (item.length === 0)
+      return res.status(404).json({ message: "Order item not found" });
+
+    const orderTime = new Date(item[0].order_date);
+    const now = new Date();
+    if (now - orderTime > 24 * 60 * 60 * 1000) {
+      return res.status(400).json({ message: "Cannot cancel after 24 hours" });
+    }
+
+    await db.promise().query(
+      "UPDATE orderitems SET status = 'Cancelled' WHERE order_item_id = ?",
+      [id]
+    );
+
+    // Emit real-time notification to user
+    if (req.io) {
+      req.io.to(item[0].user_id.toString()).emit("orderStatusUpdated", {
+        enquiryNo: item[0].order_item_id,
+        order_id: item[0].order_id,
+        status: "Cancelled",
+        service: item[0].product_name,
+      });
+    }
+
+    res.json({ message: "Order item cancelled successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;

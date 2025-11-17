@@ -1,16 +1,3 @@
-/**
- * @param {Object} params
- * @param {number} params.pages 
- * @param {number} params.copies 
- * @param {boolean} params.colored 
- * @param {number} [params.paperPricePerReam=3000] 
- * @param {number} [params.platePrice=500] 
- * @param {number} [params.runPrice=400] 
- * @param {number} [params.signaturePages=8]
- * @param {number} [params.platesPerSignature=2] 
- * @param {number} [params.multiplier=1] 
- * @returns {Object}
- */
 export function computeBookQuotation({
   pages,
   copies,
@@ -25,26 +12,21 @@ export function computeBookQuotation({
   if (!pages || !copies) return null;
 
   // --- A. FIND PRICE OF PAPER ---
-  // 1. Number of signatures
-  const signatures = pages / signaturePages;
-
-  // 2. Number of sheets
-  const sheets = signatures * copies;
-
-  // 3. Number of reams (500 sheets per ream)
-  const reams = sheets / 500;
-
-  // 4. Total paper cost
+  const signatures = Math.ceil(pages / signaturePages); // always round up
+  const sheets = Math.ceil((signatures * copies) / 2); // 2 pages per sheet
+  const reams = Math.ceil(sheets / 500); // round up reams
   const paperCost = reams * paperPricePerReam;
 
   // --- B. FIND PRICE OF PLATES ---
-  const totalPlates = signatures * platesPerSignature;
+  const totalPlates = Math.ceil(signatures * platesPerSignature); 
   const plateCost = totalPlates * platePrice;
 
   // --- C. FIND PRICE OF RUNNING / PRINTING ---
   let runCost = totalPlates * runPrice;
+
+  // Colored printing multiplies the run cost by 4
   if (colored) {
-    runCost *= 9;
+    runCost *= 4;
   }
 
   // --- D. FIND TOTAL COST ---
@@ -52,7 +34,6 @@ export function computeBookQuotation({
   const total = baseCost * multiplier;
   const perCopy = total / copies;
 
-  // --- RETURN BREAKDOWN ---
   return {
     signatures,
     sheets,

@@ -18,29 +18,35 @@ function TemplateGallery() {
     "Label",
   ];
 
-  // Filter templates based on category
+  // Filter templates by category
   const filteredTemplates = templates.filter(
     (t) => activeCategory === "All" || t.category === activeCategory
   );
 
+  // 👉 This sends the template JSON safely via router state
   const handleSelect = (tpl) => {
-    navigate(`/customize?template=${encodeURIComponent(tpl.json)}`);
+    navigate("/editor", {
+      state: { template: tpl }, // <-- pass whole template here
+    });
   };
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      {/* HEADER SECTION */}
+
+      {/* HEADER */}
       <div className="relative h-[150px] bg-blue-700 text-white flex flex-col justify-center items-center text-center">
         <h1 className="text-4xl font-bold mb-2">Create from a Template</h1>
         <p className="text-gray-200 text-lg max-w-2xl">
           Choose a ready-made design
         </p>
 
-        {/* BACK BUTTON   //p-2 hover:bg-gray-200 rounded-full transition*/}
+        {/* BACK BUTTON */}
         <button
           onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 flex items-center bg-blue text-white-700 p-2 rounded-full shadow hover:bg-white hover:text-blue-600 transition"
-        > 
+          className="absolute top-4 left-4 flex items-center 
+                     bg-blue p-2 rounded-full shadow 
+                     hover:bg-white hover:text-blue-600 transition"
+        >
           <ArrowBigLeft className="w-6 h-6" />
         </button>
       </div>
@@ -63,12 +69,14 @@ function TemplateGallery() {
       </div>
 
       {/* TEMPLATE GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 p-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 
+                      lg:grid-cols-4 gap-8 p-10">
         {filteredTemplates.map((tpl) => (
           <div
             key={tpl.id}
             onClick={() => handleSelect(tpl)}
-            className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition cursor-pointer"
+            className="bg-white shadow-md rounded-lg overflow-hidden 
+                       hover:shadow-xl transition cursor-pointer"
           >
             <img
               src={tpl.preview}
@@ -84,6 +92,7 @@ function TemplateGallery() {
           </div>
         ))}
       </div>
+
     </div>
   );
 }

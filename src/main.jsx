@@ -26,7 +26,7 @@ import Binding from "./products/Binding.jsx";
 import Invitation from "./products/Invitation.jsx";
 import RaffleTicket from "./products/RaffleTicket.jsx";
 import NewsLetter from "./products/NewsLetter.jsx";
-import Customization from "./component/Customization.jsx";
+//import Customization from "./component/Customization.jsx";
 import TemplateGallery from "./component/TemplateGallery.jsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ToastProvider } from "./component/ui/ToastProvider.jsx";
@@ -97,7 +97,7 @@ const router = createBrowserRouter([
   { path: "/newsletter", element: <NewsLetter /> },
 
   // Maintenance / Customization
-  { path: "/customize", element: <Customization /> },
+  //{ path: "/customize", element: <Customization /> },
   { path: "/maintenance", element: <MaintenanceUser /> },
   { path: "/template-gallery", element: <TemplateGallery /> },
 

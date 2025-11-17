@@ -1,0 +1,17 @@
+{
+  "version": "5.3.0",
+  "objects": [
+    { "type": "rect", "left": -40, "top": -40, "width": 800, "height": 1200, "fill": "#f8f7f3", "angle": 0 },
+    { "type": "textbox", "left": 40, "top": 30, "width": 720, "text": "November 2025", "fontSize": 48, "fontWeight": "bold", "fill": "#333333", "textAlign": "center", "fontFamily": "Arial" },
+
+    { "type": "rect", "left": 40, "top": 120, "width": 720, "height": 60, "fill": "#e0e0e0" },
+    { "type": "textbox", "left": 50, "top": 130, "width": 700, "text": "Sun    Mon    Tue    Wed    Thu    Fri    Sat", "fontSize": 18, "fill": "#444444", "textAlign": "left", "fontFamily": "Arial" },
+
+    { "type": "rect", "left": 40, "top": 200, "width": 100, "height": 100, "fill": "#ffffff", "stroke": "#cccccc" },
+    { "type": "textbox", "left": 50, "top": 210, "width": 80, "text": "1", "fontSize": 16, "fill": "#000000", "textAlign": "left", "fontFamily": "Arial" },
+
+    { "type": "rect", "left": 150, "top": 200, "width": 100, "height": 100, "fill": "#ffffff", "stroke": "#cccccc" },
+    { "type": "textbox", "left": 160, "top": 210, "width": 80, "text": "2", "fontSize": 16, "fill": "#000000", "textAlign": "left", "fontFamily": "Arial" }
+  ],
+  "background": "#ffffff"
+}

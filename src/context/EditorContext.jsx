@@ -34,10 +34,9 @@ const initialState = {
 function reducer(state, action) {
   switch (action.type) {
     case "ADD_ELEMENT": {
-      const newElements = [...state.elements, action.payload];
       return {
         ...state,
-        elements: newElements,
+        elements: [...state.elements, action.payload],
         selectedId: action.payload.id,
         history: [...state.history.slice(-30), state.elements],
         future: [],
@@ -58,28 +57,25 @@ function reducer(state, action) {
       };
     }
 
-    case "SET_ELEMENTS": {
+    case "SET_ELEMENTS":
       return {
         ...state,
         elements: action.payload,
         history: [...state.history.slice(-30), state.elements],
         future: [],
       };
-    }
 
     case "SELECT_ELEMENT":
       return { ...state, selectedId: action.payload };
 
-    case "DELETE_ELEMENT": {
-      const remaining = state.elements.filter((el) => el.id !== action.payload);
+    case "DELETE_ELEMENT":
       return {
         ...state,
-        elements: remaining,
+        elements: state.elements.filter((el) => el.id !== action.payload),
         selectedId: null,
         history: [...state.history.slice(-30), state.elements],
         future: [],
       };
-    }
 
     case "REORDER_ELEMENTS":
       return {
@@ -139,7 +135,7 @@ export function EditorProvider({ children }) {
 
   const canvasRef = useRef(null);
 
-  // 💾 Auto-save
+  // 💾 Auto-save design
   useEffect(() => {
     localStorage.setItem("editor-state", JSON.stringify(state));
   }, [state]);
@@ -191,7 +187,8 @@ export function EditorProvider({ children }) {
         width: 150,
         height: 100,
         background: overrides.background ?? "#ef4444",
-        borderRadius: shapeType === "circle" ? 9999 : overrides.borderRadius ?? 6,
+        borderRadius:
+          shapeType === "circle" ? 9999 : overrides.borderRadius ?? 6,
         opacity: overrides.opacity ?? 1,
         ...overrides,
       },
@@ -278,13 +275,99 @@ export function EditorProvider({ children }) {
     link.click();
   };
 
+  // ------------------------------------------------------
+  // ⭐ UPDATED TEMPLATE IMPORT
+  // ------------------------------------------------------
   const importFromJSON = (jsonData) => {
     try {
-      const parsed = JSON.parse(jsonData);
-      if (parsed.elements) dispatch({ type: "SET_ELEMENTS", payload: parsed.elements });
-      if (parsed.canvas) dispatch({ type: "SET_CANVAS_SIZE", payload: parsed.canvas });
-    } catch {
-      alert("Invalid JSON file!");
+      // Accept raw string or object
+      const parsed =
+        typeof jsonData === "string" ? JSON.parse(jsonData) : jsonData;
+
+      // Support two template formats:
+      // 1) Our internal format: { elements: [...], canvas: {...} }
+      // 2) Fabric-style format used by template JSONs: { objects: [...], background }
+
+      let elements = [];
+
+      if (Array.isArray(parsed.elements)) {
+        elements = parsed.elements;
+      } else if (Array.isArray(parsed.objects)) {
+        // Map Fabric-style objects -> editor elements
+        elements = parsed.objects.map((o) => {
+          const base = {
+            id: uuid(),
+            x: o.left ?? 0,
+            y: o.top ?? 0,
+            width:
+              o.width ?? (o.radius ? o.radius * 2 : o.scaleX ? 100 * o.scaleX : 100),
+            height:
+              o.height ?? (o.radius ? o.radius * 2 : o.scaleY ? 100 * o.scaleY : 100),
+            opacity: o.opacity ?? 1,
+            rotation: o.angle ?? o.rotation ?? 0,
+          };
+
+          // Text
+          if (o.type === "textbox" || o.type === "i-text" || o.type === "text") {
+            return {
+              ...base,
+              type: "text",
+              text: o.text || o.text || "",
+              fontSize: o.fontSize || 20,
+              fontFamily: o.fontFamily || "Arial, sans-serif",
+              color: o.fill || o.fillRule || "#000000",
+            };
+          }
+
+          // Image
+          if (o.type === "image") {
+            return {
+              ...base,
+              type: "image",
+              src: o.src || o.url || o.fill || "",
+            };
+          }
+
+          // Shapes (rect, circle, triangle, path)
+          if (o.type === "rect" || o.type === "circle" || o.type === "triangle" || o.type === "path") {
+            return {
+              ...base,
+              type: "shape",
+              shape: o.type === "rect" ? "rect" : o.type,
+              background: o.fill || o.stroke || "#000000",
+            };
+          }
+
+          // Fallback: keep as generic shape/text
+          return {
+            ...base,
+            type: "shape",
+            background: o.fill || "#ffffff",
+          };
+        });
+      }
+
+      // Load elements into state
+      dispatch({
+        type: "SET_ELEMENTS",
+        payload: elements,
+      });
+
+      // Load canvas settings (if provided in template)
+      if (parsed.canvas) {
+        dispatch({
+          type: "SET_CANVAS_SIZE",
+          payload: parsed.canvas,
+        });
+      } else if (parsed.width && parsed.height) {
+        dispatch({
+          type: "SET_CANVAS_SIZE",
+          payload: { width: parsed.width, height: parsed.height, aspect: "custom", zoom: state.canvas.zoom },
+        });
+      }
+    } catch (err) {
+      console.error("Failed to import template:", err);
+      alert("Invalid template format.");
     }
   };
 

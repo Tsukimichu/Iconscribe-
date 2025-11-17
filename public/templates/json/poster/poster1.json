@@ -1,0 +1,13 @@
+{
+  "version": "5.3.0",
+  "objects": [
+    { "type": "rect", "left": -40, "top": -40, "width": 1200, "height": 1600, "fill": "#0b3d91", "angle": 0 },
+    { "type": "textbox", "left": 80, "top": 120, "width": 1040, "text": "SUMMER FEST 2026", "fontSize": 72, "fontWeight": "bold", "fill": "#ffffff", "textAlign": "center", "fontFamily": "Arial" },
+    { "type": "rect", "left": 80, "top": 260, "width": 1040, "height": 8, "fill": "#ffcc00" },
+    { "type": "textbox", "left": 80, "top": 300, "width": 1040, "text": "Join us for music, food, and fun!", "fontSize": 28, "fill": "#ffffff", "textAlign": "center", "fontFamily": "Arial" },
+
+    { "type": "rect", "left": 140, "top": 380, "width": 440, "height": 440, "fill": "#ffffff", "opacity": 0.08 },
+    { "type": "textbox", "left": 600, "top": 420, "width": 520, "text": "Saturday, June 5\nDowntown Park\nTickets available online", "fontSize": 24, "fill": "#ffffff", "textAlign": "left", "fontFamily": "Arial" }
+  ],
+  "background": "#0b3d91"
+}

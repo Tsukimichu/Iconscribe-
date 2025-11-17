@@ -56,65 +56,65 @@
     "json": "/templates/json/calendar/calendar3.json"
   },
   {
-    "id":"calendar4",
-    "name":"Photo Calendar",
-    "category":"Calendar",
-    "preview":"/templates/calendar/calendar4.png",
-    "json":"/templates/json/calendar/calendar4.json"
+    "id": "calendar4",
+    "name": "Photo Calendar",
+    "category": "Calendar",
+    "preview": "/templates/calendar/calendar4.png",
+    "json": "/templates/json/calendar/calendar4.json"
   },
   {
     "id": "poster1",
     "name": "Business Poster",
     "category": "Poster",
-    "preview":"/templates/poster/poster1.png",
-    "json":"/templates/json/poster/poster1.json"
+    "preview": "/templates/poster/poster1.png",
+    "json": "/templates/json/poster/poster1.json"
   },
   {
     "id": "poster2",
     "name": "Realestate Poster",
     "category": "Poster",
-    "preview":"/templates/poster/poster2.png",
-    "json":"/templates/json/poster/poster2.json"
+    "preview": "/templates/poster/poster2.png",
+    "json": "/templates/json/poster/poster2.json"
   },
   {
-    "id":"poster3",
+    "id": "poster3",
     "name": "Modern Interior Poster",
-    "category":"Poster",
-    "preview":"/templates/poster/poster3.png",
-    "json":"/templates/json/poster/poster3.json"
+    "category": "Poster",
+    "preview": "/templates/poster/poster3.png",
+    "json": "/templates/json/poster/poster3.json"
   },
   {
-    "id":"poster4",
-    "name":"Company Poster",
-    "category":"Poster",
-    "preview":"/templates/poster/poster4.png",
-    "json":"/templates/json/poster/poster4.json"
+    "id": "poster4",
+    "name": "Company Poster",
+    "category": "Poster",
+    "preview": "/templates/poster/poster4.png",
+    "json": "/templates/json/poster/poster4.json"
   },
   {
-    "id":"poster5",
-    "name":"Minimalist Interior Poster",
-    "category":"Poster",
-    "preview":"/templates/poster/poster5.png",
-    "json":"/templates/json/poster/poster5.json"
+    "id": "poster5",
+    "name": "Minimalist Interior Poster",
+    "category": "Poster",
+    "preview": "/templates/poster/poster5.png",
+    "json": "/templates/json/poster/poster5.json"
   },
   {
     "id": "label1",
     "name": "Product Label",
-    "category": "Label",  
+    "category": "Label",
     "preview": "/templates/label/label1.png",
     "json": "/templates/json/label/label1.json"
   },
   {
     "id": "label2",
     "name": "Food Label",
-    "category": "Label",  
+    "category": "Label",
     "preview": "/templates/label/label2.png",
     "json": "/templates/json/label/label2.json"
   },
   {
     "id": "label3",
     "name": "Cosmetic Label",
-    "category": "Label",  
+    "category": "Label",
     "preview": "/templates/label/label3.png",
     "json": "/templates/json/label/label3.json"
   },

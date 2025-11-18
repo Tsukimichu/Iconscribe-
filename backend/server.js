@@ -41,11 +41,7 @@ app.use(express.json());
 // Serve uploaded files publicly
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Attach io to req for routes that need it
-app.use("/api/orders", (req, res, next) => {
-  req.io = io;
-  next();
-}, orderRoutes);
+
 
 // Routes
 app.use("/api", userRoutes);
@@ -57,6 +53,12 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/backup", backupRoutes);
 app.use("/api/sessions", sessionRoutes);
 app.use("/api", otpRoutes);
+
+// Attach io to req for routes that need it
+app.use("/api/orders", (req, res, next) => {
+  req.io = io;
+  next();
+}, orderRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {

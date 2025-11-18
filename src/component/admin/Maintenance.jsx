@@ -25,31 +25,6 @@ const Maintenance = () => {
     ],
   });
 
-  // Component editing logic
-  const handleComponentChange = (index, key, value) => {
-    const updated = { ...productComponents };
-    updated[selectedProduct][index][key] = value;
-    setProductComponents(updated);
-  };
-
-  const handleAddComponent = (product) => {
-    const updated = { ...productComponents };
-    updated[product].push({ name: "", cost: "", unit: "" });
-    setProductComponents(updated);
-  };
-
-  const handleDeleteComponent = (product, index) => {
-    const updated = { ...productComponents };
-    updated[product].splice(index, 1);
-    setProductComponents(updated);
-  };
-
-  const handleSaveComponent = (product, index) => {
-    const comp = productComponents[product][index];
-    alert(` Saved ${comp.name} (${comp.cost} / ${comp.unit}) for ${product}`);
-  };
-
-
   useEffect(() => {
     const fetchStatus = async () => {
       try {

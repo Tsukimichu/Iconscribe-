@@ -91,7 +91,7 @@ function ProductSection() {
       <div className="absolute inset-0 bg-[conic-gradient(at_top_right,rgba(34,211,238,0.05),transparent_70%)] animate-spin-slow" />
 
       <h2 className="text-3xl text-white md:text-5xl font-extrabold text-center mb-16 tracking-wide relative z-10">
-        Service <span className="text-yellow-400">Offered</span>
+        Products <span className="text-yellow-400">Offered</span>
       </h2>
 
       <div className="relative mb-12 flex justify-center">
@@ -106,47 +106,36 @@ function ProductSection() {
 
       {filteredServices.length > 0 ? (
         <div className="relative">
-          <Swiper
-            modules={[Navigation, Autoplay]}
-            navigation={true}
-            spaceBetween={24}
-            slidesPerView={3}
-            loop={true}
-            speed={2000}
-            autoplay={{
-              delay: 4000,
-              disableOnInteraction: false,
-            }}
-            onSwiper={(swiper) => {
-              setTimeout(() => {
-                if (!swiper.params.navigation) return;
-                if (!swiper.navigation) return;
+              <Swiper
+                modules={[Navigation, Autoplay]}
+                navigation={{
+                  prevEl: prevRef.current,
+                  nextEl: nextRef.current,
+                }}
+                spaceBetween={24}
+                slidesPerView={3}
+                loop={true}
+                speed={2000}
+                autoplay={{
+                  delay: 4000,
+                  disableOnInteraction: false,
+                }}
+                onSwiper={(swiper) => {
+                  setTimeout(() => {
+                    swiper.params.navigation.prevEl = prevRef.current;
+                    swiper.params.navigation.nextEl = nextRef.current;
 
-                swiper.params.navigation.prevEl = prevRef.current;
-                swiper.params.navigation.nextEl = nextRef.current;
-
-                swiper.navigation.init();
-                swiper.navigation.update();
-
-                // custom fast navigation speed
-                const fastSpeed = 600;
-                const origNext = swiper.slideNext;
-                const origPrev = swiper.slidePrev;
-
-                swiper.slideNext = (speed, runCallbacks, internal) =>
-                  origNext.call(swiper, fastSpeed, runCallbacks, internal);
-
-                swiper.slidePrev = (speed, runCallbacks, internal) =>
-                  origPrev.call(swiper, fastSpeed, runCallbacks, internal);
-              }, 0);
-            }}
-            breakpoints={{
-              320: { slidesPerView: 1 },
-              640: { slidesPerView: 2 },
-              1024: { slidesPerView: 3 },
-            }}
-            className="pb-12"
-          >
+                    swiper.navigation.init();
+                    swiper.navigation.update();
+                  });
+                }}
+                breakpoints={{
+                  320: { slidesPerView: 1 },
+                  640: { slidesPerView: 2 },
+                  1024: { slidesPerView: 3 },
+                }}
+                className="pb-12"
+              >
 
             {filteredServices.map((service, index) => (
               <SwiperSlide key={index}>

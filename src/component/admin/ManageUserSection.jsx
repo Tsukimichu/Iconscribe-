@@ -373,14 +373,6 @@ const ManageUserSection = () => {
                               >
                                 <span>Suspend</span>
                               </button>
-
-                              {/* Ban — red */}
-                              <button
-                                onClick={() => handleBan(user.user_id)}
-                                className="flex items-center gap-2 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-lg text-sm font-medium transition"
-                              >
-                                <span>Ban</span>
-                              </button>
                             </>
                           )}
 

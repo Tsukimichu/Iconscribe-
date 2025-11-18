@@ -51,6 +51,12 @@ const Navigation = ({ selectedSection, setSelectedSection, handleLogout }) => {
           onClick={() => setSelectedSection('manageUser')}
         />
         <NavItem
+          icon={<Settings size={18}/>}
+          label={"Maintenance"}
+          active={selectedSection === 'maintenance'}
+          onClick={() => setSelectedSection('maintenance')}
+        />
+        <NavItem
           icon={<RefreshCcw size={18} />}
           label="Backup & Restore"
           active={selectedSection === 'backup'}

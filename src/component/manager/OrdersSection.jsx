@@ -637,16 +637,9 @@ const OrdersSection = () => {
 
                     {/* Total Price */}
                     <td className="py-3 px-6 font-semibold text-green-600">
-                      {order.total_price
-                        ? `₱${Number(order.total_price || 0).toFixed(2)}`
-                        : order.manager_added && order.manager_added > 0
-                        ? `₱${(
-                            Number(order.estimated_price || 0) +
-                            Number(order.manager_added || 0)
-                          ).toFixed(2)}`
-                        : (
-                          <span className="text-gray-400 italic">—</span>
-                        )}
+                      {order.total_price != null
+                        ? `₱${Number(order.total_price).toFixed(2)}`
+                        : <span className="text-gray-400 italic">—</span>}
                     </td>
 
                     {/* ======================= ACTION BUTTONS ======================= */}
@@ -662,12 +655,6 @@ const OrdersSection = () => {
                       {/* COMPLETED / CANCELED VIEW: only archive */}
                       {tableView === "completed" || tableView === "canceled" ? (
                         <>
-                          <button
-                            onClick={() => openArchiveModal(order)}
-                            className="flex items-center justify-center gap-1 bg-red-100 text-red-700 px-2 py-2 rounded-lg hover:bg-red-200 transition text-sm font-medium"
-                          >
-                            <Trash2 size={16} />
-                          </button>
                         </>
                       ) : (
                         <>
@@ -688,15 +675,7 @@ const OrdersSection = () => {
                           >
                             <PlusCircle size={16} />
                           </button>
-
-                          {/* ARCHIVE */}
-                          <button
-                            onClick={() => openArchiveModal(order)}
-                            className="flex items-center justify-center gap-1 bg-red-100 text-red-700 px-2 py-2 rounded-lg hover:bg-red-200 transition text-sm font-medium"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-
+                          
                           {/* URGENCY */}
                           <button
                             onClick={() => openUrgencyModal(order)}

@@ -44,11 +44,6 @@ const upload = multer({
 router.use("/uploads", express.static(uploadDir));
 
 // ===================================================
-// Serve uploads folder so images are accessible
-// ===================================================
-router.use("/uploads", express.static(uploadDir));
-
-// ===================================================
 // CREATE NEW ORDER
 // ===================================================
 router.post("/create", async (req, res) => {
@@ -483,6 +478,43 @@ router.put("/:id/status", async (req, res) => {
       );
     }
 
+    // ======================================================
+    // AUTO-CREATE SALE RECORD WHEN STATUS = COMPLETED
+    // ======================================================
+    if (status === "Completed") {
+      // Fetch final total price
+      const [priceRows] = await db.promise().query(
+        `SELECT 
+            (oi.estimated_price + IFNULL(o.manager_added, 0)) AS total_price,
+            p.product_name AS item
+         FROM orderitems oi
+         JOIN orders o ON oi.order_id = o.order_id
+         JOIN products p ON oi.product_id = p.product_id
+         WHERE oi.order_item_id = ?
+         LIMIT 1`,
+        [id]
+      );
+
+      const finalPrice = priceRows[0]?.total_price || 0;
+      const itemName   = priceRows[0]?.item || "Unknown";
+
+      // Prevent duplicate sales
+      const [existingSale] = await db.promise().query(
+        "SELECT id FROM sales WHERE order_item_id = ?",
+        [id]
+      );
+
+      if (existingSale.length === 0) {
+        await db.promise().query(
+          `INSERT INTO sales (order_item_id, item, amount, date)
+           VALUES (?, ?, ?, NOW())`,
+          [id, itemName, finalPrice]
+        );
+
+        console.log(` Sale added for order_item_id ${id}`);
+      }
+    }
+
     // ========= SOCKET EMIT FIX =========
     if (req.io) {
       req.io.to(item.user_id.toString()).emit("orderStatusUpdated", {
@@ -493,7 +525,7 @@ router.put("/:id/status", async (req, res) => {
         date: new Date().toISOString(),
       });
 
-      console.log(`📢 Status update sent → user ${item.user_id}`);
+      console.log(` Status update sent → user ${item.user_id}`);
     }
 
     res.json({
@@ -503,7 +535,7 @@ router.put("/:id/status", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("❌ Status Update Error:", err);
+    console.error(" Status Update Error:", err);
     res.status(500).json({ success: false, message: "Database error" });
   }
 });

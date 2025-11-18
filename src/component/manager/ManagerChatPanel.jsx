@@ -3,8 +3,9 @@ import io from "socket.io-client";
 import axios from "axios";
 import { Send, MessageSquare } from "lucide-react";
 import { API_URL } from "../../api";
+import { SOCKET_URL } from "../../api";
 
-const socket = io("http://72.61.143.130:5000"); 
+const socket = io(`${SOCKET_URL}`); 
 
 function ManagerChatPanel({ managerId = 10 }) {
   const [conversations, setConversations] = useState([]);

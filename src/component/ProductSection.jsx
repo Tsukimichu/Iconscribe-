@@ -108,6 +108,7 @@ function ProductSection() {
         <div className="relative">
           <Swiper
             modules={[Navigation, Autoplay]}
+            navigation={true}
             spaceBetween={24}
             slidesPerView={3}
             loop={true}
@@ -118,21 +119,26 @@ function ProductSection() {
             }}
             onSwiper={(swiper) => {
               setTimeout(() => {
+                if (!swiper.params.navigation) return;
+                if (!swiper.navigation) return;
+
                 swiper.params.navigation.prevEl = prevRef.current;
                 swiper.params.navigation.nextEl = nextRef.current;
+
                 swiper.navigation.init();
                 swiper.navigation.update();
 
-               
-                const fastSpeed = 600; 
-                const origSlideNext = swiper.slideNext;
-                const origSlidePrev = swiper.slidePrev;
+                // custom fast navigation speed
+                const fastSpeed = 600;
+                const origNext = swiper.slideNext;
+                const origPrev = swiper.slidePrev;
 
                 swiper.slideNext = (speed, runCallbacks, internal) =>
-                  origSlideNext.call(swiper, fastSpeed, runCallbacks, internal);
+                  origNext.call(swiper, fastSpeed, runCallbacks, internal);
+
                 swiper.slidePrev = (speed, runCallbacks, internal) =>
-                  origSlidePrev.call(swiper, fastSpeed, runCallbacks, internal);
-              });
+                  origPrev.call(swiper, fastSpeed, runCallbacks, internal);
+              }, 0);
             }}
             breakpoints={{
               320: { slidesPerView: 1 },

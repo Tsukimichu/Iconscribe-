@@ -33,6 +33,10 @@ const OrdersSection = () => {
 
   // --- Walk-in order modal ---
   const [showAddOrderModal, setShowAddOrderModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState("");
+
+  const [showSizeDropdown, setShowSizeDropdown] = useState(false);
+
 
   // Define available services (for dropdown)
   const serviceOptions = [
@@ -47,6 +51,7 @@ const OrdersSection = () => {
     "News Letter",
     "Poster",
     "Raffle Ticket",
+    "Label",
   ];
 
   // Optional: if you want auto-pricing per service, define here
@@ -65,6 +70,7 @@ const OrdersSection = () => {
   };
 
   // Form state for new walk-in order
+  // Update your existing useState for newOrder
   const [newOrder, setNewOrder] = useState({
     customer_name: "",
     email: "",
@@ -76,11 +82,17 @@ const OrdersSection = () => {
     enquiry_no: "",
     price: "",
     urgency: "Normal",
-    number_of_pages: "",
-    binding_type: "",
+    // Product Specifics
+    quantity: "",
+    size: "",
     paper_type: "",
-    cover_finish: "",
-    color_printing: "",
+    color_printing: "", 
+    binding_type: "",
+    material: "",
+    details: "",
+    // NEW FIELDS FOR BROCHURE
+    lamination: "", 
+    back_to_back: false, 
   });
 
   const [showUrgencyModal, setShowUrgencyModal] = useState(false);
@@ -332,6 +344,7 @@ const OrdersSection = () => {
           paper_type: "",
           cover_finish: "",
           color_printing: "",
+          book_type:""
         });
         setOrderFiles([]);
       }
@@ -1050,255 +1063,1328 @@ const OrdersSection = () => {
         )}
       </AnimatePresence>
 
-      {/* --- Add Walk-In Order Modal --- */}
+      {/* --- Add Walk-In Order Modal (DYNAMIC VERSION) --- */}
       <AnimatePresence>
-        {showAddOrderModal && (
+      {showAddOrderModal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 flex items-center justify-center bg-black/60 z-50"
+        >
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 flex items-center justify-center bg-black/60 z-50"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            className="bg-white rounded-2xl shadow-lg p-8 max-w-4xl w-full text-left overflow-y-auto max-h-[90vh]"
           >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-lg p-8 max-w-4xl w-full text-center overflow-y-auto max-h-[90vh]"
-            >
-              <h2 className="text-2xl font-bold mb-6 text-cyan-700">
-                Add Walk-In Order
-              </h2>
+            <h2 className="text-2xl font-bold mb-6 text-cyan-700 text-center">
+              Add Walk-In Order
+            </h2>
 
-              {/* Two-column layout for inputs */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                <input
-                  type="text"
-                  placeholder="Customer Name"
-                  value={newOrder.customer_name}
-                  onChange={(e) =>
-                    setNewOrder({ ...newOrder, customer_name: e.target.value })
-                  }
-                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
-                />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={newOrder.email || ""}
-                  onChange={(e) =>
-                    setNewOrder({ ...newOrder, email: e.target.value })
-                  }
-                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
-                />
-                <input
-                  type="text"
-                  placeholder="Contact Number"
-                  value={newOrder.contact_number || ""}
-                  onChange={(e) =>
-                    setNewOrder({
-                      ...newOrder,
-                      contact_number: e.target.value,
-                    })
-                  }
-                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
-                />
-                <input
-                  type="text"
-                  placeholder="Location"
-                  value={newOrder.location || ""}
-                  onChange={(e) =>
-                    setNewOrder({ ...newOrder, location: e.target.value })
-                  }
-                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
-                />
+            {/* ============ CUSTOMER INFORMATION ============ */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="text"
+                placeholder="Customer Name"
+                value={newOrder.customer_name}
+                onChange={(e) =>
+                  setNewOrder({ ...newOrder, customer_name: e.target.value })
+                }
+                className="border border-gray-300 rounded-lg p-2"
+              />
 
-                <input
-                  type="date"
-                  value={newOrder.date_ordered || ""}
-                  onChange={(e) =>
-                    setNewOrder({ ...newOrder, date_ordered: e.target.value })
-                  }
-                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
-                />
+              <input
+                type="email"
+                placeholder="Email"
+                value={newOrder.email}
+                onChange={(e) =>
+                  setNewOrder({ ...newOrder, email: e.target.value })
+                }
+                className="border border-gray-300 rounded-lg p-2"
+              />
 
-                <select
-                  value={newOrder.status || "Pending"}
-                  onChange={(e) =>
-                    setNewOrder({ ...newOrder, status: e.target.value })
-                  }
-                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
-                >
-                  <option>Pending</option>
-                  <option>Ongoing</option>
-                  <option>Out for Delivery</option>
-                  <option>Completed</option>
-                  <option>Cancelled</option>
-                </select>
+              <input
+                type="text"
+                placeholder="Contact Number"
+                value={newOrder.contact_number}
+                onChange={(e) =>
+                  setNewOrder({ ...newOrder, contact_number: e.target.value })
+                }
+                className="border border-gray-300 rounded-lg p-2"
+              />
 
-                <select
-                  value={newOrder.service}
-                  onChange={handleServiceChange}
-                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
-                >
-                  <option value="">Select a service...</option>
-                  {serviceOptions.map((service, index) => (
-                    <option key={index} value={service}>
-                      {service}
-                    </option>
-                  ))}
-                </select>
+              <input
+                type="text"
+                placeholder="Location (Optional)"
+                value={newOrder.location}
+                onChange={(e) =>
+                  setNewOrder({ ...newOrder, location: e.target.value })
+                }
+                className="border border-gray-300 rounded-lg p-2"
+              />
+            </div>
 
-                <input
-                  type="text"
-                  placeholder="Enquiry No."
-                  value={newOrder.enquiry_no || ""}
-                  onChange={(e) =>
-                    setNewOrder({ ...newOrder, enquiry_no: e.target.value })
-                  }
-                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
-                />
+            {/* ============ PRODUCT SELECTOR ============ */}
+            <div className="mt-6">
+              <label className="font-semibold">Select Product</label>
+              <select
+                value={selectedProduct}
+                onChange={(e) => {
+                  setSelectedProduct(e.target.value);
+                  setNewOrder({ ...newOrder, service: e.target.value });
+                }}
+                className="border border-gray-300 rounded-lg p-2 w-full mt-1"
+              >
+                <option value="">Choose Product...</option>
+                <option value="Brochure">Brochure</option>
+                <option value="Binding">Binding</option>
+                <option value="Calling Card">Calling Card</option>
+                <option value="Flyers">Flyers</option>
+                <option value="Poster">Poster</option>
+                <option value="Calendar">Calendar</option>
+                <option value="Invitation">Invitation</option>
+                <option value="Book">Book</option>
+                <option value="Label">Label</option>
+                <option value="Official Receipt">Official Receipt</option>
+                <option value="News Letter">News Letter</option>
+                <option value="Raffle Ticket">Raffle Ticket</option>
+              </select>
+            </div>
 
-                <input
-                  type="number"
-                  placeholder="Price (₱)"
-                  value={newOrder.price}
-                  onChange={(e) =>
-                    setNewOrder({ ...newOrder, price: e.target.value })
-                  }
-                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
-                />
+            {/* ============ DYNAMIC PRODUCT FORMS ============ */}
+            {selectedProduct && (
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                <select
-                  value={newOrder.urgency}
-                  onChange={(e) =>
-                    setNewOrder({ ...newOrder, urgency: e.target.value })
-                  }
-                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
-                >
-                  <option>Normal</option>
-                  <option>Urgent</option>
-                  <option>Rush</option>
-                </select>
+                {/* ---------------- Brochure ---------------- */}
+                {selectedProduct === "Brochure" && (
+                  <>
+                    <input
+                      type="number"
+                      placeholder="Number of Copies"
+                      value={newOrder.quantity}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, quantity: e.target.value })
+                      }
+                      className="border border-gray-300 rounded-lg p-2"
+                    />
 
-                <input
-                  type="number"
-                  placeholder="Number of Pages"
-                  value={newOrder.number_of_pages || ""}
-                  onChange={(e) =>
-                    setNewOrder({
-                      ...newOrder,
-                      number_of_pages: e.target.value,
-                    })
-                  }
-                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
-                />
-                <input
-                  type="text"
-                  placeholder="Binding Type (e.g. Perfect Binding)"
-                  value={newOrder.binding_type || ""}
-                  onChange={(e) =>
-                    setNewOrder({
-                      ...newOrder,
-                      binding_type: e.target.value,
-                    })
-                  }
-                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
-                />
-                <input
-                  type="text"
-                  placeholder="Paper Type (e.g. Matte)"
-                  value={newOrder.paper_type || ""}
-                  onChange={(e) =>
-                    setNewOrder({ ...newOrder, paper_type: e.target.value })
-                  }
-                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
-                />
-                <input
-                  type="text"
-                  placeholder="Cover Finish (e.g. Glossy)"
-                  value={newOrder.cover_finish || ""}
-                  onChange={(e) =>
-                    setNewOrder({
-                      ...newOrder,
-                      cover_finish: e.target.value,
-                    })
-                  }
-                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
-                />
-                <input
-                  type="text"
-                  placeholder="Color Printing (e.g. Full Color)"
-                  value={newOrder.color_printing || ""}
-                  onChange={(e) =>
-                    setNewOrder({
-                      ...newOrder,
-                      color_printing: e.target.value,
-                    })
-                  }
-                  className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
-                />
-              </div>
+                    <div className="relative w-full">
 
-              {/* File Upload */}
-              <div className="mt-4 text-left">
-                <label className="block font-semibold text-gray-700 mb-1">
-                  Upload Files (Images or PDFs)
-                </label>
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*,.pdf"
-                  onChange={(e) => setOrderFiles([...e.target.files])}
-                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
-                />
-                {orderFiles.length > 0 && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    {orderFiles.length} file(s) selected
-                  </p>
+                    {/* Fake Select Box */}
+                    <div
+                      className="border rounded-lg p-2 w-full flex justify-between items-center cursor-pointer"
+                      onClick={() => setShowSizeDropdown(!showSizeDropdown)}
+                    >
+                      <span>{newOrder.size || "Select Size"}</span>
+
+                      {/* When custom => show inputs on the right */}
+                      {newOrder.size === "custom" && (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            placeholder="W"
+                            className="w-14 border rounded p-1 text-sm"
+                            value={newOrder.custom_width || ""}
+                            onChange={(e) =>
+                              setNewOrder({ ...newOrder, custom_width: e.target.value })
+                            }
+                          />
+                          <span className="text-xs font-semibold">x</span>
+                          <input
+                            type="number"
+                            placeholder="H"
+                            className="w-14 border rounded p-1 text-sm"
+                            value={newOrder.custom_height || ""}
+                            onChange={(e) =>
+                              setNewOrder({ ...newOrder, custom_height: e.target.value })
+                            }
+                          />
+                          <span className="text-xs font-semibold">in</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Dropdown Options */}
+                    {showSizeDropdown && (
+                      <div className="absolute left-0 right-0 bg-white border rounded-lg shadow-lg mt-1 z-20">
+                        {[
+                          "11” x 17”",
+                          "17” x 22”",
+                          "22” x 34”",
+                          "8.5” x 14”",
+                          "Custom Size",
+                        ].map((option) => (
+                          <div
+                            key={option}
+                            className="p-2 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => {
+                              setNewOrder({ ...newOrder, size: option });
+                              setShowSizeDropdown(false);
+                            }}
+                          >
+                            {option === "custom" ? "Custom Size" : option}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+
+
+
+                    <select
+                      value={newOrder.paper_type}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, paper_type: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Paper Type</option>
+                      <option>Matte</option>
+                      <option>Glossy</option>
+                      <option>Book Paper</option>
+                    </select>
+
+                    <select
+                      value={newOrder.paper_type}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, lamination: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Lamination Type</option>
+                      <option>Yes</option>
+                      <option>No</option>
+                    </select>
+
+                    <select
+                      value={newOrder.color_printing}
+                      onChange={(e) =>
+                        setNewOrder({
+                          ...newOrder,
+                          color_printing: e.target.value,
+                        })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Colored?</option>
+                      <option>Yes</option>
+                      <option>No</option>
+                    </select>
+
+                    {/* Checkbox aligned exactly like snippet */}
+                    <div className="flex items-center gap-3 p-2 mt-4 sm:mt-0">
+                      <input
+                        type="checkbox"
+                        id="backToBack"
+                        className="w-6 h-6 scale-110 cursor-pointer text-cyan-600 focus:ring-cyan-500 rounded"
+                        // FIX: Use newOrder.back_to_back
+                        checked={newOrder.back_to_back || false}
+                        onChange={(e) => setNewOrder({ ...newOrder, back_to_back: e.target.checked })}
+                      />
+                      <label htmlFor="backToBack" className="text-lg font-bold cursor-pointer select-none text-gray-800">
+                        Print Back-to-Back
+                      </label>
+                    </div>
+
+                  </>
+                )}
+
+                {/* ---------------- Book ---------------- */}
+                {selectedProduct === "Book" && (
+                  <>
+                    <input
+                      type="number"
+                      placeholder="Number of Copies"
+                      value={newOrder.quantity}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, quantity: e.target.value })
+                      }
+                      className="border border-gray-300 rounded-lg p-2"
+                    />
+
+                    <input
+                      type="number"
+                      placeholder="Number of Pages"
+                      value={newOrder.quantity}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, quantity: e.target.value })
+                      }
+                      className="border border-gray-300 rounded-lg p-2"
+                    />
+
+                    <select
+                      value={newOrder.binding_type}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, binding_type: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Binding Type</option>
+                      <option>Perfect Binding</option>
+                      <option>Saddle Stitch</option>
+                      <option>Hardcover</option>
+                      <option>Spiral</option>
+                    </select>
+
+                    <select
+                      value={newOrder.book_type}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, book_type: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Book Type</option>
+                      <option>Year Book</option>
+                      <option>Coffee Table Book</option>
+                      <option>Souvenir Program</option>
+                    </select>
+
+
+                    <div className="relative">
+
+                      {/* SELECT BOX */}
+                      <select
+                        value={newOrder.size}
+                        onChange={(e) => setNewOrder({ ...newOrder, size: e.target.value })}
+                        className="border rounded-lg p-2 w-full appearance-none"
+                      >
+                        <option value="">Select Size</option>
+                        <option>A4 (210 x 297 mm)</option>
+                        <option>Trade Paperback (13 x 20 cm)</option>
+                        <option>5.5&quot; x 8.5&quot; (13.97 x 21.59 cm)</option>
+                        <option>6&quot; x 9&quot; (15.24 x 22.86 cm)</option>
+                        <option>5&quot; x 8&quot; (12.7 x 20.32 cm)</option>
+
+                        {/* Custom Size */}
+                        <option value="custom">Custom Size</option>
+                      </select>
+
+                      {/* INPUTS THAT APPEAR INSIDE SELECT ON THE RIGHT SIDE */}
+                      {newOrder.size === "custom" && (
+                        <div className="absolute inset-y-0 right-2 flex items-center gap-2 pointer-events-auto">
+                          {/* Width */}
+                          <input
+                            type="number"
+                            placeholder="W"
+                            value={newOrder.custom_width || ""}
+                            onChange={(e) =>
+                              setNewOrder({ ...newOrder, custom_width: e.target.value })
+                            }
+                            className="w-14 border rounded p-1 text-sm bg-white shadow-sm"
+                          />
+
+                          <span className="text-xs font-semibold">x</span>
+
+                          {/* Height */}
+                          <input
+                            type="number"
+                            placeholder="H"
+                            value={newOrder.custom_height || ""}
+                            onChange={(e) =>
+                              setNewOrder({ ...newOrder, custom_height: e.target.value })
+                            }
+                            className="w-14 border rounded p-1 text-sm bg-white shadow-sm"
+                          />
+
+                          <span className="text-xs font-semibold">in</span>
+                        </div>
+                      )}
+                    </div>
+
+
+                    <select
+                      value={newOrder.paper_type}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, paper_type: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Paper Type</option>
+                      <option>Matte</option>
+                      <option>Glossy</option>
+                      <option>Book Paper</option>
+                    </select>
+
+                    <select
+                      value={newOrder.cover_finish}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, cover_finish: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Cover finish</option>
+                      <option>Matte</option>
+                      <option>Glossy</option>
+                      <option>Soft Touch</option>
+                    </select>
+
+                    <select
+                      value={newOrder.color_printing}
+                      onChange={(e) =>
+                        setNewOrder({
+                          ...newOrder,
+                          color_printing: e.target.value,
+                        })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Color Printing</option>
+                      <option>Full Color</option>
+                      <option>Black & White</option>
+                      <option>Mixed</option>
+                    </select>
+                  </>
+                )}
+
+
+                {/* ---------------- Official Receipt ---------------- */}
+                {selectedProduct === "Official Receipt" && (
+                  <>
+                    {/* Business Name */}
+                    <input
+                      type="text"
+                      placeholder="Business Name"
+                      value={newOrder.business_name}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, business_name: e.target.value })
+                      }
+                      className="border border-gray-300 rounded-lg p-2"
+                    />
+
+                    {/* Quantity */}
+                    <input
+                      type="number"
+                      placeholder="Quantity (min 100)"
+                      min="100"
+                      value={newOrder.quantity}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, quantity: e.target.value })
+                      }
+                      className="border border-gray-300 rounded-lg p-2"
+                    />
+
+                    {/* Paper Type */}
+                    <select
+                      value={newOrder.paper_type}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, paper_type: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Paper Type</option>
+                      <option>Carbonized</option>
+                      <option>Colored Bondpaper</option>
+                    </select>
+
+                    {/* Booklet Finish */}
+                    <select
+                      value={newOrder.booklet_finish}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, booklet_finish: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Booklet Finish</option>
+                      <option>Padded</option>
+                      <option>Stapled</option>
+                      <option>Loose</option>
+                    </select>
+                  </>
+                )}
+
+
+                {/* ---------------- Newsletter ---------------- */}
+                {selectedProduct === "News Letter" && (
+                  <> 
+                    {/* Business Name */}
+                    <input
+                      type="text"
+                      placeholder="Business Name"
+                      value={newOrder.business_name}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, business_name: e.target.value })
+                      }
+                      className="border border-gray-300 rounded-lg p-2"
+                    />
+
+                    {/* Quantity */}
+                    <input
+                      type="number"
+                      placeholder="Number of Copies (min 100)"
+                      min="100"
+                      value={newOrder.quantity}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, quantity: e.target.value })
+                      }
+                      className="border border-gray-300 rounded-lg p-2"
+                    />
+
+                    {/* Color */}
+                    <select
+                      value={newOrder.color}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, color: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Print Type</option>
+                      <option>Black & White</option>
+                      <option>Full Color</option>
+                    </select>
+
+                    {/* Layout */}
+                    <select
+                      value={newOrder.layout}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, layout: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Layout</option>
+                      <option>Single Page</option>
+                      <option>Multi-Page</option>
+                    </select>
+                  </>
+                )}
+
+
+
+
+                {/* ---------------- Raffle Ticket ---------------- */}
+                {selectedProduct === "Raffle Ticket" && (
+                  <>
+                    {/* Business Name */}
+                    <input
+                      type="text"
+                      placeholder="Business Name"
+                      value={newOrder.business_name}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, business_name: e.target.value })
+                      }
+                      className="border border-gray-300 rounded-lg p-2"
+                    />
+
+                    {/* Number of Tickets */}
+                    <input
+                      type="number"
+                      placeholder="Number of Tickets (min 50)"
+                      min="50"
+                      value={newOrder.quantity}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, quantity: e.target.value })
+                      }
+                      className="border border-gray-300 rounded-lg p-2"
+                    />
+
+                    {/* Size */}
+                    <div className="relative w-full">
+
+                      {/* SELECT BOX */}
+                      <select
+                        value={newOrder.size}
+                        onChange={(e) =>
+                          setNewOrder({ ...newOrder, size: e.target.value })
+                        }
+                        className="border rounded-lg p-2 w-full appearance-none"
+                      >
+                        <option value="">Select Size</option>
+                        <option>2” x 5” (Standard)</option>
+                        <option value="custom">Custom Size</option>
+                      </select>
+
+                      {/* CUSTOM SIZE INPUTS (APPEAR INSIDE SELECT ON RIGHT SIDE) */}
+                      {newOrder.size === "custom" && (
+                        <div className="absolute inset-y-0 right-2 flex items-center gap-2 pointer-events-auto">
+
+                          {/* Width */}
+                          <input
+                            type="number"
+                            placeholder="W"
+                            value={newOrder.custom_width || ""}
+                            onChange={(e) =>
+                              setNewOrder({ ...newOrder, custom_width: e.target.value })
+                            }
+                            className="w-14 border rounded p-1 text-sm bg-white shadow-sm"
+                          />
+
+                          <span className="text-xs font-semibold">x</span>
+
+                          {/* Height */}
+                          <input
+                            type="number"
+                            placeholder="H"
+                            value={newOrder.custom_height || ""}
+                            onChange={(e) =>
+                              setNewOrder({ ...newOrder, custom_height: e.target.value })
+                            }
+                            className="w-14 border rounded p-1 text-sm bg-white shadow-sm"
+                          />
+
+                          <span className="text-xs font-semibold">in</span>
+                        </div>
+                      )}
+                    </div>
+
+
+                    {/* With Stub */}
+                    <select
+                      value={newOrder.with_stub}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, with_stub: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">With Stub?</option>
+                      <option>Yes</option>
+                      <option>No</option>
+                    </select>
+                  </>
+                )}
+
+
+
+
+
+                {/* ---------------- Label ---------------- */}
+                {selectedProduct === "Label" && (
+                  <>
+                    {/* Quantity */}
+                    <input
+                      type="number"
+                      placeholder="Number of Copies (min 100)"
+                      min="100"
+                      value={newOrder.quantity}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, quantity: e.target.value })
+                      }
+                      className="border border-gray-300 rounded-lg p-2"
+                    />
+
+                    {/* Size */}
+                    <div className="relative w-full">
+
+                      {/* SELECT BOX */}
+                      <select
+                        value={newOrder.size}
+                        onChange={(e) =>
+                          setNewOrder({ ...newOrder, size: e.target.value })
+                        }
+                        className="border rounded-lg p-2 w-full appearance-none"
+                      >
+                        <option value="">Select Size</option>
+                        <option>2” x 2”</option>
+                        <option>3” x 3”</option>
+                        <option value="custom">Custom Size</option>
+                      </select>
+
+                      {/* CUSTOM SIZE INPUTS - FLOAT INSIDE SELECT */}
+                      {newOrder.size === "custom" && (
+                        <div className="absolute inset-y-0 right-2 flex items-center gap-2 pointer-events-auto">
+
+                          {/* Width */}
+                          <input
+                            type="number"
+                            placeholder="W"
+                            value={newOrder.custom_width || ""}
+                            onChange={(e) =>
+                              setNewOrder({ ...newOrder, custom_width: e.target.value })
+                            }
+                            className="w-14 border rounded p-1 text-sm bg-white shadow-sm"
+                          />
+
+                          <span className="text-xs font-semibold">x</span>
+
+                          {/* Height */}
+                          <input
+                            type="number"
+                            placeholder="H"
+                            value={newOrder.custom_height || ""}
+                            onChange={(e) =>
+                              setNewOrder({ ...newOrder, custom_height: e.target.value })
+                            }
+                            className="w-14 border rounded p-1 text-sm bg-white shadow-sm"
+                          />
+
+                          <span className="text-xs font-semibold">in</span>
+                        </div>
+                      )}
+                    </div>
+
+
+                    {/* Paper Type */}
+                    <select
+                      value={newOrder.paper_type}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, paper_type: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Paper Type</option>
+                      <option>Matte</option>
+                      <option>Glossy</option>
+                      <option>Transparent</option>
+                      <option>Waterproof Vinyl</option>
+                    </select>
+                  </>
+                )}
+
+
+                {/* ---------------- Calling Card ---------------- */}
+                {selectedProduct === "Calling Card" && (
+                  <>
+                    {/* Business/Personal Label */}
+                    <input
+                      type="text"
+                      placeholder="Card Title (e.g. Business or Personal)"
+                      value={newOrder.card_title}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, card_title: e.target.value })
+                      }
+                      className="border border-gray-300 rounded-lg p-2"
+                    />
+
+                    {/* Quantity */}
+                    <input
+                      type="number"
+                      placeholder="Number of Cards (min 100)"
+                      min="100"
+                      value={newOrder.quantity}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, quantity: e.target.value })
+                      }
+                      className="border border-gray-300 rounded-lg p-2"
+                    />
+
+                    {/* Size */}
+                   <div className="relative w-full">
+
+                      {/* SELECT BOX */}
+                      <select
+                        value={newOrder.size}
+                        onChange={(e) =>
+                          setNewOrder({ ...newOrder, size: e.target.value })
+                        }
+                        className="border rounded-lg p-2 w-full appearance-none"
+                      >
+                        <option value="">Select Size</option>
+                        <option>2” x 3.5” (Standard)</option>
+                        <option value="custom">Custom Size</option>
+                      </select>
+
+                      {/* CUSTOM SIZE INPUTS FLOATING INSIDE THE SELECT BOX */}
+                      {newOrder.size === "custom" && (
+                        <div className="absolute inset-y-0 right-2 flex items-center gap-2 pointer-events-auto">
+
+                          {/* Width */}
+                          <input
+                            type="number"
+                            placeholder="W"
+                            value={newOrder.custom_width || ""}
+                            onChange={(e) =>
+                              setNewOrder({ ...newOrder, custom_width: e.target.value })
+                            }
+                            className="w-14 border rounded p-1 text-sm bg-white shadow-sm"
+                          />
+
+                          <span className="text-xs font-semibold">x</span>
+
+                          {/* Height */}
+                          <input
+                            type="number"
+                            placeholder="H"
+                            value={newOrder.custom_height || ""}
+                            onChange={(e) =>
+                              setNewOrder({ ...newOrder, custom_height: e.target.value })
+                            }
+                            className="w-14 border rounded p-1 text-sm bg-white shadow-sm"
+                          />
+
+                          <span className="text-xs font-semibold">in</span>
+                        </div>
+                      )}
+                    </div>
+
+
+                    {/* Paper Type */}
+                    <select
+                      value={newOrder.paper_type}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, paper_type: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Type of Paper</option>
+                      <option>Matte</option>
+                      <option>Glossy</option>
+                      <option>Textured</option>
+                    </select>
+                  </>
+                )}
+
+
+
+
+                {/* ---------------- Calendars ---------------- */}
+                {selectedProduct === "Calendar" && (
+                  <>
+                    {/* Number of Sets */}
+                    <input
+                      type="number"
+                      placeholder="Number of Sets (min 100)"
+                      min="100"
+                      value={newOrder.quantity}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, quantity: e.target.value })
+                      }
+                      className="border border-gray-300 rounded-lg p-2"
+                    />
+
+                    {/* Color */}
+                    <select
+                      value={newOrder.color}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, color: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Color</option>
+                      <option>Single Colored</option>
+                      <option>More Than 1 Color</option>
+                    </select>
+
+                    {/* Calendar Type */}
+                    <select
+                      value={newOrder.calendar_type}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, calendar_type: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Calendar Type</option>
+                      <option>Single Month (12 pages)</option>
+                      <option>Double Month (6 pages)</option>
+                    </select>
+
+                    {/* Size */}
+                    <div className="relative w-full">
+
+                      {/* SIZE SELECT */}
+                      <select
+                        value={newOrder.size}
+                        onChange={(e) =>
+                          setNewOrder({ ...newOrder, size: e.target.value })
+                        }
+                        className="border rounded-lg p-2 w-full appearance-none"
+                        required
+                      >
+                        <option value="">Select Size</option>
+                        <option>11”x17”</option>
+                        <option>17”x22”</option>
+                        <option>22”x34”</option>
+                        <option>8 1/2”x14”</option>
+
+                        {/* CUSTOM SIZE */}
+                        <option value="custom">Custom Size</option>
+                      </select>
+
+                      {/* INLINE CUSTOM SIZE INPUTS (FLOATING INSIDE SELECT) */}
+                      {newOrder.size === "custom" && (
+                        <div className="absolute inset-y-0 right-2 flex items-center gap-2 pointer-events-auto">
+
+                          {/* Width */}
+                          <input
+                            type="number"
+                            placeholder="W"
+                            value={newOrder.custom_width || ""}
+                            onChange={(e) =>
+                              setNewOrder({ ...newOrder, custom_width: e.target.value })
+                            }
+                            className="w-14 border rounded p-1 text-sm bg-white shadow-sm"
+                          />
+
+                          <span className="text-xs font-semibold">x</span>
+
+                          {/* Height */}
+                          <input
+                            type="number"
+                            placeholder="H"
+                            value={newOrder.custom_height || ""}
+                            onChange={(e) =>
+                              setNewOrder({ ...newOrder, custom_height: e.target.value })
+                            }
+                            className="w-14 border rounded p-1 text-sm bg-white shadow-sm"
+                          />
+
+                          <span className="text-xs font-semibold">in</span>
+                        </div>
+                      )}
+                    </div>
+
+                  </>
+                )}
+
+
+                {/* ----------------Invitation---------------- */}
+                {selectedProduct === "Invitation" && (
+                  <>
+                    {/* Event Name */}
+                    <input
+                      type="text"
+                      placeholder="Event Name"
+                      value={newOrder.event_name}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, event_name: e.target.value })
+                      }
+                      className="border border-gray-300 rounded-lg p-2"
+                    />
+
+                    {/* Quantity */}
+                    <input
+                      type="number"
+                      placeholder="Number of Copies (min 50)"
+                      min="50"
+                      value={newOrder.quantity}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, quantity: e.target.value })
+                      }
+                      className="border border-gray-300 rounded-lg p-2"
+                    />
+
+                    {/* Size */}
+                    <div className="relative w-full">
+
+                      {/* SIZE SELECT */}
+                      <select
+                        value={newOrder.size}
+                        onChange={(e) =>
+                          setNewOrder({ ...newOrder, size: e.target.value })
+                        }
+                        className="border rounded-lg p-2 w-full appearance-none"
+                      >
+                        <option value="">Select Size</option>
+                        <option>5x7 inches</option>
+                        <option>4x6 inches</option>
+                        <option value="custom">Custom</option>
+                      </select>
+
+                      {/* INLINE CUSTOM SIZE INPUTS */}
+                      {newOrder.size === "custom" && (
+                        <div className="absolute inset-y-0 right-2 flex items-center gap-2 pointer-events-auto">
+
+                          {/* Width */}
+                          <input
+                            type="number"
+                            placeholder="W"
+                            value={newOrder.custom_width || ""}
+                            onChange={(e) =>
+                              setNewOrder({ ...newOrder, custom_width: e.target.value })
+                            }
+                            className="w-14 border rounded p-1 text-sm bg-white shadow-sm"
+                          />
+
+                          <span className="text-xs font-semibold">x</span>
+
+                          {/* Height */}
+                          <input
+                            type="number"
+                            placeholder="H"
+                            value={newOrder.custom_height || ""}
+                            onChange={(e) =>
+                              setNewOrder({ ...newOrder, custom_height: e.target.value })
+                            }
+                            className="w-14 border rounded p-1 text-sm bg-white shadow-sm"
+                          />
+
+                          <span className="text-xs font-semibold">in</span>
+                        </div>
+                      )}
+                    </div>
+
+
+                    {/* Paper Type */}
+                    <select
+                      value={newOrder.paper_type}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, paper_type: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Type of Paper</option>
+                      <option>Carbonized</option>
+                      <option>Colored</option>
+                      <option>Plain</option>
+                    </select>
+
+                    {/* Print Method */}
+                    <select
+                      value={newOrder.print_method}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, print_method: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Print Method</option>
+                      <option>Computer Printout</option>
+                      <option>Offset Machine</option>
+                    </select>
+                  </>
+                )}
+
+
+
+                {/* ---------------- Poster---------------- */}
+                {selectedProduct === "Poster" && (
+                  <>
+                    {/* Number of Posters */}
+                    <input
+                      type="number"
+                      placeholder="Number of Posters (min 100)"
+                      min="100"
+                      value={newOrder.quantity}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, quantity: e.target.value })
+                      }
+                      className="border border-gray-300 rounded-lg p-2"
+                    />
+
+                    {/* Poster Size */}
+                    <div className="relative w-full">
+
+                      {/* POSTER SIZE SELECT */}
+                      <select
+                        value={newOrder.size}
+                        onChange={(e) =>
+                          setNewOrder({ ...newOrder, size: e.target.value })
+                        }
+                        className="border rounded-lg p-2 w-full appearance-none"
+                      >
+                        <option value="">Select Poster Size</option>
+                        <option>A3</option>
+                        <option>A2</option>
+                        <option>A1</option>
+                        <option value="custom">Custom</option>
+                      </select>
+
+                      {/* INLINE CUSTOM SIZE INPUTS */}
+                      {newOrder.size === "custom" && (
+                        <div className="absolute inset-y-0 right-2 flex items-center gap-2 pointer-events-auto">
+
+                          {/* Width */}
+                          <input
+                            type="number"
+                            placeholder="W"
+                            value={newOrder.custom_width || ""}
+                            onChange={(e) =>
+                              setNewOrder({ ...newOrder, custom_width: e.target.value })
+                            }
+                            className="w-14 border rounded p-1 text-sm bg-white shadow-sm"
+                          />
+
+                          <span className="text-xs font-semibold">x</span>
+
+                          {/* Height */}
+                          <input
+                            type="number"
+                            placeholder="H"
+                            value={newOrder.custom_height || ""}
+                            onChange={(e) =>
+                              setNewOrder({ ...newOrder, custom_height: e.target.value })
+                            }
+                            className="w-14 border rounded p-1 text-sm bg-white shadow-sm"
+                          />
+
+                          <span className="text-xs font-semibold">in</span>
+                        </div>
+                      )}
+                    </div>
+
+
+                    {/* Paper Type */}
+                    <select
+                      value={newOrder.paper_type}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, paper_type: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Paper Type</option>
+                      <option>Glossy</option>
+                      <option>Matte</option>
+                      <option>Premium Card</option>
+                    </select>
+
+                    {/* Lamination */}
+                    <select
+                      value={newOrder.lamination}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, lamination: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Lamination</option>
+                      <option>Gloss</option>
+                      <option>Matte</option>
+                      <option>UV Coated</option>
+                    </select>
+
+                    {/* Color */}
+                    <select
+                      value={newOrder.color}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, color: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Color</option>
+                      <option>Full Color</option>
+                      <option>Black & White</option>
+                    </select>
+                  </>
+                )}
+
+
+                {/* ---------------- Flyers ---------------- */}
+                {selectedProduct === "Flyers" && (
+                  <>
+                    {/* Quantity */}
+                    <input
+                      type="number"
+                      placeholder="Number of Copies (min 1000)"
+                      min="1000"
+                      value={newOrder.quantity}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, quantity: e.target.value })
+                      }
+                      className="border border-gray-300 rounded-lg p-2"
+                    />
+
+                    {/* Flyer Size */}
+                    <div className="relative w-full">
+
+                      {/* FLYER SIZE SELECT */}
+                      <select
+                        value={newOrder.size}
+                        onChange={(e) =>
+                          setNewOrder({ ...newOrder, size: e.target.value })
+                        }
+                        className="border rounded-lg p-2 w-full appearance-none"
+                      >
+                        <option value="">Select Flyer Size</option>
+                        <option>A4</option>
+                        <option>A5</option>
+                        <option>DL</option>
+                        <option value="custom">Custom</option>
+                      </select>
+
+                      {/* INLINE CUSTOM SIZE INPUTS (FLOATING INSIDE RIGHT SIDE OF SELECT) */}
+                      {newOrder.size === "custom" && (
+                        <div className="absolute inset-y-0 right-2 flex items-center gap-2 pointer-events-auto">
+
+                          {/* Width */}
+                          <input
+                            type="number"
+                            placeholder="W"
+                            value={newOrder.custom_width || ""}
+                            onChange={(e) =>
+                              setNewOrder({ ...newOrder, custom_width: e.target.value })
+                            }
+                            className="w-14 border rounded p-1 text-sm bg-white shadow-sm"
+                          />
+
+                          <span className="text-xs font-semibold">x</span>
+
+                          {/* Height */}
+                          <input
+                            type="number"
+                            placeholder="H"
+                            value={newOrder.custom_height || ""}
+                            onChange={(e) =>
+                              setNewOrder({ ...newOrder, custom_height: e.target.value })
+                            }
+                            className="w-14 border rounded p-1 text-sm bg-white shadow-sm"
+                          />
+
+                          <span className="text-xs font-semibold">in</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Paper Type */}
+                    <select
+                      value={newOrder.paper_type}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, paper_type: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Paper Type</option>
+                      <option>Glossy</option>
+                      <option>Matte</option>
+                      <option>Premium Card</option>
+                    </select>
+
+                    {/* Lamination */}
+                    <select
+                      value={newOrder.lamination}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, lamination: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Lamination</option>
+                      <option>Gloss</option>
+                      <option>Matte</option>
+                      <option>UV Coated</option>
+                    </select>
+
+                    {/* Color */}
+                    <select
+                      value={newOrder.color}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, color: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Select Color Option</option>
+                      <option>Yes</option>
+                      <option>No</option>
+                    </select>
+
+                    {/* Back-to-Back */}
+                    <label className="flex items-center gap-3 p-2">
+                      <input
+                        type="checkbox"
+                        checked={newOrder.back_to_back || false}
+                        onChange={(e) =>
+                          setNewOrder({ ...newOrder, back_to_back: e.target.checked })
+                        }
+                        className="w-5 h-5 cursor-pointer"
+                      />
+                      <span className="font-semibold">Print Back-to-Back</span>
+                    </label>
+                  </>
+                )}
+
+
+                {/* ---------------- Binding ---------------- */}
+                {selectedProduct === "Binding" && (
+                  <>
+                    <input
+                      type="number"
+                      placeholder="Number of Books"
+                      value={newOrder.quantity}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, quantity: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    />
+
+                    <input
+                      type="number"
+                      placeholder="Page Count"
+                      value={newOrder.number_of_pages}
+                      onChange={(e) =>
+                        setNewOrder({
+                          ...newOrder,
+                          number_of_pages: e.target.value,
+                        })
+                      }
+                      className="border rounded-lg p-2"
+                    />
+
+                    <select
+                      value={newOrder.binding_type}
+                      onChange={(e) =>
+                        setNewOrder({
+                          ...newOrder,
+                          binding_type: e.target.value,
+                        })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Binding Type</option>
+                      <option>Perfect Binding</option>
+                      <option>Saddle Stitch</option>
+                      <option>Spiral</option>
+                      <option>Ring Binding</option>
+                    </select>
+
+                    <select
+                      value={newOrder.paper_type}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, paper_type: e.target.value })
+                      }
+                      className="border rounded-lg p-2"
+                    >
+                      <option value="">Paper Type</option>
+                      <option>Matte</option>
+                      <option>Glossy</option>
+                      <option>Bond Paper</option>
+                      <option>Book Paper</option>
+                    </select>
+                  </>
                 )}
               </div>
+            )}
 
-              {/* Buttons */}
-              <div className="flex justify-center gap-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAddOrderModal(false);
-                    setNewOrder({
-                      customer_name: "",
-                      email: "",
-                      contact_number: "",
-                      location: "",
-                      date_ordered: "",
-                      status: "Pending",
-                      service: "",
-                      enquiry_no: "",
-                      price: "",
-                      urgency: "Normal",
-                      number_of_pages: "",
-                      binding_type: "",
-                      paper_type: "",
-                      cover_finish: "",
-                      color_printing: "",
-                    });
-                    setOrderFiles([]);
-                  }}
-                  className="px-5 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition-colors duration-200"
-                >
-                  Cancel
-                </button>
+            {/* ============ FILE UPLOAD ============ */}
+            <div className="mt-6">
+              <label className="font-semibold text-gray-700">
+                Upload File (optional)
+              </label>
+              <input
+                type="file"
+                multiple
+                accept="image/*,.pdf"
+                onChange={(e) => setOrderFiles([...e.target.files])}
+                className="border rounded-lg p-2 w-full mt-1"
+              />
+            </div>
 
-                <button
-                  type="button"
-                  onClick={handleAddOrder}
-                  className="px-5 py-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold shadow-sm transition-colors duration-200"
-                >
-                  Add Order
-                </button>
-              </div>
-            </motion.div>
+            {/* ============ BUTTONS ============ */}
+            <div className="flex justify-center gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddOrderModal(false);
+                  setSelectedProduct("");
+                  setNewOrder({
+                    customer_name: "",
+                    email: "",
+                    contact_number: "",
+                    location: "",
+                    status: "Pending",
+                    service: "",
+                    quantity: "",
+                    size: "",
+                    paper_type: "",
+                    number_of_pages: "",
+                    binding_type: "",
+                    color_printing: "",
+                    material: "",
+                  });
+                  setOrderFiles([]);
+                }}
+                className="px-5 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleAddOrder}
+                className="px-5 py-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold"
+              >
+                Add Order
+              </button>
+            </div>
           </motion.div>
-        )}
+        </motion.div>
+      )}
       </AnimatePresence>
+
 
       {/* --- Urgency Modal --- */}
       <AnimatePresence>

@@ -1,14 +1,16 @@
 // ----------------------------
 // src/utils/exportUtils.js
 // ----------------------------
-import { toPng, toJpeg, toSvg } from "html-to-image";
+import { toPng, toJpeg } from "html-to-image";
 import jsPDF from "jspdf";
 
 /**
  * Export as PNG
+ * Returns a data URL that you can download.
  */
 export async function exportCanvasAsPng(container) {
-  if (!container) return;
+  if (!container) throw new Error("No canvas container provided");
+
   try {
     const dataUrl = await toPng(container, {
       cacheBust: true,
@@ -23,14 +25,16 @@ export async function exportCanvasAsPng(container) {
 
 /**
  * Export as JPG
+ * Returns a data URL that you can download.
  */
 export async function exportCanvasAsJpg(container) {
-  if (!container) return;
+  if (!container) throw new Error("No canvas container provided");
+
   try {
     const dataUrl = await toJpeg(container, {
       cacheBust: true,
       pixelRatio: 2,
-      quality: 0.95, // higher quality JPG
+      quality: 0.95,
     });
     return dataUrl;
   } catch (error) {
@@ -40,45 +44,45 @@ export async function exportCanvasAsJpg(container) {
 }
 
 /**
- * Export as SVG
- */
-export async function exportCanvasAsSvg(container) {
-  if (!container) return;
-  try {
-    const dataUrl = await toSvg(container, {
-      cacheBust: true,
-    });
-    return dataUrl;
-  } catch (error) {
-    console.error("SVG export failed:", error);
-    throw error;
-  }
-}
-
-/**
  * Export as PDF
+ * This will:
+ *  1. Render the canvas as a high-res PNG
+ *  2. Create a PDF sized to the image
+ *  3. Trigger a download of "canvas.pdf"
  */
-export async function exportCanvasAsPdf(container) {
-  if (!container) return;
+export async function exportCanvasAsPdf(container, fileName = "canvas.pdf") {
+  if (!container) throw new Error("No canvas container provided");
+
   try {
-    // convert container to PNG first
+    // First, render DOM → PNG
     const dataUrl = await toPng(container, {
       cacheBust: true,
       pixelRatio: 2,
     });
 
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "px",
-      format: "a4",
+    // Load image to get width/height in pixels
+    const img = new Image();
+    img.src = dataUrl;
+
+    await new Promise((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = reject;
     });
 
-    const imgProps = pdf.getImageProperties(dataUrl);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    const imgWidth = img.width;
+    const imgHeight = img.height;
 
-    pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
-    return pdf.output("dataurlstring");
+    // Create PDF with same pixel dimensions (pt ~ px for our purpose)
+    const orientation = imgWidth >= imgHeight ? "landscape" : "portrait";
+
+    const pdf = new jsPDF({
+      orientation,
+      unit: "pt",
+      format: [imgWidth, imgHeight],
+    });
+
+    pdf.addImage(dataUrl, "PNG", 0, 0, imgWidth, imgHeight);
+    pdf.save(fileName);
   } catch (error) {
     console.error("PDF export failed:", error);
     throw error;

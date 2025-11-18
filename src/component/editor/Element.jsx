@@ -8,8 +8,34 @@ import ImageElement from "./ImageElement";
 import ShapeElement from "./ShapeElement";
 import { useEditor } from "../../context/EditorContext";
 
-// 🟢 NEW — Path + SVG Element
+// 🟢 SVG PATH ELEMENT
 function PathElement({ element }) {
+  return (
+    <svg
+      width={element.width}
+      height={element.height}
+      viewBox={`0 0 ${element.width} ${element.height}`}
+      style={{
+        position: "absolute",
+        inset: 0,
+        pointerEvents: "none"
+      }}
+    >
+      <path
+        d={element.d}
+        fill={element.fill}
+        stroke={element.stroke || "none"}
+        strokeWidth={element.strokeWidth || 0}
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  );
+}
+
+// 🟢 CIRCULAR MASKED IMAGE
+function ClippedImageElement({ element }) {
+  const radius = Math.min(element.width, element.height) / 2;
+
   return (
     <svg
       width={element.width}
@@ -17,27 +43,12 @@ function PathElement({ element }) {
       style={{
         position: "absolute",
         inset: 0,
-      }}
-    >
-      <path d={element.d} fill={element.fill} />
-    </svg>
-  );
-}
-
-// 🟢 NEW — Masked (Circular) Image Element
-function ClippedImageElement({ element }) {
-  return (
-    <svg
-      width={element.width}
-      height={element.height}
-      style={{
-        position: "absolute",
-        inset: 0
+        pointerEvents: "none"
       }}
     >
       <defs>
         <clipPath id={`clip-${element.id}`}>
-          <circle cx="50%" cy="50%" r="50%" />
+          <circle cx={element.width / 2} cy={element.height / 2} r={radius} />
         </clipPath>
       </defs>
 
@@ -115,6 +126,7 @@ export default function Element({ element, zoom = 1, fitZoom = 1 }) {
     });
   };
 
+  // ⭐ FIXED ROTATION HANDLER
   const startRotate = (e) => {
     e.stopPropagation();
 
@@ -124,8 +136,7 @@ export default function Element({ element, zoom = 1, fitZoom = 1 }) {
       const cy = rect.top + rect.height / 2;
       const radians = Math.atan2(ev.clientY - cy, ev.clientX - cx);
       const deg = (radians * 180) / Math.PI;
-
-      setRotation(Math.round(deg));
+      setRotation(deg);
     };
 
     const stop = () => {
@@ -163,7 +174,9 @@ export default function Element({ element, zoom = 1, fitZoom = 1 }) {
         zIndex: element.zIndex ?? 1,
         opacity: element.opacity ?? 1,
         outline: selected ? "2px solid rgba(59,130,246,0.9)" : "none",
-        boxShadow: selected ? "0 6px 18px rgba(59,130,246,0.08)" : undefined,
+        boxShadow: selected
+          ? "0 6px 18px rgba(59,130,246,0.08)"
+          : undefined,
         touchAction: "none",
         overflow: "visible",
       }}
@@ -190,16 +203,19 @@ export default function Element({ element, zoom = 1, fitZoom = 1 }) {
         {/* SHAPE */}
         {element.type === "shape" && <ShapeElement element={element} />}
 
-        {/* 🟢 NEW: SVG PATH */}
+        {/* SVG PATH */}
         {element.type === "path" && <PathElement element={element} />}
 
-        {/* 🟢 NEW: MASKED IMAGE */}
-        {element.type === "maskedImage" && <ClippedImageElement element={element} />}
+        {/* MASKED IMAGE */}
+        {element.type === "maskedImage" && (
+          <ClippedImageElement element={element} />
+        )}
 
-        {/* ROTATE HANDLE */}
+        {/* ROTATION HANDLE */}
         {selected && (
           <div
-            className="absolute left-1/2 -top-6 w-5 h-5 bg-blue-600 rounded-full cursor-grab border border-white shadow-lg"
+            className="absolute left-1/2 -top-6 w-5 h-5 bg-blue-600 
+             rounded-full cursor-grab border border-white shadow-lg"
             style={{ transform: "translateX(-50%)" }}
             onMouseDown={startRotate}
           />

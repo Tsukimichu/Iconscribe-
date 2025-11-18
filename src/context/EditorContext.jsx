@@ -322,22 +322,22 @@ export function EditorProvider({ children }) {
 
   // ------------------------------------------------------
   // ⭐ UPDATED TEMPLATE IMPORT (supports paths + maskedImage)
-  // ------------------------------------------------------
-
+// ------------------------------------------------------
   const importFromJSON = (jsonData) => {
     try {
       const parsed =
         typeof jsonData === "string" ? JSON.parse(jsonData) : jsonData;
 
-      // If already in your format
+      // 1) Your own saved format (from exportAsJSON)
       if (Array.isArray(parsed.elements)) {
         dispatch({ type: "SET_ELEMENTS", payload: parsed.elements });
-        if (parsed.canvas)
+        if (parsed.canvas) {
           dispatch({ type: "SET_CANVAS_SIZE", payload: parsed.canvas });
+        }
         return;
       }
 
-      // Fabric fallback
+      // 2) Fabric-style / external JSON with `objects`
       let elements = [];
       let maxRight = 0;
       let maxBottom = 0;
@@ -348,9 +348,11 @@ export function EditorProvider({ children }) {
           const scaleY = o.scaleY ?? 1;
 
           const baseWidth =
-            o.width ?? (o.radius ? o.radius * 2 : 100);
+            o.width ??
+            (o.radius ? o.radius * 2 : o.rx ? o.rx * 2 : 100);
           const baseHeight =
-            o.height ?? (o.radius ? o.radius * 2 : 100);
+            o.height ??
+            (o.radius ? o.radius * 2 : o.ry ? o.ry * 2 : 100);
 
           const width = baseWidth * scaleX;
           const height = baseHeight * scaleY;
@@ -373,17 +375,25 @@ export function EditorProvider({ children }) {
             zIndex: index + 1,
           };
 
-          // ⭐ NEW — import SVG PATH
+          // --- PATH (curves / waves) ---
           if (o.type === "path") {
+            let d = "";
+            if (Array.isArray(o.path)) {
+              d = o.path.map((cmd) => cmd.join(" ")).join(" ");
+            } else {
+              d = o.d || "";
+            }
             return {
               ...base,
               type: "path",
-              d: o.path ?? o.d ?? "",
-              fill: o.fill ?? "#000000",
+              d,
+              fill: o.fill || "#000000",
+              stroke: o.stroke || null,
+              strokeWidth: o.strokeWidth || 0,
             };
           }
 
-          // ⭐ NEW — import masked image
+          // --- Masked image (if ever present) ---
           if (o.type === "maskedImage") {
             return {
               ...base,
@@ -392,7 +402,7 @@ export function EditorProvider({ children }) {
             };
           }
 
-          // TEXT
+          // --- TEXT ---
           if (
             o.type === "textbox" ||
             o.type === "text" ||
@@ -410,7 +420,7 @@ export function EditorProvider({ children }) {
             };
           }
 
-          // IMAGE
+          // --- IMAGE ---
           if (o.type === "image") {
             return {
               ...base,
@@ -419,29 +429,41 @@ export function EditorProvider({ children }) {
             };
           }
 
-          // SHAPES
+          // --- CIRCLE / ELLIPSE (map to shape: circle) ---
+          if (o.type === "circle" || o.type === "ellipse") {
+            return {
+              ...base,
+              type: "shape",
+              shape: "circle",
+              background: o.fill || "#000000",
+              borderColor: o.stroke || "#000000",
+              borderWidth: o.strokeWidth || 0,
+              borderRadius: Math.max(width, height) / 2,
+            };
+          }
+
+          // --- DEFAULT: RECT / OTHER SHAPES ---
           return {
             ...base,
             type: "shape",
-            shape: o.type,
+            shape: "rect",
             background: o.fill || "#000000",
             borderColor: o.stroke || "#000000",
             borderWidth: o.strokeWidth || 0,
             borderRadius:
-              o.rx ||
-              o.ry ||
-              (o.type === "circle" ? width / 2 : 0),
+              o.rx || o.ry || (o.type === "circle" ? width / 2 : 0),
           };
         });
       }
 
       dispatch({ type: "SET_ELEMENTS", payload: elements });
 
+      // Canvas auto-size if external JSON
       dispatch({
         type: "SET_CANVAS_SIZE",
         payload: {
-          width: parsed.width || maxRight,
-          height: parsed.height || maxBottom,
+          width: parsed.width || maxRight || state.canvas.width,
+          height: parsed.height || maxBottom || state.canvas.height,
           aspect: "custom",
           zoom: state.canvas.zoom,
         },
@@ -461,7 +483,6 @@ export function EditorProvider({ children }) {
   // ------------------------------------------------------
   // EXPORTED API
   // ------------------------------------------------------
-
   const api = {
     state,
     canvasRef,

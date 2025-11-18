@@ -3,9 +3,9 @@ import { useEditor } from "../../context/EditorContext";
 import {
   exportCanvasAsPng,
   exportCanvasAsJpg,
-  exportCanvasAsSvg,
   exportCanvasAsPdf,
 } from "../../utils/exportUtils";
+
 import AspectRatioSelector from "../AspectRatioSelector";
 import {
   Type,
@@ -32,7 +32,9 @@ export default function Toolbar() {
   const [exportOpen, setExportOpen] = useState(false);
   const [elementsOpen, setElementsOpen] = useState(false);
 
-  // --- Upload image ---
+  // ------------------------------------------
+  // Upload image
+  // ------------------------------------------
   const onUpload = (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
@@ -41,47 +43,43 @@ export default function Toolbar() {
     e.target.value = null;
   };
 
-  // --- Upload custom element (SVG/PNG) ---
   const onUploadElement = (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
     const url = URL.createObjectURL(f);
-    addImage(url); // treat custom element as image
+    addImage(url);
     e.target.value = null;
     setElementsOpen(false);
   };
 
-  // --- Export Handler ---
+  // ------------------------------------------
+  // Export Handler (PNG + JPG + PDF)
+  // ------------------------------------------
   const handleExport = async (type) => {
-    const container = document.getElementById("editor-canvas");
-    try {
-      let dataUrl, fileName;
+    // IMPORTANT: match CanvasWorkspace → id="canvas-area"
+    const container = document.getElementById("canvas-area");
+    if (!container) {
+      alert("Canvas not found. Make sure the editor is loaded.");
+      return;
+    }
 
-      switch (type) {
-        case "png":
-          dataUrl = await exportCanvasAsPng(container);
-          fileName = "canvas.png";
-          break;
-        case "jpg":
-          dataUrl = await exportCanvasAsJpg(container);
-          fileName = "canvas.jpg";
-          break;
-        case "svg":
-          dataUrl = await exportCanvasAsSvg(container);
-          fileName = "canvas.svg";
-          break;
-        case "pdf":
-          dataUrl = await exportCanvasAsPdf(container);
-          fileName = "canvas.pdf";
-          break;
-        default:
-          return;
+    try {
+      if (type === "png") {
+        const dataUrl = await exportCanvasAsPng(container);
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = "canvas.png";
+        a.click();
+      } else if (type === "jpg") {
+        const dataUrl = await exportCanvasAsJpg(container);
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = "canvas.jpg";
+        a.click();
+      } else if (type === "pdf") {
+        await exportCanvasAsPdf(container, "canvas.pdf");
       }
 
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = fileName;
-      a.click();
       setExportOpen(false);
     } catch (err) {
       console.error(err);
@@ -95,10 +93,10 @@ export default function Toolbar() {
   };
 
   return (
-    <div className="flex flex-wrap items-center justify-between w-full px-4 sm:px-6 py-3 select-none border-b border-blue-400/40 shadow-lg bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600 text-white backdrop-blur-xl relative z-50 rounded-4xl">
+    <div className="flex flex-wrap items-center justify-between gap-3 w-full px-4 sm:px-6 py-3 select-none border-b border-blue-400/40 shadow-lg bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600 text-white backdrop-blur-xl relative z-50 rounded-4xl">
 
-      {/* Left section */}
-      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+      {/* LEFT SECTION */}
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4 flex-1 min-w-[250px]">
 
         {/* Aspect Ratio */}
         <div className="bg-blue-500/30 border border-blue-300/40 rounded-xl px-2 py-1 shadow-inner hover:bg-blue-500/40 transition">
@@ -107,121 +105,29 @@ export default function Toolbar() {
 
         {/* Basic Add Elements */}
         <div className="flex flex-wrap items-center gap-2 border-l border-white/30 pl-3 sm:pl-4">
-          
-          {/* Add Text */}
           <button
             onClick={() => addText()}
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-500/20 border border-blue-300/30 hover:bg-blue-400/40 hover:shadow transition text-sm sm:text-base"
-            title="Add Text"
           >
             <Type className="w-4 h-4" /> Text
           </button>
 
-          {/* Shapes */}
-          {[
-            { type: "rectangle", icon: <Square className="w-4 h-4" /> },
-            { type: "circle", icon: <Circle className="w-4 h-4" /> },
-            { type: "line", icon: <Minus className="w-4 h-4" /> },
-          ].map((shape) => (
+          {[{ type: "rectangle", icon: <Square className="w-4 h-4" /> },
+          { type: "circle", icon: <Circle className="w-4 h-4" /> },
+          { type: "line", icon: <Minus className="w-4 h-4" /> }].map(shape => (
             <button
               key={shape.type}
               onClick={() => addShape(shape.type)}
               className="p-2 rounded-lg bg-blue-500/20 border border-blue-300/30 hover:bg-blue-400/40 hover:shadow transition"
-              title={shape.type}
             >
               {shape.icon}
             </button>
           ))}
-
-          {/* === NEW ELEMENTS BUTTON (DROPDOWN) === */}
-          <div className="relative">
-            <button
-              onClick={() => {
-                setElementsOpen(!elementsOpen);
-                setExportOpen(false);
-              }}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-purple-500/30 border border-purple-300/40 hover:bg-purple-400/40 hover:shadow transition text-sm sm:text-base"
-            >
-              <Shapes className="w-4 h-4" /> Elements
-            </button>
-
-            {elementsOpen && (
-              <div className="absolute left-0 mt-2 w-48 bg-white text-blue-700 border border-blue-200 rounded-xl shadow-xl z-50 overflow-hidden">
-
-                {/* Simple Graphics */}
-                <div className="px-4 py-2 text-xs font-bold bg-blue-50 border-b border-blue-100">
-                  Quick Elements
-                </div>
-
-                <button
-                  onClick={() => { addShape("triangle"); setElementsOpen(false); }}
-                  className="flex items-center gap-2 px-4 py-2 hover:bg-blue-50 transition text-sm"
-                >
-                  <Triangle className="w-4 h-4" /> Triangle
-                </button>
-
-                <button
-                  onClick={() => { addShape("star"); setElementsOpen(false); }}
-                  className="flex items-center gap-2 px-4 py-2 hover:bg-blue-50 transition text-sm"
-                >
-                  <Star className="w-4 h-4" /> Star
-                </button>
-
-                <button
-                  onClick={() => { addShape("blob"); setElementsOpen(false); }}
-                  className="flex items-center gap-2 px-4 py-2 hover:bg-blue-50 transition text-sm"
-                >
-                  <Palette className="w-4 h-4" /> Blob Shape
-                </button>
-
-                {/* Divider */}
-                <div className="border-t my-1"></div>
-
-                {/* Upload Element */}
-                <div className="px-4 py-2 text-xs font-bold bg-blue-50 border-b border-blue-100">
-                  Custom
-                </div>
-
-                <input
-                  ref={elementFileRef}
-                  onChange={onUploadElement}
-                  type="file"
-                  accept="image/*, .svg"
-                  className="hidden"
-                />
-
-                <button
-                  onClick={() => elementFileRef.current.click()}
-                  className="flex items-center gap-2 px-4 py-2 hover:bg-blue-50 transition text-sm"
-                >
-                  <Upload className="w-4 h-4" /> Upload Element
-                </button>
-
-                <button
-                  onClick={() => {
-                    const url = prompt("Element URL");
-                    if (url) addImage(url);
-                    setElementsOpen(false);
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 hover:bg-blue-50 transition text-sm"
-                >
-                  <ImageIcon className="w-4 h-4" /> Import From URL
-                </button>
-              </div>
-            )}
-          </div>
         </div>
 
-        {/* Image Upload */}
+        {/* Upload Section */}
         <div className="flex flex-wrap items-center gap-2 border-l border-white/30 pl-3 sm:pl-4">
-
-          <input
-            ref={fileRef}
-            onChange={onUpload}
-            type="file"
-            accept="image/*"
-            className="hidden"
-          />
+          <input ref={fileRef} onChange={onUpload} type="file" accept="image/*" className="hidden" />
 
           <button
             onClick={() => fileRef.current.click()}
@@ -239,8 +145,8 @@ export default function Toolbar() {
         </div>
       </div>
 
-      {/* Undo / Redo */}
-      <div className="flex items-center gap-2 border-t sm:border-t-0 sm:border-x border-white/30 px-2 sm:px-4 mt-2 sm:mt-0">
+      {/* MIDDLE: Undo / Redo */}
+      <div className="flex items-center gap-2 px-2 sm:px-4 border-t sm:border-none border-white/30 w-full sm:w-auto pt-2 sm:pt-0 justify-start sm:justify-center">
         <button
           onClick={undo}
           className="p-2 rounded-lg bg-blue-500/20 border border-blue-300/30 hover:bg-blue-400/40 hover:shadow transition"
@@ -255,7 +161,7 @@ export default function Toolbar() {
         </button>
       </div>
 
-      {/* Export */}
+      {/* RIGHT: EXPORT BUTTON (ALWAYS LAST) */}
       <div className="relative mt-2 sm:mt-0">
         <button
           onClick={() => {
@@ -269,7 +175,7 @@ export default function Toolbar() {
 
         {exportOpen && (
           <div className="absolute right-0 mt-2 w-40 sm:w-48 bg-white border border-blue-200 rounded-xl shadow-xl z-50 overflow-hidden">
-            {["png", "jpg", "svg", "pdf"].map((type) => (
+            {["png", "jpg", "pdf"].map((type) => (
               <button
                 key={type}
                 onClick={() => handleExport(type)}
@@ -283,4 +189,5 @@ export default function Toolbar() {
       </div>
     </div>
   );
+
 }

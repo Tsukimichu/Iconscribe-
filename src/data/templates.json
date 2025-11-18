@@ -21,20 +21,6 @@
     "json": "/templates/json/business-card/business-card3.json"
   },
   {
-    "id": "businesscard4",
-    "name": "Creative Calling Card",
-    "category": "Calling Card",
-    "preview": "/templates/business-card/business-card4.png",
-    "json": "/templates/json/business-card/business-card4.json"
-  },
-  {
-    "id": "businesscard5",
-    "name": "Professional Calling Card",
-    "category": "Calling Card",
-    "preview": "/templates/business-card/business-card5.png",
-    "json": "/templates/json/business-card/business-card5.json"
-  },
-  {
     "id": "calendar1",
     "name": "Wall Calendar",
     "category": "Calendar",

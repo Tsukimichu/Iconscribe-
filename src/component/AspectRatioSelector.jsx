@@ -38,40 +38,51 @@ export default function AspectRatioSelector() {
   }, [state.canvas])
 
   return (
-    <div className="flex items-center gap-3 bg-white/80 backdrop-blur-md rounded-xl p-3 shadow-md border border-gray-200 text-black">
-      <label className="text-sm font-medium text-black">Aspect Ratio:</label>
-      <select
-        onChange={handleChange}
-        value={state?.canvas?.aspect ?? '1:1 (Square)'}
-        className="rounded-md border border-gray-300 px-2 py-1 text-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-400"
-      >
-        {presets.map(p => (
-          <option key={p.label} value={p.label} className="text-black">{p.label}</option>
-        ))}
-        <option value="custom" className="text-black">Custom</option>
-      </select>
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2 bg-white/70 backdrop-blur-sm rounded-lg p-2 border border-gray-300 text-black w-full sm:w-auto">
 
+      {/* Label + Select row */}
+      <div className="flex items-center gap-2 w-full sm:w-auto">
+        <label className="text-xs font-medium text-gray-700 whitespace-nowrap">
+          Aspect:
+        </label>
+
+        <select
+          onChange={handleChange}
+          value={state?.canvas?.aspect ?? '1:1 (Square)'}
+          className="rounded-md border border-gray-300 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400 w-full sm:w-auto"
+        >
+          {presets.map(p => (
+            <option key={p.label} value={p.label}>{p.label}</option>
+          ))}
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+
+      {/* Custom Inputs (responsive) */}
       {state?.canvas?.aspect === 'custom' && (
-        <div className="flex items-center gap-2 text-black">
+        <div className="flex flex-row sm:flex-row items-center gap-1 w-full">
+          
           <input
             type="number"
             min="100"
             value={custom.w}
             onChange={(e) => handleCustomChange('w', e.target.value)}
-            className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm text-black placeholder:text-gray-500"
+            className="flex-1 sm:w-16 rounded-md border border-gray-300 px-2 py-1 text-xs placeholder:text-gray-400"
             placeholder="Width"
           />
-          <span className="text-black text-sm">×</span>
+
+          <span className="text-xs text-center">×</span>
+
           <input
             type="number"
             min="100"
             value={custom.h}
             onChange={(e) => handleCustomChange('h', e.target.value)}
-            className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm text-black placeholder:text-gray-500"
+            className="flex-1 sm:w-16 rounded-md border border-gray-300 px-2 py-1 text-xs placeholder:text-gray-400"
             placeholder="Height"
           />
         </div>
       )}
     </div>
-  )
+  );
 }

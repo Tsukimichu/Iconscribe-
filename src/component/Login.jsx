@@ -6,6 +6,7 @@ import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "./ui/ToastProvider.jsx";
 import { useAuth } from "../context/authContext.jsx";
+import { API_URL } from "../api";
 
 function Login() {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/api/login", {
+      const res = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, password }),
@@ -62,7 +63,7 @@ function Login() {
 
     setResetLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/request-reset-otp", {
+      const res = await fetch(`${API_URL}/request-reset-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: resetUsername }),
@@ -86,7 +87,7 @@ function Login() {
 
     setResetLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/verify-reset-otp", {
+      const res = await fetch(`${API_URL}/verify-reset-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: resetUsername, otp }),
@@ -108,7 +109,7 @@ function Login() {
 
     setResetLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/reset-password-otp", {
+      const res = await fetch(`${API_URL}/reset-password-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

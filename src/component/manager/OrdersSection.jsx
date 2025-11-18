@@ -9,6 +9,7 @@ import {
   Truck,
   Shield,
 } from "lucide-react";
+import { API_URL } from "../../api";
 
 const OrdersSection = () => {
   const [orders, setOrders] = useState([]);
@@ -126,7 +127,7 @@ const OrdersSection = () => {
   // FETCH ORDERS (single endpoint, we will filter by status)
   // ==========================================================
   const loadOrders = () => {
-    fetch("http://localhost:5000/api/orders")
+    fetch(`${API_URL}/orders`)
       .then((res) => res.json())
       .then((data) => {
         const arr = Array.isArray(data) ? data : [];
@@ -159,7 +160,7 @@ const OrdersSection = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/orders/${orderId}/archive`,
+        `${API_URL}/orders/${orderId}/archive`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -202,7 +203,7 @@ const OrdersSection = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/orders/${orderId}/price`,
+        `${API_URL}/orders/${orderId}/price`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -255,7 +256,7 @@ const OrdersSection = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/orders/${itemId}/status`,
+        `${API_URL}/orders/${itemId}/status`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -302,7 +303,7 @@ const OrdersSection = () => {
 
       orderFiles.forEach((file) => formData.append("files", file));
 
-      const res = await fetch("http://localhost:5000/api/orders", {
+      const res = await fetch(`${API_URL}/orders`, {
         method: "POST",
         body: formData,
       });
@@ -346,7 +347,7 @@ const OrdersSection = () => {
     if (!orderId) return alert("Invalid order ID.");
 
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/${orderId}`);
+      const res = await fetch(`${API_URL}/orders/${orderId}`);
       const data = await res.json();
       console.log("Fetched order:", data);
 

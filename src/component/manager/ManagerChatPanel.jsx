@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 import axios from "axios";
 import { Send, MessageSquare } from "lucide-react";
+import { API_URL } from "../../api";
 
 const socket = io("http://72.61.143.130:5000"); 
 
@@ -24,7 +25,7 @@ function ManagerChatPanel({ managerId = 10 }) {
   useEffect(() => {
     const fetchConversations = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/chat/conversations/${managerId}`);
+        const res = await axios.get(`${API_URL}/chat/conversations/${managerId}`);
         setConversations(res.data);
       } catch (err) {
         console.error("Error loading conversations:", err);
@@ -40,7 +41,7 @@ function ManagerChatPanel({ managerId = 10 }) {
     const loadMessages = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/chat/messages/${selectedConversation.id}`
+          `${API_URL}/chat/messages/${selectedConversation.id}`
         );
 
         const formatted = res.data.map(msg => ({
@@ -101,7 +102,7 @@ function ManagerChatPanel({ managerId = 10 }) {
     };
 
     try {
-      const res = await axios.post("http://localhost:5000/api/chat/messages", msg);
+      const res = await axios.post(`${API_URL}/chat/messages`, msg);
       const messageWithTime = { ...res.data, time: new Date().toLocaleString() };
       socket.emit("sendMessage", messageWithTime);
 

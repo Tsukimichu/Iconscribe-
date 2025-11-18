@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, Plus, Edit2, List, X } from "lucide-react";
 import ReactApexChart from "react-apexcharts";
 import axios from "axios";
-  import { useToast } from "../ui/ToastProvider.jsx";
+import { useToast } from "../ui/ToastProvider.jsx";
+import { API_URL } from "../../api.js";
 
 const SupplyMonitoring = () => {
   const [supplies, setSupplies] = useState([]);
@@ -22,7 +23,7 @@ const SupplyMonitoring = () => {
   // Fetch supplies
   const fetchSupplies = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/supplies");
+      const res = await axios.get(`${API_URL}/supplies`);
       setSupplies(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error(" Error fetching supplies:", err);
@@ -78,7 +79,7 @@ const SupplyMonitoring = () => {
   const handleConfirm = async () => {
     try {
       if (popupType === "add") {
-        await axios.post("http://localhost:5000/api/supplies", {
+        await axios.post(`${API_URL}/supplies`, {
           supply_name: newSupply.supply_name.trim(),
           quantity: Number(newSupply.quantity),
           unit: newSupply.unit.trim(),
@@ -97,7 +98,7 @@ const SupplyMonitoring = () => {
         };
 
         await axios.put(
-          `http://localhost:5000/api/supplies/${selectedSupply.supply_id}`,
+          `${API_URL}/supplies/${selectedSupply.supply_id}`,
           payload
         );
         showToast("Expenses updated successfully!", "success");

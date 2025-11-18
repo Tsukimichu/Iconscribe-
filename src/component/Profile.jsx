@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowBigLeft } from "lucide-react";
 import logo from "../assets/ICONS.png";
 import { useAuth } from "../context/authContext";
+import { API_URL } from "../api";
 
 
 function Modal({ isOpen, onClose, title, children }) {
@@ -84,7 +85,7 @@ function Profile() {
 
       console.log("Saving profile payload:", payload);
 
-      const response = await fetch(`http://localhost:5000/api/users/${profile.user_id}`, {
+      const response = await fetch(`${API_URL}/users/${profile.user_id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

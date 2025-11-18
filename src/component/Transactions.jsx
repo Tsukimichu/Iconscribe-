@@ -4,6 +4,7 @@ import { Bell, CheckCircle, Clock, Truck, X } from "lucide-react";
 import { useAuth } from "../context/authContext.jsx";
 import { useToast } from "../component/ui/ToastProvider.jsx";
 import io from "socket.io-client";
+import { API_URL } from "../api.js";
 
 const socket = io("http://localhost:5000");
 
@@ -39,7 +40,7 @@ function Transactions() {
 
   const handleCancelOrder = async (orderItemId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/${orderItemId}/cancel`, {
+      const res = await fetch(`${API_URL}/orders/${orderItemId}/cancel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
@@ -69,7 +70,7 @@ function Transactions() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:5000/api/orders/user/${userId}`);
+      const res = await fetch(`${API_URL}/orders/user/${userId}`);
       const data = await res.json();
 
       const sorted = Array.isArray(data)
@@ -543,7 +544,7 @@ function getStatusIcon(status) {
     // Save updates
     const handleSave = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/orders/edit/${order.enquiryNo}`, {
+        const res = await fetch(`${API_URL}/orders/edit/${order.enquiryNo}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ quantity, urgency, attributes }),
@@ -569,7 +570,7 @@ function getStatusIcon(status) {
 
       try {
         const res = await fetch(
-          `http://localhost:5000/api/orders/upload/single/${order.enquiryNo}`,
+          `${API_URL}/orders/upload/single/${order.enquiryNo}`,
           { method: "POST", body: formData }
         );
 
@@ -596,7 +597,7 @@ function getStatusIcon(status) {
 
       try {
         const res = await fetch(
-          `http://localhost:5000/api/orders/upload/double/${order.enquiryNo}`,
+          `${API_URL}/orders/upload/double/${order.enquiryNo}`,
           { method: "POST", body: formData }
         );
 

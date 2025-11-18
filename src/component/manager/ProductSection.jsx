@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { Search, Archive, List, X, Edit } from "lucide-react";
+import { API_URL } from "../../api.js";
 
 const statusColors = {
   active: "bg-green-100 text-green-700",
@@ -23,7 +24,7 @@ const ProductSection = () => {
   const [description, setDescription] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/products")
+    fetch(`${API_URL}/products`)
       .then((res) => res.json())
       .then((data) => {
         const servicesWithStatus = (Array.isArray(data) ? data : []).map((s) => ({
@@ -43,7 +44,7 @@ const ProductSection = () => {
     );
     try {
       const res = await fetch(
-        `http://localhost:5000/api/products/${productId}/status`,
+        `${API_URL}/products/${productId}/status`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -58,7 +59,7 @@ const ProductSection = () => {
 
   const updateProductInfo = async (productId, updatedData) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/products/${productId}`, {
+      const res = await fetch(`${API_URL}/products/${productId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedData),

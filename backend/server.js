@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -21,13 +23,18 @@ const server = http.createServer(app);
 // Socket.IO setup
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: process.env.CLIENT_ORIGIN,
     methods: ["GET", "POST"],
   },
 });
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Serve uploaded files publicly
@@ -86,5 +93,5 @@ io.on("connection", (socket) => {
 // Start both Express + Socket.IO on same port
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`Server + Socket.IO running at http://localhost:${PORT}`);
+  console.log(`Server + Socket.IO running on port ${PORT}`);
 });

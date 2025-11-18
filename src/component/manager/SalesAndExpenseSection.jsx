@@ -7,9 +7,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactApexChart from "react-apexcharts";
-
-
-const API_URL = "http://localhost:5000/api/sales";
+import { API_URL } from "../../api.js";
 
 const SalesAndExpenseSection = () => {
   const [sales, setSales] = useState([]);
@@ -23,7 +21,7 @@ const SalesAndExpenseSection = () => {
   // =====================================================
   const fetchSales = async () => {
     try {
-      const res = await axios.get(API_URL);
+      const res = await axios.get(`${API_URL}/sales`);
       if (res.data.success) setSales(res.data.data);
     } catch (err) {
       console.error("Error fetching sales:", err);
@@ -39,7 +37,7 @@ const SalesAndExpenseSection = () => {
 // =====================================================
   const fetchExpenses = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/supplies");
+      const res = await axios.get(`${API_URL}/supplies`);
       if (Array.isArray(res.data)) {
         const mapped = res.data.map((s) => ({
           id: s.supply_id,

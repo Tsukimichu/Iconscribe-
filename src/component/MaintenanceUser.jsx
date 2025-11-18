@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { API_URL } from "../api";
 
 const MaintenanceUser = ({ children }) => {
   const [status, setStatus] = useState(null);
@@ -7,7 +8,7 @@ const MaintenanceUser = ({ children }) => {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/maintenance/status");
+        const res = await fetch(`${API_URL}/maintenance/status`);
         const data = await res.json();
 
         if (data.maintenance) {

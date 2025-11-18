@@ -6,6 +6,7 @@ import orgImage from "../assets/org.jpg";
 import { Eye, EyeOff, ArrowBigLeft, CheckCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "./ui/ToastProvider.jsx";
+import { API_URL } from "../api";
 
 function Signup() {
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ function Signup() {
     }
 
     try {
-      const signupRes = await axios.post("http://localhost:5000/api/signup", {
+      const signupRes = await axios.post(`${API_URL}/signup`, {
         name: formData.name,
         phone: formData.phone,
         email: formData.email,
@@ -52,7 +53,7 @@ function Signup() {
         return;
       }
 
-      const otpRes = await axios.post("http://localhost:5000/api/send-otp", {
+      const otpRes = await axios.post(`${API_URL}/send-otp`, {
         email: formData.email,
       });
 

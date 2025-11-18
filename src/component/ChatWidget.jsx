@@ -2,8 +2,12 @@ import { useState, useEffect } from "react";
 import io from "socket.io-client";
 import axios from "axios";
 import { MessageCircle } from "lucide-react";
+import { API_URL } from "../api";
+import { SOCKET_URL } from "../api";
 
-const socket = io("http://localhost:5000");
+  const socket = io(SOCKET_URL, {
+    withCredentials: true,
+  });
 
 function ChatWidget({ userId = 1, managerId = 999 }) {
   const [open, setOpen] = useState(false);
@@ -16,17 +20,17 @@ function ChatWidget({ userId = 1, managerId = 999 }) {
     // Initialize conversation
     const initConversation = async () => {
         try {
-        const res = await axios.post("http://localhost:5000/api/chat/conversations", {
+        const res = await axios.post(`${API_URL}/chat/conversations`, {
             clientId: userId,
             managerId,
         });
         setConversationId(res.data.id);
 
         // Load messages from DB
-       const msgRes = await axios.get(`http://localhost:5000/api/chat/messages/${res.data.id}`);
+       const msgRes = await axios.get(`${API_URL}/chat/messages/${res.data.id}`);
         const formattedMessages = msgRes.data.map((msg) => ({
         ...msg,
-        time: new Date(msg.createdAt).toLocaleString(), // convert to readable date & time
+        time: new Date(msg.createdAt).toLocaleString(),
         }));
         setMessages(formattedMessages);
 
@@ -54,7 +58,7 @@ function ChatWidget({ userId = 1, managerId = 999 }) {
     };
 
     try {
-      await axios.post("http://localhost:5000/api/chat/messages", msg);
+      await axios.post(`${API_URL}/chat/messages`, msg);
       socket.emit("sendMessage", msg);
       setMessages((prev) => [...prev, msg]);
       setInput("");

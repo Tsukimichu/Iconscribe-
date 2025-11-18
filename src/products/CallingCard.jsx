@@ -6,6 +6,7 @@ import { useState,useEffect } from "react";
 import { Contact, MessageCircle, XCircle } from "lucide-react";
 import UploadSection from "../component/UploadSection";
 import { useToast } from "../component/ui/ToastProvider";
+import{ API_URL } from "../api";
 
 function CallingCard() {
   const navigate = useNavigate();
@@ -53,7 +54,7 @@ function CallingCard() {
         const token = localStorage.getItem("token");
         if (!token) return;
 
-        fetch("http://localhost:5000/api/profile", {
+        fetch(`${API_URL}/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         })
           .then((res) => res.json())
@@ -84,7 +85,7 @@ function CallingCard() {
     const [visible, setVisible] = useState(true);
 
     useEffect(() => {
-      fetch("http://localhost:5000/api/product-status")
+      fetch(`${API_URL}/product-status`)
         .then((res) => res.json())
         .then((data) => {
           const product = data.find((p) => p.product_name === "Calling Card");
@@ -121,7 +122,7 @@ function CallingCard() {
           { name: "Message", value: message },
         ].filter((attr) => attr.value && attr.value.toString().trim() !== "");
 
-        const response = await fetch("http://localhost:5000/api/orders/create", {
+        const response = await fetch(`${API_URL}/orders/create`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -157,7 +158,7 @@ function CallingCard() {
           const formData = new FormData();
           formData.append("file1", file);
           const uploadRes = await fetch(
-            `http://localhost:5000/api/orders/upload/single/${orderItemId}`,
+            `${API_URL}/orders/upload/single/${orderItemId}`,
             { method: "POST", body: formData }
           );
           const uploadData = await uploadRes.json();

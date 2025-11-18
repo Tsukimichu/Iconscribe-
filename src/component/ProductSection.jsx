@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { API_URL } from "../api";
 
 import "swiper/css";
 import "swiper/css/navigation";
@@ -42,7 +43,7 @@ function ProductSection() {
 
   
   useEffect(() => {
-    fetch("http://localhost:5000/api/products")
+    fetch(`${API_URL}/products`)
       .then((res) => res.json())
       .then((data) => {
         // only include products that are active

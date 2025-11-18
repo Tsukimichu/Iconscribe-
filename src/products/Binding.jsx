@@ -5,6 +5,7 @@
   import { useState, useEffect } from "react";
   import { useToast } from "../component/ui/ToastProvider";
   import UploadSection from "../component/UploadSection";
+  import { API_URL } from "../api";
 
   function Binding() {
     const navigate = useNavigate();
@@ -81,7 +82,7 @@
     useEffect(() => {
       const token = localStorage.getItem("token");
       if (!token) return;
-      fetch("http://localhost:5000/api/profile", {
+      fetch(`${API_URL}/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())
@@ -102,7 +103,7 @@
 
     // check product visibility
     useEffect(() => {
-      fetch("http://localhost:5000/api/product-status")
+      fetch(`${API_URL}/product-status`)
         .then((res) => res.json())
         .then((data) => {
           const product = data.find((p) => p.product_name === "Binding");
@@ -141,7 +142,7 @@
         ].filter(attr => attr.value && attr.value.trim() !== "");
 
         // Create order via backend
-        const res = await fetch("http://localhost:5000/api/orders/create", {
+        const res = await fetch(`${API_URL}/orders/create`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -173,7 +174,7 @@
           formData.append("file1", file);
 
           const uploadRes = await fetch(
-            `http://localhost:5000/api/orders/upload/single/${orderItemId}`,
+            `${API_URL}/orders/upload/single/${orderItemId}`,
             {
               method: "POST",
               body: formData,

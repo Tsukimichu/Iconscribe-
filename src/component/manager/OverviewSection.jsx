@@ -5,6 +5,7 @@ import Chart from "react-apexcharts";
 import ReactApexChart from "react-apexcharts";
 import axios from "axios";
 import { useToast } from "../ui/ToastProvider.jsx";
+import { API_URL } from "../../api.js";
 
 const OverviewSection = () => {
   const [activeFilter, setActiveFilter] = useState(null);
@@ -30,7 +31,7 @@ const OverviewSection = () => {
   // Fetch all orders
   const fetchOrders = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/orders");
+      const res = await axios.get(`${API_URL}/orders`);
       const fetchedOrders = Array.isArray(res.data) ? res.data : res.data.data || [];
 
       setOrders(fetchedOrders);
@@ -72,7 +73,7 @@ const OverviewSection = () => {
     useEffect(() => {
       const fetchProductTotals = async () => {
         try {
-          const res = await axios.get("http://localhost:5000/api/sales/product-totals");
+          const res = await axios.get(`${API_URL}/sales/product-totals`);
           setProductTotals(res.data);
         } catch (err) {
           console.error("❌ Error fetching product totals:", err);
@@ -93,7 +94,7 @@ const OverviewSection = () => {
   useEffect(() => {
     const fetchOrderChartData = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/orders/product-order-counts");
+        const res = await axios.get(`${API_URL}/orders/product-order-counts`);
         const items = Array.isArray(res.data) ? res.data 
                     : Array.isArray(res.data.data) ? res.data.data 
                     : [];
@@ -112,7 +113,7 @@ const OverviewSection = () => {
   // Fetch supplies as expenses
   const fetchExpenses = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/supplies");
+      const res = await axios.get(`${API_URL}/supplies`);
       if (Array.isArray(res.data)) {
         const mapped = res.data.map((s) => ({
           id: s.supply_id,

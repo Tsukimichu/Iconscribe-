@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Bell, Pause, UserX, Check, Archive, RotateCcw, Clock } from "lucide-react";
+import { API_URL } from "../../api.js";
 
 
 const ManageUserSection = () => {
@@ -27,7 +28,7 @@ const ManageUserSection = () => {
     let firstLoad = true;
 
     const fetchUsers = () => {
-      fetch("http://localhost:5000/api/users")
+      fetch(`${API_URL}/users`)
         .then((res) => res.json())
         .then((data) => {
           const newList = Array.isArray(data.data) ? data.data : [];
@@ -110,7 +111,7 @@ const ManageUserSection = () => {
   const updateStatus = async (userId, status) => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/users/${userId}/status`,
+        `${API_URL}/users/${userId}/status`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -130,7 +131,7 @@ const ManageUserSection = () => {
   const archiveUser = async (userId) => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/users/${userId}/archive`,
+        `${API_URL}/users/${userId}/archive`,
         { method: "PUT" }
       );
       const data = await res.json();
@@ -149,7 +150,7 @@ const ManageUserSection = () => {
   const restoreUser = async (userId) => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/users/${userId}/restore`,
+        `${API_URL}/users/${userId}/restore`,
         { method: "PUT" }
       );
       const data = await res.json();

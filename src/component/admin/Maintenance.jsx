@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { Calendar, Clock, Save, X } from "lucide-react";
 import { useToast } from "../ui/ToastProvider.jsx";
+import { API_URL } from "../../api.js";
 
 const Maintenance = () => {
   const [isMaintenance, setIsMaintenance] = useState(false);
@@ -53,7 +53,7 @@ const Maintenance = () => {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/maintenance/status");
+        const res = await fetch(`${API_URL}/maintenance/status`);
         const data = await res.json();
         setIsMaintenance(data.maintenance || false);
         setMessage(data.message || "");
@@ -77,7 +77,7 @@ const Maintenance = () => {
 
       if (isMaintenance) {
         // Enable maintenance
-        await fetch("http://localhost:5000/api/maintenance/on", {
+        await fetch(`${API_URL}/maintenance/on`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -91,7 +91,7 @@ const Maintenance = () => {
         });
       } else {
         // Disable maintenance
-        await fetch("http://localhost:5000/api/maintenance/off", {
+        await fetch(`${API_URL}/maintenance/off`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

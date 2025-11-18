@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Download, Trash2, UploadCloud, Database } from "lucide-react";
 import { useToast } from "../ui/ToastProvider.jsx";
+import { API_URL } from "../../api.js";
 
 const BackupRestoreSection = () => {
   const [scheduled, setScheduled] = useState(true);
@@ -13,8 +14,8 @@ const BackupRestoreSection = () => {
   const [restores, setRestores] = useState([]);
   const { showToast } = useToast();
 
-  const backupListUrl = "http://localhost:5000/api/backup/list-db";
-  const restoreListUrl = "http://localhost:5000/api/backup/restore/list-db";
+  const backupListUrl = `${API_URL}/backup/list-db`;
+  const restoreListUrl = `${API_URL}/backup/restore/list-db`;
 
   // Fetch function must be defined BEFORE useEffect
   const fetchData = async () => {
@@ -41,7 +42,7 @@ const BackupRestoreSection = () => {
   // Create Backup
   const handleCreateBackup = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/backup/create", {
+      const res = await fetch(`${API_URL}/backup/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ scope }),
@@ -73,7 +74,7 @@ const BackupRestoreSection = () => {
   // Download Backup File
   const handleDownload = (filename) => {
     window.open(
-      `http://localhost:5000/api/backup/download/${filename}`,
+      `${API_URL}/backup/download/${filename}`,
       "_blank"
     );
   };
@@ -82,7 +83,7 @@ const BackupRestoreSection = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this backup?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/backup/delete/${id}`, {
+      const res = await fetch(`${API_URL}/backup/delete/${id}`, {
         method: "DELETE",
       });
       const data = await res.json();
@@ -105,7 +106,7 @@ const BackupRestoreSection = () => {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("http://localhost:5000/api/backup/restore", {
+      const res = await fetch(`${API_URL}/backup/restore`, {
         method: "POST",
         body: formData,
       });

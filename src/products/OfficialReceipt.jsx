@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { Contact, MessageCircle, XCircle } from "lucide-react";
 import UploadSection from "../component/UploadSection.jsx";
 import { useToast } from "../component/ui/ToastProvider.jsx";
+import { API_URL } from "../api.js";
 
 function OfficialReceipt() {
   const navigate = useNavigate();
@@ -74,7 +75,7 @@ function OfficialReceipt() {
 
   // Check product visibility
   useEffect(() => {
-    fetch("http://localhost:5000/api/product-status")
+    fetch(`${API_URL}/product-status`)
       .then((res) => res.json())
       .then((data) => {
         const product = data.find((p) => p.product_name === "Official Receipt");
@@ -92,7 +93,7 @@ function OfficialReceipt() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    fetch("http://localhost:5000/api/profile", {
+    fetch(`${API_URL}/profile`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -135,7 +136,7 @@ function OfficialReceipt() {
       ].filter((a) => a.value && a.value.toString().trim() !== "");
 
       // Create the order
-      const res = await fetch("http://localhost:5000/api/orders/create", {
+      const res = await fetch(`${API_URL}/orders/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -174,7 +175,7 @@ function OfficialReceipt() {
         if (fileLastReceipt) formData.append("file2", fileLastReceipt);
 
         const uploadRes = await fetch(
-          `http://localhost:5000/api/orders/upload/double/${orderItemId}`,
+          `${API_URL}/orders/upload/double/${orderItemId}`,
           {
             method: "POST",
             body: formData,

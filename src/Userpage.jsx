@@ -9,6 +9,7 @@ import Footer from "./component/footer";
 import MaintenanceUser from "./component/MaintenanceUser";
 import ChatWidget from "./component/ChatWidget";
 import { useAuth } from "./context/authContext.jsx";
+import { API_URL } from "./api";
 
 function UserPage() {
   const [activeProducts, setActiveProducts] = useState([]);
@@ -18,7 +19,7 @@ function UserPage() {
   const isLoggedIn = !!user;
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/products")
+    fetch(`${API_URL}/products`)
       .then((res) => res.json())
       .then((data) => {
         const onlyActive = data.filter((p) => p.status === "active");

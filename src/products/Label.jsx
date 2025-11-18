@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import UploadSection from "../component/UploadSection.jsx";
 import { useToast } from "../component/ui/ToastProvider.jsx";
+import {API_URL} from "../api.js";
 
 function Label() {
   const navigate = useNavigate();
@@ -61,7 +62,7 @@ function Label() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    fetch("http://localhost:5000/api/profile", {
+    fetch(`${API_URL}/profile`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -81,7 +82,7 @@ function Label() {
 
   // --- Product visibility ---
   useEffect(() => {
-    fetch("http://localhost:5000/api/product-status")
+    fetch(`${API_URL}/product-status`)
       .then((res) => res.json())
       .then((data) => {
         const product = data.find((p) => p.product_name === "Label");
@@ -125,7 +126,7 @@ const handleConfirmOrder = async () => {
     ].filter((attr) => attr.value && attr.value.trim() !== "");
 
     // Create order
-    const response = await fetch("http://localhost:5000/api/orders/create", {
+    const response = await fetch(`${API_URL}/orders/create`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -164,7 +165,7 @@ const handleConfirmOrder = async () => {
       formData.append("file1", file);
 
       const uploadRes = await fetch(
-        `http://localhost:5000/api/orders/upload/single/${orderItemId}`,
+        `${API_URL}/orders/upload/single/${orderItemId}`,
         {
           method: "POST",
           body: formData,

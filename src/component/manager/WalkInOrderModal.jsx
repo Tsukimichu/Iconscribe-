@@ -1,25 +1,11 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-/*
-
-PROPS YOU MUST PASS:
-
-show                 → boolean (open/close)
-onClose              → function
-onSubmit             → function (your handleAddOrder)
-newOrder             → object
-setNewOrder          → setter
-selectedProduct      → string
-setSelectedProduct   → setter
-orderFiles           → array
-setOrderFiles        → setter
-showSizeDropdown     → boolean
-setShowSizeDropdown  → setter
-
-Everything else is unchanged.
-
-*/
+import { computeQuotation } from "../../utils/computeQuotation";
+import { computeBookQuotation } from "../../utils/bookQuotation";
+import { computeBindingQuotation } from "../../utils/computeBindingQuotation";
+import { computeORQuotation } from "../../utils/computeORQuotation";
+import { computeCalendarQuotation } from "../../utils/computeCalendarQuotation";
 
 export default function WalkInOrderModal({
   show,
@@ -34,6 +20,129 @@ export default function WalkInOrderModal({
   showSizeDropdown,
   setShowSizeDropdown
 }) {
+
+  // ===============================
+  // STATE
+  // ===============================
+  const [quotation, setQuotation] = React.useState(null);
+
+  // ===============================
+  // AUTO-COMPUTE QUOTATION WHEN FIELDS CHANGE
+  // ===============================
+  React.useEffect(() => {
+    autoComputeQuotation();
+  }, [
+    selectedProduct,
+    newOrder.quantity,
+    newOrder.size,
+    newOrder.custom_width,
+    newOrder.custom_height,
+    newOrder.paper_type,
+    newOrder.number_of_pages,
+    newOrder.color_printing,
+    newOrder.calendar_type
+  ]);
+
+  // ===============================
+  // QUOTATION ENGINE
+  // ===============================
+  function autoComputeQuotation() {
+    const p = selectedProduct;
+
+    // --- BOOK ---
+    if (p === "Book") {
+      const result = computeBookQuotation({
+        pages: newOrder.number_of_pages,
+        copies: newOrder.quantity,
+        colored: newOrder.color_printing === "Full Color",
+      });
+
+      setQuotation(result);
+      if (result) {
+        setNewOrder(prev => ({ ...prev, price: result.total }));
+      }
+      return;
+    }
+
+    // --- CALENDAR ---
+    if (p === "Calendar") {
+      const result = computeCalendarQuotation({
+        quantity: newOrder.quantity,
+        calendarType: newOrder.calendar_type,
+      });
+
+      setQuotation(result);
+      if (result) {
+        setNewOrder(prev => ({ ...prev, price: result.total }));
+      }
+      return;
+    }
+
+    // --- OFFICIAL RECEIPT ---
+    if (p === "Official Receipt") {
+      const result = computeORQuotation({
+        quantity: newOrder.quantity,
+      });
+
+      setQuotation(result);
+      if (result) {
+        setNewOrder(prev => ({ ...prev, price: result.total }));
+      }
+      return;
+    }
+
+    // --- BINDING ---
+    if (p === "Binding") {
+      const result = computeBindingQuotation({
+        quantity: newOrder.quantity,
+      });
+
+      setQuotation(result);
+      if (result) {
+        setNewOrder(prev => ({ ...prev, price: result.total }));
+      }
+      return;
+    }
+
+    // --- FLYERS / POSTER / LABEL / INVITATION / RAFFLE / BROCHURE / CALLING CARD ---
+    const isGeneral = [
+      "Flyers",
+      "Poster",
+      "Label",
+      "Invitation",
+      "Raffle Ticket",
+      "Brochure",
+      "Calling Card"
+    ].includes(p);
+
+    if (isGeneral) {
+      const width =
+        newOrder.custom_width ||
+        parseFloat(newOrder.size?.split("x")[0]) ||
+        null;
+
+      const height =
+        newOrder.custom_height ||
+        parseFloat(newOrder.size?.split("x")[1]) ||
+        null;
+
+      const result = computeQuotation({
+        width,
+        height,
+        copies: newOrder.quantity,
+        colored: newOrder.color_printing === "Yes",
+      });
+
+      setQuotation(result);
+      if (result) {
+        setNewOrder(prev => ({ ...prev, price: result.total }));
+      }
+      return;
+    }
+
+    // No quotation available
+    setQuotation(null);
+  }
   return (
     <AnimatePresence>
       {show && (
@@ -99,6 +208,34 @@ export default function WalkInOrderModal({
                 className="border border-gray-300 rounded-lg p-2"
               />
             </div>
+
+            {/* =============================== */}
+            {/* QUOTATION BREAKDOWN UI */}
+            {/* =============================== */}
+            {quotation && (
+              <div className="mt-8 p-4 border border-cyan-300 bg-cyan-50 rounded-xl">
+                <h3 className="text-xl font-bold text-cyan-700 mb-3">
+                  Quotation Breakdown
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                  {Object.entries(quotation).map(([key, value]) => (
+                    <p key={key} className="flex justify-between border-b py-1">
+                      <span className="capitalize font-medium text-gray-700">
+                        {key.replace(/_/g, " ").replace(/([A-Z])/g, " $1")}
+                      </span>
+                      <span className="font-semibold text-gray-900">
+                        {typeof value === "number" ? value.toLocaleString() : value}
+                      </span>
+                    </p>
+                  ))}
+                </div>
+
+                <p className="mt-3 text-lg font-bold text-green-700">
+                  Total: ₱{quotation.total?.toLocaleString()}
+                </p>
+              </div>
+            )}
 
             {/* =============================== */}
             {/* PRODUCT SELECTOR */}

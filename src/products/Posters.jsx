@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "../component/ui/ToastProvider.jsx";
 import UploadSection from "../component/UploadSection.jsx";
-import { computeQuotation } from "../utils/computeQuatation.js";
+import { computeQuotation } from "../utils/computeQuotation.js";
 import { API_URL } from "../api.js";
 
 function Posters() {

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import UploadSection from "../component/UploadSection";
 import { useToast } from "../component/ui/ToastProvider";
-import { computeBookQuotation } from "../utils/bookQuatation";
+import { computeBookQuotation } from "../utils/bookQuotation";
 import { API_URL } from "../api";
 
 function Books() {

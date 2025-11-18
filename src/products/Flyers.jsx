@@ -6,7 +6,7 @@ import { useState,useEffect } from "react";
 import { Contact, MessageCircle, XCircle } from "lucide-react";
 import UploadSection from "../component/UploadSection.jsx";
 import { useToast } from "../component/ui/ToastProvider.jsx";
-import { computeQuotation } from "../utils/computeQuatation.js";
+import { computeQuotation } from "../utils/computeQuotation.js";
 import { API_URL } from "../api.js";
 
 function Flyers() {

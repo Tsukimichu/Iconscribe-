@@ -871,5 +871,125 @@ router.get("/canceled/all", async (req, res) => {
   }
 });
 
+// ===================================================
+// CREATE WALK-IN ORDER (NO USER ACCOUNT)
+// ===================================================
+router.post(
+  "/walkin",
+  upload.array("files", 10), // allow up to 10 uploads
+  async (req, res) => {
+    try {
+      const {
+        customer_name,
+        contact_number,
+        service,
+        quantity,
+        urgency,
+        status,
+        price,
+        details,
+      } = req.body;
+
+      if (!customer_name || !service || !quantity || !price) {
+        return res.status(400).json({
+          success: false,
+          message: "Missing required fields.",
+        });
+      }
+
+      // Parse attributes
+      let parsedDetails = {};
+      try {
+        parsedDetails = JSON.parse(details || "{}");
+      } catch (err) {
+        parsedDetails = {};
+      }
+
+      // Find product_id by product_name
+      const [productRow] = await db
+        .promise()
+        .query("SELECT product_id FROM products WHERE product_name = ?", [
+          service,
+        ]);
+
+      if (productRow.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Product not found for service name.",
+        });
+      }
+
+      const product_id = productRow[0].product_id;
+
+      // Create ORDER
+      const [orderResult] = await db
+        .promise()
+        .query(
+          `INSERT INTO orders (user_id, order_date, archived, total, manager_added) 
+           VALUES (?, NOW(), 0, ?, 0)`,
+          [0, price] // user_id = 0 for walk-in
+        );
+
+      const order_id = orderResult.insertId;
+
+      // Create ORDER ITEM
+      const [orderItemResult] = await db.promise().query(
+        `INSERT INTO orderitems 
+        (order_id, product_id, quantity, urgency, status, estimated_price) 
+        VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          order_id,
+          product_id,
+          quantity,
+          urgency || "Normal",
+          status || "Pending",
+          price,
+        ]
+      );
+
+      const order_item_id = orderItemResult.insertId;
+
+      // Insert DETAILS as attributes
+      for (const key in parsedDetails) {
+        await db.promise().query(
+          `INSERT INTO order_item_attributes (order_item_id, attribute_name, attribute_value)
+           VALUES (?, ?, ?)`,
+          [order_item_id, key, parsedDetails[key]]
+        );
+      }
+
+      // Handle file uploads
+      if (req.files && req.files.length > 0) {
+        const filePaths = req.files.map(
+          (file) => `/uploads/orderfiles/${file.filename}`
+        );
+
+        // Save first 2 files (DB schema supports file1 + file2)
+        await db.promise().query(
+          `UPDATE orderitems SET file1 = ?, file2 = ? WHERE order_item_id = ?`,
+          [
+            filePaths[0] || null,
+            filePaths[1] || null,
+            order_item_id
+          ]
+        );
+      }
+
+      res.json({
+        success: true,
+        message: "Walk-in order created successfully!",
+        order_id,
+        enquiryNo: order_item_id,
+      });
+    } catch (err) {
+      console.error("❌ WALK-IN ORDER ERROR:", err);
+      res.status(500).json({
+        success: false,
+        message: "Server error",
+        error: err.message,
+      });
+    }
+  }
+);
 
 module.exports = router;

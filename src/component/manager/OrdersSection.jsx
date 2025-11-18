@@ -38,38 +38,6 @@ const OrdersSection = () => {
 
   const [showSizeDropdown, setShowSizeDropdown] = useState(false);
 
-
-  // Define available services (for dropdown)
-  const serviceOptions = [
-    "Official Receipt",
-    "Binding",
-    "Book",
-    "Brochure",
-    "Calendar",
-    "Calling Card",
-    "Flyers",
-    "Invitation",
-    "News Letter",
-    "Poster",
-    "Raffle Ticket",
-    "Label",
-  ];
-
-  // Optional: if you want auto-pricing per service, define here
-  const servicePrices = {
-    "Official Receipt": 150,
-    Binding: 50,
-    Book: 300,
-    Brochure: 120,
-    Calendar: 200,
-    "Calling Card": 100,
-    Flyers: 80,
-    Invitation: 90,
-    "News Letter": 150,
-    Poster: 180,
-    "Raffle Ticket": 130,
-  };
-
   // Form state for new walk-in order
   // Update your existing useState for newOrder
   const [newOrder, setNewOrder] = useState({
@@ -316,7 +284,7 @@ const OrdersSection = () => {
 
       orderFiles.forEach((file) => formData.append("files", file));
 
-      const res = await fetch(`${API_URL}/orders`, {
+      const res = await fetch(`${API_URL}/orders/walkin`, {
         method: "POST",
         body: formData,
       });
@@ -340,12 +308,40 @@ const OrdersSection = () => {
           enquiry_no: "",
           price: "",
           urgency: "Normal",
+
+          // UNIVERSAL PRODUCT FIELDS
+          quantity: "",
+          size: "",
+          custom_width: "",
+          custom_height: "",
+          paper_type: "",
+          color_printing: "",
+          lamination: "",
+          back_to_back: false,
+
+          // BOOK
           number_of_pages: "",
           binding_type: "",
-          paper_type: "",
           cover_finish: "",
-          color_printing: "",
-          book_type:""
+          book_type: "",
+
+          // CALENDAR
+          calendar_type: "",
+          color: "",
+
+          // INVITATION, NEWSLETTER
+          event_name: "",
+          layout: "",
+
+          // CALLING CARD
+          card_title: "",
+
+          // OR
+          business_name: "",
+          booklet_finish: "",
+
+          // RAFFLE
+          with_stub: "",
         });
         setOrderFiles([]);
       }
@@ -490,6 +486,25 @@ const OrdersSection = () => {
     "Out for Delivery": "bg-purple-50",
     Completed: "bg-green-50",
     Cancelled: "bg-red-50",
+  };
+  
+  const handlePriceInput = (value) => {
+    const cleaned = value.replace(/[^0-9.]/g, "");
+
+    const parts = cleaned.split(".");
+    if (parts.length > 2) return;
+
+    setNewOrder((prev) => ({
+      ...prev,
+      price: cleaned,
+    }));
+  };
+
+  const handlePriceBlur = () => {
+    if (!newOrder.price) return;
+
+    const formatted = Number(newOrder.price).toFixed(2);
+    setNewOrder((prev) => ({ ...prev, price: formatted }));
   };
 
   return (
@@ -1077,11 +1092,6 @@ const OrdersSection = () => {
               showSizeDropdown={showSizeDropdown}
               setShowSizeDropdown={setShowSizeDropdown}
             />
-
-
-
-
-
 
       {/* --- Urgency Modal --- */}
       <AnimatePresence>

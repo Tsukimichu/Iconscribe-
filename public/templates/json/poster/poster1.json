@@ -1,13 +1,132 @@
 {
   "version": "5.3.0",
+  "background": "#EEF4F8",
   "objects": [
-    { "type": "rect", "left": -40, "top": -40, "width": 1200, "height": 1600, "fill": "#0b3d91", "angle": 0 },
-    { "type": "textbox", "left": 80, "top": 120, "width": 1040, "text": "SUMMER FEST 2026", "fontSize": 72, "fontWeight": "bold", "fill": "#ffffff", "textAlign": "center", "fontFamily": "Arial" },
-    { "type": "rect", "left": 80, "top": 260, "width": 1040, "height": 8, "fill": "#ffcc00" },
-    { "type": "textbox", "left": 80, "top": 300, "width": 1040, "text": "Join us for music, food, and fun!", "fontSize": 28, "fill": "#ffffff", "textAlign": "center", "fontFamily": "Arial" },
+    {
+      "type": "rect",
+      "left": 0,
+      "top": 0,
+      "width": 1080,
+      "height": 600,
+      "fill": "#EEF4F8"
+    },
 
-    { "type": "rect", "left": 140, "top": 380, "width": 440, "height": 440, "fill": "#ffffff", "opacity": 0.08 },
-    { "type": "textbox", "left": 600, "top": 420, "width": 520, "text": "Saturday, June 5\nDowntown Park\nTickets available online", "fontSize": 24, "fill": "#ffffff", "textAlign": "left", "fontFamily": "Arial" }
-  ],
-  "background": "#0b3d91"
+    {
+      "type": "path",
+      "left": 0,
+      "top": 0,
+      "width": 1080,
+      "height": 260,
+      "fill": "#9DCFFB",
+      "d": "M0 0 L1080 0 L1080 180 Q540 260 0 180 Z"
+    },
+
+    {
+      "type": "circle",
+      "left": 820,
+      "top": 40,
+      "radius": 90,
+      "fill": "#70B5FF",
+      "opacity": 0.55
+    },
+
+    {
+      "type": "circle",
+      "left": -40,
+      "top": 120,
+      "radius": 110,
+      "fill": "#6EE7C2",
+      "opacity": 0.55
+    },
+
+    {
+      "type": "textbox",
+      "left": 0,
+      "top": 70,
+      "width": 1080,
+      "text": "Minimal Pastel Design",
+      "fontSize": 42,
+      "fontFamily": "Arial",
+      "fontWeight": "bold",
+      "fill": "#1E293B",
+      "textAlign": "center"
+    },
+
+    {
+      "type": "textbox",
+      "left": 0,
+      "top": 125,
+      "width": 1080,
+      "text": "Clean • Strong • Modern",
+      "fontSize": 22,
+      "fontFamily": "Arial",
+      "fill": "#334155",
+      "textAlign": "center"
+    },
+
+    {
+      "type": "rect",
+      "left": 140,
+      "top": 240,
+      "width": 800,
+      "height": 260,
+      "fill": "#FFFFFF",
+      "stroke": "#D0D7E2",
+      "strokeWidth": 2,
+      "rx": 22,
+      "ry": 22
+    },
+
+    {
+      "type": "rect",
+      "left": 260,
+      "top": 285,
+      "width": 560,
+      "height": 150,
+      "fill": "#D9ECFF",
+      "rx": 18,
+      "ry": 18,
+      "stroke": "#B7DBFF",
+      "strokeWidth": 1.5
+    },
+
+    {
+      "type": "textbox",
+      "left": 280,
+      "top": 305,
+      "width": 520,
+      "text": "• Richer modern color blend\n• Stronger background contrast\n• Clean balanced composition",
+      "fontSize": 22,
+      "fontFamily": "Arial",
+      "fill": "#1E293B",
+      "lineHeight": 1.35
+    },
+
+    {
+      "type": "circle",
+      "left": 240,
+      "top": 430,
+      "radius": 16,
+      "fill": "#5CD9B2"
+    },
+
+    {
+      "type": "circle",
+      "left": 820,
+      "top": 430,
+      "radius": 16,
+      "fill": "#52A9FF"
+    },
+
+    {
+      "type": "rect",
+      "left": 510,
+      "top": 470,
+      "width": 70,
+      "height": 8,
+      "fill": "#94A3B8",
+      "rx": 4,
+      "ry": 4
+    }
+  ]
 }

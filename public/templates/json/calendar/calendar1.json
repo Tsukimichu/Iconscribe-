@@ -1,17 +1,235 @@
 {
   "version": "5.3.0",
+  "background": "#ffffff",
+  "width": 1080,
+  "height": 400,
   "objects": [
-    { "type": "rect", "left": -40, "top": -40, "width": 800, "height": 1200, "fill": "#f8f7f3", "angle": 0 },
-    { "type": "textbox", "left": 40, "top": 30, "width": 720, "text": "November 2025", "fontSize": 48, "fontWeight": "bold", "fill": "#333333", "textAlign": "center", "fontFamily": "Arial" },
+    {
+      "type": "textbox",
+      "left": 180,
+      "top": 20,
+      "width": 720,
+      "text": "YOUR BRANDING",
+      "fontSize": 64,
+      "fontWeight": "bold",
+      "fontFamily": "Arial",
+      "fill": "#1F4FA3",
+      "textAlign": "center"
+    },
+    {
+      "type": "rect",
+      "left": 40,
+      "top": 120,
+      "width": 1000,
+      "height": 90,
+      "fill": "#1F4FA3",
+      "rx": 8,
+      "ry": 8
+    },
+    {
+      "type": "rect",
+      "left": 60,
+      "top": 130,
+      "width": 220,
+      "height": 70,
+      "fill": "#254FAD",
+      "rx": 4,
+      "ry": 4
+    },
+    {
+      "type": "textbox",
+      "left": 72,
+      "top": 136,
+      "width": 200,
+      "text": "UP TO\n30%\nALL FOOD PRODUCT",
+      "fontSize": 18,
+      "fontWeight": "bold",
+      "lineHeight": 1.15,
+      "fontFamily": "Arial",
+      "fill": "#ffffff",
+      "textAlign": "center"
+    },
+    {
+      "type": "rect",
+      "left": 310,
+      "top": 130,
+      "width": 220,
+      "height": 70,
+      "fill": "#C40000",
+      "rx": 4,
+      "ry": 4
+    },
+    {
+      "type": "textbox",
+      "left": 320,
+      "top": 136,
+      "width": 200,
+      "text": "$500\nALL FOOD PRODUCT",
+      "fontSize": 22,
+      "fontWeight": "bold",
+      "lineHeight": 1.15
+    },
+    {
+      "type": "rect",
+      "left": 560,
+      "top": 130,
+      "width": 220,
+      "height": 70,
+      "fill": "#254FAD",
+      "rx": 4,
+      "ry": 4
+    },
+    {
+      "type": "textbox",
+      "left": 570,
+      "top": 136,
+      "width": 200,
+      "text": "FREE\nDELIVERY\nALL FOOD PRODUCT",
+      "fontSize": 18,
+      "fontWeight": "bold",
+      "lineHeight": 1.15,
+      "fontFamily": "Arial",
+      "fill": "#ffffff",
+      "textAlign": "center"
+    },
+    {
+      "type": "rect",
+      "left": 140,
+      "top": 240,
+      "width": 120,
+      "height": 60,
+      "fill": "#ffffff",
+      "stroke": "#d10000",
+      "strokeWidth": 3,
+      "rx": 6,
+      "ry": 6
+    },
+    {
+      "type": "textbox",
+      "left": 150,
+      "top": 248,
+      "width": 100,
+      "text": "MEGA\nSALE\n70%",
+      "fontSize": 18,
+      "fontWeight": "bold",
+      "lineHeight": 1.1,
+      "fontFamily": "Arial",
+      "fill": "#d10000",
+      "textAlign": "center"
+    },
 
-    { "type": "rect", "left": 40, "top": 120, "width": 720, "height": 60, "fill": "#e0e0e0" },
-    { "type": "textbox", "left": 50, "top": 130, "width": 700, "text": "Sun    Mon    Tue    Wed    Thu    Fri    Sat", "fontSize": 18, "fill": "#444444", "textAlign": "left", "fontFamily": "Arial" },
+    {
+      "type": "rect",
+      "left": 290,
+      "top": 240,
+      "width": 120,
+      "height": 60,
+      "fill": "#ffffff",
+      "stroke": "#d10000",
+      "strokeWidth": 3,
+      "rx": 6,
+      "ry": 6
+    },
+    {
+      "type": "textbox",
+      "left": 300,
+      "top": 248,
+      "width": 100,
+      "text": "MEGA\nSALE\n70%",
+      "fontSize": 18,
+      "fontWeight": "bold",
+      "lineHeight": 1.1,
+      "fontFamily": "Arial",
+      "fill": "#d10000",
+      "textAlign": "center"
+    },
+    {
+      "type": "rect",
+      "left": 520,
+      "top": 240,
+      "width": 120,
+      "height": 60,
+      "fill": "#ffffff",
+      "stroke": "#d10000",
+      "strokeWidth": 3,
+      "rx": 6,
+      "ry": 6
+    },
+    {
+      "type": "textbox",
+      "left": 530,
+      "top": 248,
+      "width": 100,
+      "text": "MEGA\nSALE\n70%",
+      "fontSize": 18,
+      "fontWeight": "bold",
+      "lineHeight": 1.1,
+      "fontFamily": "Arial",
+      "fill": "#d10000",
+      "textAlign": "center"
+    },
 
-    { "type": "rect", "left": 40, "top": 200, "width": 100, "height": 100, "fill": "#ffffff", "stroke": "#cccccc" },
-    { "type": "textbox", "left": 50, "top": 210, "width": 80, "text": "1", "fontSize": 16, "fill": "#000000", "textAlign": "left", "fontFamily": "Arial" },
+    {
+      "type": "rect",
+      "left": 670,
+      "top": 240,
+      "width": 120,
+      "height": 60,
+      "fill": "#ffffff",
+      "stroke": "#d10000",
+      "strokeWidth": 3,
+      "rx": 6,
+      "ry": 6
+    },
+    {
+      "type": "textbox",
+      "left": 680,
+      "top": 248,
+      "width": 100,
+      "text": "MEGA\nSALE\n70%",
+      "fontSize": 18,
+      "fontWeight": "bold",
+      "lineHeight": 1.1,
+      "fontFamily": "Arial",
+      "fill": "#d10000",
+      "textAlign": "center"
+    },
+    {
+      "type": "textbox",
+      "left": 420,
+      "top": 330,
+      "width": 240,
+      "text": "CONTACT US:",
+      "fontSize": 20,
+      "fontWeight": "bold",
+      "fontFamily": "Arial",
+      "fill": "#C40000",
+      "textAlign": "center"
+    },
 
-    { "type": "rect", "left": 150, "top": 200, "width": 100, "height": 100, "fill": "#ffffff", "stroke": "#cccccc" },
-    { "type": "textbox", "left": 160, "top": 210, "width": 80, "text": "2", "fontSize": 16, "fill": "#000000", "textAlign": "left", "fontFamily": "Arial" }
-  ],
-  "background": "#ffffff"
+    {
+      "type": "rect",
+      "left": 420,
+      "top": 360,
+      "width": 240,
+      "height": 36,
+      "fill": "#1F4FA3",
+      "rx": 20,
+      "ry": 20
+    },
+
+    {
+      "type": "textbox",
+      "left": 430,
+      "top": 366,
+      "width": 220,
+      "text": "📞 63 936 7844 2",
+      "fontSize": 16,
+      "fontWeight": "bold",
+      "fontFamily": "Arial",
+      "fill": "#ffffff",
+      "textAlign": "center"
+    }
+
+  ]
 }

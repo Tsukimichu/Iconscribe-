@@ -18,7 +18,6 @@ const OrdersSection = () => {
   const [imageGallery, setImageGallery] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-
   const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [showPriceModal, setShowPriceModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
@@ -26,6 +25,7 @@ const OrdersSection = () => {
   const [showImageModal, setShowImageModal] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
 
+  const [tableView, setTableView] = useState("active"); // active | completed | canceled
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [newPrice, setNewPrice] = useState("");
   const [newStatus, setNewStatus] = useState("");
@@ -107,7 +107,7 @@ const OrdersSection = () => {
     setShowUrgencyModal(false);
   };
 
-  // Handle file uploads
+  // Handle file uploads (for walk-in)
   const [orderFiles, setOrderFiles] = useState([]);
 
   // When the user selects a service from the dropdown
@@ -122,12 +122,23 @@ const OrdersSection = () => {
     }));
   };
 
-  // --- Fetch from backend ---
-  useEffect(() => {
+  // ==========================================================
+  // FETCH ORDERS (single endpoint, we will filter by status)
+  // ==========================================================
+  const loadOrders = () => {
     fetch("http://localhost:5000/api/orders")
       .then((res) => res.json())
-      .then((data) => setOrders(Array.isArray(data) ? data : []))
-      .catch((err) => console.error("Error fetching orders:", err));
+      .then((data) => {
+        const arr = Array.isArray(data) ? data : [];
+        // data from backend already has enquiryNo, service, customer_name, etc.
+        setOrders(arr);
+      })
+      .catch((err) => console.error("❌ Error loading orders:", err));
+  };
+
+  // Load on first render
+  useEffect(() => {
+    loadOrders();
   }, []);
 
   // --- Archive Logic ---
@@ -135,20 +146,25 @@ const OrdersSection = () => {
     setSelectedOrder(order);
     setShowArchiveModal(true);
   };
+
   const closeArchiveModal = () => {
     setShowArchiveModal(false);
     setSelectedOrder(null);
   };
+
   const confirmArchive = async () => {
     if (!selectedOrder) return;
     const orderId = selectedOrder.order_id;
     if (!orderId) return alert("Invalid order ID.");
 
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/${orderId}/archive`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-      });
+      const res = await fetch(
+        `http://localhost:5000/api/orders/${orderId}/archive`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
       const data = await res.json();
       if (res.ok && data.success) {
         setOrders((prev) => prev.filter((o) => o.order_id !== orderId));
@@ -169,11 +185,13 @@ const OrdersSection = () => {
     setNewPrice(order.price || "");
     setShowPriceModal(true);
   };
+
   const closePriceModal = () => {
     setShowPriceModal(false);
     setSelectedOrder(null);
     setNewPrice("");
   };
+
   const confirmAddPrice = async () => {
     if (!selectedOrder || newPrice === "" || isNaN(newPrice)) {
       alert("Enter a valid price");
@@ -183,23 +201,25 @@ const OrdersSection = () => {
     const orderId = selectedOrder.order_id;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/${orderId}/price`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ price: Number(newPrice) }),
-      });
+      const res = await fetch(
+        `http://localhost:5000/api/orders/${orderId}/price`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ price: Number(newPrice) }),
+        }
+      );
 
       const data = await res.json();
 
       if (res.ok && data.success) {
-        // Update order in state to reflect new total and manager_added
         setOrders((prev) =>
           prev.map((o) =>
             o.order_id === orderId
               ? {
                   ...o,
                   manager_added: data.manager_added,
-                  total: data.total,
+                  total_price: data.total,
                 }
               : o
           )
@@ -215,102 +235,65 @@ const OrdersSection = () => {
     }
   };
 
+  // --- Set Status Logic (per order item) ---
+  const openStatusModal = (order) => {
+    setSelectedOrder(order);
+    setNewStatus(order.status || "Pending");
+    setShowStatusModal(true);
+  };
 
-  // --- Set Status Logic ---
- const openStatusModal = (order) => {
-  if (!order?.enquiryNo) return alert("Invalid order selected.");
-  setSelectedOrder(order);
-  setNewStatus(order.status || "Pending");
-  setShowStatusModal(true);
-};
   const closeStatusModal = () => {
     setShowStatusModal(false);
     setSelectedOrder(null);
     setNewStatus("");
   };
 
-  // If status is changed to "Completed", add to sales table
   const confirmSetStatus = async () => {
     if (!selectedOrder) return;
 
-    const newStatusValue = newStatus;
+    const itemId = selectedOrder.enquiryNo; // order_item_id
 
     try {
-      // Update main order status
-      const resOrder = await fetch(
-        `http://localhost:5000/api/orders/${selectedOrder.order_id}/status`,
+      const res = await fetch(
+        `http://localhost:5000/api/orders/${itemId}/status`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: newStatusValue }),
+          body: JSON.stringify({ status: newStatus }),
         }
       );
-      const orderData = await resOrder.json();
-      if (!resOrder.ok || !orderData.success)
-        throw new Error(orderData.message || "Failed to update order status");
 
-      // Add to sales if completed
-      if (newStatusValue === "Completed") {
-        try {
-          // check first if this order_item_id already exists in sales
-          const checkRes = await fetch(
-            `http://localhost:5000/api/sales?order_item_id=${item.order_item_id}`
-          );
-          const checkData = await checkRes.json();
+      const data = await res.json();
 
-          if (checkData.exists) {
-            console.log(`Sale already exists for item ${item.order_item_id}, skipping...`);
-            return;
-          }
-
-          // only insert if not yet in sales
-          await fetch(`http://localhost:5000/api/sales`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              order_item_id: item.order_item_id,
-              item: item.service,
-              amount: item.price,
-              date: new Date().toISOString(),
-            }),
-          });
-        } catch (err) {
-          console.error("Failed to add to sales:", err);
-        }
+      if (!data.success) {
+        alert(data.message || "Failed to update status");
+        return;
       }
 
-      // Update local state for orders
-      setOrders((prev) =>
-        (prev || []).map((o) =>
-          o.order_id === selectedOrder.order_id
-            ? {
-                ...o,
-                status: newStatusValue,
-                items: (o.items || []).map((i) => ({ ...i, status: newStatusValue })),
-              }
-            : o
-        )
-      );
+      // Reload list so all tabs (active/completed/canceled) reflect changes
+      loadOrders();
 
-      // Close modal
       setShowStatusModal(false);
       setSelectedOrder(null);
       setNewStatus("");
     } catch (err) {
-      console.error(err);
-      alert(err.message || "Server error");
+      console.error("❌ Status update failed:", err);
+      alert("Status update failed");
     }
   };
 
   // --- Add Walk-In Order Logic ---
   const handleAddOrder = async () => {
-    const { customer_name, service, price, urgency } = newOrder;
+    const { customer_name, service, price } = newOrder;
 
     if (!customer_name.trim() || !service || !price) {
-      return alert("Please fill in all required fields (Customer, Service, and Price).");
+      return alert(
+        "Please fill in all required fields (Customer, Service, and Price)."
+      );
     }
 
     try {
+      // Still using your original endpoint; adjust to /create when backend ready
       const formData = new FormData();
       Object.entries(newOrder).forEach(([key, value]) => {
         if (value) formData.append(key, value);
@@ -329,7 +312,8 @@ const OrdersSection = () => {
       if (!res.ok) throw new Error(data.message || "Failed to add order");
 
       if (data.success) {
-        setOrders((prev) => [...prev, data.order]);
+        // Either push the new order or just reload:
+        loadOrders();
         setShowAddOrderModal(false);
         setNewOrder({
           customer_name: "",
@@ -356,60 +340,106 @@ const OrdersSection = () => {
     }
   };
 
-
   // --- Open View Modal ---
-const openViewModal = async (order) => {
-  const orderId = order.order_id;
-  if (!orderId) return alert("Invalid order ID.");
+  const openViewModal = async (order) => {
+    const orderId = order.order_id;
+    if (!orderId) return alert("Invalid order ID.");
 
-  try {
-    const res = await fetch(`http://localhost:5000/api/orders/${orderId}`);
-    const data = await res.json();
-    console.log("Fetched order:", data);
+    try {
+      const res = await fetch(`http://localhost:5000/api/orders/${orderId}`);
+      const data = await res.json();
+      console.log("Fetched order:", data);
 
-    if (res.ok && data.success) {
-      setSelectedOrder(data.order);
-      setShowViewModal(true);
-    } else {
-      alert(data.message || "Failed to fetch order details.");
+      if (res.ok && data.success) {
+        setSelectedOrder(data.order);
+        setShowViewModal(true);
+      } else {
+        alert(data.message || "Failed to fetch order details.");
+      }
+    } catch (err) {
+      console.error("Error fetching order details:", err);
+      alert("Server error while fetching order details.");
     }
-  } catch (err) {
-    console.error("Error fetching order details:", err);
-    alert("Server error while fetching order details.");
-  }
-};
-
+  };
 
   const closeViewModal = () => {
     setShowViewModal(false);
     setSelectedOrder(null);
   };
-  
 
   // --- Search + Sort ---
   const sortedOrders = useMemo(() => {
-    let filtered = orders.filter(
-      (o) =>
-        o.enquiryNo.toString().includes(searchTerm) ||
-        o.service?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        o.customer_name?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const term = searchTerm.toLowerCase().trim();
+
+    let filtered = orders.filter((o) => {
+      const enquiryNoMatch = o.enquiryNo?.toString().includes(term);
+      const serviceMatch = o.service?.toLowerCase().includes(term);
+      const customerMatch = o.customer_name?.toLowerCase().includes(term);
+      const statusMatch = o.status?.toLowerCase().includes(term);
+      const urgencyMatch = o.urgency?.toLowerCase().includes(term);
+
+      const estimatedPriceMatch =
+        o.estimated_price &&
+        o.estimated_price.toString().toLowerCase().includes(term);
+
+      const totalPrice =
+        Number(o.estimated_price || 0) + Number(o.manager_added || 0);
+
+      const totalPriceMatch =
+        totalPrice && totalPrice.toString().toLowerCase().includes(term);
+
+      const rawDate = o.dateOrdered ? new Date(o.dateOrdered) : null;
+
+      const dateMatch = rawDate
+        ? rawDate.toLocaleDateString().toLowerCase().includes(term) ||
+          rawDate.toDateString().toLowerCase().includes(term) ||
+          rawDate.toISOString().toLowerCase().includes(term)
+        : false;
+
+      return (
+        enquiryNoMatch ||
+        serviceMatch ||
+        customerMatch ||
+        statusMatch ||
+        urgencyMatch ||
+        estimatedPriceMatch ||
+        totalPriceMatch ||
+        dateMatch
+      );
+    });
 
     if (sortConfig.key) {
       filtered.sort((a, b) => {
         const aVal = a[sortConfig.key];
         const bVal = b[sortConfig.key];
+
         if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
         if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
         return 0;
       });
     }
+
     return filtered;
   }, [orders, searchTerm, sortConfig]);
 
+  // Filter by tab: active / completed / canceled (no extra DB tables)
+  const displayedOrders = useMemo(() => {
+    if (tableView === "completed") {
+      return sortedOrders.filter((o) => o.status === "Completed");
+    }
+    if (tableView === "canceled") {
+      return sortedOrders.filter((o) => o.status === "Cancelled");
+    }
+    // "active" — anything that is not Completed or Cancelled
+    return sortedOrders.filter(
+      (o) => o.status !== "Completed" && o.status !== "Cancelled"
+    );
+  }, [sortedOrders, tableView]);
+
   const requestSort = (key) => {
     let direction = "asc";
-    if (sortConfig.key === key && sortConfig.direction === "asc") direction = "desc";
+    if (sortConfig.key === key && sortConfig.direction === "asc")
+      direction = "desc";
     setSortConfig({ key, direction });
   };
 
@@ -422,13 +452,30 @@ const openViewModal = async (order) => {
       )
     ) : null;
 
-    const formatLabel = (key) => {
-      return key
-        .replace(/([A-Z])/g, " $1")     
-        .replace(/_/g, " ")              
-        .replace(/\b\w/g, (char) => char.toUpperCase());
-    };
+  const formatLabel = (key) => {
+    return key
+      .replace(/([A-Z])/g, " $1")
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  };
 
+  const statusColors = {
+    Pending: "bg-gray-100 text-gray-700",
+    Ongoing: "bg-yellow-100 text-yellow-700",
+    "Out for delivery": "bg-purple-100 text-purple-700",
+    "Out for Delivery": "bg-purple-100 text-purple-700",
+    Completed: "bg-green-100 text-green-700",
+    Cancelled: "bg-red-100 text-red-700",
+  };
+
+  const rowHighlight = {
+    Pending: "bg-gray-50",
+    Ongoing: "bg-yellow-50",
+    "Out for delivery": "bg-purple-50",
+    "Out for Delivery": "bg-purple-50",
+    Completed: "bg-green-50",
+    Cancelled: "bg-red-50",
+  };
 
   return (
     <div className="p-8 rounded-3xl bg-white shadow-2xl space-y-8 min-h-screen">
@@ -453,10 +500,46 @@ const openViewModal = async (order) => {
           </div>
         </div>
 
-        <div className="flex justify-end mt-2">
+        <div className="flex justify-start gap-3 mt-2">
+          <button
+            onClick={() => setTableView("active")}
+            className={`px-4 py-2 rounded-lg shadow-sm transition 
+            ${
+              tableView === "active"
+                ? "bg-cyan-600 text-white"
+                : "bg-gray-200 text-gray-700"
+            }`}
+          >
+            Active Orders
+          </button>
+
+          <button
+            onClick={() => setTableView("completed")}
+            className={`px-4 py-2 rounded-lg shadow-sm transition 
+            ${
+              tableView === "completed"
+                ? "bg-cyan-600 text-white"
+                : "bg-gray-200 text-gray-700"
+            }`}
+          >
+            Completed Orders
+          </button>
+
+          <button
+            onClick={() => setTableView("canceled")}
+            className={`px-4 py-2 rounded-lg shadow-sm transition 
+            ${
+              tableView === "canceled"
+                ? "bg-cyan-600 text-white"
+                : "bg-gray-200 text-gray-700"
+            }`}
+          >
+            Canceled Orders
+          </button>
+
           <button
             onClick={() => setShowAddOrderModal(true)}
-            className="flex items-center gap-2 bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 transition shadow-md"
+            className="ml-auto flex items-center gap-2 bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 transition shadow-md"
           >
             <PlusCircle size={18} />
             Add Walk-In Order
@@ -481,8 +564,8 @@ const openViewModal = async (order) => {
                     { key: "dateOrdered", label: "Date Ordered" },
                     { key: "urgency", label: "Urgency" },
                     { key: "status", label: "Status" },
-                    { key: "price", label: "Estimated Price" },
-                    { key: "total", label: "Total Price" },
+                    { key: "estimated_price", label: "Estimated Price" },
+                    { key: "total_price", label: "Total Price" },
                   ].map((col) => (
                     <th
                       key={col.key}
@@ -499,108 +582,132 @@ const openViewModal = async (order) => {
                 </tr>
               </thead>
               <tbody>
-                {sortedOrders.map((order, idx) => {
-                  const isCancelled = order.status === "Cancelled";
+                {displayedOrders.map((order, idx) => (
+                  <motion.tr
+                    key={order.enquiryNo}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className={`
+                      border-b border-gray-200 transition hover:opacity-95 
+                      ${rowHighlight[order.status] || "bg-white"}
+                    `}
+                  >
+                    {/* Enquiry No */}
+                    <td className="py-3 px-6">{order.enquiryNo}</td>
 
-                  return (
-                    <motion.tr
-                      key={order.enquiryNo}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className={`border-b border-gray-200 transition ${
-                        isCancelled ? "bg-gray-200" : "hover:bg-gray-50"
-                      }`}
-                    >
-                      <td className="py-3 px-6">{order.enquiryNo}</td>
-                      <td className="py-3 px-6">{order.service}</td>
-                      <td className="py-3 px-6">{order.customer_name}</td>
-                      <td className="py-3 px-6">
-                        {new Date(order.dateOrdered).toLocaleDateString()}
-                      </td>
-                      <td className="py-3 px-6">{order.urgency || "—"}</td>
-                      <td className="py-3 px-6">{order.status || "Pending"}</td>
-                      <td className="py-3 px-6">
-                        {order.estimated_price
-                          ? `₱${Number(order.estimated_price || 0).toFixed(2)}`
-                          : <span className="text-gray-400 italic">Not Set</span>}
-                      </td>
-                      <td className="py-3 px-6 font-semibold text-green-600">
-                        {order.manager_added && order.manager_added > 0
-                          ? `₱${(
-                              Number(order.estimated_price || 0) +
-                              Number(order.manager_added || 0)
-                            ).toFixed(2)}`
-                          : <span className="text-gray-400 italic">—</span>}
-                      </td>
+                    {/* Service */}
+                    <td className="py-3 px-6">{order.service}</td>
 
-                      <td className="py-3 px-6 flex justify-end gap-2">
+                    {/* Customer Name */}
+                    <td className="py-3 px-6">{order.customer_name}</td>
 
-                        {/* VIEW — always enabled */}
-                        <button
-                          onClick={() => openViewModal(order)}
-                          className="flex items-center justify-center gap-1 bg-blue-100 text-blue-700 px-2 py-2 rounded-lg hover:bg-blue-200 transition text-sm font-medium"
-                        >
-                          <Search size={16} />
-                        </button>
+                    {/* Date Ordered */}
+                    <td className="py-3 px-6">
+                      {order.dateOrdered
+                        ? new Date(order.dateOrdered).toLocaleDateString()
+                        : "—"}
+                    </td>
 
-                        {/* STATUS BUTTON */}
-                        <button
-                          onClick={() => !isCancelled && openStatusModal(order)}
-                          disabled={isCancelled}
-                          className={`flex items-center justify-center gap-1 px-2 py-2 rounded-lg text-sm font-medium transition
-                            ${isCancelled
-                              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                              : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
-                            }`}
-                        >
-                          <Truck size={16} />
-                        </button>
+                    {/* Urgency */}
+                    <td className="py-3 px-6">{order.urgency || "—"}</td>
 
-                        {/* ADD PRICE BUTTON */}
-                        <button
-                          onClick={() => !isCancelled && openPriceModal(order)}
-                          disabled={isCancelled}
-                          className={`flex items-center justify-center gap-1 px-2 py-2 rounded-lg text-sm font-medium transition
-                            ${isCancelled
-                              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                              : "bg-cyan-100 text-cyan-700 hover:bg-cyan-200"
-                            }`}
-                        >
-                          <PlusCircle size={16} />
-                        </button>
+                    {/* STATUS with COLOR BADGE */}
+                    <td className="py-3 px-6">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold 
+                        ${
+                          statusColors[order.status] ||
+                          "bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {order.status}
+                      </span>
+                    </td>
 
-                        {/* ARCHIVE BUTTON */}
-                        <button
-                          onClick={() => !isCancelled && openArchiveModal(order)}
-                          disabled={isCancelled}
-                          className={`flex items-center justify-center gap-1 px-2 py-2 rounded-lg text-sm font-medium transition
-                            ${isCancelled
-                              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                              : "bg-red-100 text-red-700 hover:bg-red-200"
-                            }`}
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                    {/* Estimated Price */}
+                    <td className="py-3 px-6">
+                      {order.estimated_price
+                        ? `₱${Number(order.estimated_price || 0).toFixed(2)}`
+                        : (
+                          <span className="text-gray-400 italic">Not Set</span>
+                        )}
+                    </td>
 
-                        {/* URGENCY BUTTON */}
-                        <button
-                          onClick={() => !isCancelled && openUrgencyModal(order)}
-                          disabled={isCancelled}
-                          className={`flex items-center justify-center gap-1 px-2 py-2 rounded-lg text-sm font-medium transition
-                            ${isCancelled
-                              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                              : "bg-orange-100 text-orange-700 hover:bg-orange-200"
-                            }`}
-                        >
-                          <Shield size={16} />
-                        </button>
+                    {/* Total Price */}
+                    <td className="py-3 px-6 font-semibold text-green-600">
+                      {order.total_price
+                        ? `₱${Number(order.total_price || 0).toFixed(2)}`
+                        : order.manager_added && order.manager_added > 0
+                        ? `₱${(
+                            Number(order.estimated_price || 0) +
+                            Number(order.manager_added || 0)
+                          ).toFixed(2)}`
+                        : (
+                          <span className="text-gray-400 italic">—</span>
+                        )}
+                    </td>
 
-                      </td>
+                    {/* ======================= ACTION BUTTONS ======================= */}
+                    <td className="py-3 px-6 flex justify-end gap-2">
+                      {/* VIEW ALWAYS AVAILABLE */}
+                      <button
+                        onClick={() => openViewModal(order)}
+                        className="flex items-center justify-center gap-1 bg-blue-100 text-blue-700 px-2 py-2 rounded-lg hover:bg-blue-200 transition text-sm font-medium"
+                      >
+                        <Search size={16} />
+                      </button>
 
-                    </motion.tr>
-                  );
-                })}
+                      {/* COMPLETED / CANCELED VIEW: only archive */}
+                      {tableView === "completed" || tableView === "canceled" ? (
+                        <>
+                          <button
+                            onClick={() => openArchiveModal(order)}
+                            className="flex items-center justify-center gap-1 bg-red-100 text-red-700 px-2 py-2 rounded-lg hover:bg-red-200 transition text-sm font-medium"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          {/* ACTIVE ORDERS ONLY */}
+
+                          {/* SET STATUS */}
+                          <button
+                            onClick={() => openStatusModal(order)}
+                            className="flex items-center justify-center gap-1 bg-yellow-100 text-yellow-700 px-2 py-2 rounded-lg hover:bg-yellow-200 transition text-sm font-medium"
+                          >
+                            <Truck size={16} />
+                          </button>
+
+                          {/* ADD PRICE */}
+                          <button
+                            onClick={() => openPriceModal(order)}
+                            className="flex items-center justify-center gap-1 bg-cyan-100 text-cyan-700 px-2 py-2 rounded-lg hover:bg-cyan-200 transition text-sm font-medium"
+                          >
+                            <PlusCircle size={16} />
+                          </button>
+
+                          {/* ARCHIVE */}
+                          <button
+                            onClick={() => openArchiveModal(order)}
+                            className="flex items-center justify-center gap-1 bg-red-100 text-red-700 px-2 py-2 rounded-lg hover:bg-red-200 transition text-sm font-medium"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+
+                          {/* URGENCY */}
+                          <button
+                            onClick={() => openUrgencyModal(order)}
+                            className="flex items-center justify-center gap-1 bg-orange-100 text-orange-700 px-2 py-2 rounded-lg hover:bg-orange-200 transition text-sm font-medium"
+                          >
+                            <Shield size={16} />
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </motion.tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -668,13 +775,18 @@ const openViewModal = async (order) => {
                   {/* Loop through items safely */}
                   {(selectedOrder.items || []).length > 0 ? (
                     (selectedOrder.items || []).map((item, idx) => (
-                      <div key={idx} className="mt-6 border-t border-gray-200 pt-5">
+                      <div
+                        key={idx}
+                        className="mt-6 border-t border-gray-200 pt-5"
+                      >
                         <h3 className="text-lg font-semibold text-cyan-700 mb-3">
                           {item.service || "Service"}
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
                           <p>
-                            <span className="font-bold text-gray-800">Enquiry No:</span>{" "}
+                            <span className="font-bold text-gray-800">
+                              Enquiry No:
+                            </span>{" "}
                             {item.enquiryNo || "—"}
                           </p>
                           <p>
@@ -705,22 +817,35 @@ const openViewModal = async (order) => {
                               </h4>
                               <div className="flex flex-wrap gap-3">
                                 {(item.files || []).map((file, fIdx) => {
-                                  const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(file);
+                                  const isImage =
+                                    /\.(jpg|jpeg|png|gif|webp)$/i.test(file);
                                   const isPDF = /\.pdf$/i.test(file);
                                   return (
-                                    <div key={fIdx} className="flex flex-col items-center">
+                                    <div
+                                      key={fIdx}
+                                      className="flex flex-col items-center"
+                                    >
                                       {isImage && (
                                         <button
                                           onClick={() => {
-                                            const allImages = (item.files || []).filter((f) =>
-                                              /\.(jpg|jpeg|png|gif|webp)$/i.test(f)
+                                            const allImages = (
+                                              item.files || []
+                                            ).filter((f) =>
+                                              /\.(jpg|jpeg|png|gif|webp)$/i.test(
+                                                f
+                                              )
                                             );
-                                            const startIndex = allImages.findIndex(
-                                              (img) => img === file
-                                            );
+                                            const startIndex =
+                                              allImages.findIndex(
+                                                (img) => img === file
+                                              );
                                             setImageGallery(allImages);
-                                            setCurrentImageIndex(startIndex >= 0 ? startIndex : 0);
-                                            setPreviewImage(`http://localhost:5000${file}`);
+                                            setCurrentImageIndex(
+                                              startIndex >= 0 ? startIndex : 0
+                                            );
+                                            setPreviewImage(
+                                              `http://localhost:5000${file}`
+                                            );
                                             setShowImageModal(true);
                                           }}
                                           className="px-2 py-1 border border-gray-300 rounded bg-gray-100 hover:bg-gray-200 text-sm"
@@ -755,7 +880,9 @@ const openViewModal = async (order) => {
                       </div>
                     ))
                   ) : (
-                    <p className="text-gray-500 italic mt-3">No items found for this order.</p>
+                    <p className="text-gray-500 italic mt-3">
+                      No items found for this order.
+                    </p>
                   )}
                 </div>
               ) : (
@@ -776,74 +903,73 @@ const openViewModal = async (order) => {
         )}
       </AnimatePresence>
 
-
-
-        {/* --- Image Gallery Preview Modal --- */}
-        <AnimatePresence>
-          {showImageModal && imageGallery.length > 0 && (
+      {/* --- Image Gallery Preview Modal --- */}
+      <AnimatePresence>
+        {showImageModal && imageGallery.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 flex items-center justify-center bg-black/70 z-[100]"
+            onClick={() => setShowImageModal(false)}
+          >
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 flex items-center justify-center bg-black/70 z-[100]"
-              onClick={() => setShowImageModal(false)}
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className="relative bg-white p-4 rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
             >
-              <motion.div
-                initial={{ scale: 0.9 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.9 }}
-                className="relative bg-white p-4 rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center"
-                onClick={(e) => e.stopPropagation()}
+              <img
+                src={`http://localhost:5000${imageGallery[currentImageIndex]}`}
+                alt={`Preview ${currentImageIndex + 1}`}
+                className="max-w-full max-h-[80vh] rounded-xl object-contain"
+              />
+
+              {/* Navigation buttons */}
+              {imageGallery.length > 1 && (
+                <>
+                  <button
+                    onClick={() =>
+                      setCurrentImageIndex(
+                        (prev) =>
+                          (prev - 1 + imageGallery.length) % imageGallery.length
+                      )
+                    }
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-gray-800/70 text-white px-3 py-2 rounded-full hover:bg-gray-700 transition"
+                  >
+                    ‹
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      setCurrentImageIndex(
+                        (prev) => (prev + 1) % imageGallery.length
+                      )
+                    }
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-gray-800/70 text-white px-3 py-2 rounded-full hover:bg-gray-700 transition"
+                  >
+                    ›
+                  </button>
+                </>
+              )}
+
+              {/* Image counter */}
+              <p className="mt-3 text-sm text-gray-600">
+                Image {currentImageIndex + 1} of {imageGallery.length}
+              </p>
+
+              {/* Close button */}
+              <button
+                onClick={() => setShowImageModal(false)}
+                className="absolute top-3 right-3 bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600"
               >
-                <img
-                  src={`http://localhost:5000${imageGallery[currentImageIndex]}`}
-                  alt={`Preview ${currentImageIndex + 1}`}
-                  className="max-w-full max-h-[80vh] rounded-xl object-contain"
-                />
-
-                {/* Navigation buttons */}
-                {imageGallery.length > 1 && (
-                  <>
-                    <button
-                      onClick={() =>
-                        setCurrentImageIndex(
-                          (prev) => (prev - 1 + imageGallery.length) % imageGallery.length
-                        )
-                      }
-                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-gray-800/70 text-white px-3 py-2 rounded-full hover:bg-gray-700 transition"
-                    >
-                      ‹
-                    </button>
-
-                    <button
-                      onClick={() =>
-                        setCurrentImageIndex((prev) => (prev + 1) % imageGallery.length)
-                      }
-                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-gray-800/70 text-white px-3 py-2 rounded-full hover:bg-gray-700 transition"
-                    >
-                      ›
-                    </button>
-                  </>
-                )}
-
-                {/* Image counter */}
-                <p className="mt-3 text-sm text-gray-600">
-                  Image {currentImageIndex + 1} of {imageGallery.length}
-                </p>
-
-                {/* Close button */}
-                <button
-                  onClick={() => setShowImageModal(false)}
-                  className="absolute top-3 right-3 bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600"
-                >
-                  Close
-                </button>
-              </motion.div>
+                Close
+              </button>
             </motion.div>
-          )}
-        </AnimatePresence>
-
-
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* --- Status Modal --- */}
       <AnimatePresence>
@@ -860,20 +986,23 @@ const openViewModal = async (order) => {
               exit={{ scale: 0.8, opacity: 0 }}
               className="bg-white rounded-2xl shadow-lg p-6 max-w-sm w-full text-center"
             >
-              <h2 className="text-xl font-bold mb-3 text-gray-900">Set Order Status</h2>
+              <h2 className="text-xl font-bold mb-3 text-gray-900">
+                Set Order Status
+              </h2>
               <p className="text-gray-600 mb-4">
                 Choose new status for <b>{selectedOrder?.enquiryNo}</b>
               </p>
-                <select
-                  value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:ring-2 focus:ring-yellow-500 outline-none"
-                >
-                  <option>Pending</option>
-                  <option>Ongoing</option>
-                  <option>Out for delivery</option>
-                  <option>Completed</option>
-                </select>
+              <select
+                value={newStatus}
+                onChange={(e) => setNewStatus(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:ring-2 focus:ring-yellow-500 outline-none"
+              >
+                <option>Pending</option>
+                <option>Ongoing</option>
+                <option>Out for Delivery</option>
+                <option>Completed</option>
+                <option>Cancelled</option>
+              </select>
               <div className="flex justify-center gap-3">
                 <button
                   onClick={closeStatusModal}
@@ -908,7 +1037,9 @@ const openViewModal = async (order) => {
               exit={{ scale: 0.8, opacity: 0 }}
               className="bg-white rounded-2xl shadow-lg p-6 max-w-sm w-full text-center"
             >
-              <h2 className="text-xl font-bold mb-3 text-gray-900">Add / Update Price</h2>
+              <h2 className="text-xl font-bold mb-3 text-gray-900">
+                Add / Update Price
+              </h2>
               <p className="text-gray-600 mb-4">
                 Enter price for order <b>{selectedOrder?.enquiryNo}</b>
               </p>
@@ -960,7 +1091,6 @@ const openViewModal = async (order) => {
 
               {/* Two-column layout for inputs */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                {/* Customer Information */}
                 <input
                   type="text"
                   placeholder="Customer Name"
@@ -984,7 +1114,10 @@ const openViewModal = async (order) => {
                   placeholder="Contact Number"
                   value={newOrder.contact_number || ""}
                   onChange={(e) =>
-                    setNewOrder({ ...newOrder, contact_number: e.target.value })
+                    setNewOrder({
+                      ...newOrder,
+                      contact_number: e.target.value,
+                    })
                   }
                   className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
                 />
@@ -998,7 +1131,6 @@ const openViewModal = async (order) => {
                   className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
                 />
 
-                {/* Date Ordered */}
                 <input
                   type="date"
                   value={newOrder.date_ordered || ""}
@@ -1008,7 +1140,6 @@ const openViewModal = async (order) => {
                   className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
                 />
 
-                {/* Status */}
                 <select
                   value={newOrder.status || "Pending"}
                   onChange={(e) =>
@@ -1017,12 +1148,12 @@ const openViewModal = async (order) => {
                   className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
                 >
                   <option>Pending</option>
-                  <option>In Progress</option>
+                  <option>Ongoing</option>
+                  <option>Out for Delivery</option>
                   <option>Completed</option>
                   <option>Cancelled</option>
                 </select>
 
-                {/* Service */}
                 <select
                   value={newOrder.service}
                   onChange={handleServiceChange}
@@ -1036,7 +1167,6 @@ const openViewModal = async (order) => {
                   ))}
                 </select>
 
-                {/* Enquiry Number */}
                 <input
                   type="text"
                   placeholder="Enquiry No."
@@ -1047,7 +1177,6 @@ const openViewModal = async (order) => {
                   className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
                 />
 
-                {/* Price */}
                 <input
                   type="number"
                   placeholder="Price (₱)"
@@ -1058,7 +1187,6 @@ const openViewModal = async (order) => {
                   className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
                 />
 
-                {/* Urgency */}
                 <select
                   value={newOrder.urgency}
                   onChange={(e) =>
@@ -1071,13 +1199,15 @@ const openViewModal = async (order) => {
                   <option>Rush</option>
                 </select>
 
-                {/* Book Details */}
                 <input
                   type="number"
                   placeholder="Number of Pages"
                   value={newOrder.number_of_pages || ""}
                   onChange={(e) =>
-                    setNewOrder({ ...newOrder, number_of_pages: e.target.value })
+                    setNewOrder({
+                      ...newOrder,
+                      number_of_pages: e.target.value,
+                    })
                   }
                   className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
                 />
@@ -1086,7 +1216,10 @@ const openViewModal = async (order) => {
                   placeholder="Binding Type (e.g. Perfect Binding)"
                   value={newOrder.binding_type || ""}
                   onChange={(e) =>
-                    setNewOrder({ ...newOrder, binding_type: e.target.value })
+                    setNewOrder({
+                      ...newOrder,
+                      binding_type: e.target.value,
+                    })
                   }
                   className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
                 />
@@ -1104,7 +1237,10 @@ const openViewModal = async (order) => {
                   placeholder="Cover Finish (e.g. Glossy)"
                   value={newOrder.cover_finish || ""}
                   onChange={(e) =>
-                    setNewOrder({ ...newOrder, cover_finish: e.target.value })
+                    setNewOrder({
+                      ...newOrder,
+                      cover_finish: e.target.value,
+                    })
                   }
                   className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
                 />
@@ -1113,7 +1249,10 @@ const openViewModal = async (order) => {
                   placeholder="Color Printing (e.g. Full Color)"
                   value={newOrder.color_printing || ""}
                   onChange={(e) =>
-                    setNewOrder({ ...newOrder, color_printing: e.target.value })
+                    setNewOrder({
+                      ...newOrder,
+                      color_printing: e.target.value,
+                    })
                   }
                   className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500 outline-none"
                 />
@@ -1180,7 +1319,7 @@ const openViewModal = async (order) => {
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       {/* --- Urgency Modal --- */}
       <AnimatePresence>
         {showUrgencyModal && (
@@ -1196,7 +1335,9 @@ const openViewModal = async (order) => {
               exit={{ scale: 0.8, opacity: 0 }}
               className="bg-white rounded-2xl shadow-lg p-6 max-w-sm w-full text-center"
             >
-              <h2 className="text-xl font-bold mb-3 text-gray-900">Edit Urgency</h2>
+              <h2 className="text-xl font-bold mb-3 text-gray-900">
+                Edit Urgency
+              </h2>
               <p className="text-gray-600 mb-4">
                 Choose urgency for <b>{selectedOrder?.enquiryNo}</b>
               </p>
@@ -1244,9 +1385,12 @@ const openViewModal = async (order) => {
               exit={{ scale: 0.8, opacity: 0 }}
               className="bg-white rounded-2xl shadow-lg p-6 max-w-sm w-full text-center"
             >
-              <h2 className="text-xl font-bold mb-3 text-gray-900">Archive Order</h2>
+              <h2 className="text-xl font-bold mb-3 text-gray-900">
+                Archive Order
+              </h2>
               <p className="text-gray-600 mb-5">
-                Are you sure you want to archive order <b>{selectedOrder?.enquiryNo}</b>?
+                Are you sure you want to archive order{" "}
+                <b>{selectedOrder?.enquiryNo}</b>?
               </p>
               <div className="flex justify-center gap-3">
                 <button

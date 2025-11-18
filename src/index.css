@@ -77,4 +77,13 @@ body {
 
 /* Editable text helper */
 [contenteditable]:focus { outline: none; }
-  
+
+.price-flash {
+  animation: priceFlash 1.3s ease-out;
+}
+
+@keyframes priceFlash {
+  0% { background-color: #fff3b0; }
+  50% { background-color: #ffe680; }
+  100% { background-color: transparent; }
+}

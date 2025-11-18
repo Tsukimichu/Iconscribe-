@@ -9,30 +9,29 @@ export function computeBookQuotation({
   platesPerSignature = 2,
   multiplier = 1,
 }) {
-  if (!pages || !copies) return null;
+  // Convert inputs to numbers
+  const pagesNum = Number(pages);
+  const copiesNum = Number(copies);
+  if (!pagesNum || !copiesNum) return null;
 
-  // --- A. FIND PRICE OF PAPER ---
-  const signatures = Math.ceil(pages / signaturePages); // always round up
-  const sheets = Math.ceil((signatures * copies) / 2); // 2 pages per sheet
-  const reams = Math.ceil(sheets / 500); // round up reams
+  // --- A. Paper cost ---
+  const signatures = Math.ceil(pagesNum / signaturePages);
+  const sheets = Math.ceil((signatures * copiesNum) / 2);
+  const reams = Math.ceil(sheets / 500);
   const paperCost = reams * paperPricePerReam;
 
-  // --- B. FIND PRICE OF PLATES ---
-  const totalPlates = Math.ceil(signatures * platesPerSignature); 
+  // --- B. Plates cost ---
+  const totalPlates = Math.ceil(signatures * platesPerSignature);
   const plateCost = totalPlates * platePrice;
 
-  // --- C. FIND PRICE OF RUNNING / PRINTING ---
+  // --- C. Run/printing cost ---
   let runCost = totalPlates * runPrice;
+  if (colored) runCost *= 4; // full color multiplies
 
-  // Colored printing multiplies the run cost by 4
-  if (colored) {
-    runCost *= 4;
-  }
-
-  // --- D. FIND TOTAL COST ---
+  // --- D. Total cost ---
   const baseCost = paperCost + plateCost + runCost;
   const total = baseCost * multiplier;
-  const perCopy = total / copies;
+  const perCopy = total / copiesNum;
 
   return {
     signatures,

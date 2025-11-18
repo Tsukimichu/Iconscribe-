@@ -145,46 +145,6 @@ function Navigation() {
               </li>
             ))}
 
-            {/* Mobile Dropdown */}
-            <li>
-              <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex justify-center items-center gap-2 w-full px-4 py-2 rounded-lg hover:bg-yellow-400 hover:text-black transition-all"
-              >
-                Quotation
-                <ChevronDown size={16} />
-              </button>
-
-              {dropdownOpen && (
-                <ul className="mt-1 bg-white text-black rounded-lg overflow-hidden shadow-md mx-6">
-                  <li>
-                    <Link
-                      to="/quotation/request"
-                      className="block px-4 py-2 hover:bg-yellow-100"
-                      onClick={() => {
-                        setDropdownOpen(false);
-                        setMenuOpen(false);
-                      }}
-                    >
-                      Single Shit Service
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/quotation/history"
-                      className="block px-4 py-2 hover:bg-yellow-100"
-                      onClick={() => {
-                        setDropdownOpen(false);
-                        setMenuOpen(false);
-                      }}
-                    >
-                      Soft Bound Service
-                    </Link>
-                  </li>
-                </ul>
-              )}
-            </li>
-
             {/* Mobile Login/Logout */}
             <li className="border-t border-yellow-400/40 pt-3 mt-3">
               {isLoggedIn ? (

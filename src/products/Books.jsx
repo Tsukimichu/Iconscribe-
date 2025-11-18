@@ -198,21 +198,23 @@ function Books() {
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useEffect(() => {
-      if (!pages || !quantity) {
+      const pagesNum = Number(pages);
+      const copiesNum = Number(quantity);
+
+      if (!pagesNum || !copiesNum) {
         setEstimatedPrice(0);
         return;
       }
 
       const result = computeBookQuotation({
-        pages: Number(pages),
-        copies: Number(quantity),
+        pages: pagesNum,
+        copies: copiesNum,
         colored: colorPrinting === "Full Color",
       });
 
-      setEstimatedPrice(Math.round(result.total));
+      console.log("Quotation result:", result);
+      setEstimatedPrice(result ? Math.round(result.total) : 0);
     }, [pages, quantity, colorPrinting]);
-
-
 
 
   return (

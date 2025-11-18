@@ -336,14 +336,14 @@ router.get("/:id", async (req, res) => {
 // ===================================================
 router.put("/:orderId/price", async (req, res) => {
   const { orderId } = req.params;
-  const { price } = req.body; // manager's added amount
+  const { price } = req.body;
 
   if (price == null || isNaN(price)) {
     return res.status(400).json({ success: false, message: "Invalid price" });
   }
 
   try {
-    // Get total estimated price from orderitems
+    // Calculate items total
     const [sumResult] = await db.promise().query(
       "SELECT SUM(estimated_price) AS items_total FROM orderitems WHERE order_id = ?",
       [orderId]
@@ -355,20 +355,50 @@ router.put("/:orderId/price", async (req, res) => {
       "SELECT manager_added FROM orders WHERE order_id = ?",
       [orderId]
     );
+
     if (current.length === 0) {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
 
-    const updatedManagerAdded = Number(current[0].manager_added || 0) + Number(price);
+    const updatedManagerAdded =
+      Number(current[0].manager_added || 0) + Number(price);
 
-    // Compute final total
     const finalTotal = itemsTotal + updatedManagerAdded;
 
-    //] Update orders table
+    // Update table
     await db.promise().execute(
       "UPDATE orders SET manager_added = ?, total = ? WHERE order_id = ?",
       [updatedManagerAdded, finalTotal, orderId]
     );
+
+    // ========= FIXED: Fetch user_id + product_name =========
+    const [orderInfo] = await db.promise().query(
+      `SELECT 
+          o.user_id,
+          p.product_name
+       FROM orders o
+       JOIN orderitems oi ON o.order_id = oi.order_id
+       JOIN products p ON oi.product_id = p.product_id
+       WHERE o.order_id = ?
+       LIMIT 1`,
+      [orderId]
+    );
+
+    const serviceName = orderInfo[0]?.product_name || "Your Order";
+    const userId = orderInfo[0]?.user_id;
+
+    // ========= Emit Socket Notification =========
+    if (req.io && userId) {
+      req.io.to(userId.toString()).emit("orderPriceUpdated", {
+        order_id: orderId,
+        service: serviceName,
+        total: finalTotal,
+        manager_added: updatedManagerAdded,
+        date: new Date().toISOString(),
+      });
+
+      console.log(`📢 Price update sent → user ${userId}`);
+    }
 
     res.json({
       success: true,
@@ -376,6 +406,7 @@ router.put("/:orderId/price", async (req, res) => {
       total: finalTotal,
       manager_added: updatedManagerAdded,
     });
+
   } catch (err) {
     console.error("❌ Error updating price:", err);
     res.status(500).json({ success: false, message: "Database error" });
@@ -383,80 +414,101 @@ router.put("/:orderId/price", async (req, res) => {
 });
 
 
+
+
+
 // ===================================================
-// UPDATE ORDER STATUS + Emit Notification + Sales
+// UPDATE ORDER STATUS + Move to Completed/Canceled Tables
 // ===================================================
 router.put("/:id/status", async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
-  if (!status) return res.status(400).json({ success: false, message: "Status is required" });
+  if (!status)
+    return res.status(400).json({ success: false, message: "Status is required" });
 
   try {
-    // Update order status
-    await db.promise().query("UPDATE orderitems SET status=? WHERE order_id=?", [status, id]);
+    // Update the status
+    await db.promise().query(
+      "UPDATE orderitems SET status = ? WHERE order_item_id = ?",
+      [status, id]
+    );
 
-    // Fetch updated order info
-    const [updated] = await db.promise().query(
-      `SELECT oi.order_item_id AS enquiryNo, o.order_id, o.user_id, p.product_name AS service, oi.status
+    // ========= FIXED: Fetch full order info + product name =========
+    const [rows] = await db.promise().query(
+      `SELECT 
+          oi.order_item_id AS enquiryNo,
+          oi.order_id,
+          o.user_id,
+          p.product_name
        FROM orderitems oi
        JOIN orders o ON oi.order_id = o.order_id
        JOIN products p ON oi.product_id = p.product_id
-       WHERE o.order_id = ?
+       WHERE oi.order_item_id = ?
        LIMIT 1`,
       [id]
     );
 
-    // Emit real-time notification to the user
-    if (updated.length > 0 && req.io) {
-      req.io.to(updated[0].user_id.toString()).emit("orderStatusUpdated", updated[0]);
-    }
+    if (rows.length === 0)
+      return res.status(404).json({ success: false, message: "Order not found" });
 
-    // ===================================================
-    // SALES INSERTION IF COMPLETED
-    // ===================================================
-    if (status === "Completed") {
-      const [order] = await db.promise().query(
-        `SELECT o.order_id, o.manager_added, SUM(oi.estimated_price) AS items_total
-         FROM orders o
-         JOIN orderitems oi ON o.order_id = oi.order_id
-         WHERE o.order_id = ?
-         GROUP BY o.order_id`,
-        [id]
+    const item = rows[0];
+
+    // Prevent duplicates
+    const [alreadyCompleted] = await db.promise().query(
+      `SELECT * FROM completed_orders WHERE order_item_id = ?`,
+      [id]
+    );
+
+    const [alreadyCanceled] = await db.promise().query(
+      `SELECT * FROM canceled_orders WHERE order_item_id = ?`,
+      [id]
+    );
+
+    // Insert into Completed Table
+    if (status === "Completed" && alreadyCompleted.length === 0) {
+      await db.promise().query(
+        `INSERT INTO completed_orders (order_item_id, order_id, user_id)
+         VALUES (?, ?, ?)`,
+        [item.enquiryNo, item.order_id, item.user_id]
       );
-
-      if (order.length === 0)
-        return res.status(404).json({ success: false, message: "Order not found" });
-
-      const finalTotal = Number(order[0].items_total || 0) + Number(order[0].manager_added || 0);
-
-      // Check if sale already exists
-      const [existingSale] = await db.promise().query("SELECT * FROM sales WHERE order_item_id = ?", [id]);
-
-      if (existingSale.length === 0) {
-        const [orderItems] = await db.promise().query(
-          `SELECT oi.order_item_id, p.product_name, oi.quantity
-           FROM orderitems oi
-           JOIN products p ON oi.product_id = p.product_id
-           WHERE oi.order_id = ?`,
-          [id]
-        );
-
-        const itemNames = orderItems.map(i => `${i.product_name} x${i.quantity}`).join(", ");
-
-        await db.promise().query(
-          "INSERT INTO sales (order_item_id, item, amount, date) VALUES (?, ?, ?, NOW())",
-          [id, itemNames, finalTotal]
-        );
-      }
     }
 
-    res.json({ success: true, message: "Order status updated successfully" });
+    // Insert into Canceled Table
+    if (status === "Cancelled" && alreadyCanceled.length === 0) {
+      await db.promise().query(
+        `INSERT INTO canceled_orders (order_item_id, order_id, user_id)
+         VALUES (?, ?, ?)`,
+        [item.enquiryNo, item.order_id, item.user_id]
+      );
+    }
+
+    // ========= SOCKET EMIT FIX =========
+    if (req.io) {
+      req.io.to(item.user_id.toString()).emit("orderStatusUpdated", {
+        enquiryNo: item.enquiryNo,
+        order_id: item.order_id,
+        status,
+        service: item.product_name,
+        date: new Date().toISOString(),
+      });
+
+      console.log(`📢 Status update sent → user ${item.user_id}`);
+    }
+
+    res.json({
+      success: true,
+      message: "Status updated + moved successfully",
+      orderItem: item,
+    });
+
   } catch (err) {
-    console.error("❌ Error updating status:", err);
+    console.error("❌ Status Update Error:", err);
     res.status(500).json({ success: false, message: "Database error" });
   }
 });
+
+
 
 
 // ===================================================
@@ -663,6 +715,127 @@ router.post("/:id/cancel", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.put("/edit/:orderItemId", async (req, res) => {
+  const { orderItemId } = req.params;
+  const { quantity, urgency, attributes } = req.body;
+
+  try {
+    // Check if still within 12 hours
+    const [item] = await db.promise().query(
+      `SELECT o.order_date
+       FROM orderitems oi
+       JOIN orders o ON oi.order_id = o.order_id
+       WHERE oi.order_item_id = ?`,
+      [orderItemId]
+    );
+
+    if (item.length === 0)
+      return res.status(404).json({ success: false, message: "Order not found" });
+
+    const orderTime = new Date(item[0].order_date);
+    const now = new Date();
+
+    if (now - orderTime > 12 * 60 * 60 * 1000)
+      return res.status(403).json({ success: false, message: "Editing time expired" });
+
+    // Update quantity + urgency
+    await db.promise().query(
+      `UPDATE orderitems 
+       SET quantity = ?, urgency = ?
+       WHERE order_item_id = ?`,
+      [quantity, urgency, orderItemId]
+    );
+
+    // Update attributes
+    if (Array.isArray(attributes)) {
+      await db.promise().query(
+        "DELETE FROM order_item_attributes WHERE order_item_id = ?",
+        [orderItemId]
+      );
+
+      for (const attr of attributes) {
+        await db.promise().query(
+          `INSERT INTO order_item_attributes (order_item_id, attribute_name, attribute_value)
+           VALUES (?, ?, ?)`,
+          [orderItemId, attr.name, attr.value]
+        );
+      }
+    }
+
+    res.json({ success: true, message: "Order updated successfully!" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// ===================================================
+// GET COMPLETED ORDERS (Normalized)
+// ===================================================
+router.get("/completed/all", async (req, res) => {
+  try {
+    const [rows] = await db.promise().query(`
+      SELECT 
+        co.completed_id,
+        co.order_item_id AS enquiryNo,
+        co.order_id,
+        co.user_id,
+        co.date_completed,
+        
+        p.product_name AS service,
+        oi.quantity,
+        oi.estimated_price,
+        o.manager_added,
+        
+        (oi.estimated_price + IFNULL(o.manager_added, 0)) AS total_price,
+        u.name AS customer_name
+      FROM completed_orders co
+      JOIN orderitems oi ON co.order_item_id = oi.order_item_id
+      JOIN orders o ON co.order_id = o.order_id
+      JOIN users u ON co.user_id = u.user_id
+      JOIN products p ON oi.product_id = p.product_id
+      ORDER BY co.date_completed DESC
+    `);
+
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error("❌ Error loading completed orders:", err);
+    res.status(500).json({ success: false, message: "Database error" });
+  }
+});
+
+// ===================================================
+// GET CANCELED ORDERS (Normalized)
+// ===================================================
+router.get("/canceled/all", async (req, res) => {
+  try {
+    const [rows] = await db.promise().query(`
+      SELECT 
+        ca.canceled_id,
+        ca.order_item_id AS enquiryNo,
+        ca.order_id,
+        ca.user_id,
+        ca.date_canceled,
+
+        p.product_name AS service,
+        oi.quantity,
+        u.name AS customer_name,
+        oi.estimated_price
+      FROM canceled_orders ca
+      JOIN orderitems oi ON ca.order_item_id = oi.order_item_id
+      JOIN orders o ON ca.order_id = o.order_id
+      JOIN users u ON ca.user_id = u.user_id
+      JOIN products p ON oi.product_id = p.product_id
+      ORDER BY ca.date_canceled DESC
+    `);
+
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error("❌ Error loading canceled orders:", err);
+    res.status(500).json({ success: false, message: "Database error" });
   }
 });
 

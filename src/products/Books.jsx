@@ -635,7 +635,18 @@ function Books() {
                         <option>Mixed</option>
                       </select>
                     </div>
-                  </div>
+
+                 {/* Estimated Price Box */}
+                    <div className="mt-4 border border-blue-200 bg-blue-50 rounded-2xl shadow-sm p-5 w-143 text-right">
+                      <p className="text-base text-gray-700 font-medium">Estimated Price</p>
+                        <p className="text-3xl font-bold text-blue-700 mt-1">
+                          {estimatedPrice.toLocaleString("en-PH", { style: "currency", currency: "PHP" })}
+                        </p>
+                      <p className="text-sm text-gray-500 italic mt-1">
+                        *Final price may vary depending on specifications
+                      </p>
+                    </div>
+                  </div>   
 
 
                   {/* Price + Place Order */}

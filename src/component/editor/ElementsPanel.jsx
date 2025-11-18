@@ -1,126 +1,155 @@
-import React, { useRef } from "react";
+// ----------------------------
+// src/components/Editor/Element.jsx
+// ----------------------------
+import React, { useState, useEffect, useRef } from "react";
+import { Rnd } from "react-rnd";
+import TextElement from "./TextElement";
+import ImageElement from "./ImageElement";
+import ShapeElement from "./ShapeElement";
 import { useEditor } from "../../context/EditorContext";
-import { Shapes, X, Upload } from "lucide-react";
 
-export default function ElementsPanel() {
-  const { addImage, isElementsPanelOpen, toggleElementsPanel } = useEditor();
-  const fileInputRef = useRef();
+export default function Element({ element, zoom = 1, fitZoom = 1 }) {
+  const { updateElement, selectElement, state } = useEditor();
+  const selected = state.selectedId === element.id;
 
-  if (!isElementsPanelOpen) return null;
+  // ⭐ ABSOLUTE SAFETY CHECKS — prevent react-rnd crash
+  const safeWidth = Number(element.width) > 0 ? Number(element.width) : 1;
+  const safeHeight = Number(element.height) > 0 ? Number(element.height) : 1;
 
-  // --- ELEMENT ASSETS (LOCAL FOLDER) ---
-  const categories = [
-    {
-      title: "Lines",
-      items: [
-        { label: "Line 1", src: "/assets/elements/lines/line1.png" },
-        { label: "Line 2", src: "/assets/elements/lines/line2.png" },
-        { label: "Line 3", src: "/assets/elements/lines/line3.svg" },
-      ],
-    },
-    {
-      title: "Borders",
-      items: [
-        { label: "Border 1", src: "/assets/elements/borders/border1.png" },
-        { label: "Border 2", src: "/assets/elements/borders/border2.svg" },
-      ],
-    },
-    {
-      title: "Flowers",
-      items: [
-        { label: "Flower 1", src: "/assets/elements/flowers/flower1.png" },
-        { label: "Flower 2", src: "/assets/elements/flowers/flower2.png" },
-      ],
-    },
-    {
-      title: "Blobs / Shapes",
-      items: [
-        { label: "Blob 1", src: "/assets/elements/blobs/blob1.png" },
-        { label: "Blob 2", src: "/assets/elements/blobs/blob2.png" },
-      ],
-    },
-  ];
+  const scale = Math.max(0.0001, zoom * fitZoom);
+  const [rotation, setRotation] = useState(element.rotation || 0);
+  const [livePos, setLivePos] = useState({
+    x: Number(element.x) || 0,
+    y: Number(element.y) || 0,
+  });
 
-  // --- Upload Element Handler ---
-  const handleUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const draggingRef = useRef(false);
+  const rotateRef = useRef(null);
 
-    const reader = new FileReader();
-    reader.onload = () => addImage(reader.result);
-    reader.readAsDataURL(file);
+  useEffect(() => {
+    if (!draggingRef.current) {
+      setLivePos({
+        x: Number(element.x) || 0,
+        y: Number(element.y) || 0,
+      });
+    }
+  }, [element.x, element.y]);
+
+  // Sync rotation
+  useEffect(() => setRotation(element.rotation ?? 0), [element.rotation]);
+
+  // ---------------- DRAGGING ----------------
+  const onDrag = (e, d) => {
+    draggingRef.current = true;
+    setLivePos({ x: d.x, y: d.y });
+  };
+
+  const onDragStop = (e, d) => {
+    draggingRef.current = false;
+    updateElement(element.id, {
+      x: Number(d.x),
+      y: Number(d.y),
+    });
+  };
+
+  // ---------------- RESIZING ----------------
+  const onResize = (e, dir, ref, delta, pos) => {
+    setLivePos({
+      x: Number(pos.x),
+      y: Number(pos.y),
+    });
+  };
+
+  const onResizeStop = (e, dir, ref, delta, pos) => {
+    let newW = Number(ref.style.width);
+    let newH = Number(ref.style.height);
+
+    // Safe fallback
+    if (!newW || newW <= 0) newW = 1;
+    if (!newH || newH <= 0) newH = 1;
+
+    updateElement(element.id, {
+      width: newW,
+      height: newH,
+      x: Number(pos.x),
+      y: Number(pos.y),
+    });
+  };
+
+  // ---------------- ROTATION ----------------
+  const startRotate = (e) => {
+    e.stopPropagation();
+    const move = (ev) => {
+      const rect = rotateRef.current.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const radians = Math.atan2(ev.clientY - cy, ev.clientX - cx);
+      const deg = (radians * 180) / Math.PI;
+      setRotation(Math.round(deg));
+    };
+    const stop = () => {
+      updateElement(element.id, { rotation });
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", stop);
+    };
+    window.addEventListener("mousemove", move, { passive: true });
+    window.addEventListener("mouseup", stop, { passive: true });
   };
 
   return (
-    <div
-      className="
-        fixed top-20 left-4 w-72 max-h-[85vh] overflow-y-auto
-        bg-white border border-blue-300/40 rounded-2xl shadow-xl z-50
-        p-4 select-none animate-fadeIn
-      "
+    <Rnd
+      size={{
+        width: safeWidth,   // SAFE
+        height: safeHeight, // SAFE
+      }}
+      position={{
+        x: Number(livePos.x) || 0,
+        y: Number(livePos.y) || 0,
+      }}
+      scale={scale}
+      onDrag={onDrag}
+      onDragStop={onDragStop}
+      onResize={onResize}
+      onResizeStop={onResizeStop}
+      onClick={(e) => {
+        e.stopPropagation();
+        selectElement(element.id);
+      }}
+      enableResizing={{
+        bottomRight: true,
+        bottomLeft: true,
+        topRight: true,
+        topLeft: true,
+      }}
+      style={{
+        zIndex: element.zIndex ?? 1,
+        opacity: element.opacity ?? 1,
+        outline: selected ? "2px solid rgba(59,130,246,0.9)" : "none",
+        boxShadow: selected ? "0 6px 18px rgba(59,130,246,0.08)" : undefined,
+        touchAction: "none",
+        overflow: "visible",
+      }}
     >
-      {/* Header */}
-      <div className="flex justify-between items-center mb-3">
-        <div className="flex items-center gap-2 text-blue-700 font-semibold text-lg">
-          <Shapes className="w-5 h-5" /> Elements
-        </div>
-        <button
-          onClick={toggleElementsPanel}
-          className="p-1 rounded-lg hover:bg-blue-100 transition"
-        >
-          <X className="w-5 h-5 text-blue-600" />
-        </button>
-      </div>
-
-      {/* Upload Element */}
-      <button
-        onClick={() => fileInputRef.current.click()}
-        className="
-          w-full flex items-center justify-center gap-2
-          py-3 mb-4 rounded-xl border border-blue-300/40 bg-blue-50
-          hover:bg-blue-100 transition
-        "
+      <div
+        ref={rotateRef}
+        className="relative w-full h-full flex items-center justify-center"
+        style={{
+          transform: `rotate(${rotation}deg)`,
+          transformOrigin: "center",
+        }}
       >
-        <Upload className="w-5 h-5 text-blue-600" />
-        <span className="text-blue-700 font-medium">Upload Element</span>
-      </button>
-      <input
-        type="file"
-        accept=".png,.jpg,.jpeg,.svg"
-        className="hidden"
-        ref={fileInputRef}
-        onChange={handleUpload}
-      />
+        {element.type === "text" && <TextElement element={element} />}
+        {element.type === "image" && <ImageElement element={element} />}
+        {element.type === "shape" && <ShapeElement element={element} />}
 
-      {/* CATEGORY SECTIONS */}
-      {categories.map((cat) => (
-        <div key={cat.title} className="mb-5">
-          <h3 className="text-blue-700 font-semibold mb-2">
-            {cat.title}
-          </h3>
-
-          <div className="grid grid-cols-3 gap-3">
-            {cat.items.map((item) => (
-              <button
-                key={item.src}
-                onClick={() => addImage(item.src)}
-                className="
-                  border border-blue-200 rounded-xl overflow-hidden bg-white
-                  hover:shadow-[0_0_10px_rgba(59,130,246,0.3)]
-                  hover:border-blue-400 transition
-                  aspect-square flex items-center justify-center
-                "
-              >
-                <img
-                  src={item.src}
-                  alt={item.label}
-                  className="w-full h-full object-contain p-2"
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
+        {selected && (
+          <div
+            className="absolute left-1/2 -top-6 w-5 h-5 bg-blue-600 rounded-full cursor-grab border border-white shadow-lg flex items-center justify-center"
+            style={{ transform: "translateX(-50%)" }}
+            onMouseDown={startRotate}
+          />
+        )}
+      </div>
+    </Rnd>
   );
 }

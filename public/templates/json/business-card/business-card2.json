@@ -1,124 +1,138 @@
 {
-  "version": "5.2.4",
+  "width": 1080,
+  "height": 600,
+  "background": "#FFFFFF",
   "objects": [
     {
-      "type": "text",
-      "version": "5.2.4",
-      "left": 80,
-      "top": 100,
-      "fontSize": 48,
-      "fontWeight": "bold",
-      "fill": "#1a1a1a",
-      "text": "Claudia Alves",
-      "fontFamily": "Open Sans",
-      "textAlign": "left"
+      "type": "rect",
+      "left": 0,
+      "top": 0,
+      "width": 1080,
+      "height": 600,
+      "fill": "#FFFFFF"
     },
+
     {
-      "type": "text",
-      "version": "5.2.4",
-      "left": 80,
+      "type": "rect",
+      "left": 0,
+      "top": 0,
+      "width": 350,
+      "height": 600,
+      "fill": "#111827"
+    },
+
+    {
+      "type": "textbox",
+      "left": 40,
+      "top": 100,
+      "width": 260,
+      "text": "AARON ORIASEL",
+      "fontSize": 38,
+      "fontWeight": "bold",
+      "fontFamily": "Arial",
+      "fill": "#FFFFFF",
+      "textAlign": "left",
+      "lineHeight": 1.1
+    },
+
+    {
+      "type": "textbox",
+      "left": 40,
       "top": 160,
-      "fontSize": 28,
-      "fill": "#555555",
-      "text": "Marketing Manager",
-      "fontFamily": "Open Sans",
+      "width": 260,
+      "text": "Visual Artist & Developer",
+      "fontSize": 20,
+      "fontFamily": "Arial",
+      "fill": "#9CA3AF",
       "textAlign": "left"
     },
-    {
-      "type": "text",
-      "version": "5.2.4",
-      "left": 80,
-      "top": 240,
-      "fontSize": 26,
-      "fill": "#1a1a1a",
-      "text": "+123-456-7890\nhello@reallygreatsite.com\nwww.reallygreatsite.com\n123 Anywhere St., Any City, ST 12345",
-      "fontFamily": "Open Sans",
-      "lineHeight": 1.6,
-      "textAlign": "left"
-    },
+
     {
       "type": "rect",
-      "version": "5.2.4",
-      "left": 600,
-      "top": 60,
-      "width": 320,
-      "height": 320,
-      "angle": 45,
-      "fill": "#009c9c"
+      "left": 380,
+      "top": 80,
+      "width": 670,
+      "height": 200,
+      "fill": "#F3F4F6",
+      "rx": 12,
+      "ry": 12
     },
+
     {
-      "type": "rect",
-      "version": "5.2.4",
-      "left": 640,
-      "top": 100,
-      "width": 280,
-      "height": 280,
-      "angle": 45,
-      "fill": "#00b8b8"
-    },
-    {
-      "type": "rect",
-      "version": "5.2.4",
-      "left": 680,
-      "top": 140,
-      "width": 240,
-      "height": 240,
-      "angle": 45,
-      "fill": "#00cccc"
-    },
-    {
-      "type": "text",
-      "version": "5.2.4",
+      "type": "textbox",
       "left": 400,
-      "top": 700,
-      "fontSize": 40,
+      "top": 110,
+      "width": 630,
+      "text": "Hi, I’m Aaron — a multidisciplinary creator passionate about turning ideas into clean, modern visuals.",
+      "fontSize": 26,
       "fontWeight": "bold",
-      "fill": "#1a1a1a",
-      "text": "LICERIA & CO.",
-      "fontFamily": "Open Sans",
-      "textAlign": "center"
+      "fontFamily": "Arial",
+      "fill": "#111827",
+      "textAlign": "left",
+      "lineHeight": 1.3
     },
+
     {
-      "type": "text",
-      "version": "5.2.4",
+      "type": "textbox",
       "left": 400,
-      "top": 750,
-      "fontSize": 26,
-      "fill": "#555555",
-      "text": "Real Estate",
-      "fontFamily": "Open Sans",
-      "textAlign": "center"
+      "top": 190,
+      "width": 630,
+      "text": "I specialize in design, front-end development, and crafting smooth user experiences.",
+      "fontSize": 20,
+      "fontFamily": "Arial",
+      "fill": "#4B5563",
+      "textAlign": "left",
+      "lineHeight": 1.4
     },
+
     {
-      "type": "text",
-      "version": "5.2.4",
-      "left": 400,
-      "top": 820,
-      "fontSize": 24,
-      "fill": "#333333",
-      "text": "www.reallygreatsite.com",
-      "fontFamily": "Open Sans",
-      "textAlign": "center"
+      "type": "textbox",
+      "left": 40,
+      "top": 260,
+      "width": 260,
+      "text": "CONTACT",
+      "fontSize": 22,
+      "fontFamily": "Arial",
+      "fontWeight": "bold",
+      "fill": "#FFFFFF",
+      "textAlign": "left"
     },
+
+    {
+      "type": "textbox",
+      "left": 40,
+      "top": 300,
+      "width": 260,
+      "text": "Phone: 0912 345 6789\nEmail: aaron@email.com",
+      "fontSize": 18,
+      "fontFamily": "Arial",
+      "fill": "#D1D5DB",
+      "textAlign": "left",
+      "lineHeight": 1.4
+    },
+
     {
       "type": "rect",
-      "version": "5.2.4",
-      "left": 470,
-      "top": 640,
-      "width": 40,
-      "height": 40,
-      "angle": 45,
-      "fill": "#00b8b8"
+      "left": 400,
+      "top": 330,
+      "width": 220,
+      "height": 60,
+      "fill": "#111827",
+      "rx": 8,
+      "ry": 8
     },
+
     {
-      "type": "rect",
-      "version": "5.2.4",
-      "left": 490,
-      "top": 620,
-      "width": 40,
-      "height": 40,
-      "angle": 45,
-      "fill": "#009c9c"
+      "type": "textbox",
+      "left": 400,
+      "top": 347,
+      "width": 220,
+      "text": "VIEW PORTFOLIO",
+      "fontSize": 18,
+      "fontFamily": "Arial",
+      "fontWeight": "bold",
+      "fill": "#FFFFFF",
+      "textAlign": "center"
     }
   ]
 }

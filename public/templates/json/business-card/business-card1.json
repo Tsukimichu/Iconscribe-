@@ -1,19 +1,126 @@
 {
-    "version": "5.3.0",
-    "objects": [
-    
-      { "type": "rect", "left": -40, "top": -40, "width": 180, "height": 180, "fill": "#1B5E20", "angle": 45 },
-      { "type": "rect", "left": 400, "top": -40, "width": 180, "height": 180, "fill": "#2E7D32", "angle": 45 },
-      { "type": "rect", "left": -50, "top": 190, "width": 180, "height": 180, "fill": "#43A047", "angle": 45 },
-      { "type": "rect", "left": 400, "top": 190, "width": 180, "height": 180, "fill": "#1B5E20", "angle": 45 },
-      { "type": "rect", "left": 240, "top": 140, "width": 16, "height": 16, "fill": "#2E7D32", "angle": 45 },
+  "width": 1080,
+  "height": 600,
+  "background": "#FFFFFF",
+  "objects": [
+    {
+      "type": "rect",
+      "left": 0,
+      "top": 0,
+      "width": 1080,
+      "height": 600,
+      "fill": "#FFFFFF"
+    },
 
-      { "type": "circle", "left": 210, "top": 80, "radius": 52, "fill": "#2E7D32" },
-      { "type": "triangle", "left": 232, "top": 98, "width": 45, "height": 60, "fill": "#ffffff" },
-      { "type": "path", "path": [["M", 220, 130], ["Q", 260, 150, 285, 115]], "stroke": "#ffffff", "strokeWidth": 5, "fill": "" },
+    {
+      "type": "rect",
+      "left": 0,
+      "top": 0,
+      "width": 380,
+      "height": 600,
+      "fill": "#1F2937"
+    },
 
-      { "type": "textbox", "left": 185, "top": 205, "width": 200, "text": "LICERIA", "fontSize": 28, "fontWeight": "bold", "fill": "#000000", "textAlign": "center", "fontFamily": "Arial" },
-      { "type": "textbox", "left": 185, "top": 235, "width": 200, "text": "COMPANY", "fontSize": 22, "fontWeight": "bold", "fill": "#2E7D32", "textAlign": "center", "fontFamily": "Arial" }
-    ],
-    "background": "#ffffff"
+    {
+      "type": "textbox",
+      "left": 40,
+      "top": 120,
+      "width": 300,
+      "text": "AARON ORIASEL",
+      "fontSize": 42,
+      "fontWeight": "bold",
+      "fontFamily": "Arial",
+      "fill": "#FFFFFF",
+      "textAlign": "left",
+      "lineHeight": 1.1
+    },
+
+    {
+      "type": "textbox",
+      "left": 40,
+      "top": 190,
+      "width": 300,
+      "text": "Creative Designer",
+      "fontSize": 22,
+      "fontFamily": "Arial",
+      "fill": "#D1D5DB",
+      "textAlign": "left"
+    },
+
+    {
+      "type": "textbox",
+      "left": 420,
+      "top": 120,
+      "width": 600,
+      "text": "CONTACT DETAILS",
+      "fontSize": 26,
+      "fontWeight": "bold",
+      "fontFamily": "Arial",
+      "fill": "#1F2937",
+      "textAlign": "left"
+    },
+
+    {
+      "type": "textbox",
+      "left": 420,
+      "top": 170,
+      "width": 600,
+      "text": "Phone: +63 912 345 6789\nEmail: aaron@example.com\nWebsite: www.aaronportfolio.com",
+      "fontSize": 20,
+      "fontFamily": "Arial",
+      "fill": "#374151",
+      "textAlign": "left",
+      "lineHeight": 1.3
+    },
+
+    {
+      "type": "textbox",
+      "left": 420,
+      "top": 300,
+      "width": 600,
+      "text": "ADDRESS",
+      "fontSize": 26,
+      "fontWeight": "bold",
+      "fontFamily": "Arial",
+      "fill": "#1F2937",
+      "textAlign": "left"
+    },
+
+    {
+      "type": "textbox",
+      "left": 420,
+      "top": 350,
+      "width": 600,
+      "text": "123 Creative Street\nDesign City, Philippines",
+      "fontSize": 20,
+      "fontFamily": "Arial",
+      "fill": "#374151",
+      "textAlign": "left",
+      "lineHeight": 1.4
+    },
+
+    {
+      "type": "rect",
+      "left": 420,
+      "top": 460,
+      "width": 280,
+      "height": 60,
+      "fill": "#1F2937",
+      "rx": 10,
+      "ry": 10
+    },
+
+    {
+      "type": "textbox",
+      "left": 420,
+      "top": 475,
+      "width": 280,
+      "text": "BOOK A MEETING",
+      "fontSize": 20,
+      "fontFamily": "Arial",
+      "fontWeight": "bold",
+      "fill": "#FFFFFF",
+      "textAlign": "center"
+    }
+  ]
 }

@@ -8,38 +8,87 @@ import ImageElement from "./ImageElement";
 import ShapeElement from "./ShapeElement";
 import { useEditor } from "../../context/EditorContext";
 
+// 🟢 NEW — Path + SVG Element
+function PathElement({ element }) {
+  return (
+    <svg
+      width={element.width}
+      height={element.height}
+      style={{
+        position: "absolute",
+        inset: 0,
+      }}
+    >
+      <path d={element.d} fill={element.fill} />
+    </svg>
+  );
+}
+
+// 🟢 NEW — Masked (Circular) Image Element
+function ClippedImageElement({ element }) {
+  return (
+    <svg
+      width={element.width}
+      height={element.height}
+      style={{
+        position: "absolute",
+        inset: 0
+      }}
+    >
+      <defs>
+        <clipPath id={`clip-${element.id}`}>
+          <circle cx="50%" cy="50%" r="50%" />
+        </clipPath>
+      </defs>
+
+      <image
+        href={element.src}
+        width="100%"
+        height="100%"
+        clipPath={`url(#clip-${element.id})`}
+        preserveAspectRatio="xMidYMid slice"
+      />
+    </svg>
+  );
+}
+
 export default function Element({ element, zoom = 1, fitZoom = 1 }) {
   const { updateElement, selectElement, state } = useEditor();
   const selected = state.selectedId === element.id;
 
   const scale = Math.max(0.0001, zoom * fitZoom);
+
+  const safeWidth = Math.max(1, Number(element.width) || 1);
+  const safeHeight = Math.max(1, Number(element.height) || 1);
+
+  useEffect(() => {
+    if (element.width !== safeWidth || element.height !== safeHeight) {
+      updateElement(element.id, { width: safeWidth, height: safeHeight });
+    }
+  }, []);
+
   const [rotation, setRotation] = useState(element.rotation || 0);
-  const [livePos, setLivePos] = useState({ x: element.x, y: element.y });
+  const [livePos, setLivePos] = useState({
+    x: Number(element.x) || 0,
+    y: Number(element.y) || 0,
+  });
+
   const draggingRef = useRef(false);
   const rotateRef = useRef(null);
 
-  useEffect(() => setRotation(element.rotation ?? 0), [element.rotation]);
+  useEffect(() => {
+    setRotation(Number(element.rotation) || 0);
+  }, [element.rotation]);
 
   useEffect(() => {
-    if (!draggingRef.current) setLivePos({ x: element.x, y: element.y });
+    if (!draggingRef.current) {
+      setLivePos({
+        x: Number(element.x) || 0,
+        y: Number(element.y) || 0,
+      });
+    }
   }, [element.x, element.y]);
 
-  // Keyboard shortcut: Shift + R = rotate 15°
-  useEffect(() => {
-    const onKey = (e) => {
-      if (!selected) return;
-      if (e.shiftKey && e.key.toLowerCase() === "r") {
-        e.preventDefault();
-        const newRotation = (rotation + 15) % 360;
-        updateElement(element.id, { rotation: newRotation });
-        setRotation(newRotation);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [selected, rotation, element.id, updateElement]);
-
-  // ---------------- Dragging ----------------
   const onDrag = (e, d) => {
     draggingRef.current = true;
     setLivePos({ x: d.x, y: d.y });
@@ -47,56 +96,52 @@ export default function Element({ element, zoom = 1, fitZoom = 1 }) {
 
   const onDragStop = (e, d) => {
     draggingRef.current = false;
-    // ❌ remove Math.max(0, d.x/y) so element can move beyond canvas
     updateElement(element.id, { x: d.x, y: d.y });
   };
 
-  // ---------------- Resizing ----------------
   const onResize = (e, dir, ref, delta, pos) => {
-    const w = parseFloat(ref.style.width) || element.width;
-    const h = parseFloat(ref.style.height) || element.height;
     setLivePos({ x: pos.x, y: pos.y });
   };
 
   const onResizeStop = (e, dir, ref, delta, pos) => {
-    const w = parseFloat(ref.style.width) || element.width;
-    const h = parseFloat(ref.style.height) || element.height;
-    // ❌ remove Math.max(0, pos.x/y) to allow positioning beyond canvas
+    const w = Math.max(1, parseFloat(ref.style.width) || 1);
+    const h = Math.max(1, parseFloat(ref.style.height) || 1);
+
     updateElement(element.id, {
-      width: Math.max(1, w),
-      height: Math.max(1, h),
+      width: w,
+      height: h,
       x: pos.x,
       y: pos.y,
     });
   };
 
-  // ---------------- Rotation ----------------
   const startRotate = (e) => {
     e.stopPropagation();
+
     const move = (ev) => {
       const rect = rotateRef.current.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
       const radians = Math.atan2(ev.clientY - cy, ev.clientX - cx);
       const deg = (radians * 180) / Math.PI;
+
       setRotation(Math.round(deg));
     };
+
     const stop = () => {
       updateElement(element.id, { rotation });
       window.removeEventListener("mousemove", move);
       window.removeEventListener("mouseup", stop);
     };
-    window.addEventListener("mousemove", move, { passive: true });
-    window.addEventListener("mouseup", stop, { passive: true });
-  };
 
-  const visiblePos = { x: livePos.x, y: livePos.y };
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", stop);
+  };
 
   return (
     <Rnd
-      // ❌ remove bounds — allow free movement
-      size={{ width: element.width, height: element.height }}
-      position={visiblePos}
+      size={{ width: safeWidth, height: safeHeight }}
+      position={{ x: livePos.x, y: livePos.y }}
       scale={scale}
       onDrag={onDrag}
       onDragStop={onDragStop}
@@ -112,41 +157,51 @@ export default function Element({ element, zoom = 1, fitZoom = 1 }) {
         topRight: true,
         topLeft: true,
       }}
-      dragHandleClassName={selected ? undefined : undefined}
       style={{
+        transform: "none",
+        transformOrigin: "top left",
         zIndex: element.zIndex ?? 1,
         opacity: element.opacity ?? 1,
         outline: selected ? "2px solid rgba(59,130,246,0.9)" : "none",
         boxShadow: selected ? "0 6px 18px rgba(59,130,246,0.08)" : undefined,
         touchAction: "none",
-        overflow: "visible", // allows rotation handle and selection ring outside
+        overflow: "visible",
       }}
       enableUserSelectHack={false}
     >
       <div
         ref={rotateRef}
-        className="relative w-full h-full flex items-center justify-center"
+        className="relative w-full h-full"
         style={{
-          transform: `rotate(${rotation}deg)`,
-          transformOrigin: "center",
-          transition: draggingRef.current ? "none" : "transform 0.08s linear",
+          transform: `
+            rotate(${rotation}deg)
+            scaleX(${element.scaleX || 1})
+            scaleY(${element.scaleY || 1})
+          `,
+          transformOrigin: "top left",
         }}
       >
+        {/* TEXT */}
         {element.type === "text" && <TextElement element={element} />}
+
+        {/* IMAGE */}
         {element.type === "image" && <ImageElement element={element} />}
+
+        {/* SHAPE */}
         {element.type === "shape" && <ShapeElement element={element} />}
 
-        {/* rotation handle (still visible outside clipping area) */}
+        {/* 🟢 NEW: SVG PATH */}
+        {element.type === "path" && <PathElement element={element} />}
+
+        {/* 🟢 NEW: MASKED IMAGE */}
+        {element.type === "maskedImage" && <ClippedImageElement element={element} />}
+
+        {/* ROTATE HANDLE */}
         {selected && (
           <div
-            className="absolute left-1/2 -top-6 w-5 h-5 bg-blue-600 rounded-full cursor-grab border border-white shadow-lg flex items-center justify-center"
+            className="absolute left-1/2 -top-6 w-5 h-5 bg-blue-600 rounded-full cursor-grab border border-white shadow-lg"
             style={{ transform: "translateX(-50%)" }}
             onMouseDown={startRotate}
-            onTouchStart={(e) => {
-              e.preventDefault();
-              startRotate(e);
-            }}
-            aria-hidden
           />
         )}
       </div>

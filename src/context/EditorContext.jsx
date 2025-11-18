@@ -33,7 +33,7 @@ const initialState = {
 // ------------------------------------------------------
 function reducer(state, action) {
   switch (action.type) {
-    case "ADD_ELEMENT": {
+    case "ADD_ELEMENT":
       return {
         ...state,
         elements: [...state.elements, action.payload],
@@ -41,7 +41,6 @@ function reducer(state, action) {
         history: [...state.history.slice(-30), state.elements],
         future: [],
       };
-    }
 
     case "UPDATE_ELEMENT": {
       const updated = state.elements.map((el) =>
@@ -149,8 +148,9 @@ export function EditorProvider({ children }) {
   };
 
   // ------------------------------------------------------
-  // Element Creation
+  // ELEMENT CREATION
   // ------------------------------------------------------
+
   const addText = (overrides = {}) => {
     const { x, y } = getCanvasCenter();
     dispatch({
@@ -165,7 +165,7 @@ export function EditorProvider({ children }) {
         height: 80,
         text: overrides.text ?? "Double-click to edit",
         fontSize: overrides.fontSize ?? 20,
-        fontFamily: overrides.fontFamily ?? "Arial, sans-serif",
+        fontFamily: overrides.fontFamily ?? "Arial",
         color: overrides.color ?? "#111827",
         opacity: overrides.opacity ?? 1,
         ...overrides,
@@ -214,9 +214,53 @@ export function EditorProvider({ children }) {
     });
   };
 
+  // ⭐ NEW — SVG PATH
+  const addPath = (d, overrides = {}) => {
+    const { x, y } = getCanvasCenter();
+    dispatch({
+      type: "ADD_ELEMENT",
+      payload: {
+        id: uuid(),
+        type: "path",
+        name: overrides.name ?? "SVG Path",
+        d,
+        x: x - 150,
+        y: y - 80,
+        width: overrides.width ?? 300,
+        height: overrides.height ?? 200,
+        fill: overrides.fill ?? "#3B82F6",
+        opacity: overrides.opacity ?? 1,
+        rotation: overrides.rotation ?? 0,
+        ...overrides,
+      },
+    });
+  };
+
+  // ⭐ NEW — Masked (Circle) Image
+  const addMaskedImage = (src, overrides = {}) => {
+    const { x, y } = getCanvasCenter();
+    dispatch({
+      type: "ADD_ELEMENT",
+      payload: {
+        id: uuid(),
+        type: "maskedImage",
+        name: overrides.name ?? "Masked Image",
+        src,
+        x: x - 100,
+        y: y - 100,
+        width: 200,
+        height: 200,
+        opacity: overrides.opacity ?? 1,
+        rotation: overrides.rotation ?? 0,
+        ...overrides,
+      },
+    });
+  };
+
   // ------------------------------------------------------
-  // Element Controls
+  // ELEMENT CONTROLS
   // ------------------------------------------------------
+
   const renameElement = (id, newName) =>
     dispatch({
       type: "UPDATE_ELEMENT",
@@ -245,8 +289,9 @@ export function EditorProvider({ children }) {
     dispatch({ type: "TOGGLE_ELEMENTS_PANEL" });
 
   // ------------------------------------------------------
-  // Export
+  // EXPORT
   // ------------------------------------------------------
+
   const exportAsImage = async (format = "png") => {
     const canvasEl = document.querySelector("#canvas-area");
     if (!canvasEl) return alert("No canvas found!");
@@ -276,97 +321,133 @@ export function EditorProvider({ children }) {
   };
 
   // ------------------------------------------------------
-  // ⭐ UPDATED TEMPLATE IMPORT
+  // ⭐ UPDATED TEMPLATE IMPORT (supports paths + maskedImage)
   // ------------------------------------------------------
+
   const importFromJSON = (jsonData) => {
     try {
-      // Accept raw string or object
       const parsed =
         typeof jsonData === "string" ? JSON.parse(jsonData) : jsonData;
 
-      // Support two template formats:
-      // 1) Our internal format: { elements: [...], canvas: {...} }
-      // 2) Fabric-style format used by template JSONs: { objects: [...], background }
-
-      let elements = [];
-
+      // If already in your format
       if (Array.isArray(parsed.elements)) {
-        elements = parsed.elements;
-      } else if (Array.isArray(parsed.objects)) {
-        // Map Fabric-style objects -> editor elements
-        elements = parsed.objects.map((o) => {
+        dispatch({ type: "SET_ELEMENTS", payload: parsed.elements });
+        if (parsed.canvas)
+          dispatch({ type: "SET_CANVAS_SIZE", payload: parsed.canvas });
+        return;
+      }
+
+      // Fabric fallback
+      let elements = [];
+      let maxRight = 0;
+      let maxBottom = 0;
+
+      if (Array.isArray(parsed.objects)) {
+        elements = parsed.objects.map((o, index) => {
+          const scaleX = o.scaleX ?? 1;
+          const scaleY = o.scaleY ?? 1;
+
+          const baseWidth =
+            o.width ?? (o.radius ? o.radius * 2 : 100);
+          const baseHeight =
+            o.height ?? (o.radius ? o.radius * 2 : 100);
+
+          const width = baseWidth * scaleX;
+          const height = baseHeight * scaleY;
+
+          const x = o.left ?? 0;
+          const y = o.top ?? 0;
+
+          maxRight = Math.max(maxRight, x + width);
+          maxBottom = Math.max(maxBottom, y + height);
+
           const base = {
             id: uuid(),
-            x: o.left ?? 0,
-            y: o.top ?? 0,
-            width:
-              o.width ?? (o.radius ? o.radius * 2 : o.scaleX ? 100 * o.scaleX : 100),
-            height:
-              o.height ?? (o.radius ? o.radius * 2 : o.scaleY ? 100 * o.scaleY : 100),
+            name: o.name || `${o.type} ${index + 1}`,
+            x,
+            y,
+            width,
+            height,
+            rotation: o.angle ?? 0,
             opacity: o.opacity ?? 1,
-            rotation: o.angle ?? o.rotation ?? 0,
+            zIndex: index + 1,
           };
 
-          // Text
-          if (o.type === "textbox" || o.type === "i-text" || o.type === "text") {
+          // ⭐ NEW — import SVG PATH
+          if (o.type === "path") {
             return {
               ...base,
-              type: "text",
-              text: o.text || o.text || "",
-              fontSize: o.fontSize || 20,
-              fontFamily: o.fontFamily || "Arial, sans-serif",
-              color: o.fill || o.fillRule || "#000000",
+              type: "path",
+              d: o.path ?? o.d ?? "",
+              fill: o.fill ?? "#000000",
             };
           }
 
-          // Image
+          // ⭐ NEW — import masked image
+          if (o.type === "maskedImage") {
+            return {
+              ...base,
+              type: "maskedImage",
+              src: o.src || "",
+            };
+          }
+
+          // TEXT
+          if (
+            o.type === "textbox" ||
+            o.type === "text" ||
+            o.type === "i-text"
+          ) {
+            return {
+              ...base,
+              type: "text",
+              text: o.text || "",
+              fontSize: o.fontSize || 20,
+              fontFamily: o.fontFamily || "Arial",
+              color: o.fill || "#000",
+              textAlign: o.textAlign || "left",
+              lineHeight: o.lineHeight || 1.2,
+            };
+          }
+
+          // IMAGE
           if (o.type === "image") {
             return {
               ...base,
               type: "image",
-              src: o.src || o.url || o.fill || "",
+              src: o.src || o.url || "",
             };
           }
 
-          // Shapes (rect, circle, triangle, path)
-          if (o.type === "rect" || o.type === "circle" || o.type === "triangle" || o.type === "path") {
-            return {
-              ...base,
-              type: "shape",
-              shape: o.type === "rect" ? "rect" : o.type,
-              background: o.fill || o.stroke || "#000000",
-            };
-          }
-
-          // Fallback: keep as generic shape/text
+          // SHAPES
           return {
             ...base,
             type: "shape",
-            background: o.fill || "#ffffff",
+            shape: o.type,
+            background: o.fill || "#000000",
+            borderColor: o.stroke || "#000000",
+            borderWidth: o.strokeWidth || 0,
+            borderRadius:
+              o.rx ||
+              o.ry ||
+              (o.type === "circle" ? width / 2 : 0),
           };
         });
       }
 
-      // Load elements into state
-      dispatch({
-        type: "SET_ELEMENTS",
-        payload: elements,
-      });
+      dispatch({ type: "SET_ELEMENTS", payload: elements });
 
-      // Load canvas settings (if provided in template)
-      if (parsed.canvas) {
-        dispatch({
-          type: "SET_CANVAS_SIZE",
-          payload: parsed.canvas,
-        });
-      } else if (parsed.width && parsed.height) {
-        dispatch({
-          type: "SET_CANVAS_SIZE",
-          payload: { width: parsed.width, height: parsed.height, aspect: "custom", zoom: state.canvas.zoom },
-        });
-      }
+      dispatch({
+        type: "SET_CANVAS_SIZE",
+        payload: {
+          width: parsed.width || maxRight,
+          height: parsed.height || maxBottom,
+          aspect: "custom",
+          zoom: state.canvas.zoom,
+        },
+      });
     } catch (err) {
-      console.error("Failed to import template:", err);
+      console.error("IMPORT FAILED:", err);
       alert("Invalid template format.");
     }
   };
@@ -378,8 +459,9 @@ export function EditorProvider({ children }) {
     });
 
   // ------------------------------------------------------
-  // Expose API
+  // EXPORTED API
   // ------------------------------------------------------
+
   const api = {
     state,
     canvasRef,
@@ -387,6 +469,10 @@ export function EditorProvider({ children }) {
     addText,
     addShape,
     addImage,
+
+    // ⭐ NEW
+    addPath,
+    addMaskedImage,
 
     renameElement,
     updateElement,
@@ -409,7 +495,9 @@ export function EditorProvider({ children }) {
   };
 
   return (
-    <EditorContext.Provider value={api}>{children}</EditorContext.Provider>
+    <EditorContext.Provider value={api}>
+      {children}
+    </EditorContext.Provider>
   );
 }
 

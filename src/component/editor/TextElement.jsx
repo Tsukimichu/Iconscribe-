@@ -1,49 +1,84 @@
-import React, { useState, useRef, useEffect } from 'react'
-import { useEditor } from '../../context/EditorContext'
+// ----------------------------
+// src/components/Editor/TextElement.jsx
+// ----------------------------
+import React, { useState, useRef, useEffect } from "react";
+import { useEditor } from "../../context/EditorContext";
 
 export default function TextElement({ element }) {
-  const { updateElement } = useEditor()
-  const [editing, setEditing] = useState(false)
-  const [text, setText] = useState(element.text)
-  const inputRef = useRef(null)
+  const { updateElement } = useEditor();
 
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(element.text);
+  const inputRef = useRef(null);
+
+  useEffect(() => setText(element.text), [element.text]);
+
+  // Auto-focus when editing begins
   useEffect(() => {
-    if (editing && inputRef.current) {
-      inputRef.current.focus()
-    }
-  }, [editing])
+    if (editing && inputRef.current) inputRef.current.focus();
+  }, [editing]);
 
-  const handleDoubleClick = () => {
-    setEditing(true)
-  }
+  const handleDoubleClick = () => setEditing(true);
 
   const handleBlur = () => {
-    setEditing(false)
-    updateElement(element.id, { text })
-  }
+    setEditing(false);
+    updateElement(element.id, { text });
+  };
 
+  // -------------------------------------------------------
+  // ⭐ FIXED: Top-left aligned text like Fabric.js
+  // -------------------------------------------------------
   const style = {
+    width: "100%",
+    height: "100%",
+    padding: "2px",
+
+    fontSize: element.fontSize || 20,
+    fontFamily: element.fontFamily || "Arial, sans-serif",
+    color: element.color || "#000",
+    fontWeight: element.fontWeight || "normal",
+    fontStyle: element.fontStyle || "normal",
+    lineHeight: element.lineHeight || 1.2,
+    letterSpacing: element.letterSpacing || 0,
+
+    // NO MORE flexbox centering → this was breaking your templates
+    display: "block",
+
+    textAlign: element.textAlign || "left",
+
+    whiteSpace: "pre-wrap",
+    wordBreak: "break-word",
+
+    cursor: "text",
+    opacity: element.opacity ?? 1,
+    userSelect: "none",
+
+    // DO NOT scale text container — scaling is handled by Element.jsx wrap
+    transform: "none",
+  };
+
+  // -------------------------------------------------------
+  // ⭐ TEXTAREA style (when editing)
+  // -------------------------------------------------------
+  const editStyle = {
+    width: "100%",
+    height: "100%",
+    resize: "none",
+    background: "transparent",
+    outline: "none",
+    border: "none",
+
     fontSize: element.fontSize,
     fontFamily: element.fontFamily,
     color: element.color,
-    fontWeight: element.fontWeight || 'normal',
-    fontStyle: element.fontStyle || 'normal',
-    textAlign: element.textAlign || 'center',
-    opacity: element.opacity ?? 1,
-    width: '100%',
-    height: '100%',
-    cursor: 'text',
-    userSelect: 'none',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent:
-      element.textAlign === 'left'
-        ? 'flex-start'
-        : element.textAlign === 'right'
-        ? 'flex-end'
-        : 'center',
-    padding: '4px',
-  }
+    fontWeight: element.fontWeight || "normal",
+    fontStyle: element.fontStyle || "normal",
+    textAlign: element.textAlign || "left",
+    lineHeight: element.lineHeight || 1.2,
+    letterSpacing: element.letterSpacing || 0,
+
+    overflow: "hidden",
+  };
 
   return (
     <div style={style} onDoubleClick={handleDoubleClick}>
@@ -53,30 +88,21 @@ export default function TextElement({ element }) {
           value={text}
           onChange={(e) => setText(e.target.value)}
           onBlur={handleBlur}
-          className="w-full h-full resize-none bg-transparent outline-none"
-          style={{
-            fontSize: element.fontSize,
-            fontFamily: element.fontFamily,
-            color: element.color,
-            fontWeight: element.fontWeight || 'normal',
-            fontStyle: element.fontStyle || 'normal',
-            textAlign: element.textAlign || 'center',
-          }}
+          style={editStyle}
         />
       ) : (
         <span
           style={{
-            width: '100%',
-            textAlign: element.textAlign || 'center',
-            fontWeight: element.fontWeight || 'normal',
-            fontStyle: element.fontStyle || 'normal',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
+            lineHeight: element.lineHeight || 1.2,
+            letterSpacing: element.letterSpacing || 0,
+            textAlign: element.textAlign || "left",
           }}
         >
           {element.text}
         </span>
       )}
     </div>
-  )
+  );
 }

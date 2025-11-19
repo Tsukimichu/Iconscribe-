@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Bell, CheckCircle, Clock, Truck, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Bell, CheckCircle, Clock, Truck, X, AlertTriangle } from "lucide-react";
 import { useAuth } from "../context/authContext.jsx";
 import { useToast } from "../component/ui/ToastProvider.jsx";
 import io from "socket.io-client";
@@ -20,9 +20,11 @@ function Transactions() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const { showToast } = useToast();
   const [editOrder, setEditOrder] = useState(null);
+  
+  // New State for Cancellation Confirmation
+  const [orderToCancel, setOrderToCancel] = useState(null);
+
   const [liveNotifications, setLiveNotifications] = useState([]);
-
-
 
   // Preview image handler
   function handleImagePreview(image) {
@@ -38,9 +40,11 @@ function Transactions() {
     return now - orderTime <= 24 * 60 * 60 * 1000;
   };
 
-  const handleCancelOrder = async (orderItemId) => {
+  const executeCancelOrder = async () => {
+    if (!orderToCancel) return;
+
     try {
-      const res = await fetch(`${API_URL}/orders/${orderItemId}/cancel`, {
+      const res = await fetch(`${API_URL}/orders/${orderToCancel}/cancel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
@@ -50,13 +54,16 @@ function Transactions() {
       showToast("Order cancelled successfully!");
 
       setOrders(prev => prev.map(o =>
-        o.enquiryNo === orderItemId
+        o.enquiryNo === orderToCancel
           ? { ...o, status: "Cancelled" }
           : o
       ));
     } catch (err) {
       console.error(err);
       showToast("Failed to cancel order.");
+    } finally {
+      // Close the modal
+      setOrderToCancel(null);
     }
   };
 
@@ -184,8 +191,6 @@ function Transactions() {
   }, [userId]);
 
 
-
-
   if (!isLoggedIn) return null;
 
   // Build notifications (latest 5, excluding cancelled)
@@ -202,13 +207,12 @@ function Transactions() {
   const notifications = [...liveNotifications, ...backendNotifications]
     .slice(0, 5);
 
-
-
     const canEditOrder = (orderDate) => {
       const orderTime = new Date(orderDate).getTime();
       const now = Date.now();
       return now - orderTime <= 12 * 60 * 60 * 1000;
     };
+
   return (
     <section className="relative w-full px-6 py-30 bg-white text-gray-800">
       <motion.h2
@@ -256,7 +260,6 @@ function Transactions() {
                     const disableActions =
                       ["Completed", "Cancelled"].includes(item.status) ||
                       !canEditOrder(item.dateOrdered || item.created_at);
-
 
                     return (
                     <motion.tr
@@ -340,7 +343,8 @@ function Transactions() {
                                   Edit
                                 </button>
                                 <button
-                                  onClick={() => handleCancelOrder(item.enquiryNo)}
+                                  // CHANGED: Opens modal instead of cancelling immediately
+                                  onClick={() => setOrderToCancel(item.enquiryNo)}
                                   disabled={disableActions}
                                   className={`bg-red-600 text-white text-xs px-3 py-1 rounded-lg shadow transition ${
                                     disableActions
@@ -388,7 +392,7 @@ function Transactions() {
                 >
                   <div className="flex flex-col">
                     <span className="font-semibold text-gray-700">{note.title}</span>
-                   
+                    
                     <span
                       className={`mt-1 inline-block px-2 py-0.5 text-xs rounded-full font-medium ${
                         note.status === "Pending"
@@ -432,7 +436,7 @@ function Transactions() {
         <OrderModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />
       )}
 
-      {/* EDIT ORDER MODAL (PUT IT HERE!) */}
+      {/* EDIT ORDER MODAL */}
       {editOrder && (
         <EditOrderModal
           order={editOrder}
@@ -440,9 +444,56 @@ function Transactions() {
           onUpdated={refreshOrders}
         />
       )}
+
+      {/* CONFIRM CANCEL MODAL */}
+      {orderToCancel && (
+        <ConfirmCancelModal 
+            onClose={() => setOrderToCancel(null)} 
+            onConfirm={executeCancelOrder} 
+        />
+      )}
+
     </section>
   );
 }
+
+// --- NEW COMPONENT: Confirm Cancel Modal ---
+function ConfirmCancelModal({ onClose, onConfirm }) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-[60] p-4">
+        <motion.div
+          className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          <div className="flex flex-col items-center text-center">
+            <div className="bg-red-100 p-3 rounded-full mb-4">
+              <AlertTriangle className="text-red-600" size={32} />
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Cancel Order?</h3>
+            <p className="text-gray-600 mb-6 text-sm">
+              Are you sure you want to cancel this order? This action cannot be undone.
+            </p>
+            
+            <div className="flex gap-3 w-full">
+              <button 
+                onClick={onClose}
+                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition"
+              >
+                No, Keep it
+              </button>
+              <button 
+                onClick={onConfirm}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition"
+              >
+                Yes, Cancel
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
 // Separate component for Order Modal
 function OrderModal({ order, onClose }) {
@@ -805,7 +856,5 @@ function getStatusIcon(status) {
       </div>
     );
   }
-
-
 
 export default Transactions;

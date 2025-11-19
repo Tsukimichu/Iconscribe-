@@ -35,20 +35,6 @@
     "json": "/templates/json/calendar/calendar2.json"
   },
   {
-    "id": "calendar3",
-    "name": "Monthly Planner",
-    "category": "Calendar",
-    "preview": "/templates/calendar/calendar3.png",
-    "json": "/templates/json/calendar/calendar3.json"
-  },
-  {
-    "id": "calendar4",
-    "name": "Photo Calendar",
-    "category": "Calendar",
-    "preview": "/templates/calendar/calendar4.png",
-    "json": "/templates/json/calendar/calendar4.json"
-  },
-  {
     "id": "poster1",
     "name": "Business Poster",
     "category": "Poster",
@@ -61,27 +47,6 @@
     "category": "Poster",
     "preview": "/templates/poster/poster2.png",
     "json": "/templates/json/poster/poster2.json"
-  },
-  {
-    "id": "poster3",
-    "name": "Modern Interior Poster",
-    "category": "Poster",
-    "preview": "/templates/poster/poster3.png",
-    "json": "/templates/json/poster/poster3.json"
-  },
-  {
-    "id": "poster4",
-    "name": "Company Poster",
-    "category": "Poster",
-    "preview": "/templates/poster/poster4.png",
-    "json": "/templates/json/poster/poster4.json"
-  },
-  {
-    "id": "poster5",
-    "name": "Minimalist Interior Poster",
-    "category": "Poster",
-    "preview": "/templates/poster/poster5.png",
-    "json": "/templates/json/poster/poster5.json"
   },
   {
     "id": "label1",
@@ -98,13 +63,6 @@
     "json": "/templates/json/label/label2.json"
   },
   {
-    "id": "label3",
-    "name": "Cosmetic Label",
-    "category": "Label",
-    "preview": "/templates/label/label3.png",
-    "json": "/templates/json/label/label3.json"
-  },
-  {
     "id": "brochure1",
     "name": "Corporate Brochure",
     "category": "Brochure",
@@ -117,19 +75,5 @@
     "category": "Brochure",
     "preview": "/templates/brochure/brochure2.png",
     "json": "/templates/json/brochure/brochure2.json"
-  },
-  {
-    "id": "brochure3",
-    "name": "Event Brochure",
-    "category": "Brochure",
-    "preview": "/templates/brochure/brochure3.png",
-    "json": "/templates/json/brochure/brochure3.json"
-  },
-  {
-    "id": "brochure4",
-    "name": "Product Brochure",
-    "category": "Brochure",
-    "preview": "/templates/brochure/brochure4.png",
-    "json": "/templates/json/brochure/brochure4.json"
   }
 ]

@@ -225,19 +225,21 @@ function Books() {
         <div className="w-full max-w-[120rem] p-2 sm:p-2">
           {isLoggedIn ? (
             <>
-              {/* Back Button + Title */}
-              <div className="flex items-center gap-6 mb-10">
-                <button
-                  onClick={() => navigate(-1)}
-                  className="p-2 hover:bg-gray-200 rounded-full transition"
-                >
-                  <ArrowBigLeft className="w-7 h-7" />
-                </button>
-                <h2 className="text-4xl font-bold text-black">
-                  Service Request
-                </h2>
-              </div>
+                {/* Back Button + Title */}
+                <div className="relative flex items-center justify-center mb-10 w-full">
+                  {/* Back Button - stays on the left */}
+                  <button
+                    onClick={() => navigate(-1)}
+                    className="absolute left-0 p-2 hover:bg-gray-200 rounded-full transition"
+                  >
+                    <ArrowBigLeft className="w-7 h-7" />
+                  </button>
 
+                  {/* Centered Title */}
+                  <h2 className="text-3xl md:text-4xl font-bold text-black text-center">
+                    Product Request
+                  </h2>
+                </div>
 
               {/* Form Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -473,6 +475,11 @@ function Books() {
                         </p>
                       <p className="text-sm text-gray-500 italic mt-1">
                         *Final price may vary depending on specifications
+                      </p>
+                    </div>
+                    <div class="max-w-md mx-auto mt-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 rounded-xl shadow-sm">
+                      <p class="text-yellow-800 text-sm font-medium">
+                        📌 The products take about <span class="font-semibold">2–3 weeks</span> to be completed and prepared for delivery.
                       </p>
                     </div>
                   </div>

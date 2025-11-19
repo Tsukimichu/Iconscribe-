@@ -1,149 +1,123 @@
 {
   "version": "5.3.0",
+  "background": "#ffffff",
+  "width": 600,
+  "height": 400,
   "objects": [
-    {
-      "type": "rect",
-      "left": 0,
-      "top": 0,
-      "width": 600,
-      "height": 400,
-      "fill": "#ffffff"
-    },
-    {
-      "type": "rect",
-      "left": 0,
-      "top": 0,
-      "width": 600,
-      "height": 50,
-      "fill": "#8B0000"
-    },
-    {
-      "type": "rect",
-      "left": 0,
-      "top": 350,
-      "width": 600,
-      "height": 50,
-      "fill": "#8B0000"
-    },
-    {
-      "type": "rect",
-      "left": 0,
-      "top": 48,
-      "width": 600,
-      "height": 4,
-      "fill": "#2E7D32"
-    },
-    {
-      "type": "circle",
-      "left": 190,
-      "top": 40,
-      "radius": 110,
-      "fill": "#8B0000"
-    },
+
+    { "type": "rect", "left": 0, "top": 0, "width": 600, "height": 60, "fill": "#8B0000" },
+    { "type": "rect", "left": 0, "top": 340, "width": 600, "height": 60, "fill": "#8B0000" },
+
+    { "type": "circle", "left": 170, "top": 55, "radius": 120, "fill": "#8B0000" },
+
     {
       "type": "textbox",
-      "left": 180,
-      "top": 80,
-      "width": 240,
+      "left": 160,
+      "top": 95,
+      "width": 280,
       "text": "Strawberry",
-      "fontSize": 42,
+      "fontSize": 46,
       "fontFamily": "Brush Script MT",
       "fill": "#ffffff",
       "textAlign": "center"
     },
     {
       "type": "textbox",
-      "left": 180,
-      "top": 130,
-      "width": 240,
+      "left": 160,
+      "top": 145,
+      "width": 280,
       "text": "FRESH JUICE",
       "fontSize": 22,
       "fontWeight": "bold",
+      "fontFamily": "Arial",
       "fill": "#ffffff",
-      "textAlign": "center",
-      "fontFamily": "Arial"
+      "textAlign": "center"
     },
     {
       "type": "textbox",
-      "left": 180,
-      "top": 160,
-      "width": 240,
+      "left": 160,
+      "top": 175,
+      "width": 280,
       "text": "100% NATURAL",
       "fontSize": 18,
       "fontWeight": "bold",
+      "fontFamily": "Arial",
       "fill": "#ffffff",
-      "textAlign": "center",
-      "fontFamily": "Arial"
+      "textAlign": "center"
     },
+
     {
       "type": "textbox",
-      "left": 40,
-      "top": 180,
+      "left": 30,
+      "top": 210,
       "width": 200,
-      "text": "Description\nFresh lemon lemonade is made from 100% organic lemons freshly picked from its garden. All the ingredients were cooked on the same day to ensure their quality and freshness.",
+      "text": "Description\nFresh strawberry juice made from 100% organic strawberries. Carefully blended to retain natural sweetness and freshness.",
       "fontSize": 12,
-      "fill": "#000000",
       "fontFamily": "Arial",
+      "fill": "#000000",
+      "textAlign": "left",
+      "lineHeight": 1.2
+    },
+
+    {
+      "type": "textbox",
+      "left": 30,
+      "top": 310,
+      "width": 200,
+      "text": "Ingredients\nFresh Strawberry Juice,\nSugar, Water",
+      "fontSize": 12,
+      "fontFamily": "Arial",
+      "fill": "#000000",
       "textAlign": "left"
     },
+
     {
       "type": "textbox",
-      "left": 40,
-      "top": 300,
-      "width": 200,
-      "text": "Ingredients\nFresh Strawberry juice,\nSugar, Water",
-      "fontSize": 12,
-      "fill": "#000000",
-      "fontFamily": "Arial",
-      "textAlign": "left"
-    },
-    {
-      "type": "textbox",
-      "left": 40,
-      "top": 360,
+      "left": 30,
+      "top": 350,
       "width": 200,
       "text": "Exp. Date\n01.06.2024",
       "fontSize": 12,
-      "fill": "#000000",
       "fontFamily": "Arial",
+      "fill": "#000000",
       "textAlign": "left"
     },
+
     {
       "type": "rect",
-      "left": 430,
-      "top": 180,
-      "width": 130,
-      "height": 90,
+      "left": 380,
+      "top": 210,
+      "width": 170,
+      "height": 110,
       "fill": "#ffffff",
       "stroke": "#000000",
       "strokeWidth": 1
     },
     {
       "type": "textbox",
-      "left": 440,
-      "top": 185,
-      "width": 110,
-      "text": "Nutrition Facts:",
+      "left": 395,
+      "top": 215,
+      "width": 150,
+      "text": "Nutrition Facts",
       "fontSize": 12,
       "fontWeight": "bold",
-      "fill": "#000000",
       "fontFamily": "Arial"
     },
     {
       "type": "textbox",
-      "left": 440,
-      "top": 200,
-      "width": 120,
-      "text": "Calories ....................\nFat ............................\nSodium ....................\nTotal Carbohydrates .....\nProtein ....................",
+      "left": 395,
+      "top": 235,
+      "width": 150,
+      "text": "Calories ............\nFat ......................\nSodium ..............\nCarbs .................\nProtein ...............",
       "fontSize": 10,
-      "fill": "#000000",
       "fontFamily": "Arial"
     },
+
     {
       "type": "rect",
-      "left": 450,
-      "top": 290,
-      "width": 100,
+      "left": 395,
+      "top": 330,
+      "width": 130,
       "height": 40,
       "fill": "#ffffff",
       "stroke": "#000000",
@@ -151,48 +125,49 @@
     },
     {
       "type": "textbox",
-      "left": 455,
-      "top": 300,
-      "width": 90,
-      "text": "||||||||||||||||",
-      "fontSize": 20,
+      "left": 405,
+      "top": 338,
+      "width": 110,
+      "text": "||||||||||||||||||||",
+      "fontSize": 22,
       "fontFamily": "Courier New",
-      "fill": "#000000",
       "textAlign": "center"
     },
+
     {
       "type": "textbox",
-      "left": 250,
-      "top": 355,
-      "width": 100,
+      "left": 260,
+      "top": 330,
+      "width": 80,
       "text": "500 ML",
       "fontSize": 14,
       "fontWeight": "bold",
+      "fontFamily": "Arial",
       "fill": "#ffffff",
-      "textAlign": "center",
-      "fontFamily": "Arial"
+      "textAlign": "center"
     },
+
     {
       "type": "rect",
-      "left": 230,
+      "left": 245,
       "top": 230,
-      "width": 140,
-      "height": 90,
-      "fill": "#f8f8f8",
+      "width": 130,
+      "height": 100,
+      "fill": "#ffffff",
       "stroke": "#cccccc",
       "strokeWidth": 1
     },
     {
       "type": "textbox",
-      "left": 250,
+      "left": 255,
       "top": 265,
-      "width": 100,
+      "width": 110,
       "text": "Image Placeholder",
-      "fontSize": 10,
+      "fontSize": 11,
+      "fontFamily": "Arial",
       "fill": "#555555",
-      "textAlign": "center",
-      "fontFamily": "Arial"
+      "textAlign": "center"
     }
-  ],
-  "background": "#ffffff"
+
+  ]
 }

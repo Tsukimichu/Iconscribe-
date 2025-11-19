@@ -1,149 +1,137 @@
 {
   "version": "5.3.0",
+  "background": "#FFF5E6",
+  "width": 600,
+  "height": 300,
   "objects": [
+
+    { "type": "rect", "left": 0, "top": 0, "width": 600, "height": 300, "fill": "#FFF5E6" },
+
     {
       "type": "rect",
       "left": 0,
-      "top": 0,
+      "top": 95,
       "width": 600,
-      "height": 300,
-      "fill": "#FFF3E0"
+      "height": 145,
+      "fill": "#F7B72F"
     },
-    {
-      "type": "rect",
-      "left": 0,
-      "top": 100,
-      "width": 600,
-      "height": 100,
-      "fill": "#FBC02D"
-    },
+
     {
       "type": "circle",
-      "left": 250,
-      "top": 80,
-      "radius": 70,
-      "fill": "#FBC02D",
-      "stroke": "#EF6C00",
+      "left": 240,
+      "top": 85,
+      "radius": 65,
+      "fill": "#F7B72F",
+      "stroke": "#E8832E",
       "strokeWidth": 3
     },
+
     {
       "type": "rect",
-      "left": 265,
-      "top": 95,
+      "left": 270,
+      "top": 122,
       "width": 70,
-      "height": 50,
-      "rx": 8,
-      "ry": 8,
-      "fill": "#BBDEFB",
-      "stroke": "#F57C00",
+      "height": 48,
+      "rx": 10,
+      "ry": 10,
+      "fill": "#C5E4FF",
+      "stroke": "#DE7A1C",
       "strokeWidth": 1
     },
-    {
-      "type": "rect",
-      "left": 265,
-      "top": 120,
-      "width": 70,
-      "height": 25,
-      "fill": "#A5D6A7"
-    },
-    {
-      "type": "circle",
-      "left": 285,
-      "top": 105,
-      "radius": 5,
-      "fill": "#FDD835"
-    },
+    { "type": "rect", "left": 270, "top": 144, "width": 70, "height": 22, "fill": "#B7E8B3" },
+    { "type": "circle", "left": 292, "top": 131, "radius": 4, "fill": "#FFD740" },
+
     {
       "type": "textbox",
-      "left": 60,
-      "top": 115,
-      "width": 200,
+      "left": 40,
+      "top": 112,
+      "width": 240,
       "text": "APRICOT JAM",
-      "fontSize": 22,
+      "fontSize": 24,
       "fontWeight": "bold",
-      "fill": "#000000",
       "fontFamily": "Arial",
+      "fill": "#2B1B0F",
       "textAlign": "left"
     },
     {
       "type": "textbox",
-      "left": 60,
+      "left": 40,
       "top": 140,
-      "width": 200,
+      "width": 230,
       "text": "made with love",
       "fontSize": 14,
-      "fill": "#3E2723",
       "fontFamily": "Arial",
+      "fill": "#5C4033",
       "textAlign": "left"
     },
+
     {
       "type": "textbox",
-      "left": 60,
-      "top": 160,
-      "width": 200,
+      "left": 40,
+      "top": 162,
+      "width": 240,
       "text": "Ingredients:",
       "fontSize": 14,
       "fontWeight": "bold",
-      "fill": "#3E2723",
       "fontFamily": "Arial",
-      "textAlign": "left"
+      "fill": "#5C4033"
     },
     {
       "type": "textbox",
-      "left": 60,
-      "top": 178,
-      "width": 200,
+      "left": 40,
+      "top": 183,
+      "width": 240,
       "text": "Apricot, Ginger, Cinnamon,\nHoney, Lemon juice,\nSugar, Salt.",
       "fontSize": 13,
-      "fill": "#3E2723",
       "fontFamily": "Arial",
-      "textAlign": "left"
+      "fill": "#5C4033",
+      "lineHeight": 1.2
     },
+
     {
       "type": "textbox",
-      "left": 420,
-      "top": 120,
-      "width": 140,
+      "left": 415,
+      "top": 115,
+      "width": 150,
       "text": "Expiry date:",
       "fontSize": 13,
       "fontWeight": "bold",
-      "fill": "#3E2723",
       "fontFamily": "Arial",
-      "textAlign": "left"
+      "fill": "#5C4033"
     },
     {
       "type": "textbox",
-      "left": 420,
-      "top": 138,
-      "width": 140,
+      "left": 415,
+      "top": 133,
+      "width": 150,
       "text": "02/05/2025",
       "fontSize": 13,
-      "fill": "#3E2723",
       "fontFamily": "Arial",
-      "textAlign": "left"
+      "fill": "#5C4033"
     },
+
     {
       "type": "textbox",
-      "left": 410,
-      "top": 185,
-      "width": 150,
-      "text": "|||||||||||||||||||||||||",
-      "fontSize": 22,
+      "left": 380,
+      "top": 175,
+      "width": 200,
+      "text": "|||||||||||||||||||",
+      "fontSize": 20,
       "fontFamily": "Courier New",
       "fill": "#000000",
       "textAlign": "center"
     },
     {
       "type": "textbox",
-      "left": 400,
-      "top": 210,
-      "width": 170,
+      "left": 380,
+      "top": 200,
+      "width": 200,
       "text": "www.reallygreatsite.com",
       "fontSize": 12,
-      "fill": "#3E2723",
       "fontFamily": "Arial",
+      "fill": "#5C4033",
       "textAlign": "center"
     }
-  ],
-  "background": "#FFF3E0"
+
+  ]
 }

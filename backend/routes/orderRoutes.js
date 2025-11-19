@@ -187,7 +187,17 @@ router.get("/", async (req, res) => {
         oi.order_item_id AS enquiryNo,
         o.order_id,
         p.product_name AS service,
-        u.name AS customer_name,
+
+        /* FIX: If user_id = 0 (walk-in), use attribute value "customer_name"
+           from order_item_attributes */
+        IFNULL(u.name, 
+          (SELECT attribute_value 
+           FROM order_item_attributes 
+           WHERE order_item_id = oi.order_item_id 
+           AND attribute_name = 'customer_name'
+           LIMIT 1)
+        ) AS customer_name,
+
         o.order_date AS dateOrdered,
         oi.urgency,
         oi.status,
@@ -197,7 +207,7 @@ router.get("/", async (req, res) => {
         (oi.estimated_price + IFNULL(o.manager_added, 0)) AS total_price
       FROM orderitems oi
       JOIN orders o ON oi.order_id = o.order_id
-      JOIN users u ON o.user_id = u.user_id
+      LEFT JOIN users u ON o.user_id = u.user_id  /* <--- FIXED */
       JOIN products p ON oi.product_id = p.product_id
       ORDER BY o.order_date DESC
     `);
@@ -222,6 +232,7 @@ router.get("/", async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to load orders" });
   }
 });
+
 
 
 // ===================================================
@@ -435,14 +446,20 @@ router.put("/:id/status", async (req, res) => {
           oi.order_item_id AS enquiryNo,
           oi.order_id,
           o.user_id,
-          p.product_name
-       FROM orderitems oi
-       JOIN orders o ON oi.order_id = o.order_id
-       JOIN products p ON oi.product_id = p.product_id
-       WHERE oi.order_item_id = ?
-       LIMIT 1`,
+          p.product_name,
+          (SELECT attribute_value 
+          FROM order_item_attributes 
+          WHERE order_item_id = oi.order_item_id 
+          AND attribute_name = 'customer_name'
+          LIMIT 1) AS walkin_name
+      FROM orderitems oi
+      JOIN orders o ON oi.order_id = o.order_id
+      JOIN products p ON oi.product_id = p.product_id
+      WHERE oi.order_item_id = ?
+      LIMIT 1`,
       [id]
     );
+
 
     if (rows.length === 0)
       return res.status(404).json({ success: false, message: "Order not found" });
@@ -463,10 +480,12 @@ router.put("/:id/status", async (req, res) => {
     // Insert into Completed Table
     if (status === "Completed" && alreadyCompleted.length === 0) {
       await db.promise().query(
-        `INSERT INTO completed_orders (order_item_id, order_id, user_id)
-         VALUES (?, ?, ?)`,
-        [item.enquiryNo, item.order_id, item.user_id]
+        `INSERT INTO completed_orders (order_item_id, order_id, user_id, customer_name)
+        VALUES (?, ?, ?, ?)`,
+        [item.enquiryNo, item.order_id, item.user_id, rows[0].walkin_name]
       );
+
+
     }
 
     // Insert into Canceled Table
@@ -872,6 +891,91 @@ router.get("/canceled/all", async (req, res) => {
 });
 
 // ===================================================
+// GET FULL ONLINE ORDER (user checkout order)
+// ===================================================
+router.get("/full/:orderId", async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    // 1. Get order header
+    const [orders] = await db.promise().query(
+      `SELECT 
+          o.order_id,
+          o.user_id,
+          o.order_date AS dateOrdered,
+          o.total,
+          o.manager_added,
+          u.name AS customer_name,
+          u.email,
+          u.phone AS contact_number,
+          u.address AS location
+        FROM orders o
+        LEFT JOIN users u ON o.user_id = u.user_id
+        WHERE o.order_id = ?`,
+      [orderId]
+    );
+
+    if (orders.length === 0) {
+      return res.json({ success: false, message: "Order not found." });
+    }
+
+    const order = orders[0];
+
+    // 2. Get items
+    const [items] = await db.promise().query(
+      `SELECT 
+          oi.order_item_id AS enquiryNo,
+          oi.product_id,
+          p.product_name AS service,
+          oi.quantity,
+          oi.urgency,
+          oi.status,
+          oi.estimated_price,
+          oi.file1,
+          oi.file2
+        FROM orderitems oi
+        JOIN products p ON oi.product_id = p.product_id
+        WHERE oi.order_id = ?`,
+      [orderId]
+    );
+
+    // 3. Attach attributes
+    for (let item of items) {
+      const [attrs] = await db.promise().query(
+        `SELECT attribute_name, attribute_value
+           FROM order_item_attributes
+           WHERE order_item_id = ?`,
+        [item.enquiryNo]
+      );
+
+      item.details = {};
+      attrs.forEach((a) => {
+        item.details[a.attribute_name] = a.attribute_value;
+      });
+
+      item.files = [];
+      if (item.file1) item.files.push(item.file1);
+      if (item.file2) item.files.push(item.file2);
+    }
+
+    res.json({
+      success: true,
+      order: {
+        ...order,
+        items,
+      },
+    });
+  } catch (err) {
+    console.error("❌ FULL ORDER ERROR:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error loading order",
+    });
+  }
+});
+
+
+// ===================================================
 // CREATE WALK-IN ORDER (NO USER ACCOUNT)
 // ===================================================
 router.post(
@@ -881,7 +985,9 @@ router.post(
     try {
       const {
         customer_name,
+        email,
         contact_number,
+        location,
         service,
         quantity,
         urgency,
@@ -890,6 +996,9 @@ router.post(
         details,
       } = req.body;
 
+      // ---------------------------
+      // BASIC VALIDATION
+      // ---------------------------
       if (!customer_name || !service || !quantity || !price) {
         return res.status(400).json({
           success: false,
@@ -897,15 +1006,20 @@ router.post(
         });
       }
 
-      // Parse attributes
+      // ---------------------------
+      // PARSE DETAILS (attributes)
+      // ---------------------------
       let parsedDetails = {};
       try {
         parsedDetails = JSON.parse(details || "{}");
       } catch (err) {
+        console.log("⚠ invalid details JSON, ignoring.");
         parsedDetails = {};
       }
 
-      // Find product_id by product_name
+      // ---------------------------
+      // MATCH PRODUCT ID
+      // ---------------------------
       const [productRow] = await db
         .promise()
         .query("SELECT product_id FROM products WHERE product_name = ?", [
@@ -921,52 +1035,85 @@ router.post(
 
       const product_id = productRow[0].product_id;
 
-      // Create ORDER
-      const [orderResult] = await db
-        .promise()
-        .query(
-          `INSERT INTO orders (user_id, order_date, archived, total, manager_added) 
-           VALUES (?, NOW(), 0, ?, 0)`,
-          [0, price] // user_id = 0 for walk-in
-        );
+      // ---------------------------
+      // INSERT INTO orders TABLE
+      // ---------------------------
+      const [orderResult] = await db.promise().query(
+        `INSERT INTO orders (user_id, order_date, total, manager_added)
+         VALUES (NULL, NOW(), ?, 0)`,
+        [price]
+      );
 
       const order_id = orderResult.insertId;
 
-      // Create ORDER ITEM
-      const [orderItemResult] = await db.promise().query(
+      // ---------------------------
+      // INSERT INTO orderitems TABLE
+      // ---------------------------
+      const [itemRes] = await db.promise().query(
         `INSERT INTO orderitems 
-        (order_id, product_id, quantity, urgency, status, estimated_price) 
+          (order_id, product_id, quantity, urgency, status, estimated_price) 
         VALUES (?, ?, ?, ?, ?, ?)`,
-        [
-          order_id,
-          product_id,
-          quantity,
-          urgency || "Normal",
-          status || "Pending",
-          price,
-        ]
+        [order_id, product_id, quantity, urgency, status, price]
       );
 
-      const order_item_id = orderItemResult.insertId;
+const order_item_id = itemRes.insertId;
 
-      // Insert DETAILS as attributes
+// ---------------------------
+// INSERT CUSTOMER FIELDS INTO ATTRIBUTES
+// ---------------------------
+await db.promise().query(
+  `INSERT INTO order_item_attributes (order_item_id, attribute_name, attribute_value)
+   VALUES
+    (?, 'customer_name', ?),
+    (?, 'email', ?),
+    (?, 'contact_number', ?),
+    (?, 'location', ?)`,
+  [
+    order_item_id, customer_name,
+    order_item_id, email || "",
+    order_item_id, contact_number || "",
+    order_item_id, location || ""
+  ]
+);
+
+// ---------------------------
+// INSERT PRODUCT DETAILS
+// ---------------------------
+for (const key in parsedDetails) {
+  await db.promise().query(
+    `INSERT INTO order_item_attributes (order_item_id, attribute_name, attribute_value)
+     VALUES (?, ?, ?)`,
+    [order_item_id, key, parsedDetails[key]]
+  );
+}
+
+
+      // ---------------------------
+      // INSERT ALL PRODUCT ATTRIBUTES
+      // ---------------------------
       for (const key in parsedDetails) {
+        if (!parsedDetails[key]) continue;
+
         await db.promise().query(
-          `INSERT INTO order_item_attributes (order_item_id, attribute_name, attribute_value)
-           VALUES (?, ?, ?)`,
+          `INSERT INTO order_item_attributes 
+          (order_item_id, attribute_name, attribute_value)
+          VALUES (?, ?, ?)`,
           [order_item_id, key, parsedDetails[key]]
         );
       }
 
-      // Handle file uploads
+      // ---------------------------
+      // HANDLE FILE UPLOADS
+      // ---------------------------
       if (req.files && req.files.length > 0) {
         const filePaths = req.files.map(
           (file) => `/uploads/orderfiles/${file.filename}`
         );
 
-        // Save first 2 files (DB schema supports file1 + file2)
         await db.promise().query(
-          `UPDATE orderitems SET file1 = ?, file2 = ? WHERE order_item_id = ?`,
+          `UPDATE orderitems 
+           SET file1 = ?, file2 = ?
+           WHERE order_item_id = ?`,
           [
             filePaths[0] || null,
             filePaths[1] || null,
@@ -975,12 +1122,16 @@ router.post(
         );
       }
 
+      // ---------------------------
+      // SUCCESS
+      // ---------------------------
       res.json({
         success: true,
         message: "Walk-in order created successfully!",
         order_id,
         enquiryNo: order_item_id,
       });
+
     } catch (err) {
       console.error("❌ WALK-IN ORDER ERROR:", err);
       res.status(500).json({
@@ -991,5 +1142,90 @@ router.post(
     }
   }
 );
+
+// ===================================================
+// GET WALK-IN ORDER (no user_id)
+// ===================================================
+router.get("/walkin/:itemId", async (req, res) => {
+  try {
+    const { itemId } = req.params;
+
+    // 1. Fetch order item
+    const [items] = await db.promise().query(
+      `SELECT 
+          oi.order_item_id AS enquiryNo,
+          oi.order_id,
+          oi.product_id,
+          p.product_name AS service,
+          oi.quantity,
+          oi.urgency,
+          oi.status,
+          oi.estimated_price,
+          oi.file1,
+          oi.file2
+        FROM orderitems oi
+        JOIN products p ON oi.product_id = p.product_id
+        WHERE oi.order_item_id = ?`,
+      [itemId]
+    );
+
+    if (items.length === 0) {
+      return res.json({ success: false, message: "Walk-in order not found" });
+    }
+
+    const item = items[0];
+
+    // 2. Fetch attributes
+    const [attrs] = await db.promise().query(
+      `SELECT attribute_name, attribute_value
+         FROM order_item_attributes
+         WHERE order_item_id = ?`,
+      [itemId]
+    );
+
+    let details = {};
+    attrs.forEach((row) => {
+      details[row.attribute_name] = row.attribute_value;
+    });
+
+    // 3. Build file list
+    const files = [];
+    if (item.file1) files.push(item.file1);
+    if (item.file2) files.push(item.file2);
+
+    // 4. Return unified structure
+    res.json({
+      success: true,
+      order: {
+        order_id: item.order_id,
+        enquiryNo: item.enquiryNo,
+        customer_name: details.customer_name || "Walk-in Customer",
+        email: details.email || "",
+        contact_number: details.contact_number || "",
+        location: details.location || "",
+        dateOrdered: new Date(),
+        status: item.status,
+        total: item.estimated_price,
+        items: [
+          {
+            enquiryNo: item.enquiryNo,
+            service: item.service,
+            quantity: item.quantity,
+            urgency: item.urgency,
+            estimated_price: item.estimated_price,
+            details,
+            files,
+          },
+        ],
+      },
+    });
+  } catch (err) {
+    console.error("❌ WALK-IN VIEW ERROR:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+
+
 
 module.exports = router;

@@ -6,6 +6,8 @@ import { useState, useEffect } from "react";
 import { useToast } from "../component/ui/ToastProvider";
 import UploadSection from "../component/UploadSection";
 import { API_URL } from "../api";
+import { computeBindingQuotation } from "../utils/computeBindingQuotation";
+
 
 function Binding() {
   const navigate = useNavigate();
@@ -18,29 +20,15 @@ function Binding() {
 
   const [showContactModal, setShowContactModal] = useState(false);
 
-  const calculatePrice = (quantity, pages, bindingType, paperType) => {
-    if (!quantity || !pages) return 0;
+  const calculatePrice = (quantity) => {
+    const q = computeBindingQuotation({
+      copies: quantity,
+      basePrice: 250, // you can change this anytime
+    });
 
-    let basePrice = 0.1 * pages;
-
-    switch (paperType) {
-      case "Glossy":
-        basePrice *= 1.2;
-        break;
-      case "Matte":
-        basePrice *= 1.1;
-        break;
-      case "Bond Paper":
-        basePrice *= 1.05;
-        break;
-      case "Book Paper":
-        basePrice *= 1.0;
-        break;
-      default:
-        break;
-    }
-    return basePrice * quantity;
+    return q ? q.total : 0;
   };
+
 
   // User Profile
   const [userProfile, setUserProfile] = useState({
@@ -153,6 +141,7 @@ function Binding() {
           quantity,
           urgency: "Normal",
           status: "Pending",
+          estimated_price: estimatedPrice,   
           attributes,
         }),
       });
@@ -203,8 +192,9 @@ function Binding() {
 
   // Auto-update estimated price
   useEffect(() => {
-    setEstimatedPrice(calculatePrice(quantity, pageCount, bindingType, paperType));
-  }, [quantity, pageCount, bindingType, paperType]);
+    setEstimatedPrice(calculatePrice(quantity));
+  }, [quantity]);
+
 
   if (!visible) return null;
 

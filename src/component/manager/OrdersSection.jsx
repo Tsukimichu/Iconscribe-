@@ -14,20 +14,18 @@ import WalkInOrderModal from "./WalkInOrderModal";
 
 const OrdersSection = () => {
   const [orders, setOrders] = useState([]);
-  const [archived, setArchived] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [imageGallery, setImageGallery] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [showPriceModal, setShowPriceModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
 
-  const [tableView, setTableView] = useState("active"); // active | completed | canceled
+  const [tableView, setTableView] = useState("active");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [newPrice, setNewPrice] = useState("");
   const [newStatus, setNewStatus] = useState("");
@@ -67,28 +65,6 @@ const OrdersSection = () => {
   const [showUrgencyModal, setShowUrgencyModal] = useState(false);
   const [newUrgency, setNewUrgency] = useState("");
 
-  const openUrgencyModal = (order) => {
-    setSelectedOrder(order);
-    setNewUrgency(order.urgency || "Not Rush");
-    setShowUrgencyModal(true);
-  };
-
-  const closeUrgencyModal = () => {
-    setShowUrgencyModal(false);
-    setNewUrgency("");
-  };
-
-  const confirmUrgencyChange = () => {
-    setOrders((prev) =>
-      prev.map((o) =>
-        o.enquiryNo === selectedOrder.enquiryNo
-          ? { ...o, urgency: newUrgency }
-          : o
-      )
-    );
-    setShowUrgencyModal(false);
-  };
-
   // Handle file uploads (for walk-in)
   const [orderFiles, setOrderFiles] = useState([]);
 
@@ -112,54 +88,65 @@ const OrdersSection = () => {
       .then((res) => res.json())
       .then((data) => {
         const arr = Array.isArray(data) ? data : [];
-        // data from backend already has enquiryNo, service, customer_name, etc.
-        setOrders(arr);
+
+        // 🔥 Normalize table data
+        setOrders(
+          arr.map((o) => {
+            const userId =
+              o.user_id !== undefined
+                ? o.user_id
+                : o.userId !== undefined
+                ? o.userId
+                : null;
+
+            // --- SAFEST NAME FIX ON EARTH ---
+            // Walk-in = user_id === null
+            // Online = user_id = number
+
+            const safeCustomerName = (() => {
+              if (userId === null) {
+                // WALK-IN
+                const n = o.customer_name?.trim();
+                if (n && n !== "null" && n !== "undefined") return n;
+
+                // If missing, fallback to attribute or last resort
+                return o.name || "Walk-in Customer";
+              }
+
+              // ONLINE ORDERS
+              return o.customer_name || o.name || "";
+            })();
+
+            return {
+              ...o,
+
+              // Normalized IDs
+              user_id: userId,
+              order_id: o.order_id || o.orderId || null,
+
+              // ✔ FIXED: Correct name field (NO MORE TYPO)
+              customer_name: safeCustomerName,
+
+              // Normalized date
+              dateOrdered: o.dateOrdered || o.order_date || o.orderDate || null,
+
+              // Safe price total
+              total_price:
+                Number(o.estimated_price || 0) + Number(o.manager_added || 0),
+            };
+          })
+        );
       })
       .catch((err) => console.error("❌ Error loading orders:", err));
   };
+
+
 
   // Load on first render
   useEffect(() => {
     loadOrders();
   }, []);
 
-  // --- Archive Logic ---
-  const openArchiveModal = (order) => {
-    setSelectedOrder(order);
-    setShowArchiveModal(true);
-  };
-
-  const closeArchiveModal = () => {
-    setShowArchiveModal(false);
-    setSelectedOrder(null);
-  };
-
-  const confirmArchive = async () => {
-    if (!selectedOrder) return;
-    const orderId = selectedOrder.order_id;
-    if (!orderId) return alert("Invalid order ID.");
-
-    try {
-      const res = await fetch(
-        `${API_URL}/orders/${orderId}/archive`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setOrders((prev) => prev.filter((o) => o.order_id !== orderId));
-        setArchived((prev) => [...prev, selectedOrder]);
-        closeArchiveModal();
-      } else {
-        alert(data.message || "Failed to archive order");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Server error");
-    }
-  };
 
   // --- Add Price Logic ---
   const openPriceModal = (order) => {
@@ -264,114 +251,193 @@ const OrdersSection = () => {
     }
   };
 
-  // --- Add Walk-In Order Logic ---
   const handleAddOrder = async () => {
-    const { customer_name, service, price } = newOrder;
+    const { customer_name, service, quantity, price } = newOrder;
 
-    if (!customer_name.trim() || !service || !price) {
-      return alert(
-        "Please fill in all required fields (Customer, Service, and Price)."
-      );
+    // ==========================
+    // 1. Validations
+    // ==========================
+    if (!customer_name?.trim()) {
+      return alert("Please enter customer name.");
+    }
+
+    // SERVICE must always be set
+    if (!service || service.trim() === "") {
+      return alert("Select a product/service.");
+    }
+
+    // QUANTITY must exist
+    if (!quantity || Number(quantity) <= 0) {
+      return alert("Enter valid quantity.");
+    }
+
+    // PRICE must be computed
+    if (!price || isNaN(price)) {
+      return alert("Price was not computed. Check product inputs.");
     }
 
     try {
-      // Still using your original endpoint; adjust to /create when backend ready
-      const formData = new FormData();
+      const fd = new FormData();
+
+      // ==========================
+      // 2. Core Fields ALWAYS included
+      // ==========================
+      const CORE_FIELDS = [
+        "customer_name",
+        "email",
+        "contact_number",
+        "location",
+        "service",
+        "quantity",
+        "price",       // estimated price
+        "urgency",
+        "status",
+      ];
+
+      const details = {};
+
+      // ==========================
+      // 3. Separate CORE + DETAILS
+      // ==========================
       Object.entries(newOrder).forEach(([key, value]) => {
-        if (value) formData.append(key, value);
+        if (value === "" || value === null || value === undefined) {
+          return; // skip empty fields ONLY
+        }
+
+        // Core fields go into form-data root
+        if (CORE_FIELDS.includes(key)) {
+          fd.append(key, value);
+        } 
+        // Everything else goes inside DETAILS JSON
+        else {
+          details[key] = value;
+        }
       });
-      formData.append("source", "walk-in");
 
-      orderFiles.forEach((file) => formData.append("files", file));
+      // ==========================
+      // 4. Attach all product-specific fields
+      // ==========================
+      fd.append("details", JSON.stringify(details));
 
+      // ==========================
+      // 5. Attach uploaded files
+      // ==========================
+      orderFiles.forEach((file) => fd.append("files", file));
+
+      // ==========================
+      // 6. Send request to backend
+      // ==========================
       const res = await fetch(`${API_URL}/orders/walkin`, {
         method: "POST",
-        body: formData,
+        body: fd,
       });
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.message || "Failed to add order");
-
-      if (data.success) {
-        // Either push the new order or just reload:
-        loadOrders();
-        setShowAddOrderModal(false);
-        setNewOrder({
-          customer_name: "",
-          email: "",
-          contact_number: "",
-          location: "",
-          date_ordered: "",
-          status: "Pending",
-          service: "",
-          enquiry_no: "",
-          price: "",
-          urgency: "Normal",
-
-          // UNIVERSAL PRODUCT FIELDS
-          quantity: "",
-          size: "",
-          custom_width: "",
-          custom_height: "",
-          paper_type: "",
-          color_printing: "",
-          lamination: "",
-          back_to_back: false,
-
-          // BOOK
-          number_of_pages: "",
-          binding_type: "",
-          cover_finish: "",
-          book_type: "",
-
-          // CALENDAR
-          calendar_type: "",
-          color: "",
-
-          // INVITATION, NEWSLETTER
-          event_name: "",
-          layout: "",
-
-          // CALLING CARD
-          card_title: "",
-
-          // OR
-          business_name: "",
-          booklet_finish: "",
-
-          // RAFFLE
-          with_stub: "",
-        });
-        setOrderFiles([]);
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to add order");
       }
+
+      // ==========================
+      // 7. Refresh Orders List
+      // ==========================
+      await loadOrders();
+
+      // ==========================
+      // 8. Reset form after success
+      // ==========================
+      setShowAddOrderModal(false);
+      setOrderFiles([]);
+      setSelectedProduct("");
+
+      setNewOrder({
+        customer_name: "",
+        email: "",
+        contact_number: "",
+        location: "",
+        price: "",
+        service: "",
+        quantity: "",
+        size: "",
+        custom_width: "",
+        custom_height: "",
+        paper_type: "",
+        color_printing: "",
+        lamination: "",
+        back_to_back: false,
+        number_of_pages: "",
+        binding_type: "",
+        cover_finish: "",
+        book_type: "",
+        calendar_type: "",
+        color: "",
+        event_name: "",
+        layout: "",
+        card_title: "",
+        business_name: "",
+        booklet_finish: "",
+        with_stub: "",
+        urgency: "Normal",
+        status: "Pending",
+      });
+
     } catch (err) {
-      console.error("Error adding walk-in order:", err);
+      console.error("❌ Error adding walk-in order:", err);
       alert("Server error while adding order. Please try again later.");
     }
   };
 
+
+
   // --- Open View Modal ---
   const openViewModal = async (order) => {
-    const orderId = order.order_id;
-    if (!orderId) return alert("Invalid order ID.");
-
     try {
-      const res = await fetch(`${API_URL}/orders/${orderId}`);
-      const data = await res.json();
-      console.log("Fetched order:", data);
+      let url = "";
 
-      if (res.ok && data.success) {
-        setSelectedOrder(data.order);
-        setShowViewModal(true);
+      // Determine if walk-in properly (user_id missing OR null)
+      const isWalkIn = !order.user_id || order.user_id === null;
+
+      if (isWalkIn) {
+        // walk-in uses enquiryNo only
+        url = `${API_URL}/orders/walkin/${order.enquiryNo}`;
       } else {
-        alert(data.message || "Failed to fetch order details.");
+        // online orders MUST use order_id
+        const oid = order.order_id || order.orderId; // <-- fallback fix
+        if (!oid) {
+          alert("Order ID missing. Cannot load online order.");
+          return;
+        }
+        url = `${API_URL}/orders/full/${oid}`;
       }
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (!data.success) {
+        alert(data.message || "Unable to load order.");
+        return;
+      }
+
+      const finalOrder = data.order;
+
+      // Safe defaults
+      finalOrder.customer_name = finalOrder.customer_name || "Customer";
+      finalOrder.email = finalOrder.email || "—";
+      finalOrder.contact_number = finalOrder.contact_number || "—";
+      finalOrder.location = finalOrder.location || "—";
+
+      setSelectedOrder(finalOrder);
+      setShowViewModal(true);
+
     } catch (err) {
-      console.error("Error fetching order details:", err);
-      alert("Server error while fetching order details.");
+      console.error("❌ Error loading order:", err);
+      alert("Server error loading order.");
     }
   };
+
+
+
+
 
   const closeViewModal = () => {
     setShowViewModal(false);
@@ -500,12 +566,6 @@ const OrdersSection = () => {
     }));
   };
 
-  const handlePriceBlur = () => {
-    if (!newOrder.price) return;
-
-    const formatted = Number(newOrder.price).toFixed(2);
-    setNewOrder((prev) => ({ ...prev, price: formatted }));
-  };
 
   return (
     <div className="p-8 rounded-3xl bg-white shadow-2xl space-y-8 min-h-screen">
@@ -592,7 +652,6 @@ const OrdersSection = () => {
                     { key: "service", label: "Service" },
                     { key: "customer_name", label: "Name" },
                     { key: "dateOrdered", label: "Date Ordered" },
-                    { key: "urgency", label: "Urgency" },
                     { key: "status", label: "Status" },
                     { key: "estimated_price", label: "Estimated Price" },
                     { key: "total_price", label: "Total Price" },
@@ -639,9 +698,6 @@ const OrdersSection = () => {
                         : "—"}
                     </td>
 
-                    {/* Urgency */}
-                    <td className="py-3 px-6">{order.urgency || "—"}</td>
-
                     {/* STATUS with COLOR BADGE */}
                     <td className="py-3 px-6">
                       <span
@@ -681,7 +737,7 @@ const OrdersSection = () => {
                         <Search size={16} />
                       </button>
 
-                      {/* COMPLETED / CANCELED VIEW: only archive */}
+                      {/* COMPLETED / CANCELED VIEW: */}
                       {tableView === "completed" || tableView === "canceled" ? (
                         <>
                         </>
@@ -705,13 +761,6 @@ const OrdersSection = () => {
                             <PlusCircle size={16} />
                           </button>
                           
-                          {/* URGENCY */}
-                          <button
-                            onClick={() => openUrgencyModal(order)}
-                            className="flex items-center justify-center gap-1 bg-orange-100 text-orange-700 px-2 py-2 rounded-lg hover:bg-orange-200 transition text-sm font-medium"
-                          >
-                            <Shield size={16} />
-                          </button>
                         </>
                       )}
                     </td>
@@ -743,139 +792,95 @@ const OrdersSection = () => {
                 Order Details
               </h2>
 
-              {selectedOrder ? (
+              {selectedOrder && (
                 <div className="space-y-6">
-                  {/* Basic Order Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                  
+                  {/* BASIC INFO */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <p><b>Customer Name:</b> {selectedOrder.customer_name}</p>
+                    <p><b>Email:</b> {selectedOrder.email}</p>
+                    <p><b>Contact Number:</b> {selectedOrder.contact_number}</p>
+                    <p><b>Location:</b> {selectedOrder.location}</p>
+
                     <p>
-                      <span className="font-bold text-gray-800">Customer Name:</span>{" "}
-                      {selectedOrder.customer_name || "—"}
-                    </p>
-                    <p>
-                      <span className="font-bold text-gray-800">Email:</span>{" "}
-                      {selectedOrder.email || "—"}
-                    </p>
-                    <p>
-                      <span className="font-bold text-gray-800">Contact Number:</span>{" "}
-                      {selectedOrder.contact_number || "—"}
-                    </p>
-                    <p>
-                      <span className="font-bold text-gray-800">Location:</span>{" "}
-                      {selectedOrder.location || "—"}
-                    </p>
-                    <p>
-                      <span className="font-bold text-gray-800">Date Ordered:</span>{" "}
+                      <b>Date Ordered:</b>{" "}
                       {selectedOrder.dateOrdered
-                        ? new Date(selectedOrder.dateOrdered).toLocaleDateString()
+                        ? new Date(selectedOrder.dateOrdered).toLocaleString()
                         : "—"}
                     </p>
+
+                    <p><b>Status:</b> {selectedOrder.status}</p>
                     <p>
-                      <span className="font-bold text-gray-800">Status:</span>{" "}
-                      {selectedOrder.status || "Pending"}
-                    </p>
-                    <p>
-                      <span className="font-bold text-gray-800">Price:</span>{" "}
-                      {selectedOrder.price != null
-                        ? `₱${selectedOrder.price}`
-                        : "₱350.00"}
+                      <b>Total:</b> ₱
+                      {Number(selectedOrder.total ?? selectedOrder.price ?? 0).toFixed(2)}
                     </p>
                   </div>
 
-                  {/* Loop through items safely */}
-                  {(selectedOrder.items || []).length > 0 ? (
-                    (selectedOrder.items || []).map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="mt-6 border-t border-gray-200 pt-5"
-                      >
-                        <h3 className="text-lg font-semibold text-cyan-700 mb-3">
-                          {item.service || "Service"}
+                  {/* ORDER ITEMS */}
+                  {selectedOrder.items && selectedOrder.items.length > 0 ? (
+                    selectedOrder.items.map((item, idx) => (
+                      <div key={idx} className="border-t pt-5 mt-5">
+                        
+                        <h3 className="text-xl font-bold text-cyan-700 mb-3">
+                          {item.service}
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+
+                          <p><b>Enquiry No:</b> {item.enquiryNo}</p>
+                          <p><b>Quantity:</b> {item.quantity}</p>
+                          <p><b>Urgency:</b> {item.urgency}</p>
                           <p>
-                            <span className="font-bold text-gray-800">
-                              Enquiry No:
-                            </span>{" "}
-                            {item.enquiryNo || "—"}
-                          </p>
-                          <p>
-                            <span className="font-bold text-gray-800">Urgency:</span>{" "}
-                            {item.urgency || "—"}
+                            <b>Estimated Price:</b> ₱
+                            {Number(item.estimated_price || 0).toFixed(2)}
                           </p>
 
-                          {/* Product-specific details */}
+                          {/* ATTRIBUTES */}
                           {item.details &&
-                            Object.keys(item.details).map((key) => {
-                              const value = item.details[key];
-                              if (!value) return null;
-                              return (
-                                <p key={key}>
-                                  <span className="font-bold text-gray-800">
-                                    {formatLabel(key)}:
-                                  </span>{" "}
-                                  {value}
-                                </p>
-                              );
-                            })}
+                            Object.keys(item.details).map((key) => (
+                              <p key={key}>
+                                <b>{key.replace(/_/g, " ")}:</b> {item.details[key]}
+                              </p>
+                            ))}
 
-                          {/* Uploaded files */}
-                          {(item.files || []).length > 0 && (
-                            <div className="mt-3">
-                              <h4 className="font-semibold text-gray-800 mb-2">
-                                Uploaded Files:
-                              </h4>
-                              <div className="flex flex-wrap gap-3">
-                                {(item.files || []).map((file, fIdx) => {
-                                  const isImage =
-                                    /\.(jpg|jpeg|png|gif|webp)$/i.test(file);
-                                  const isPDF = /\.pdf$/i.test(file);
+                          {/* FILES */}
+                          {item.files && item.files.length > 0 && (
+                            <div className="col-span-2">
+                              <b>Uploaded Files:</b>
+                              <div className="flex gap-3 mt-2 flex-wrap">
+                                {item.files.map((f, fIdx) => {
+                                  const isImage = /\.(jpg|jpeg|png|gif)$/i.test(f);
+                                  const isPDF = /\.pdf$/i.test(f);
+
                                   return (
-                                    <div
-                                      key={fIdx}
-                                      className="flex flex-col items-center"
-                                    >
+                                    <div key={fIdx} className="flex flex-col items-center">
                                       {isImage && (
                                         <button
                                           onClick={() => {
-                                            const allImages = (
-                                              item.files || []
-                                            ).filter((f) =>
-                                              /\.(jpg|jpeg|png|gif|webp)$/i.test(
-                                                f
-                                              )
-                                            );
-                                            const startIndex =
-                                              allImages.findIndex(
-                                                (img) => img === file
-                                              );
-                                            setImageGallery(allImages);
-                                            setCurrentImageIndex(
-                                              startIndex >= 0 ? startIndex : 0
-                                            );
-                                            setPreviewImage(
-                                              `http://localhost:5000${file}`
-                                            );
+                                            setImageGallery(item.files);
+                                            setCurrentImageIndex(fIdx);
                                             setShowImageModal(true);
                                           }}
-                                          className="px-2 py-1 border border-gray-300 rounded bg-gray-100 hover:bg-gray-200 text-sm"
+                                          className="bg-gray-100 border px-2 py-1 rounded"
                                         >
                                           View Image
                                         </button>
                                       )}
+
                                       {isPDF && (
                                         <a
-                                          href={`http://localhost:5000${file}`}
                                           target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="px-2 py-1 border border-gray-300 rounded bg-gray-100 hover:bg-gray-200 text-sm"
+                                          href={`${API_URL.replace("/api","")}${f}`}
+                                          className="bg-gray-100 border px-2 py-1 rounded"
                                         >
                                           View PDF
                                         </a>
                                       )}
+
                                       <a
-                                        href={`http://localhost:5000${file}`}
+                                        href={`${API_URL.replace("/api","")}${f}`}
                                         download
-                                        className="text-xs text-cyan-600 mt-1 hover:underline"
+                                        className="text-xs text-blue-600 mt-1"
                                       >
                                         Download
                                       </a>
@@ -889,13 +894,9 @@ const OrdersSection = () => {
                       </div>
                     ))
                   ) : (
-                    <p className="text-gray-500 italic mt-3">
-                      No items found for this order.
-                    </p>
+                    <p className="text-gray-500 italic">No items found for this order.</p>
                   )}
                 </div>
-              ) : (
-                <p className="text-gray-500 italic">No order selected.</p>
               )}
 
               {/* Close Button */}
@@ -1092,97 +1093,6 @@ const OrdersSection = () => {
               showSizeDropdown={showSizeDropdown}
               setShowSizeDropdown={setShowSizeDropdown}
             />
-
-      {/* --- Urgency Modal --- */}
-      <AnimatePresence>
-        {showUrgencyModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 flex items-center justify-center bg-black/60 z-50"
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-lg p-6 max-w-sm w-full text-center"
-            >
-              <h2 className="text-xl font-bold mb-3 text-gray-900">
-                Edit Urgency
-              </h2>
-              <p className="text-gray-600 mb-4">
-                Choose urgency for <b>{selectedOrder?.enquiryNo}</b>
-              </p>
-
-              <select
-                value={newUrgency}
-                onChange={(e) => setNewUrgency(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:ring-2 focus:ring-orange-500 outline-none"
-              >
-                <option>Rush</option>
-                <option>Not Rush</option>
-              </select>
-
-              <div className="flex justify-center gap-3">
-                <button
-                  onClick={closeUrgencyModal}
-                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmUrgencyChange}
-                  className="px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white transition"
-                >
-                  Save
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* --- Archive Modal --- */}
-      <AnimatePresence>
-        {showArchiveModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 flex items-center justify-center bg-black/60 z-50"
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-lg p-6 max-w-sm w-full text-center"
-            >
-              <h2 className="text-xl font-bold mb-3 text-gray-900">
-                Archive Order
-              </h2>
-              <p className="text-gray-600 mb-5">
-                Are you sure you want to archive order{" "}
-                <b>{selectedOrder?.enquiryNo}</b>?
-              </p>
-              <div className="flex justify-center gap-3">
-                <button
-                  onClick={closeArchiveModal}
-                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmArchive}
-                  className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition"
-                >
-                  Confirm
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

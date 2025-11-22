@@ -12,9 +12,9 @@ function TemplateGallery() {
     "Brochure",
     "Calendar",
     "Calling Card",
-    "Flyer",
+    //"Flyer",
     "Poster",
-    "Invitation",
+    //"Invitation",
     "Label",
   ];
 

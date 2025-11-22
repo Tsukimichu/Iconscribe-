@@ -479,10 +479,10 @@ router.put("/:id/status", async (req, res) => {
 
     // Insert into Completed Table
     if (status === "Completed" && alreadyCompleted.length === 0) {
-      await db.promise().query(
-        `INSERT INTO completed_orders (order_item_id, order_id, user_id, customer_name)
-        VALUES (?, ?, ?, ?)`,
-        [item.enquiryNo, item.order_id, item.user_id, rows[0].walkin_name]
+     await db.promise().query(
+        `INSERT INTO completed_orders (order_item_id, order_id, user_id)
+        VALUES (?, ?, ?)`,
+        [item.enquiryNo, item.order_id, item.user_id]
       );
 
 
@@ -497,42 +497,48 @@ router.put("/:id/status", async (req, res) => {
       );
     }
 
-    // ======================================================
-    // AUTO-CREATE SALE RECORD WHEN STATUS = COMPLETED
-    // ======================================================
-    if (status === "Completed") {
-      // Fetch final total price
-      const [priceRows] = await db.promise().query(
-        `SELECT 
-            (oi.estimated_price + IFNULL(o.manager_added, 0)) AS total_price,
-            p.product_name AS item
-         FROM orderitems oi
-         JOIN orders o ON oi.order_id = o.order_id
-         JOIN products p ON oi.product_id = p.product_id
-         WHERE oi.order_item_id = ?
-         LIMIT 1`,
-        [id]
-      );
+        // ======================================================
+        // AUTO-CREATE SALE RECORD WHEN STATUS = COMPLETED
+        // ======================================================
+          console.log("🚨 item.user_id =", item.user_id);
 
-      const finalPrice = priceRows[0]?.total_price || 0;
-      const itemName   = priceRows[0]?.item || "Unknown";
+          if (status === "Completed" && item.user_id) {
 
-      // Prevent duplicate sales
-      const [existingSale] = await db.promise().query(
-        "SELECT id FROM sales WHERE order_item_id = ?",
-        [id]
-      );
+            const [priceRows] = await db.promise().query(
+              `SELECT 
+                  oi.quantity,
+                  (oi.estimated_price + IFNULL(o.manager_added, 0)) AS total_price,
+                  p.product_name AS item
+              FROM orderitems oi
+              JOIN orders o ON oi.order_id = o.order_id
+              JOIN products p ON oi.product_id = p.product_id
+              WHERE oi.order_item_id = ?
+              LIMIT 1`,
+              [id]
+            );
 
-      if (existingSale.length === 0) {
-        await db.promise().query(
-          `INSERT INTO sales (order_item_id, item, amount, date)
-           VALUES (?, ?, ?, NOW())`,
-          [id, itemName, finalPrice]
-        );
+            if (priceRows.length > 0) {
 
-        console.log(` Sale added for order_item_id ${id}`);
-      }
-    }
+              const quantity   = priceRows[0].quantity || 1;
+              const itemName   = priceRows[0].item || "Unknown";
+              const finalPrice = priceRows[0].total_price || 0;
+
+              const [existingSale] = await db.promise().query(
+                "SELECT id FROM sales WHERE order_item_id = ?",
+                [id]
+              );
+
+              if (existingSale.length === 0) {
+                await db.promise().query(
+                  `INSERT INTO sales (order_item_id, item, quantity, amount, date)
+                  VALUES (?, ?, ?, ?, CURDATE())`,
+                  [id, itemName, quantity, finalPrice]
+                );
+
+                console.log(`✔ Sale inserted for order_item_id ${id}`);
+              }
+            }
+          }
 
     // ========= SOCKET EMIT FIX =========
     if (req.io) {

@@ -118,7 +118,9 @@ const handleConfirmOrder = async () => {
       return;
     }
 
-    // Use attributes instead of custom_details
+    // ⭐ FINAL PRICE CALCULATION (ALWAYS RECOMPUTE)
+    const finalEstimatedPrice = estimatedPrice;
+
     const attributes = [
       { name: "Name", value: userProfile.name },
       { name: "Email", value: userProfile.email },
@@ -127,9 +129,10 @@ const handleConfirmOrder = async () => {
       { name: "Size", value: size },
       { name: "Paper Type", value: paperType },
       { name: "Message", value: message },
-    ].filter((attr) => attr.value && attr.value.trim() !== "");
+      { name: "Estimated Price", value: finalEstimatedPrice.toFixed(2) } // optional but recommended
+    ].filter((attr) => attr.value && attr.value.toString().trim() !== "");
 
-    // Create order
+    // ⭐ SEND estimated_price TO BACKEND HERE
     const response = await fetch(`${API_URL}/orders/create`, {
       method: "POST",
       headers: {
@@ -142,19 +145,19 @@ const handleConfirmOrder = async () => {
         quantity,
         urgency: "Normal",
         status: "Pending",
+        estimated_price: finalEstimatedPrice,   // ⭐ FIXED — THIS IS THE IMPORTANT ONE
         attributes,
       }),
     });
 
     const data = await response.json();
-    console.log(" Order creation response:", data);
+    console.log("Order creation response:", data);
 
     if (!data.success) {
       showToast(" Failed to place order. Please try again.", "error");
       return;
     }
 
-    // Extract order item ID
     const orderItemId =
       data.order_item_id || data.orderItemId || data.id || data.order_id;
 
@@ -163,21 +166,17 @@ const handleConfirmOrder = async () => {
       return;
     }
 
-    // Upload file if provided
+    // Upload file if available
     if (file) {
       const formData = new FormData();
       formData.append("file1", file);
 
       const uploadRes = await fetch(
         `${API_URL}/orders/upload/single/${orderItemId}`,
-        {
-          method: "POST",
-          body: formData,
-        }
+        { method: "POST", body: formData }
       );
 
       const uploadData = await uploadRes.json();
-      console.log(" Upload response:", uploadData);
 
       if (uploadData.success) {
         showToast(" Order placed and file uploaded successfully!", "success");
@@ -187,20 +186,23 @@ const handleConfirmOrder = async () => {
     } else {
       showToast(" Order placed successfully!", "success");
     }
-
-    // Step 4: Reset fields
+    // Reset form
     setShowConfirm(false);
     setQuantity("");
     setSize("2” x 2”");
     setPaperType("Matte");
     setMessage("");
     setFile(null);
+
+    // ⭐ Redirect after success
     navigate("/dashboard");
+
   } catch (error) {
     console.error("Error placing order:", error);
     showToast(" An error occurred while placing your order.", "error");
   }
 };
+
 
 useEffect(() => {
   if (!quantity || quantity < 100) {

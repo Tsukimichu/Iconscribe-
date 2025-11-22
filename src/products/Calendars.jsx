@@ -109,6 +109,8 @@ function Calendars() {
         { name: "Color", value: color },
         { name: "Calendar Type", value: calendarType },
         { name: "Size", value: size },
+        { name: "Message", value: "" },
+        { name: "estimatedPrice", value: estimatedPrice.toFixed(2) },
       ].filter((attr) => attr.value && attr.value.trim() !== "");
 
       const response = await fetch(`${API_URL}/orders/create`, {
@@ -117,14 +119,15 @@ function Calendars() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          user_id: userProfile.id,
-          product_id: 4,
-          quantity,
-          urgency: "Normal",
-          status: "Pending",
-          attributes,
-        }),
+          body: JSON.stringify({
+            user_id: userProfile.id,
+            product_id: 4,
+            quantity,
+            urgency: "Normal",
+            status: "Pending",
+            estimated_price: estimatedPrice, 
+            attributes,
+          }),
       });
 
       const data = await response.json();

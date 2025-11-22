@@ -111,6 +111,9 @@ function CallingCard() {
           return;
         }
 
+        // ALWAYS RECALCULATE FINAL PRICE HERE
+        const finalEstimatedPrice = estimatedPrice; 
+
         const attributes = [
           { name: "Customization", value: customization ? "Yes" : "No" },
           { name: "Name", value: userProfile.name },
@@ -125,6 +128,7 @@ function CallingCard() {
           { name: "Lamination", value: lamination },
           { name: "Print", value: backToBack ? "Back to back" : "Single side" },
           { name: "Message", value: message },
+          { name: "estimatedPrice", value: finalEstimatedPrice.toFixed(2) } // ⭐ add this for transparency
         ].filter((attr) => attr.value && attr.value.toString().trim() !== "");
 
         const response = await fetch(`${API_URL}/orders/create`, {
@@ -139,6 +143,7 @@ function CallingCard() {
             quantity,
             urgency: "Normal",
             status: "Pending",
+            estimated_price: finalEstimatedPrice,   // ⭐⭐ FIXED — finally sending to backend
             attributes,
           }),
         });
@@ -152,13 +157,13 @@ function CallingCard() {
         }
 
         const orderItemId = data.order_item_id || data.orderItemId;
-        console.log(" Order item ID:", orderItemId);
 
         if (!orderItemId) {
           showToast("Order created but missing ID.", "error");
           return;
         }
 
+        // Upload File
         if (file) {
           const formData = new FormData();
           formData.append("file1", file);
@@ -167,7 +172,6 @@ function CallingCard() {
             { method: "POST", body: formData }
           );
           const uploadData = await uploadRes.json();
-          console.log(" Upload result:", uploadData);
 
           if (uploadData.success) {
             showToast(" Order placed and file uploaded successfully!", "success");
@@ -190,7 +194,9 @@ function CallingCard() {
         setFile(null);
         setCustomization(false);
 
+        // ⭐⭐ Redirect after success
         navigate("/dashboard");
+
       } catch (error) {
         console.error("Order error:", error);
         showToast(" Something went wrong. Please try again later.", "error");

@@ -257,9 +257,6 @@ function Transactions() {
                   </tr>
                 ) : (
                   orders.map((item, index) => {
-                    const disableActions =
-                      ["Completed", "Cancelled"].includes(item.status) ||
-                      !canEditOrder(item.dateOrdered || item.created_at);
 
                     return (
                     <motion.tr
@@ -273,8 +270,9 @@ function Transactions() {
                     >
                       {(() => {
                         const disableActions =
-                          ["Completed", "Cancelled"].includes(item.status) ||
+                          ["Ongoing", "Out for Delivery", "Completed", "Cancelled"].includes(item.status) ||
                           !canEditOrder(item.dateOrdered || item.created_at);
+
 
                         return (
                           <>

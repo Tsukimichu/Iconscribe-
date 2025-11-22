@@ -10,8 +10,11 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/login" replace />;
   }
 
+  // FIX: Prevent error when user.role is undefined
+  const role = user.role ? user.role.toLowerCase() : "";
+
   // If user’s role is not allowed → redirect to Unauthorized page
-  if (allowedRoles && !allowedRoles.includes(user.role.toLowerCase())) {
+  if (allowedRoles && !allowedRoles.includes(role)) {
     return <Navigate to="/unauthorized" replace />;
   }
 

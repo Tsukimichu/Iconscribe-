@@ -122,6 +122,9 @@ function Binding() {
         return;
       }
 
+      // ALWAYS RECALCULATE FINAL PRICE HERE
+      const finalEstimatedPrice = calculatePrice(quantity);
+
       const attributes = [
         { name: "Page Count", value: pageCount },
         { name: "Binding Type", value: bindingType },
@@ -141,7 +144,7 @@ function Binding() {
           quantity,
           urgency: "Normal",
           status: "Pending",
-          estimated_price: estimatedPrice,   
+          estimated_price: finalEstimatedPrice,   // 🔥 FIXED
           attributes,
         }),
       });
@@ -158,13 +161,10 @@ function Binding() {
         const fd = new FormData();
         fd.append("file1", file);
 
-        const uploadRes = await fetch(
-          `${API_URL}/orders/upload/single/${orderItemId}`,
-          {
-            method: "POST",
-            body: fd,
-          }
-        );
+        const uploadRes = await fetch(`${API_URL}/orders/upload/single/${orderItemId}`, {
+          method: "POST",
+          body: fd,
+        });
 
         const uploadData = await uploadRes.json();
 
@@ -177,6 +177,7 @@ function Binding() {
         showToast("Order placed successfully!", "success");
       }
 
+      navigate("/dashboard");
       setShowConfirm(false);
       setQuantity("");
       setPageCount("");
@@ -189,6 +190,7 @@ function Binding() {
       showToast("Something went wrong.", "error");
     }
   };
+
 
   // Auto-update estimated price
   useEffect(() => {

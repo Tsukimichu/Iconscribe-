@@ -31,8 +31,6 @@ import TemplateGallery from "./component/TemplateGallery.jsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ToastProvider } from "./component/ui/ToastProvider.jsx";
 import { AuthProvider } from "./context/authContext.jsx";
-import ForgotPassword from "./pages/ForgotPassword.jsx";
-import ResetPassword from "./pages/ResetPassword.jsx";
 
 
 // Canva-style Editor imports

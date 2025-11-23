@@ -77,9 +77,7 @@ const OrdersSection = () => {
     date_ordered: "",
     status: "Pending",
     service: "",
-    enquiry_no: "",
     price: "",
-    urgency: "Normal",
     // Product Specifics
     quantity: "",
     size: "",
@@ -93,30 +91,6 @@ const OrdersSection = () => {
     back_to_back: false, 
   });
 
-  const [showUrgencyModal, setShowUrgencyModal] = useState(false);
-  const [newUrgency, setNewUrgency] = useState("");
-
-  const openUrgencyModal = (order) => {
-    setSelectedOrder(order);
-    setNewUrgency(order.urgency || "Not Rush");
-    setShowUrgencyModal(true);
-  };
-
-  const closeUrgencyModal = () => {
-    setShowUrgencyModal(false);
-    setNewUrgency("");
-  };
-
-  const confirmUrgencyChange = () => {
-    setOrders((prev) =>
-      prev.map((o) =>
-        o.enquiryNo === selectedOrder.enquiryNo
-          ? { ...o, urgency: newUrgency }
-          : o
-      )
-    );
-    setShowUrgencyModal(false);
-  };
 
   // Handle file uploads (for walk-in)
   const [orderFiles, setOrderFiles] = useState([]);
@@ -141,7 +115,6 @@ const OrdersSection = () => {
       .then((res) => res.json())
       .then((data) => {
         const arr = Array.isArray(data) ? data : [];
-        // data from backend already has enquiryNo, service, customer_name, etc.
         setOrders(arr);
       })
       .catch((err) => console.error("❌ Error loading orders:", err));
@@ -224,7 +197,6 @@ const OrdersSection = () => {
   const confirmSetStatus = async () => {
     if (!selectedOrder) return;
 
-    const itemId = selectedOrder.enquiryNo; // order_item_id
 
     try {
       const res = await fetch(
@@ -296,9 +268,7 @@ const OrdersSection = () => {
           date_ordered: "",
           status: "Pending",
           service: "",
-          enquiry_no: "",
           price: "",
-          urgency: "Normal",
           number_of_pages: "",
           binding_type: "",
           paper_type: "",
@@ -346,11 +316,9 @@ const OrdersSection = () => {
     const term = searchTerm.toLowerCase().trim();
 
     let filtered = orders.filter((o) => {
-      const enquiryNoMatch = o.enquiryNo?.toString().includes(term);
       const serviceMatch = o.service?.toLowerCase().includes(term);
       const customerMatch = o.customer_name?.toLowerCase().includes(term);
       const statusMatch = o.status?.toLowerCase().includes(term);
-      const urgencyMatch = o.urgency?.toLowerCase().includes(term);
 
       const estimatedPriceMatch =
         o.estimated_price &&
@@ -371,11 +339,9 @@ const OrdersSection = () => {
         : false;
 
       return (
-        enquiryNoMatch ||
         serviceMatch ||
         customerMatch ||
         statusMatch ||
-        urgencyMatch ||
         estimatedPriceMatch ||
         totalPriceMatch ||
         dateMatch
@@ -532,7 +498,6 @@ const OrdersSection = () => {
               <thead className="bg-gray-100 sticky top-0 z-10">
                 <tr>
                   {[
-                    { key: "enquiryNo", label: "Enquiry No." },
                     { key: "service", label: "Service" },
                     { key: "customer_name", label: "Name" },
                     { key: "dateOrdered", label: "Date Ordered" },
@@ -566,9 +531,6 @@ const OrdersSection = () => {
                       ${rowHighlight[order.status] || "bg-white"}
                     `}
                   >
-                    {/* Enquiry No */}
-                    <td className="py-3 px-6">{order.enquiryNo}</td>
-
                     {/* Service */}
                     <td className="py-3 px-6">{order.service}</td>
 
@@ -725,16 +687,6 @@ const OrdersSection = () => {
                           {item.service || "Service"}
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
-                          <p>
-                            <span className="font-bold text-gray-800">
-                              Enquiry No:
-                            </span>{" "}
-                            {item.enquiryNo || "—"}
-                          </p>
-                          <p>
-                            <span className="font-bold text-gray-800">Urgency:</span>{" "}
-                            {item.urgency || "—"}
-                          </p>
 
                           {/* Product-specific details */}
                           {item.details &&
@@ -931,9 +883,6 @@ const OrdersSection = () => {
               <h2 className="text-xl font-bold mb-3 text-gray-900">
                 Set Order Status
               </h2>
-              <p className="text-gray-600 mb-4">
-                Choose new status for <b>{selectedOrder?.enquiryNo}</b>
-              </p>
               <select
                 value={newStatus}
                 onChange={(e) => setNewStatus(e.target.value)}
@@ -982,9 +931,6 @@ const OrdersSection = () => {
               <h2 className="text-xl font-bold mb-3 text-gray-900">
                 Add / Update Price
               </h2>
-              <p className="text-gray-600 mb-4">
-                Enter price for order <b>{selectedOrder?.enquiryNo}</b>
-              </p>
               <input
                 type="number"
                 min="0"
@@ -1026,60 +972,6 @@ const OrdersSection = () => {
               setShowSizeDropdown={setShowSizeDropdown}
             />
 
-
-
-
-
-
-      {/* --- Urgency Modal --- */}
-      <AnimatePresence>
-        {showUrgencyModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 flex items-center justify-center bg-black/60 z-50"
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-lg p-6 max-w-sm w-full text-center"
-            >
-              <h2 className="text-xl font-bold mb-3 text-gray-900">
-                Edit Urgency
-              </h2>
-              <p className="text-gray-600 mb-4">
-                Choose urgency for <b>{selectedOrder?.enquiryNo}</b>
-              </p>
-
-              <select
-                value={newUrgency}
-                onChange={(e) => setNewUrgency(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:ring-2 focus:ring-orange-500 outline-none"
-              >
-                <option>Rush</option>
-                <option>Not Rush</option>
-              </select>
-
-              <div className="flex justify-center gap-3">
-                <button
-                  onClick={closeUrgencyModal}
-                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmUrgencyChange}
-                  className="px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white transition"
-                >
-                  Save
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
     </div>
   );

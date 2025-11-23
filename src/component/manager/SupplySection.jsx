@@ -12,21 +12,51 @@ const SupplyMonitoring = () => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [popupType, setPopupType] = useState(null);
   const [selectedSupply, setSelectedSupply] = useState(null);
-  const [newSupply, setNewSupply] = useState({
-    supply_name: "",
-    quantity: 0,
-    unit: "",
-    price: 0,
-  });
-  const showToast = useToast();
+  const lowStockThreshold = 5;
 
+  const { showToast } = useToast();
+
+  // ----------------- CATEGORY SETS ----------------- //
+  const materialCategories = [
+    "Ink & Toner",
+    "Photo Paper",
+    "PVC / ID Materials",
+    "Binding Materials",
+    "Packaging Supplies",
+    "Office Consumables",
+    "Cleaning & Maintenance Supplies",
+    "Accessories",
+    "Others",
+  ];
+
+  const expenseCategories = [
+    "Rent & Lease",
+    "Utilities (Electricity, Water)",
+    "Transportation",
+    "Labor / Salary",
+    "Miscellaneous",
+  ];
+
+  const emptySupply = {
+    supply_name: "",
+    quantity: "",
+    unit: "",
+    price: "",
+    category: "",
+    expense_type: "Material",
+  };
+
+  const [newSupply, setNewSupply] = useState(emptySupply);
+
+  // ======================================================
   // Fetch supplies
+  // ======================================================
   const fetchSupplies = async () => {
     try {
       const res = await axios.get(`${API_URL}/supplies`);
       setSupplies(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      console.error(" Error fetching supplies:", err);
+      console.error("❌ Error fetching supplies:", err);
     }
   };
 
@@ -34,11 +64,70 @@ const SupplyMonitoring = () => {
     fetchSupplies();
   }, []);
 
-  const filteredSupplies = supplies.filter((s) =>
-    s.supply_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // ======================================================
+  // Low stock alert toast
+  // ======================================================
+  useEffect(() => {
+    if (supplies.length === 0) return;
 
-  // Open popup
+    const lowStockItems = supplies.filter(
+      (s) => Number(s.quantity) <= lowStockThreshold
+    );
+
+    if (lowStockItems.length > 0) {
+      showToast(`⚠ Low stock detected! (${lowStockItems.length} item/s)`, "warning");
+    }
+  }, [supplies, showToast]);
+
+  // ======================================================
+  // Search filter
+  // ======================================================
+  const filteredSupplies = supplies.filter((s) => {
+    const needle = searchTerm.toLowerCase();
+    return (
+      s.supply_name?.toLowerCase().includes(needle) ||
+      s.category?.toLowerCase().includes(needle) ||
+      s.expense_type?.toLowerCase().includes(needle)
+    );
+  });
+
+  // ======================================================
+  // Group by category
+  // ======================================================
+  const groupedSupplies = useMemo(() => {
+    const groups = {};
+
+    filteredSupplies.forEach((item) => {
+      const cat = item.category || "Uncategorized";
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(item);
+    });
+
+    return groups;
+  }, [filteredSupplies]);
+
+  // ======================================================
+  // Section grouping
+  // ======================================================
+  const sectionGroups = useMemo(() => {
+    return {
+      Materials: Object.entries(groupedSupplies).filter(([category]) =>
+        materialCategories.includes(category)
+      ),
+      Business: Object.entries(groupedSupplies).filter(([category]) =>
+        expenseCategories.includes(category)
+      ),
+      Uncategorized: Object.entries(groupedSupplies).filter(
+        ([category]) =>
+          !materialCategories.includes(category) &&
+          !expenseCategories.includes(category)
+      ),
+    };
+  }, [groupedSupplies]);
+
+  // ======================================================
+  // Popup handlers
+  // ======================================================
   const openPopup = (type, supply = null) => {
     setPopupType(type);
     setSelectedSupply(supply);
@@ -46,140 +135,138 @@ const SupplyMonitoring = () => {
     if (type === "edit" && supply) {
       setNewSupply({
         supply_name: supply.supply_name,
-        quantity: 0,
+        quantity: "",
         unit: supply.unit,
         price: supply.price,
+        category: supply.category,
+        expense_type: supply.expense_type,
       });
     } else {
-      setNewSupply({
-        supply_name: "",
-        quantity: 0,
-        unit: "",
-        price: 0,
-      });
+      setNewSupply(emptySupply);
     }
 
     setIsPopupOpen(true);
   };
 
-
   const closePopup = () => {
-    setIsPopupOpen(false);
     setPopupType(null);
     setSelectedSupply(null);
-    setNewSupply({
-      supply_name: "",
-      quantity: 0,
-      unit: "",
-      price: 0,
-    });
+    setNewSupply(emptySupply);
+    setIsPopupOpen(false);
   };
 
-  // Confirm add/edit
+  // ======================================================
+  // Confirm add / edit
+  // ======================================================
   const handleConfirm = async () => {
     try {
+      if (!newSupply.supply_name.trim())
+        return showToast("Supply name is required.", "error");
+
+      if (!newSupply.category)
+        return showToast("Select a category.", "error");
+
       if (popupType === "add") {
         await axios.post(`${API_URL}/supplies`, {
-          supply_name: newSupply.supply_name.trim(),
-          quantity: Number(newSupply.quantity),
-          unit: newSupply.unit.trim(),
-          price: Number(newSupply.price),
+          ...newSupply,
+          quantity: Number(newSupply.quantity) || 0,
+          price: Number(newSupply.price) || 0,
         });
-      } else if (popupType === "edit" && selectedSupply) {
-        // Add quantity to existing stock, update unit & price
-        const updatedQuantity =
-          Number(selectedSupply.quantity) + Number(newSupply.quantity);
 
-        const payload = {
-          supply_name: selectedSupply.supply_name,
-          quantity: updatedQuantity,
-          unit: newSupply.unit.trim(),
-          price: Number(newSupply.price),
-        };
+        showToast("Supply added successfully!", "success");
+      }
 
-        await axios.put(
-          `${API_URL}/supplies/${selectedSupply.supply_id}`,
-          payload
-        );
-        showToast("Expenses updated successfully!", "success");
+      if (popupType === "edit" && selectedSupply) {
+        const addQty = Number(newSupply.quantity) || 0;
+
+        if (addQty <= 0)
+          return showToast("Enter a valid quantity to add.", "error");
+
+        await axios.put(`${API_URL}/supplies/${selectedSupply.supply_id}`, {
+          ...newSupply,
+          quantity: Number(selectedSupply.quantity) + addQty,
+          price: Number(newSupply.price) || 0,
+        });
+
+        showToast(`Added ${addQty} to stock!`, "success");
       }
 
       await fetchSupplies();
       closePopup();
     } catch (err) {
-      console.error("❌ Error saving supply:", err.response?.data || err.message);
+      console.error(err);
+      showToast("Error saving supply.", "error");
     }
   };
 
-
-  const sortSupplies = () => {
-    setSupplies((prev) =>
-      [...prev].sort((a, b) => a.supply_name.localeCompare(b.supply_name))
-    );
+  // ======================================================
+  // Chart Data
+  // ======================================================
+  const barOptions = {
+    chart: { type: "bar", toolbar: { show: false } },
+    xaxis: { categories: supplies.map((s) => s.supply_name) },
+    colors: ["#11d8fbff"],
+    plotOptions: { bar: { borderRadius: 6 } },
+    dataLabels: { enabled: false },
   };
 
-  // Chart Data
-  const barOptions = useMemo(
-    () => ({
-      chart: { type: "bar", toolbar: { show: false } },
-      xaxis: { categories: supplies.map((s) => s.supply_name) },
-      colors: ["#11d8fbff"],
-      plotOptions: { bar: { borderRadius: 6, horizontal: false } },
-      dataLabels: { enabled: false },
-    }),
-    [supplies]
-  );
+  const barSeries = [{
+    name: "Quantity",
+    data: supplies.map((s) => s.quantity),
+  }];
 
-  const barSeries = useMemo(
-    () => [{ name: "Quantity", data: supplies.map((s) => s.quantity) }],
-    [supplies]
-  );
-
+  // ======================================================
+  // RENDER
+  // ======================================================
   return (
     <div className="p-6 min-h-screen bg-white text-gray-800 rounded-3xl">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-6">
-        <h1 className="text-4xl font-extrabold text-cyan-700">
-          Expenses Management
-        </h1>
+
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+        <h1 className="text-4xl font-extrabold text-cyan-700">Expenses Management</h1>
+
         <div className="relative w-full sm:w-auto">
           <input
             type="text"
-            placeholder="Search"
+            placeholder="Search items..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2 w-full sm:w-64 rounded-full bg-gray-100 border border-gray-300 text-gray-800 focus:ring-2 focus:ring-blue-400 outline-none"
+            className="pl-10 pr-4 py-2 w-full sm:w-72 rounded-full bg-gray-100 border border-gray-300"
           />
-          <Search className="absolute left-3 top-2.5 text-gray-500" size={18} />
+          <Search size={18} className="absolute left-3 top-2.5 text-gray-500" />
         </div>
       </div>
 
-      {/* Buttons */}
+      {/* BUTTONS */}
       <div className="flex justify-end gap-3 mb-6">
         <button
           onClick={() => openPopup("add")}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
         >
           <Plus size={18} /> Add Expenses
         </button>
+
         <button
-          onClick={sortSupplies}
-          className="flex items-center gap-2 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg border hover:bg-gray-300 transition"
+          onClick={() =>
+            setSupplies((prev) => [...prev].sort((a, b) =>
+              a.supply_name.localeCompare(b.supply_name)
+            ))
+          }
+          className="flex items-center gap-2 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300"
         >
           <List size={18} /> Sort Items
         </button>
       </div>
 
-      {/* Chart */}
+      {/* CHART */}
       <div className="grid md:grid-cols-2 gap-6 mb-10">
         <motion.div
           className="bg-white border border-gray-200 rounded-2xl shadow-md p-4"
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h2 className="text-lg font-semibold mb-3 text-gray-700">
-            Quantity per Item
-          </h2>
+          <h2 className="text-lg font-semibold mb-3 text-gray-700">Quantity per Item</h2>
+
           <ReactApexChart
             options={barOptions}
             series={barSeries}
@@ -189,58 +276,127 @@ const SupplyMonitoring = () => {
         </motion.div>
       </div>
 
-      {/* Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200"
-      >
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-gray-100 sticky top-0">
-            <tr>
-              <th className="py-3 px-6 font-semibold text-gray-700">Item</th>
-              <th className="py-3 px-6 font-semibold text-gray-700">Date</th>
-              <th className="py-3 px-6 font-semibold text-gray-700">Quantity</th>
-              <th className="py-3 px-6 font-semibold text-gray-700">Unit</th>
-              <th className="py-3 px-6 font-semibold text-gray-700">Price</th>
-              <th className="py-3 px-6 font-semibold text-gray-700">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredSupplies.map((s, idx) => (
-              <motion.tr
-                key={s.supply_id || idx}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.05 }}
-                className="border-b border-gray-200 hover:bg-gray-50 transition"
-              >
-                <td className="py-3 px-6">{s.supply_name}</td>
-                <td className="py-3 px-6">
-                  {s.created_at
-                    ? new Date(s.created_at).toLocaleDateString()
-                    : "—"}
-                </td>
-                <td className="py-3 px-6">{s.quantity}</td>
-                <td className="py-3 px-6">{s.unit || "—"}</td>
-                <td className="py-3 px-6">
-                  ₱{(Number(s.price) || 0).toFixed(2)}
-                </td>
-                <td className="py-3 px-6">
-                  <button
-                    onClick={() => openPopup("edit", s)}
-                    className="flex items-center gap-1 bg-gray-200 px-3 py-1 rounded-lg hover:bg-gray-300 transition"
-                  >
-                    <Edit2 size={16} /> Edit
-                  </button>
-                </td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
-      </motion.div>
+      {/* ======================== */}
+      {/* CARD DISPLAY INTEGRATED */}
+      {/* ======================== */}
 
-      {/* Popup */}
+      <div className="space-y-10">
+
+        {/* MATERIALS */}
+        {sectionGroups.Materials.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-bold text-cyan-700 mb-4">Materials</h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {sectionGroups.Materials.flatMap(([category, items]) =>
+                items.map((s) => (
+                  <motion.div
+                    key={s.supply_id}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`p-5 rounded-2xl shadow-md border ${
+                      s.quantity <= lowStockThreshold
+                        ? "border-red-400 bg-red-50"
+                        : "border-gray-200 bg-white"
+                    }`}
+                  >
+                    <h3 className="text-xl font-bold">{s.supply_name}</h3>
+                    <p className="text-sm text-gray-500">{s.category}</p>
+
+                    <div className="mt-3">
+                      <p><b>Qty:</b> {s.quantity} {s.unit}</p>
+
+                      {s.quantity <= lowStockThreshold && (
+                        <span className="inline-block mt-2 px-3 py-1 text-xs bg-red-500 text-white rounded-full">
+                          Low Stock
+                        </span>
+                      )}
+
+                      <p className="mt-2">
+                        <b>Price:</b> ₱{Number(s.price).toFixed(2)}
+                      </p>
+                    </div>
+
+                    <p className="mt-2 text-xs text-gray-400">
+                      Added: {s.created_at ? new Date(s.created_at).toLocaleDateString() : "—"}
+                    </p>
+
+                    <button
+                      onClick={() => openPopup("edit", s)}
+                      className="mt-4 w-full py-2 bg-cyan-100 text-cyan-700 rounded-lg font-semibold hover:bg-cyan-200"
+                    >
+                      Add Stock
+                    </button>
+                  </motion.div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* BUSINESS */}
+        {sectionGroups.Business.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-bold text-green-700 mb-4">Business Expenses</h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {sectionGroups.Business.flatMap(([category, items]) =>
+                items.map((s) => (
+                  <motion.div
+                    key={s.supply_id}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-5 rounded-2xl bg-white shadow-md border border-gray-200"
+                  >
+                    <h3 className="text-xl font-bold">{s.supply_name}</h3>
+                    <p className="text-sm text-gray-500">{s.category}</p>
+
+                    <div className="mt-3">
+                      <p><b>Type:</b> Business Expense</p>
+                      <p><b>Price:</b> ₱{Number(s.price).toFixed(2)}</p>
+                    </div>
+
+                    <p className="mt-2 text-xs text-gray-400">
+                      Date: {s.created_at ? new Date(s.created_at).toLocaleDateString() : "—"}
+                    </p>
+                  </motion.div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* UNCATEGORIZED */}
+        {sectionGroups.Uncategorized.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Uncategorized</h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {sectionGroups.Uncategorized.flatMap(([category, items]) =>
+                items.map((s) => (
+                  <motion.div
+                    key={s.supply_id}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-5 rounded-2xl bg-white shadow-md border border-gray-200"
+                  >
+                    <h3 className="text-xl font-bold">{s.supply_name}</h3>
+                    <p className="text-sm text-gray-500">{s.category}</p>
+
+                    <div className="mt-3">
+                      <p><b>Qty:</b> {s.quantity}</p>
+                      <p><b>Price:</b> ₱{Number(s.price).toFixed(2)}</p>
+                    </div>
+                  </motion.div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      {/* POPUP */}
       <AnimatePresence>
         {isPopupOpen && (
           <motion.div
@@ -250,29 +406,42 @@ const SupplyMonitoring = () => {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="bg-white text-gray-800 rounded-2xl p-6 shadow-2xl max-w-sm w-full relative border border-gray-200"
-              initial={{ scale: 0.85, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.85, opacity: 0 }}
+              className="bg-white rounded-2xl p-6 shadow-2xl max-w-sm w-full relative"
+              initial={{ scale: 0.85 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.85 }}
             >
               <button
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                className="absolute top-4 right-4 text-gray-500"
                 onClick={closePopup}
               >
                 <X size={20} />
               </button>
 
               <h3 className="text-xl font-bold mb-4">
-                {popupType === "add"
-                  ? "Add New Supply"
-                  : `Edit Supply: ${selectedSupply?.supply_name}`}
+                {popupType === "add" ? "Add New Supply" : `Add Stock: ${selectedSupply?.supply_name}`}
               </h3>
 
               <div className="space-y-4">
-                {/* Supply name - read-only in edit mode */}
+
+                <select
+                  value={newSupply.expense_type}
+                  onChange={(e) =>
+                    setNewSupply({
+                      ...newSupply,
+                      expense_type: e.target.value,
+                      category: "",
+                    })
+                  }
+                  className="w-full px-4 py-2 rounded-lg border"
+                >
+                  <option value="Material">Material</option>
+                  <option value="Business">Business Expense</option>
+                </select>
+
                 <input
                   type="text"
-                  placeholder="Product name"
+                  placeholder="Supply name"
                   value={newSupply.supply_name}
                   readOnly={popupType === "edit"}
                   onChange={(e) =>
@@ -281,44 +450,54 @@ const SupplyMonitoring = () => {
                       supply_name: e.target.value,
                     })
                   }
-                  className={`w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none ${
-                    popupType === "edit"
-                      ? "bg-gray-100 cursor-not-allowed"
-                      : "bg-white"
-                  }`}
+                  className="w-full px-4 py-2 rounded-lg border"
                 />
 
-                {/* Quantity input (additive when editing) */}
-                <div>
-                  <input
-                    type="number"
-                    placeholder={popupType === "edit" ? "Add Quantity" : "Quantity"}
-                    value={newSupply.quantity}
-                    onChange={(e) =>
-                      setNewSupply({
-                        ...newSupply,
-                        quantity: parseInt(e.target.value) || 0,
-                      })
-                    }
-                    className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none"
-                  />
-                  {popupType === "edit" && (
-                    <p className="text-sm text-gray-500 mt-1">
-                      Current quantity: {selectedSupply?.quantity}
-                    </p>
-                  )}
-                </div>
+                <input
+                  type="number"
+                  placeholder={popupType === "edit" ? "Add Quantity" : "Quantity"}
+                  value={newSupply.quantity}
+                  onChange={(e) =>
+                    setNewSupply({
+                      ...newSupply,
+                      quantity: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-2 rounded-lg border"
+                />
 
-                {/* Editable Unit */}
+                <select
+                  value={newSupply.category}
+                  onChange={(e) =>
+                    setNewSupply({ ...newSupply, category: e.target.value })
+                  }
+                  className="w-full px-4 py-2 rounded-lg border"
+                >
+                  <option value="">Select Category</option>
+
+                  {(newSupply.expense_type === "Business"
+                    ? expenseCategories
+                    : materialCategories
+                  ).map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+
                 <input
                   type="text"
-                  placeholder="Unit"
+                  placeholder="Unit (e.g. pcs, box)"
                   value={newSupply.unit}
-                  onChange={(e) => setNewSupply({ ...newSupply, unit: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none"
+                  onChange={(e) =>
+                    setNewSupply({
+                      ...newSupply,
+                      unit: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-2 rounded-lg border"
                 />
 
-                {/* Editable Price */}
                 <input
                   type="number"
                   placeholder="Price"
@@ -326,26 +505,23 @@ const SupplyMonitoring = () => {
                   onChange={(e) =>
                     setNewSupply({
                       ...newSupply,
-                      price: parseFloat(e.target.value) || 0,
+                      price: e.target.value,
                     })
                   }
-                  className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none"
+                  className="w-full px-4 py-2 rounded-lg border"
                 />
               </div>
 
-
               <div className="flex justify-center gap-4 mt-6">
                 <button
-                  type="button"
+                  className="px-4 py-2 rounded-xl border hover:bg-gray-100"
                   onClick={closePopup}
-                  className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 transition"
                 >
                   Cancel
                 </button>
                 <button
-                  type="button"
+                  className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
                   onClick={handleConfirm}
-                  className="px-4 py-2 rounded-xl text-white bg-blue-600 hover:bg-blue-700 transition"
                 >
                   Confirm
                 </button>
@@ -354,6 +530,7 @@ const SupplyMonitoring = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
     </div>
   );
 };

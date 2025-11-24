@@ -1,31 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import logo from "../assets/ICONS.png";
-import { Link, useNavigate } from "react-router-dom";
-import { UserCircle, LogOut, Menu, X, ChevronDown } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Menu, X } from "lucide-react";
 import { useAuth } from "../context/authContext";
 
 function Navigation() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
   const isLoggedIn = !!user;
-  const [activeSection] = useState("");
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  const [activeSection, setActiveSection] = useState("home");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate("/");
   };
 
+  // Detect route changes → highlight correct menu
+  useEffect(() => {
+    if (location.pathname === "/dashboard") setActiveSection("home");
+    if (location.pathname.includes("product")) setActiveSection("product");
+    if (location.pathname.includes("transactions")) setActiveSection("transactions");
+    if (location.pathname.includes("about-us")) setActiveSection("about-us");
+    if (location.pathname.includes("contact")) setActiveSection("contact");
+  }, [location.pathname]);
 
   const handleScroll = (id) => {
+    setActiveSection(id); // <<< FIXED — highlight now updates
+
     if (window.location.pathname === "/dashboard") {
       const section = document.getElementById(id);
       if (section) {
         section.scrollIntoView({ behavior: "smooth", block: "center" });
-        setMenuOpen(false);
       }
+      setMenuOpen(false);
     } else {
       navigate(`/dashboard`);
     }
@@ -51,23 +61,19 @@ function Navigation() {
     return colors[Math.abs(hash) % colors.length];
   };
 
-
   return (
     <nav
       className="sticky top-0 z-50 text-white shadow-lg backdrop-blur-md border-b border-yellow-400/30"
-      style={{
-        background: "linear-gradient(135deg, #0a2a6c, #0e4aa8, #0d64c7)",
-      }}
+      style={{ background: "linear-gradient(135deg, #0a2a6c, #0e4aa8, #0d64c7)" }}
     >
       <div className="flex items-center justify-between w-full px-6 py-3">
+        
         {/* Logo */}
-        <div className="flex-shrink-0">
-          <img
-            src={logo}
-            alt="logo"
-            className="w-14 h-14 object-contain drop-shadow-[0_0_12px_rgba(250,204,21,0.5)]"
-          />
-        </div>
+        <img
+          src={logo}
+          alt="logo"
+          className="w-14 h-14 object-contain drop-shadow-[0_0_12px_rgba(250,204,21,0.5)]"
+        />
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex flex-1 justify-center">
@@ -86,32 +92,27 @@ function Navigation() {
                 </button>
               </li>
             ))}
-
           </ul>
         </div>
 
-        {/* Right side login/logout (Desktop) */}
+        {/* Desktop Right (Profile/Logout) */}
         <div className="hidden md:flex items-center gap-4">
           {isLoggedIn ? (
             <>
               <Link to="/profile">
                 <div
-                  className="w-10 h-10 flex items-center justify-center rounded-full font-bold text-white text-lg shadow-[0_0_10px_rgba(250,204,21,0.5)] cursor-pointer hover:scale-105 transition"
-                  style={{
-                    backgroundColor: getProfileColor(user?.name || "U"),
-                  }}
+                  className="w-10 h-10 flex items-center justify-center rounded-full font-bold text-white text-lg cursor-pointer hover:scale-105 transition shadow-[0_0_10px_rgba(250,204,21,0.5)]"
+                  style={{ backgroundColor: getProfileColor(user?.name || "U") }}
                 >
                   {(user?.name?.charAt(0) || "U").toUpperCase()}
                 </div>
               </Link>
+
               <button
                 onClick={handleLogout}
                 className="px-5 py-2 rounded-lg bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-semibold shadow-[0_0_10px_rgba(250,204,21,0.6)] hover:shadow-[0_0_15px_rgba(250,204,21,0.9)] transition-all"
               >
-                <div className="flex items-center gap-2">
-                  <LogOut size={18} />
-                  Logout
-                </div>
+                 Logout
               </button>
             </>
           ) : (
@@ -124,7 +125,7 @@ function Navigation() {
           )}
         </div>
 
-        {/* Mobile Toggle Button */}
+        {/* Mobile Menu Toggle */}
         <button className="md:hidden ml-2" onClick={() => setMenuOpen(!menuOpen)}>
           {menuOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
@@ -138,24 +139,28 @@ function Navigation() {
               <li key={id}>
                 <button
                   onClick={() => handleScroll(id)}
-                  className="block w-full px-4 py-2 rounded-lg hover:bg-yellow-400 hover:text-black transition-all"
+                  className={`block w-full px-4 py-2 rounded-lg transition-all ${
+                    activeSection === id
+                      ? "bg-yellow-400 text-black"
+                      : "hover:bg-yellow-400 hover:text-black"
+                  }`}
                 >
                   {label}
                 </button>
               </li>
             ))}
 
-            {/* Mobile Login/Logout */}
             <li className="border-t border-yellow-400/40 pt-3 mt-3">
               {isLoggedIn ? (
                 <>
                   <Link
                     to="/profile"
                     onClick={() => setMenuOpen(false)}
-                    className="block px-4 py-2 text-yellow-300 hover:text-yellow-500"
+                    className="block py-2 text-yellow-300 hover:text-yellow-500"
                   >
                     Profile
                   </Link>
+
                   <button
                     onClick={() => {
                       handleLogout();

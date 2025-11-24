@@ -6,15 +6,18 @@ import {
   ChevronDown,
   PlusCircle,
   Truck,
-  Shield,
 } from "lucide-react";
 import { API_URL } from "../../api";
 import WalkInOrderModal from "./WalkInOrderModal";
 
 const OrdersSection = () => {
+  // =====================================================
+  // STATE
+  // =====================================================
   const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+
   const [imageGallery, setImageGallery] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -26,49 +29,17 @@ const OrdersSection = () => {
 
   const [tableView, setTableView] = useState("active"); // active | completed | canceled
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [currentViewIndex, setCurrentViewIndex] = useState(null);
+
   const [newPrice, setNewPrice] = useState("");
   const [newStatus, setNewStatus] = useState("");
 
   // --- Walk-in order modal ---
   const [showAddOrderModal, setShowAddOrderModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState("");
-
   const [showSizeDropdown, setShowSizeDropdown] = useState(false);
 
-
-  // Define available services (for dropdown)
-  const serviceOptions = [
-    "Official Receipt",
-    "Binding",
-    "Book",
-    "Brochure",
-    "Calendar",
-    "Calling Card",
-    "Flyers",
-    "Invitation",
-    "News Letter",
-    "Poster",
-    "Raffle Ticket",
-    "Label",
-  ];
-
-  // Optional: if you want auto-pricing per service, define here
-  const servicePrices = {
-    "Official Receipt": 150,
-    Binding: 50,
-    Book: 300,
-    Brochure: 120,
-    Calendar: 200,
-    "Calling Card": 100,
-    Flyers: 80,
-    Invitation: 90,
-    "News Letter": 150,
-    Poster: 180,
-    "Raffle Ticket": 130,
-  };
-
   // Form state for new walk-in order
-  // Update your existing useState for newOrder
   const [newOrder, setNewOrder] = useState({
     customer_name: "",
     email: "",
@@ -82,34 +53,21 @@ const OrdersSection = () => {
     quantity: "",
     size: "",
     paper_type: "",
-    color_printing: "", 
+    color_printing: "",
     binding_type: "",
     material: "",
     details: "",
     // NEW FIELDS FOR BROCHURE
-    lamination: "", 
-    back_to_back: false, 
+    lamination: "",
+    back_to_back: false,
   });
-
 
   // Handle file uploads (for walk-in)
   const [orderFiles, setOrderFiles] = useState([]);
 
-  // When the user selects a service from the dropdown
-  const handleServiceChange = (e) => {
-    const selectedService = e.target.value;
-
-    // Automatically fill the price if a service is selected
-    setNewOrder((prev) => ({
-      ...prev,
-      service: selectedService,
-      price: servicePrices[selectedService] || "",
-    }));
-  };
-
-  // ==========================================================
-  // FETCH ORDERS (single endpoint, we will filter by status)
-  // ==========================================================
+  // =====================================================
+  // LOAD ORDERS
+  // =====================================================
   const loadOrders = () => {
     fetch(`${API_URL}/orders`)
       .then((res) => res.json())
@@ -120,198 +78,13 @@ const OrdersSection = () => {
       .catch((err) => console.error("❌ Error loading orders:", err));
   };
 
-  // Load on first render
   useEffect(() => {
     loadOrders();
   }, []);
 
-  // --- Add Price Logic ---
-  const openPriceModal = (order) => {
-    setSelectedOrder(order);
-    setNewPrice(order.price || "");
-    setShowPriceModal(true);
-  };
-
-  const closePriceModal = () => {
-    setShowPriceModal(false);
-    setSelectedOrder(null);
-    setNewPrice("");
-  };
-
-  const confirmAddPrice = async () => {
-    if (!selectedOrder || newPrice === "" || isNaN(newPrice)) {
-      alert("Enter a valid price");
-      return;
-    }
-
-    const orderId = selectedOrder.order_id;
-
-    try {
-      const res = await fetch(
-        `${API_URL}/orders/${orderId}/price`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ price: Number(newPrice) }),
-        }
-      );
-
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        setOrders((prev) =>
-          prev.map((o) =>
-            o.order_id === orderId
-              ? {
-                  ...o,
-                  manager_added: data.manager_added,
-                  total_price: data.total,
-                }
-              : o
-          )
-        );
-
-        closePriceModal();
-      } else {
-        alert(data.message || "Failed to update price");
-      }
-    } catch (err) {
-      console.error("❌ Error updating price:", err);
-      alert("Server error while updating price");
-    }
-  };
-
-  // --- Set Status Logic (per order item) ---
-  const openStatusModal = (order) => {
-    setSelectedOrder(order);
-    setNewStatus(order.status || "Pending");
-    setShowStatusModal(true);
-  };
-
-  const closeStatusModal = () => {
-    setShowStatusModal(false);
-    setSelectedOrder(null);
-    setNewStatus("");
-  };
-
-  const confirmSetStatus = async () => {
-    if (!selectedOrder) return;
-
-
-    try {
-      const res = await fetch(
-        `${API_URL}/orders/${itemId}/status`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: newStatus }),
-        }
-      );
-
-      const data = await res.json();
-
-      if (!data.success) {
-        alert(data.message || "Failed to update status");
-        return;
-      }
-
-      // Reload list so all tabs (active/completed/canceled) reflect changes
-      loadOrders();
-
-      setShowStatusModal(false);
-      setSelectedOrder(null);
-      setNewStatus("");
-    } catch (err) {
-      console.error("❌ Status update failed:", err);
-      alert("Status update failed");
-    }
-  };
-
-  // --- Add Walk-In Order Logic ---
-  const handleAddOrder = async () => {
-    const { customer_name, service, price } = newOrder;
-
-    if (!customer_name.trim() || !service || !price) {
-      return alert(
-        "Please fill in all required fields (Customer, Service, and Price)."
-      );
-    }
-
-    try {
-      // Still using your original endpoint; adjust to /create when backend ready
-      const formData = new FormData();
-      Object.entries(newOrder).forEach(([key, value]) => {
-        if (value) formData.append(key, value);
-      });
-      formData.append("source", "walk-in");
-
-      orderFiles.forEach((file) => formData.append("files", file));
-
-      const res = await fetch(`${API_URL}/orders`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || "Failed to add order");
-
-      if (data.success) {
-        // Either push the new order or just reload:
-        loadOrders();
-        setShowAddOrderModal(false);
-        setNewOrder({
-          customer_name: "",
-          email: "",
-          contact_number: "",
-          location: "",
-          date_ordered: "",
-          status: "Pending",
-          service: "",
-          price: "",
-          number_of_pages: "",
-          binding_type: "",
-          paper_type: "",
-          cover_finish: "",
-          color_printing: "",
-          book_type:""
-        });
-        setOrderFiles([]);
-      }
-    } catch (err) {
-      console.error("Error adding walk-in order:", err);
-      alert("Server error while adding order. Please try again later.");
-    }
-  };
-
-  // --- Open View Modal ---
-  const openViewModal = async (order) => {
-    const orderId = order.order_id;
-    if (!orderId) return alert("Invalid order ID.");
-
-    try {
-      const res = await fetch(`${API_URL}/orders/${orderId}`);
-      const data = await res.json();
-      console.log("Fetched order:", data);
-
-      if (res.ok && data.success) {
-        setSelectedOrder(data.order);
-        setShowViewModal(true);
-      } else {
-        alert(data.message || "Failed to fetch order details.");
-      }
-    } catch (err) {
-      console.error("Error fetching order details:", err);
-      alert("Server error while fetching order details.");
-    }
-  };
-
-  const closeViewModal = () => {
-    setShowViewModal(false);
-    setSelectedOrder(null);
-  };
-
-  // --- Search + Sort ---
+  // =====================================================
+  // SEARCH + SORT HOOKS
+  // =====================================================
   const sortedOrders = useMemo(() => {
     const term = searchTerm.toLowerCase().trim();
 
@@ -362,7 +135,7 @@ const OrdersSection = () => {
     return filtered;
   }, [orders, searchTerm, sortConfig]);
 
-  // Filter by tab: active / completed / canceled (no extra DB tables)
+  // Filter by tab: active / completed / canceled
   const displayedOrders = useMemo(() => {
     if (tableView === "completed") {
       return sortedOrders.filter((o) => o.status === "Completed");
@@ -376,6 +149,9 @@ const OrdersSection = () => {
     );
   }, [sortedOrders, tableView]);
 
+  // =====================================================
+  // HELPERS / FORMATTERS
+  // =====================================================
   const requestSort = (key) => {
     let direction = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc")
@@ -392,12 +168,11 @@ const OrdersSection = () => {
       )
     ) : null;
 
-  const formatLabel = (key) => {
-    return key
+  const formatLabel = (key) =>
+    key
       .replace(/([A-Z])/g, " $1")
       .replace(/_/g, " ")
       .replace(/\b\w/g, (char) => char.toUpperCase());
-  };
 
   const statusColors = {
     Pending: "bg-gray-100 text-gray-700",
@@ -417,6 +192,238 @@ const OrdersSection = () => {
     Cancelled: "bg-red-50",
   };
 
+  // =====================================================
+  // VIEW MODAL + NAVIGATION (NEXT / PREV + KEYBOARD)
+  // =====================================================
+  const openViewModal = async (order) => {
+    const orderId = order.order_id;
+    if (!orderId) return alert("Invalid order ID.");
+
+    try {
+      const res = await fetch(`${API_URL}/orders/details/${orderId}`);
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        alert(data.message || "Failed to fetch order details.");
+        return;
+      }
+
+      // Find current index in displayedOrders (for Next/Prev)
+      const index = displayedOrders.findIndex((o) => o.order_id === orderId);
+
+      setCurrentViewIndex(index);
+      setSelectedOrder(data.order);
+      setShowViewModal(true);
+    } catch (err) {
+      console.error("Error fetching order details:", err);
+      alert("Server error while fetching order details.");
+    }
+  };
+
+  const closeViewModal = () => {
+    setShowViewModal(false);
+    setSelectedOrder(null);
+    setCurrentViewIndex(null);
+  };
+
+  const goToNextOrder = async () => {
+    if (
+      currentViewIndex == null ||
+      currentViewIndex >= displayedOrders.length - 1
+    )
+      return;
+
+    const nextOrder = displayedOrders[currentViewIndex + 1];
+    await openViewModal(nextOrder);
+  };
+
+  const goToPreviousOrder = async () => {
+    if (currentViewIndex == null || currentViewIndex <= 0) return;
+
+    const prevOrder = displayedOrders[currentViewIndex - 1];
+    await openViewModal(prevOrder);
+  };
+
+  // Keyboard navigation: ← → Esc
+  useEffect(() => {
+    if (!showViewModal) return;
+
+    const handleKey = (e) => {
+      if (e.key === "ArrowRight") {
+        goToNextOrder();
+      } else if (e.key === "ArrowLeft") {
+        goToPreviousOrder();
+      } else if (e.key === "Escape") {
+        closeViewModal();
+      }
+    };
+
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [showViewModal, currentViewIndex, displayedOrders]);
+
+  // =====================================================
+  // PRICE MODAL HANDLERS
+  // =====================================================
+  const openPriceModal = (order) => {
+    setSelectedOrder(order);
+    setNewPrice(order.price || "");
+    setShowPriceModal(true);
+  };
+
+  const closePriceModal = () => {
+    setShowPriceModal(false);
+    setSelectedOrder(null);
+    setNewPrice("");
+  };
+
+  const confirmAddPrice = async () => {
+    if (!selectedOrder || newPrice === "" || isNaN(newPrice)) {
+      alert("Enter a valid price");
+      return;
+    }
+
+    const orderId = selectedOrder.order_id;
+
+    try {
+      const res = await fetch(`${API_URL}/orders/${orderId}/price`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ price: Number(newPrice) }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.order_id === orderId
+              ? {
+                  ...o,
+                  manager_added: data.manager_added,
+                  total_price: data.total,
+                }
+              : o
+          )
+        );
+        closePriceModal();
+      } else {
+        alert(data.message || "Failed to update price");
+      }
+    } catch (err) {
+      console.error("❌ Error updating price:", err);
+      alert("Server error while updating price");
+    }
+  };
+
+  // =====================================================
+  // STATUS MODAL HANDLERS
+  // =====================================================
+  const openStatusModal = (order) => {
+    setSelectedOrder(order);
+    setNewStatus(order.status || "Pending");
+    setShowStatusModal(true);
+  };
+
+  const closeStatusModal = () => {
+    setShowStatusModal(false);
+    setSelectedOrder(null);
+    setNewStatus("");
+  };
+
+  const confirmSetStatus = async () => {
+    if (!selectedOrder) return;
+
+    try {
+      // 🔥 Using selectedOrder.order_item_id as you specified
+      const res = await fetch(
+        `${API_URL}/orders/${selectedOrder.order_item_id}/status`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!data.success) {
+        alert(data.message || "Failed to update status");
+        return;
+      }
+
+      // Reload list so all tabs (active/completed/canceled) reflect changes
+      loadOrders();
+
+      setShowStatusModal(false);
+      setSelectedOrder(null);
+      setNewStatus("");
+    } catch (err) {
+      console.error("❌ Status update failed:", err);
+      alert("Status update failed");
+    }
+  };
+
+  // =====================================================
+  // WALK-IN ORDER HANDLERS
+  // =====================================================
+  const handleAddOrder = async () => {
+    const { customer_name, service, price } = newOrder;
+
+    if (!customer_name.trim() || !service || !price) {
+      return alert(
+        "Please fill in all required fields (Customer, Service, and Price)."
+      );
+    }
+
+    try {
+      const formData = new FormData();
+      Object.entries(newOrder).forEach(([key, value]) => {
+        if (value) formData.append(key, value);
+      });
+      formData.append("source", "walk-in");
+
+      orderFiles.forEach((file) => formData.append("files", file));
+
+      const res = await fetch(`${API_URL}/orders`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || "Failed to add order");
+
+      if (data.success) {
+        loadOrders();
+        setShowAddOrderModal(false);
+        setNewOrder({
+          customer_name: "",
+          email: "",
+          contact_number: "",
+          location: "",
+          date_ordered: "",
+          status: "Pending",
+          service: "",
+          price: "",
+          number_of_pages: "",
+          binding_type: "",
+          paper_type: "",
+          cover_finish: "",
+          color_printing: "",
+          book_type: "",
+        });
+        setOrderFiles([]);
+      }
+    } catch (err) {
+      console.error("Error adding walk-in order:", err);
+      alert("Server error while adding order. Please try again later.");
+    }
+  };
+
+  // =====================================================
+  // RENDER
+  // =====================================================
   return (
     <div className="p-8 rounded-3xl bg-white shadow-2xl space-y-8 min-h-screen">
       <motion.div
@@ -440,15 +447,16 @@ const OrdersSection = () => {
           </div>
         </div>
 
+        {/* Tabs + Add Walk-in */}
         <div className="flex justify-start gap-3 mt-2">
           <button
             onClick={() => setTableView("active")}
             className={`px-4 py-2 rounded-lg shadow-sm transition 
-            ${
-              tableView === "active"
-                ? "bg-cyan-600 text-white"
-                : "bg-gray-200 text-gray-700"
-            }`}
+              ${
+                tableView === "active"
+                  ? "bg-cyan-600 text-white"
+                  : "bg-gray-200 text-gray-700"
+              }`}
           >
             Active Orders
           </button>
@@ -456,11 +464,11 @@ const OrdersSection = () => {
           <button
             onClick={() => setTableView("completed")}
             className={`px-4 py-2 rounded-lg shadow-sm transition 
-            ${
-              tableView === "completed"
-                ? "bg-cyan-600 text-white"
-                : "bg-gray-200 text-gray-700"
-            }`}
+              ${
+                tableView === "completed"
+                  ? "bg-cyan-600 text-white"
+                  : "bg-gray-200 text-gray-700"
+              }`}
           >
             Completed Orders
           </button>
@@ -468,11 +476,11 @@ const OrdersSection = () => {
           <button
             onClick={() => setTableView("canceled")}
             className={`px-4 py-2 rounded-lg shadow-sm transition 
-            ${
-              tableView === "canceled"
-                ? "bg-cyan-600 text-white"
-                : "bg-gray-200 text-gray-700"
-            }`}
+              ${
+                tableView === "canceled"
+                  ? "bg-cyan-600 text-white"
+                  : "bg-gray-200 text-gray-700"
+              }`}
           >
             Canceled Orders
           </button>
@@ -526,10 +534,8 @@ const OrdersSection = () => {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.05 }}
-                    className={`
-                      border-b border-gray-200 transition hover:opacity-95 
-                      ${rowHighlight[order.status] || "bg-white"}
-                    `}
+                    className={`border-b border-gray-200 transition hover:opacity-95 
+                      ${rowHighlight[order.status] || "bg-white"}`}
                   >
                     {/* Service */}
                     <td className="py-3 px-6">{order.service}</td>
@@ -544,14 +550,14 @@ const OrdersSection = () => {
                         : "—"}
                     </td>
 
-                    {/* STATUS with COLOR BADGE */}
+                    {/* STATUS */}
                     <td className="py-3 px-6">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold 
-                        ${
-                          statusColors[order.status] ||
-                          "bg-gray-100 text-gray-700"
-                        }`}
+                          ${
+                            statusColors[order.status] ||
+                            "bg-gray-100 text-gray-700"
+                          }`}
                       >
                         {order.status}
                       </span>
@@ -559,23 +565,25 @@ const OrdersSection = () => {
 
                     {/* Estimated Price */}
                     <td className="py-3 px-6">
-                      {order.estimated_price
-                        ? `₱${Number(order.estimated_price || 0).toFixed(2)}`
-                        : (
-                          <span className="text-gray-400 italic">Not Set</span>
-                        )}
+                      {order.estimated_price ? (
+                        `₱${Number(order.estimated_price || 0).toFixed(2)}`
+                      ) : (
+                        <span className="text-gray-400 italic">Not Set</span>
+                      )}
                     </td>
 
                     {/* Total Price */}
                     <td className="py-3 px-6 font-semibold text-green-600">
-                      {order.total_price != null
-                        ? `₱${Number(order.total_price).toFixed(2)}`
-                        : <span className="text-gray-400 italic">—</span>}
+                      {order.total_price != null ? (
+                        `₱${Number(order.total_price).toFixed(2)}`
+                      ) : (
+                        <span className="text-gray-400 italic">—</span>
+                      )}
                     </td>
 
-                    {/* ======================= ACTION BUTTONS ======================= */}
+                    {/* ACTIONS */}
                     <td className="py-3 px-6 flex justify-end gap-2">
-                      {/* VIEW ALWAYS AVAILABLE */}
+                      {/* VIEW */}
                       <button
                         onClick={() => openViewModal(order)}
                         className="flex items-center justify-center gap-1 bg-blue-100 text-blue-700 px-2 py-2 rounded-lg hover:bg-blue-200 transition text-sm font-medium"
@@ -583,14 +591,11 @@ const OrdersSection = () => {
                         <Search size={16} />
                       </button>
 
-                      {/* COMPLETED / CANCELED VIEW: only archive */}
+                      {/* ACTIVE ORDER ACTIONS ONLY */}
                       {tableView === "completed" || tableView === "canceled" ? (
-                        <>
-                        </>
+                        <></>
                       ) : (
                         <>
-                          {/* ACTIVE ORDERS ONLY */}
-
                           {/* SET STATUS */}
                           <button
                             onClick={() => openStatusModal(order)}
@@ -606,7 +611,6 @@ const OrdersSection = () => {
                           >
                             <PlusCircle size={16} />
                           </button>
-                      
                         </>
                       )}
                     </td>
@@ -643,7 +647,9 @@ const OrdersSection = () => {
                   {/* Basic Order Info */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
                     <p>
-                      <span className="font-bold text-gray-800">Customer Name:</span>{" "}
+                      <span className="font-bold text-gray-800">
+                        Customer Name:
+                      </span>{" "}
                       {selectedOrder.customer_name || "—"}
                     </p>
                     <p>
@@ -651,17 +657,25 @@ const OrdersSection = () => {
                       {selectedOrder.email || "—"}
                     </p>
                     <p>
-                      <span className="font-bold text-gray-800">Contact Number:</span>{" "}
+                      <span className="font-bold text-gray-800">
+                        Contact Number:
+                      </span>{" "}
                       {selectedOrder.contact_number || "—"}
                     </p>
                     <p>
-                      <span className="font-bold text-gray-800">Location:</span>{" "}
+                      <span className="font-bold text-gray-800">
+                        Location:
+                      </span>{" "}
                       {selectedOrder.location || "—"}
                     </p>
                     <p>
-                      <span className="font-bold text-gray-800">Date Ordered:</span>{" "}
+                      <span className="font-bold text-gray-800">
+                        Date Ordered:
+                      </span>{" "}
                       {selectedOrder.dateOrdered
-                        ? new Date(selectedOrder.dateOrdered).toLocaleDateString()
+                        ? new Date(
+                            selectedOrder.dateOrdered
+                          ).toLocaleDateString()
                         : "—"}
                     </p>
                     <p>
@@ -672,11 +686,11 @@ const OrdersSection = () => {
                       <span className="font-bold text-gray-800">Price:</span>{" "}
                       {selectedOrder.price != null
                         ? `₱${selectedOrder.price}`
-                        : "₱350.00"}
+                        : "--"}
                     </p>
                   </div>
 
-                  {/* Loop through items safely */}
+                  {/* Items */}
                   {(selectedOrder.items || []).length > 0 ? (
                     (selectedOrder.items || []).map((item, idx) => (
                       <div
@@ -687,7 +701,6 @@ const OrdersSection = () => {
                           {item.service || "Service"}
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
-
                           {/* Product-specific details */}
                           {item.details &&
                             Object.keys(item.details).map((key) => {
@@ -783,6 +796,39 @@ const OrdersSection = () => {
                 <p className="text-gray-500 italic">No order selected.</p>
               )}
 
+              {/* Navigation Buttons */}
+              <div className="flex justify-between items-center mt-6">
+                <button
+                  disabled={currentViewIndex == null || currentViewIndex <= 0}
+                  onClick={goToPreviousOrder}
+                  className={`px-4 py-2 rounded-lg text-white transition 
+                    ${
+                      currentViewIndex == null || currentViewIndex <= 0
+                        ? "bg-gray-300 cursor-not-allowed"
+                        : "bg-cyan-600 hover:bg-cyan-700"
+                    }`}
+                >
+                  ← Previous
+                </button>
+
+                <button
+                  disabled={
+                    currentViewIndex == null ||
+                    currentViewIndex >= displayedOrders.length - 1
+                  }
+                  onClick={goToNextOrder}
+                  className={`px-4 py-2 rounded-lg text-white transition 
+                    ${
+                      currentViewIndex == null ||
+                      currentViewIndex >= displayedOrders.length - 1
+                        ? "bg-gray-300 cursor-not-allowed"
+                        : "bg-cyan-600 hover:bg-cyan-700"
+                    }`}
+                >
+                  Next →
+                </button>
+              </div>
+
               {/* Close Button */}
               <div className="flex justify-center mt-8">
                 <button
@@ -820,7 +866,6 @@ const OrdersSection = () => {
                 className="max-w-full max-h-[80vh] rounded-xl object-contain"
               />
 
-              {/* Navigation buttons */}
               {imageGallery.length > 1 && (
                 <>
                   <button
@@ -848,12 +893,10 @@ const OrdersSection = () => {
                 </>
               )}
 
-              {/* Image counter */}
               <p className="mt-3 text-sm text-gray-600">
                 Image {currentImageIndex + 1} of {imageGallery.length}
               </p>
 
-              {/* Close button */}
               <button
                 onClick={() => setShowImageModal(false)}
                 className="absolute top-3 right-3 bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600"
@@ -958,21 +1001,20 @@ const OrdersSection = () => {
         )}
       </AnimatePresence>
 
-            <WalkInOrderModal
-              show={showAddOrderModal}
-              onClose={() => setShowAddOrderModal(false)}
-              onSubmit={handleAddOrder}
-              newOrder={newOrder}
-              setNewOrder={setNewOrder}
-              selectedProduct={selectedProduct}
-              setSelectedProduct={setSelectedProduct}
-              orderFiles={orderFiles}
-              setOrderFiles={setOrderFiles}
-              showSizeDropdown={showSizeDropdown}
-              setShowSizeDropdown={setShowSizeDropdown}
-            />
-
-
+      {/* Walk-in Order Modal */}
+      <WalkInOrderModal
+        show={showAddOrderModal}
+        onClose={() => setShowAddOrderModal(false)}
+        onSubmit={handleAddOrder}
+        newOrder={newOrder}
+        setNewOrder={setNewOrder}
+        selectedProduct={selectedProduct}
+        setSelectedProduct={setSelectedProduct}
+        orderFiles={orderFiles}
+        setOrderFiles={setOrderFiles}
+        showSizeDropdown={showSizeDropdown}
+        setShowSizeDropdown={setShowSizeDropdown}
+      />
     </div>
   );
 };

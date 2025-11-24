@@ -581,4 +581,67 @@ router.put("/edit/:id", async (req, res) => {
   }
 });
 
+/* ========================================================
+   GET ORDERS FOR SPECIFIC USER (Client Transactions Page)
+======================================================== */
+router.get("/user/:id", async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // 1. Get user's orders
+    const [orderItems] = await db.promise().query(
+      `
+      SELECT 
+        oi.order_item_id AS enquiryNo,
+        oi.order_id,
+        p.product_name AS service,
+        oi.quantity,
+        oi.urgency,
+        oi.status,
+        oi.estimated_price,
+        o.order_date AS dateOrdered,
+        (oi.estimated_price + IFNULL(o.manager_added, 0)) AS total_price
+      FROM orderitems oi
+      JOIN orders o ON oi.order_id = o.order_id
+      JOIN products p ON oi.product_id = p.product_id
+      WHERE o.user_id = ?
+      ORDER BY o.order_date DESC
+      `,
+      [userId]
+    );
+
+    // 2. Get attributes
+    const [attrs] = await db.promise().query(
+      `
+      SELECT 
+        oia.order_item_id,
+        a.attribute_name,
+        oia.attribute_value
+      FROM order_item_attributes oia
+      JOIN attributes a ON a.attribute_id = oia.attribute_id
+      `
+    );
+
+    // 3. Group attributes under each order
+    const final = orderItems.map((item) => ({
+      ...item,
+      details: attrs
+        .filter((a) => a.order_item_id === item.enquiryNo)
+        .reduce(
+          (obj, row) => ({
+            ...obj,
+            [row.attribute_name]: row.attribute_value,
+          }),
+          {}
+        ),
+    }));
+
+    res.json(final);
+  } catch (err) {
+    console.error("❌ GET /orders/user/:id error:", err);
+    res.status(500).json({ success: false, message: "Error loading user orders" });
+  }
+});
+
+
 module.exports = router;

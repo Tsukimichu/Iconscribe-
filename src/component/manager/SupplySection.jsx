@@ -125,24 +125,60 @@ const SupplyMonitoring = () => {
   }, [filteredSupplies]);
 
   // ======================================================
+  // Expense Totals per Category (for color-coded chart)
+  // ======================================================
+  const expenseTotals = useMemo(() => {
+    return {
+      Materials: categorizedSupplies.Materials.reduce((sum, s) => sum + Number(s.price || 0), 0),
+      Business: categorizedSupplies.Business.reduce((sum, s) => sum + Number(s.price || 0), 0),
+      Utilities: categorizedSupplies.Utilities.reduce((sum, s) => sum + Number(s.price || 0), 0),
+      Transport: categorizedSupplies.Transport.reduce((sum, s) => sum + Number(s.price || 0), 0),
+      Miscellaneous: categorizedSupplies.Miscellaneous.reduce((sum, s) => sum + Number(s.price || 0), 0),
+    };
+  }, [categorizedSupplies]);
+
+
+  // ======================================================
   // Chart Data
   // 1) Quantity per Item (existing)
   // 2) Stock level per Material Category (new)
+  // EXPENSES CHART (COLOR-CODED BY CATEGORY)
   // ======================================================
   const barOptions = {
     chart: { type: "bar", toolbar: { show: false } },
-    xaxis: { categories: supplies.map((s) => s.supply_name) },
-    colors: ["#11d8fbff"],
-    plotOptions: { bar: { borderRadius: 6 } },
+    xaxis: {
+      categories: ["Materials", "Business", "Utilities", "Transport", "Misc"],
+    },
+    plotOptions: {
+      bar: {
+        borderRadius: 6,
+        distributed: true,   // <-- THIS enables individual bar colors
+      },
+    },
+    colors: [
+      "#22c55e", // Materials
+      "#3b82f6", // Business
+      "#a855f7", // Utilities
+      "#f59e0b", // Transport
+      "#6b7280", // Misc
+    ],
     dataLabels: { enabled: false },
   };
 
+
   const barSeries = [
     {
-      name: "Quantity",
-      data: supplies.map((s) => Number(s.quantity) || 0),
+      name: "Total Expense",
+      data: [
+        expenseTotals.Materials,
+        expenseTotals.Business,
+        expenseTotals.Utilities,
+        expenseTotals.Transport,
+        expenseTotals.Miscellaneous,
+      ],
     },
   ];
+
 
   const materialStockByCategory = useMemo(() => {
     const totals = {};
@@ -299,7 +335,7 @@ const SupplyMonitoring = () => {
           animate={{ opacity: 1, y: 0 }}
         >
           <h2 className="text-lg font-semibold mb-3 text-gray-700">
-            Quantity per Item
+            Expenses Chart
           </h2>
 
           <ReactApexChart
@@ -367,7 +403,7 @@ const SupplyMonitoring = () => {
                     return (
                       <tr
                         key={s.supply_id}
-                        className="border-b hover:bg-gray-50 h-14 transition"
+                        className=" hover:bg-gray-50 h-14 transition"
                       >
                         <td className="px-6">{s.supply_name}</td>
 
@@ -447,7 +483,7 @@ const SupplyMonitoring = () => {
                   {categorizedSupplies.Business.map((s) => (
                     <tr
                       key={s.supply_id}
-                      className="border-b hover:bg-gray-50 h-14 transition"
+                      className=" hover:bg-gray-50 h-14 transition"
                     >
                       <td className="px-6">{s.supply_name}</td>
                       <td className="px-6">{s.category}</td>
@@ -497,7 +533,7 @@ const SupplyMonitoring = () => {
                   {categorizedSupplies.Utilities.map((s) => (
                     <tr
                       key={s.supply_id}
-                      className="border-b hover:bg-gray-50 h-14 transition"
+                      className=" hover:bg-gray-50 h-14 transition"
                     >
                       <td className="px-6">{s.supply_name}</td>
                       <td className="px-6">{s.category}</td>
@@ -547,7 +583,7 @@ const SupplyMonitoring = () => {
                   {categorizedSupplies.Transport.map((s) => (
                     <tr
                       key={s.supply_id}
-                      className="border-b hover:bg-gray-50 h-14 transition"
+                      className=" hover:bg-gray-50 h-14 transition"
                     >
                       <td className="px-6">{s.supply_name}</td>
                       <td className="px-6">{s.category}</td>
@@ -597,7 +633,7 @@ const SupplyMonitoring = () => {
                   {categorizedSupplies.Miscellaneous.map((s) => (
                     <tr
                       key={s.supply_id}
-                      className="border-b hover:bg-gray-50 h-14 transition"
+                      className=" hover:bg-gray-50 h-14 transition"
                     >
                       <td className="px-6">{s.supply_name}</td>
                       <td className="px-6">{s.category}</td>

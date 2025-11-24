@@ -71,30 +71,28 @@ app.use((err, req, res, next) => {
 
 // Socket.IO logic
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+  console.log("Client connected:", socket.id);
 
-  // Join a room (e.g., for chat)
-  socket.on("joinRoom", (room) => {
-    socket.join(room);
-    console.log(`User joined room: ${room}`);
+  socket.on("joinRoom", (conversationId) => {
+    socket.join(conversationId);
   });
 
-  // Join personal room for order notifications
-  socket.on("joinUserRoom", (userId) => {
-    socket.join(userId.toString());
-    console.log(`User joined personal room: ${userId}`);
+  socket.on("sendMessage", (msg) => {
+    // already existing in your app
+    io.to(msg.conversationId).emit("receiveMessage", msg);
   });
 
-  // Chat messages
-  socket.on("sendMessage", (data) => {
-    console.log("Message received:", data);
-    io.to(data.conversationId).emit("receiveMessage", data);
-  });
+  // NEW: seen status
+  socket.on("messageSeen", async ({ conversationId, messageId, seenBy }) => {
 
-  socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+    io.to(conversationId).emit("messageSeen", {
+      conversationId,
+      messageId,
+      seenBy,
+    });
   });
 });
+
 
 // Start both Express + Socket.IO on same port
 const PORT = process.env.PORT || 5000;

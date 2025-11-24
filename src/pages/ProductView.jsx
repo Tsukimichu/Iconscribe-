@@ -25,7 +25,8 @@ const ProductView = () => {
   const [product, setProduct] = useState(null);
   const [attributes, setAttributes] = useState([]);
   const [selected, setSelected] = useState({});
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(1); // Number of Copies
+  const [pageCount, setPageCount] = useState(""); // Number of Pages (Books / Binding only)
   const [file, setFile] = useState(null);
   const [notes, setNotes] = useState("");
 
@@ -152,21 +153,31 @@ const ProductView = () => {
   // --------------------------------------------------------
   if (!product) {
     return (
-      <div className="p-10 max-w-7xl mx-auto">
-        <div className="animate-pulse">
-          <div className="h-96 bg-blue-100 rounded-xl mb-6"></div>
-          <div className="grid grid-cols-2 gap-6">
-            {Array(6)
-              .fill(0)
-              .map((_, i) => (
-                <div key={i} className="h-10 bg-blue-100 rounded"></div>
-              ))}
+      <>
+        <Navigation />
+        <div className="p-10 max-w-7xl mx-auto">
+          <div className="animate-pulse">
+            <div className="h-96 bg-blue-100 rounded-xl mb-6"></div>
+            <div className="grid grid-cols-2 gap-6">
+              {Array(6)
+                .fill(0)
+                .map((_, i) => (
+                  <div key={i} className="h-10 bg-blue-100 rounded"></div>
+                ))}
+            </div>
+            <div className="h-32 bg-blue-100 rounded mt-6"></div>
           </div>
-          <div className="h-32 bg-blue-100 rounded mt-6"></div>
         </div>
-      </div>
+      </>
     );
   }
+
+  // --------------------------------------------------------
+  // BOOKS / BINDING DETECTION (BY NAME)
+  // --------------------------------------------------------
+  const isBookOrBinding =
+    product &&
+    /book|binding/i.test((product.product_name || "").toLowerCase());
 
   // --------------------------------------------------------
   // PLACE ORDER
@@ -189,10 +200,18 @@ const ProductView = () => {
         value: selected[attr.attribute_name],
       }));
 
+      // Add Number of Pages as an attribute for Books / Binding
+      if (isBookOrBinding && pageCount) {
+        formattedAttributes.push({
+          name: "Number of Pages",
+          value: pageCount,
+        });
+      }
+
       const payload = {
         user_id,
         product_id: product.product_id,
-        quantity,
+        quantity, // still send as quantity (copies)
         status: "Pending",
         estimated_price: estimatedPrice || 0,
         name: userProfile.name,
@@ -270,7 +289,6 @@ const ProductView = () => {
               {product.description}
             </p>
 
-            {/* FIXED IMAGE URL */}
             <div className="relative w-full max-w-3xl rounded-2xl overflow-hidden group">
               <img
                 src={
@@ -342,10 +360,13 @@ const ProductView = () => {
               </div>
             </div>
 
-            {/* QUANTITY */}
+            {/* QUANTITY / PAGES SECTION */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Number of Copies (always) */}
               <div>
-                <label className="font-semibold">Quantity</label>
+                <label className="font-semibold">
+                  {isBookOrBinding ? "Number of Copies" : "Number of Copies"}
+                </label>
                 <input
                   type="number"
                   min="1"
@@ -355,6 +376,21 @@ const ProductView = () => {
                   required
                 />
               </div>
+
+              {/* Number of Pages (only for Books / Binding) */}
+              {isBookOrBinding && (
+                <div>
+                  <label className="font-semibold">Number of Pages</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={pageCount}
+                    onChange={(e) => setPageCount(e.target.value)}
+                    className="mt-1 w-full border border-gray-300 p-3 rounded-xl"
+                    required
+                  />
+                </div>
+              )}
             </div>
 
             {/* ATTRIBUTES */}
@@ -401,7 +437,7 @@ const ProductView = () => {
                 />
               </div>
 
-              {/* NOTES */}
+              {/* NOTES + PRICE */}
               <div className="flex flex-col justify-between">
                 <div>
                   <label className="font-semibold">Notes (optional)</label>
@@ -559,7 +595,8 @@ const ProductView = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 w-full h-full">
-          {/* LEFT */}
+          
+          {/* LEFT IMAGE */}
           <div className="relative w-full h-full flex items-center justify-center overflow-hidden group">
             <img
               src={
@@ -570,10 +607,9 @@ const ProductView = () => {
               alt={product.product_name}
               className="w-full h-[70vh] object-contain rounded-2xl transition-transform duration-500 group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
           </div>
 
-          {/* RIGHT */}
+          {/* RIGHT CONTENT */}
           <div className="w-full max-w-2xl flex flex-col justify-center h-full space-y-6 text-black">
             <h2 className="text-4xl font-bold text-black">
               {product.product_name}
@@ -583,44 +619,73 @@ const ProductView = () => {
               {product.description}
             </p>
 
-            {/* SAMPLE ATTRIBUTE */}
+            {/* INPUTS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Copies */}
               <div>
                 <label className="block text-base font-semibold text-black">
-                  Quantity
+                  Number of Copies
                 </label>
                 <input
                   type="number"
-                  placeholder="Enter quantity"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
                   min="1"
-                  className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black"
+                  className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm"
                 />
               </div>
 
-              {attributes[0] && (
+              {/* Pages if Books/Binding */}
+              {isBookOrBinding ? (
                 <div>
                   <label className="block text-base font-semibold text-black">
-                    {attributes[0].attribute_name}
+                    Number of Pages
                   </label>
-                  <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition text-black">
-                    {attributes[0].options.map((opt, i) => {
-                      const val = typeof opt === "string" ? opt : opt.value;
-                      return (
-                        <option key={i} value={val}>
-                          {val}
-                        </option>
-                      );
-                    })}
-                  </select>
+                  <input
+                    type="number"
+                    value={pageCount}
+                    onChange={(e) => setPageCount(e.target.value)}
+                    min="1"
+                    className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm"
+                  />
                 </div>
+              ) : (
+                attributes[0] && (
+                  <div>
+                    <label className="block text-base font-semibold text-black">
+                      {attributes[0].attribute_name}
+                    </label>
+                    <select className="mt-1 w-full border border-gray-300 p-3 rounded-xl shadow-sm">
+                      {attributes[0].options.map((opt, i) => (
+                        <option key={i}>
+                          {typeof opt === "string" ? opt : opt.value}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )
               )}
+            </div>
+
+            {/* ✔️ ESTIMATED PRICE FOR LOGGED-OUT USERS */}
+            <div className="mt-6 border border-blue-200 bg-blue-50 rounded-2xl p-5 text-right">
+              <p className="text-gray-700">Estimated Price</p>
+              <p className="text-3xl font-bold text-blue-700">
+                {estimatedPrice.toLocaleString("en-PH", {
+                  style: "currency",
+                  currency: "PHP",
+                })}
+              </p>
+              <p className="text-sm text-gray-500 italic">
+                * Final price may vary depending on specifications.
+              </p>
             </div>
 
             {/* BUTTONS */}
             <div className="flex justify-end gap-4 mt-6">
               <button
                 type="button"
-                className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:shadow-lg hover:scale-105 transition text-white px-8 py-3 rounded-xl font-semibold text-lg"
+                className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-8 py-3 rounded-xl font-semibold text-lg"
                 onClick={() => setShowContactModal(true)}
               >
                 Contact Us
@@ -629,49 +694,18 @@ const ProductView = () => {
               <button
                 type="button"
                 onClick={() => navigate("/login")}
-                className="bg-gradient-to-r from-blue-600 to-blue-800 hover:shadow-lg hover:scale-105 transition text-white px-8 py-3 rounded-xl font-semibold text-lg"
+                className="bg-gradient-to-r from-blue-600 to-blue-800 text-white px-8 py-3 rounded-xl font-semibold text-lg"
               >
                 Log In to Order
               </button>
             </div>
 
-            {showContactModal && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md relative">
-                  <button
-                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-                    onClick={() => setShowContactModal(false)}
-                  >
-                    <XCircle className="w-6 h-6" />
-                  </button>
-
-                  <h3 className="text-2xl font-bold mb-4 text-center flex items-center justify-center gap-2">
-                    <Contact className="text-blue-600 w-6 h-6" /> Contact Us
-                  </h3>
-
-                  <div className="space-y-4 text-black">
-                    <div className="flex items-center gap-2">
-                      <Contact className="text-green-600 w-5 h-5" />
-                      <span className="font-medium">+63 912 345 6789</span>
-                    </div>
-                    <a
-                      href="mailto:iconscribe@gmail.com"
-                      className="flex items-center gap-2 text-blue-700 hover:underline"
-                    >
-                      <MessageCircle className="w-5 h-5" />
-                      <span className="font-medium">
-                        iconscribe@gmail.com
-                      </span>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
     </div>
   );
+
 
   return (
     <>

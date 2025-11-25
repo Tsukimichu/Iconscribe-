@@ -61,7 +61,7 @@ function ProductSection() {
             title: p.product_name,
             description: `${p.product_name} printing service.`,
             image: asset?.image || null,
-            link: asset?.link || "#",
+            link: `/product/${p.product_id}`,
             alt: asset?.alt || p.product_name,
           };
         });

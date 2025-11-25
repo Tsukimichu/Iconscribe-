@@ -32,6 +32,9 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ToastProvider } from "./component/ui/ToastProvider.jsx";
 import { AuthProvider } from "./context/authContext.jsx";
 
+// Product View Page
+import ProductView from "./pages/ProductView.jsx";
+
 
 // Canva-style Editor imports
 import EditorPage from "./pages/EditorPage.jsx";
@@ -81,6 +84,8 @@ const router = createBrowserRouter([
   },
 
   // Products (public)
+
+  { path: "/product/:id", element: <ProductView /> },
   { path: "/books", element: <Books /> },
   { path: "/brochure", element: <Brochure /> },
   { path: "/calling-card", element: <CallingCard /> },

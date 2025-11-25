@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Plus, Edit2, List, X } from "lucide-react";
+import { Search, Plus, List, X } from "lucide-react";
 import ReactApexChart from "react-apexcharts";
 import axios from "axios";
 import { useToast } from "../ui/ToastProvider.jsx";
@@ -31,7 +31,7 @@ const SupplyMonitoring = () => {
 
   const expenseCategories = [
     "Rent & Lease",
-    "Utilities (Electricity, Water)",
+    "Utilities",
     "Transportation",
     "Labor / Salary",
     "Miscellaneous",
@@ -71,7 +71,7 @@ const SupplyMonitoring = () => {
     if (supplies.length === 0) return;
 
     const lowStockItems = supplies.filter(
-      (s) => Number(s.quantity) <= lowStockThreshold
+      (s) => Number(s.quantity) <= lowStockThreshold && s.expense_type === "Material"
     );
 
     if (lowStockItems.length > 0) {
@@ -92,38 +92,84 @@ const SupplyMonitoring = () => {
   });
 
   // ======================================================
-  // Group by category
+  // Categorize into: Materials, Business, Utilities, Transport, Misc
   // ======================================================
-  const groupedSupplies = useMemo(() => {
-    const groups = {};
+  const categorizedSupplies = useMemo(() => {
+    const groups = {
+      Materials: [],
+      Business: [],
+      Utilities: [],
+      Transport: [],
+      Miscellaneous: [],
+    };
 
     filteredSupplies.forEach((item) => {
-      const cat = item.category || "Uncategorized";
-      if (!groups[cat]) groups[cat] = [];
-      groups[cat].push(item);
+      if (item.expense_type === "Material") {
+        groups.Materials.push(item);
+      } else {
+        const cat = item.category || "";
+        if (cat.includes("Utilities")) {
+          groups.Utilities.push(item);
+        } else if (cat.includes("Transportation")) {
+          groups.Transport.push(item);
+        } else if (cat.includes("Miscellaneous")) {
+          groups.Miscellaneous.push(item);
+        } else {
+          // Default under Business if it's not utilities/transport/misc
+          groups.Business.push(item);
+        }
+      }
     });
 
     return groups;
   }, [filteredSupplies]);
 
   // ======================================================
-  // Section grouping
+  // Chart Data
+  // 1) Quantity per Item (existing)
+  // 2) Stock level per Material Category (new)
   // ======================================================
-  const sectionGroups = useMemo(() => {
-    return {
-      Materials: Object.entries(groupedSupplies).filter(([category]) =>
-        materialCategories.includes(category)
-      ),
-      Business: Object.entries(groupedSupplies).filter(([category]) =>
-        expenseCategories.includes(category)
-      ),
-      Uncategorized: Object.entries(groupedSupplies).filter(
-        ([category]) =>
-          !materialCategories.includes(category) &&
-          !expenseCategories.includes(category)
-      ),
-    };
-  }, [groupedSupplies]);
+  const barOptions = {
+    chart: { type: "bar", toolbar: { show: false } },
+    xaxis: { categories: supplies.map((s) => s.supply_name) },
+    colors: ["#11d8fbff"],
+    plotOptions: { bar: { borderRadius: 6 } },
+    dataLabels: { enabled: false },
+  };
+
+  const barSeries = [
+    {
+      name: "Quantity",
+      data: supplies.map((s) => Number(s.quantity) || 0),
+    },
+  ];
+
+  const materialStockByCategory = useMemo(() => {
+    const totals = {};
+    supplies
+      .filter((s) => s.expense_type === "Material")
+      .forEach((s) => {
+        const cat = s.category || "Uncategorized";
+        const qty = Number(s.quantity) || 0;
+        totals[cat] = (totals[cat] || 0) + qty;
+      });
+    return totals;
+  }, [supplies]);
+
+  const materialBarOptions = {
+    chart: { type: "bar", toolbar: { show: false } },
+    xaxis: { categories: Object.keys(materialStockByCategory) },
+    colors: ["#22c55e"],
+    plotOptions: { bar: { borderRadius: 6 } },
+    dataLabels: { enabled: false },
+  };
+
+  const materialBarSeries = [
+    {
+      name: "Stock Level",
+      data: Object.values(materialStockByCategory),
+    },
+  ];
 
   // ======================================================
   // Popup handlers
@@ -200,30 +246,15 @@ const SupplyMonitoring = () => {
   };
 
   // ======================================================
-  // Chart Data
-  // ======================================================
-  const barOptions = {
-    chart: { type: "bar", toolbar: { show: false } },
-    xaxis: { categories: supplies.map((s) => s.supply_name) },
-    colors: ["#11d8fbff"],
-    plotOptions: { bar: { borderRadius: 6 } },
-    dataLabels: { enabled: false },
-  };
-
-  const barSeries = [{
-    name: "Quantity",
-    data: supplies.map((s) => s.quantity),
-  }];
-
-  // ======================================================
   // RENDER
   // ======================================================
   return (
     <div className="p-6 min-h-screen bg-white text-gray-800 rounded-3xl">
-
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-        <h1 className="text-4xl font-extrabold text-cyan-700">Expenses Management</h1>
+        <h1 className="text-4xl font-extrabold text-cyan-700">
+          Expenses Management
+        </h1>
 
         <div className="relative w-full sm:w-auto">
           <input
@@ -248,9 +279,11 @@ const SupplyMonitoring = () => {
 
         <button
           onClick={() =>
-            setSupplies((prev) => [...prev].sort((a, b) =>
-              a.supply_name.localeCompare(b.supply_name)
-            ))
+            setSupplies((prev) =>
+              [...prev].sort((a, b) =>
+                a.supply_name.localeCompare(b.supply_name)
+              )
+            )
           }
           className="flex items-center gap-2 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300"
         >
@@ -258,14 +291,16 @@ const SupplyMonitoring = () => {
         </button>
       </div>
 
-      {/* CHART */}
+      {/* CHARTS */}
       <div className="grid md:grid-cols-2 gap-6 mb-10">
         <motion.div
           className="bg-white border border-gray-200 rounded-2xl shadow-md p-4"
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h2 className="text-lg font-semibold mb-3 text-gray-700">Quantity per Item</h2>
+          <h2 className="text-lg font-semibold mb-3 text-gray-700">
+            Quantity per Item
+          </h2>
 
           <ReactApexChart
             options={barOptions}
@@ -274,122 +309,310 @@ const SupplyMonitoring = () => {
             height={250}
           />
         </motion.div>
+
+        <motion.div
+          className="bg-white border border-gray-200 rounded-2xl shadow-md p-4"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h2 className="text-lg font-semibold mb-3 text-gray-700">
+            Stock Level per Material Category
+          </h2>
+
+          <ReactApexChart
+            options={materialBarOptions}
+            series={materialBarSeries}
+            type="bar"
+            height={250}
+          />
+        </motion.div>
       </div>
 
-      {/* ======================== */}
-      {/* CARD DISPLAY INTEGRATED */}
-      {/* ======================== */}
-
+      {/* TABLES */}
       <div className="space-y-10">
-
         {/* MATERIALS */}
-        {sectionGroups.Materials.length > 0 && (
+        {categorizedSupplies.Materials.length > 0 && (
           <div>
-            <h2 className="text-2xl font-bold text-cyan-700 mb-4">Materials</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-cyan-700">Materials</h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sectionGroups.Materials.flatMap(([category, items]) =>
-                items.map((s) => (
-                  <motion.div
-                    key={s.supply_id}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`p-5 rounded-2xl shadow-md border ${
-                      s.quantity <= lowStockThreshold
-                        ? "border-red-400 bg-red-50"
-                        : "border-gray-200 bg-white"
-                    }`}
-                  >
-                    <h3 className="text-xl font-bold">{s.supply_name}</h3>
-                    <p className="text-sm text-gray-500">{s.category}</p>
+              {/* TOTAL */}
+              <span className="text-lg font-semibold text-green-600">
+                Total: ₱
+                {categorizedSupplies.Materials
+                  .reduce((sum, s) => sum + Number(s.price || 0), 0)
+                  .toLocaleString()}
+              </span>
+            </div>
 
-                    <div className="mt-3">
-                      <p><b>Qty:</b> {s.quantity} {s.unit}</p>
+            <div className="overflow-x-auto rounded-3xl shadow-md border border-gray-200">
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-50 text-gray-600">
+                  <tr className="h-14">
+                    <th className="px-6 text-left font-semibold">Name</th>
+                    <th className="px-6 text-left font-semibold">Quantity</th>
+                    <th className="px-6 text-left font-semibold">Unit</th>
+                    <th className="px-6 text-left font-semibold">Category</th>
+                    <th className="px-6 text-left font-semibold">Price</th>
+                    <th className="px-6 text-left font-semibold">Status</th>
+                    <th className="px-6 text-left font-semibold">Date</th>
+                    <th className="px-6 text-left font-semibold">Actions</th>
+                  </tr>
+                </thead>
 
-                      {s.quantity <= lowStockThreshold && (
-                        <span className="inline-block mt-2 px-3 py-1 text-xs bg-red-500 text-white rounded-full">
-                          Low Stock
-                        </span>
-                      )}
+                <tbody>
+                  {categorizedSupplies.Materials.map((s) => {
+                    const isLow = Number(s.quantity) <= lowStockThreshold;
 
-                      <p className="mt-2">
-                        <b>Price:</b> ₱{Number(s.price).toFixed(2)}
-                      </p>
-                    </div>
+                    return (
+                      <tr
+                        key={s.supply_id}
+                        className="border-b hover:bg-gray-50 h-14 transition"
+                      >
+                        <td className="px-6">{s.supply_name}</td>
 
-                    <p className="mt-2 text-xs text-gray-400">
-                      Added: {s.created_at ? new Date(s.created_at).toLocaleDateString() : "—"}
-                    </p>
+                        <td className="px-6">{s.quantity}</td>
 
-                    <button
-                      onClick={() => openPopup("edit", s)}
-                      className="mt-4 w-full py-2 bg-cyan-100 text-cyan-700 rounded-lg font-semibold hover:bg-cyan-200"
+                        <td className="px-6">{s.unit || "—"}</td>
+
+                        <td className="px-6">{s.category}</td>
+
+                        <td className="px-6 text-green-700 font-semibold">
+                          ₱{Number(s.price || 0).toLocaleString()}
+                        </td>
+
+                        <td className="px-6">
+                          {isLow ? (
+                            <span className="px-3 py-1 rounded-full bg-red-100 text-red-600 text-xs">
+                              Low Stock
+                            </span>
+                          ) : (
+                            <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs">
+                              OK
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="px-6 text-xs text-gray-500">
+                          {s.created_at
+                            ? new Date(s.created_at).toLocaleDateString()
+                            : "—"}
+                        </td>
+
+                        {/* ACTION BUTTONS (ONLY EDIT) */}
+                        <td className="px-6 flex gap-2">
+                          <button
+                            onClick={() => openPopup("edit", s)}
+                            className="p-2 rounded-full bg-yellow-100 hover:bg-yellow-200 text-yellow-700 transition shadow-sm"
+                          >
+                            <List size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* BUSINESS EXPENSES */}
+        {categorizedSupplies.Business.length > 0 && (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-green-700">Business Expenses</h2>
+
+              {/* TOTAL */}
+              <span className="text-lg font-semibold text-green-600">
+                Total: ₱
+                {categorizedSupplies.Business
+                  .reduce((sum, s) => sum + Number(s.price || 0), 0)
+                  .toLocaleString()}
+              </span>
+            </div>
+
+            <div className="overflow-x-auto rounded-3xl shadow-md border border-gray-200">
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-50 text-gray-600">
+                  <tr className="h-14">
+                    <th className="px-6 text-left font-semibold">Name</th>
+                    <th className="px-6 text-left font-semibold">Category</th>
+                    <th className="px-6 text-left font-semibold">Price</th>
+                    <th className="px-6 text-left font-semibold">Date</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {categorizedSupplies.Business.map((s) => (
+                    <tr
+                      key={s.supply_id}
+                      className="border-b hover:bg-gray-50 h-14 transition"
                     >
-                      Add Stock
-                    </button>
-                  </motion.div>
-                ))
-              )}
+                      <td className="px-6">{s.supply_name}</td>
+                      <td className="px-6">{s.category}</td>
+                      <td className="px-6 text-green-700 font-semibold">
+                        ₱{Number(s.price || 0).toLocaleString()}
+                      </td>
+                      <td className="px-6 text-xs text-gray-500">
+                        {s.created_at
+                          ? new Date(s.created_at).toLocaleDateString()
+                          : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
 
-        {/* BUSINESS */}
-        {sectionGroups.Business.length > 0 && (
+        {/* UTILITIES */}
+        {categorizedSupplies.Utilities.length > 0 && (
           <div>
-            <h2 className="text-2xl font-bold text-green-700 mb-4">Business Expenses</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-indigo-700">Utilities</h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sectionGroups.Business.flatMap(([category, items]) =>
-                items.map((s) => (
-                  <motion.div
-                    key={s.supply_id}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-5 rounded-2xl bg-white shadow-md border border-gray-200"
-                  >
-                    <h3 className="text-xl font-bold">{s.supply_name}</h3>
-                    <p className="text-sm text-gray-500">{s.category}</p>
+              {/* TOTAL */}
+              <span className="text-lg font-semibold text-indigo-600">
+                Total: ₱
+                {categorizedSupplies.Utilities
+                  .reduce((sum, s) => sum + Number(s.price || 0), 0)
+                  .toLocaleString()}
+              </span>
+            </div>
 
-                    <div className="mt-3">
-                      <p><b>Type:</b> Business Expense</p>
-                      <p><b>Price:</b> ₱{Number(s.price).toFixed(2)}</p>
-                    </div>
+            <div className="overflow-x-auto rounded-3xl shadow-md border border-gray-200">
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-50 text-gray-600">
+                  <tr className="h-14">
+                    <th className="px-6 text-left font-semibold">Name</th>
+                    <th className="px-6 text-left font-semibold">Category</th>
+                    <th className="px-6 text-left font-semibold">Price</th>
+                    <th className="px-6 text-left font-semibold">Date</th>
+                  </tr>
+                </thead>
 
-                    <p className="mt-2 text-xs text-gray-400">
-                      Date: {s.created_at ? new Date(s.created_at).toLocaleDateString() : "—"}
-                    </p>
-                  </motion.div>
-                ))
-              )}
+                <tbody>
+                  {categorizedSupplies.Utilities.map((s) => (
+                    <tr
+                      key={s.supply_id}
+                      className="border-b hover:bg-gray-50 h-14 transition"
+                    >
+                      <td className="px-6">{s.supply_name}</td>
+                      <td className="px-6">{s.category}</td>
+                      <td className="px-6 text-green-700 font-semibold">
+                        ₱{Number(s.price || 0).toLocaleString()}
+                      </td>
+                      <td className="px-6 text-xs text-gray-500">
+                        {s.created_at
+                          ? new Date(s.created_at).toLocaleDateString()
+                          : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
 
-        {/* UNCATEGORIZED */}
-        {sectionGroups.Uncategorized.length > 0 && (
+        {/* TRANSPORT */}
+        {categorizedSupplies.Transport.length > 0 && (
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Uncategorized</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-orange-600">Transport</h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sectionGroups.Uncategorized.flatMap(([category, items]) =>
-                items.map((s) => (
-                  <motion.div
-                    key={s.supply_id}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-5 rounded-2xl bg-white shadow-md border border-gray-200"
-                  >
-                    <h3 className="text-xl font-bold">{s.supply_name}</h3>
-                    <p className="text-sm text-gray-500">{s.category}</p>
+              {/* TOTAL */}
+              <span className="text-lg font-semibold text-orange-600">
+                Total: ₱
+                {categorizedSupplies.Transport
+                  .reduce((sum, s) => sum + Number(s.price || 0), 0)
+                  .toLocaleString()}
+              </span>
+            </div>
 
-                    <div className="mt-3">
-                      <p><b>Qty:</b> {s.quantity}</p>
-                      <p><b>Price:</b> ₱{Number(s.price).toFixed(2)}</p>
-                    </div>
-                  </motion.div>
-                ))
-              )}
+            <div className="overflow-x-auto rounded-3xl shadow-md border border-gray-200">
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-50 text-gray-600">
+                  <tr className="h-14">
+                    <th className="px-6 text-left font-semibold">Name</th>
+                    <th className="px-6 text-left font-semibold">Category</th>
+                    <th className="px-6 text-left font-semibold">Price</th>
+                    <th className="px-6 text-left font-semibold">Date</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {categorizedSupplies.Transport.map((s) => (
+                    <tr
+                      key={s.supply_id}
+                      className="border-b hover:bg-gray-50 h-14 transition"
+                    >
+                      <td className="px-6">{s.supply_name}</td>
+                      <td className="px-6">{s.category}</td>
+                      <td className="px-6 text-green-700 font-semibold">
+                        ₱{Number(s.price || 0).toLocaleString()}
+                      </td>
+                      <td className="px-6 text-xs text-gray-500">
+                        {s.created_at
+                          ? new Date(s.created_at).toLocaleDateString()
+                          : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* MISCELLANEOUS */}
+        {categorizedSupplies.Miscellaneous.length > 0 && (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-gray-800">Miscellaneous</h2>
+
+              {/* TOTAL */}
+              <span className="text-lg font-semibold text-gray-700">
+                Total: ₱
+                {categorizedSupplies.Miscellaneous
+                  .reduce((sum, s) => sum + Number(s.price || 0), 0)
+                  .toLocaleString()}
+              </span>
+            </div>
+
+            <div className="overflow-x-auto rounded-3xl shadow-md border border-gray-200">
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-50 text-gray-600">
+                  <tr className="h-14">
+                    <th className="px-6 text-left font-semibold">Name</th>
+                    <th className="px-6 text-left font-semibold">Category</th>
+                    <th className="px-6 text-left font-semibold">Price</th>
+                    <th className="px-6 text-left font-semibold">Date</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {categorizedSupplies.Miscellaneous.map((s) => (
+                    <tr
+                      key={s.supply_id}
+                      className="border-b hover:bg-gray-50 h-14 transition"
+                    >
+                      <td className="px-6">{s.supply_name}</td>
+                      <td className="px-6">{s.category}</td>
+                      <td className="px-6 text-green-700 font-semibold">
+                        ₱{Number(s.price || 0).toLocaleString()}
+                      </td>
+                      <td className="px-6 text-xs text-gray-500">
+                        {s.created_at
+                          ? new Date(s.created_at).toLocaleDateString()
+                          : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
@@ -419,11 +642,12 @@ const SupplyMonitoring = () => {
               </button>
 
               <h3 className="text-xl font-bold mb-4">
-                {popupType === "add" ? "Add New Supply" : `Add Stock: ${selectedSupply?.supply_name}`}
+                {popupType === "add"
+                  ? "Add New Supply"
+                  : `Add Stock: ${selectedSupply?.supply_name}`}
               </h3>
 
               <div className="space-y-4">
-
                 <select
                   value={newSupply.expense_type}
                   onChange={(e) =>
@@ -530,7 +754,6 @@ const SupplyMonitoring = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
     </div>
   );
 };

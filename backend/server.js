@@ -16,6 +16,7 @@ const chatRoutes = require("./routes/chatRoutes");
 const backupRoutes = require("./routes/backupRoutes");
 const sessionRoutes = require("./routes/sessionRoutes");
 const otpRoutes = require("./routes/otpRoutes");
+const attributesRoutes = require("./routes/productAttributesRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -39,7 +40,7 @@ app.use(
 app.use(express.json());
 
 // Serve uploaded files publicly
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads/products", express.static(path.join(__dirname, "uploads/products")));
 
 
 
@@ -53,6 +54,8 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/backup", backupRoutes);
 app.use("/api/sessions", sessionRoutes);
 app.use("/api", otpRoutes);
+app.use("/api/attributes", attributesRoutes);
+
 
 // Attach io to req for routes that need it
 app.use("/api/orders", (req, res, next) => {

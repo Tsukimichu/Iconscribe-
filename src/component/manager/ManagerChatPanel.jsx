@@ -165,8 +165,8 @@ function ManagerChatPanel({ managerId = 10 }) {
   return (
     <div className="flex h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* SIDEBAR */}
-      <div className="w-72 bg-white/90 backdrop-blur-md shadow-xl border-r border-gray-200 flex flex-col">
-        <div className="flex items-center gap-2 px-5 py-4 border-b bg-blue-100/70">
+      <div className="w-72 rounded-2xl bg-white/90 backdrop-blur-md shadow-xl border-gray-200 flex flex-col">
+        <div className="flex rounded-t-lg items-center gap-2 px-5 py-4 border-b border-b-gray-200 bg-blue-100/70">
           <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-md">
             <MessageSquare size={18} />
           </div>
@@ -189,7 +189,7 @@ function ManagerChatPanel({ managerId = 10 }) {
                 setSelectedConversation(conv);
                 setSeenMessageId(null);
               }}
-              className={`px-4 py-3 border-b cursor-pointer transition-all flex flex-col gap-1 ${
+              className={`px-4 py-3 border-b border-b-gray-200 cursor-pointer transition-all flex flex-col gap-1 ${
                 selectedConversation?.id === conv.id
                   ? "bg-blue-50 text-blue-800"
                   : "hover:bg-gray-50 text-gray-800"

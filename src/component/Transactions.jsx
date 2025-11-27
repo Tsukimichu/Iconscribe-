@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Bell, CheckCircle, Clock, Truck, X, AlertTriangle } from "lucide-react";
 import { useAuth } from "../context/authContext.jsx";
 import { useToast } from "../component/ui/ToastProvider.jsx";
@@ -8,114 +8,119 @@ import { API_URL } from "../api.js";
 
 const socket = io("http://localhost:5000");
 
+function sendPushNotification(title, body) {
+  if (typeof window === "undefined") return;
+  if (!("Notification" in window)) return;
+  if (Notification.permission === "granted") {
+    new Notification(title, {
+      body,
+      icon: "/ICONS.png",
+      vibrate: [150, 80, 150],
+    });
+  }
+}
+
 function Transactions() {
   const { user } = useAuth();
   const isLoggedIn = !!user;
   const userId = user?.id;
-
   const { showToast } = useToast();
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [serverTime, setServerTime] = useState(Date.now());  // ✅ Real server time
-  const [timeOffset, setTimeOffset] = useState(0);           // Difference: server - device
+
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [serverNow, setServerNow] = useState(null);
 
   const [showImageModal, setShowImageModal] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
-  const [selectedOrder, setSelectedOrder] = useState(null);
+
   const [editOrder, setEditOrder] = useState(null);
   const [orderToCancel, setOrderToCancel] = useState(null);
 
   const [liveNotifications, setLiveNotifications] = useState([]);
 
-  // ============================================================
-  // 🚀 FETCH REAL SERVER TIME
-  // ============================================================
-  const fetchServerTime = async () => {
-    try {
-      const res = await fetch(`${API_URL}/orders/server-time`);
-      const data = await res.json();
-
-      const serverNow = data.now;
-      const localNow = Date.now();
-
-      setServerTime(serverNow);
-
-      // Store offset to ensure all checks use server time only
-      setTimeOffset(serverNow - localNow);
-
-    } catch (err) {
-      console.error("Failed to fetch server time:", err);
-    }
-  };
-
-  // Fetch server time every mount + every 30 seconds
   useEffect(() => {
-    fetchServerTime();
-    const interval = setInterval(fetchServerTime, 30000);
-    return () => clearInterval(interval);
+    if (typeof window === "undefined") return;
+    if (!("Notification" in window)) return;
+    if (Notification.permission === "default") {
+      Notification.requestPermission();
+    }
   }, []);
 
-  // ============================================================
-  // 🔐 Get real server time safely
-  // ============================================================
-  const getServerNow = () => Date.now() + timeOffset;
+  useEffect(() => {
+    let secondTicker = null;
+    let resyncTicker = null;
 
-  // ============================================================
-  // ⛔ Replace device-time-dependent logic
-  // ============================================================
-  const canCancelOrder = (orderDate) => {
-    if (!orderDate) return false;
-    const orderMs = new Date(orderDate).getTime();
-    const now = getServerNow();
-    return now - orderMs <= 24 * 60 * 60 * 1000;
+    async function syncServerTime() {
+      try {
+        const res = await fetch(`${API_URL}/orders/server-time`);
+        const data = await res.json();
+        setServerNow(data.now);
+      } catch {}
+    }
+
+    syncServerTime();
+
+    secondTicker = setInterval(() => {
+      setServerNow((prev) => (prev !== null ? prev + 1000 : null));
+    }, 1000);
+
+    resyncTicker = setInterval(syncServerTime, 30000);
+
+    return () => {
+      clearInterval(secondTicker);
+      clearInterval(resyncTicker);
+    };
+  }, []);
+
+  const canCancelOrder = (date, status) => {
+    if (!date || !serverNow) return false;
+    if (["Ongoing", "Out for Delivery", "Completed", "Cancelled"].includes(status)) return false;
+    const orderTime = new Date(date).getTime();
+    return serverNow - orderTime <= 24 * 60 * 60 * 1000;
   };
 
-  const canEditOrder = (orderDate) => {
-    if (!orderDate) return false;
-    const orderMs = new Date(orderDate).getTime();
-    const now = getServerNow();
-    return now - orderMs <= 12 * 60 * 60 * 1000;
+  const canEditOrder = (date, status) => {
+    if (!date || !serverNow) return false;
+    if (["Ongoing", "Out for Delivery", "Completed", "Cancelled"].includes(status)) return false;
+    const orderTime = new Date(date).getTime();
+    return serverNow - orderTime <= 12 * 60 * 60 * 1000;
   };
 
-  // ============================================================
-  // EXECUTE CANCEL ORDER
-  // ============================================================
   const executeCancelOrder = async () => {
     if (!orderToCancel) return;
-
     try {
       const res = await fetch(`${API_URL}/orders/${orderToCancel}/cancel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (!data.success) {
+        showToast(data.message);
+        return setOrderToCancel(null);
+      }
 
       showToast("Order cancelled successfully!");
+      sendPushNotification("Order Cancelled", "Your order was cancelled.");
 
-      setOrders(prev =>
-        prev.map(o =>
-          o.enquiryNo === orderToCancel
-            ? { ...o, status: "Cancelled" }
-            : o
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.enquiryNo === orderToCancel ? { ...o, status: "Cancelled" } : o
         )
       );
-    } catch (err) {
-      console.error(err);
+    } catch {
       showToast("Failed to cancel order.");
     } finally {
       setOrderToCancel(null);
     }
   };
 
-  // ============================================================
-  // FETCH USER ORDERS
-  // ============================================================
   const fetchOrders = async () => {
+    if (!userId) return;
     try {
       setLoading(true);
-
       const res = await fetch(`${API_URL}/orders/user/${userId}`);
       const data = await res.json();
 
@@ -128,54 +133,51 @@ function Transactions() {
         : [];
 
       setOrders(sorted);
-    } catch (err) {
-      console.error("Error fetching orders:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const refreshOrders = () => {
-    fetchOrders();
-  };
+  const refreshOrders = () => fetchOrders();
 
   useEffect(() => {
     if (!isLoggedIn || !userId) return;
     fetchOrders();
   }, [isLoggedIn, userId]);
 
-  // ============================================================
-  // SOCKET LISTENERS
-  // ============================================================
   useEffect(() => {
     if (!userId) return;
 
     socket.emit("joinUserRoom", userId);
 
-    socket.on("orderStatusUpdated", (data) => {
-      showToast(`Your order "${data.service}" is now: ${data.status}`);
+    const statusHandler = (data) => {
+      const message = `Your order "${data.service}" is now ${data.status}`;
+      showToast(message);
+      sendPushNotification("Order Update", message);
 
-      setOrders(prev =>
-        prev.map(o =>
+      setOrders((prev) =>
+        prev.map((o) =>
           o.order_id === data.order_id ? { ...o, status: data.status } : o
         )
       );
 
-      setLiveNotifications(prev => [
+      setLiveNotifications((prev) => [
         {
           title: data.service,
           status: data.status,
-          date: new Date().toISOString().slice(0, 10)
+          date: new Date().toISOString().slice(0, 10),
         },
-        ...prev
+        ...prev,
       ]);
-    });
+    };
 
-    socket.on("orderPriceUpdated", (data) => {
-      showToast(`New total price: ₱${data.total}`);
+    const priceHandler = (data) => {
+      const msg = `New total price: ₱${data.total}`;
+      showToast(msg);
+      sendPushNotification("Price Updated", msg);
 
-      setOrders(prev =>
-        prev.map(o =>
+      setOrders((prev) =>
+        prev.map((o) =>
           o.order_id === data.order_id
             ? { ...o, price: data.total, _flash: true }
             : o
@@ -183,51 +185,46 @@ function Transactions() {
       );
 
       setTimeout(() => {
-        setOrders(prev =>
-          prev.map(o =>
-            o.order_id === data.order_id
-              ? { ...o, _flash: false }
-              : o
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.order_id === data.order_id ? { ...o, _flash: false } : o
           )
         );
       }, 1200);
 
-      setLiveNotifications(prev => [
+      setLiveNotifications((prev) => [
         {
           title: data.service,
           status: "Price Updated",
           price: data.total,
-          date: new Date().toISOString().slice(0, 10)
+          date: new Date().toISOString().slice(0, 10),
         },
-        ...prev
+        ...prev,
       ]);
-    });
+    };
+
+    socket.on("orderStatusUpdated", statusHandler);
+    socket.on("orderPriceUpdated", priceHandler);
 
     return () => {
-      socket.off("orderStatusUpdated");
-      socket.off("orderPriceUpdated");
+      socket.off("orderStatusUpdated", statusHandler);
+      socket.off("orderPriceUpdated", priceHandler);
     };
   }, [userId]);
 
   if (!isLoggedIn) return null;
 
-  // ============================================================
-  // NOTIFICATIONS LIST
-  // ============================================================
   const backendNotifications = orders
-    .filter(order => order.status !== "Cancelled")
+    .filter((o) => o.status !== "Cancelled")
     .slice(0, 5)
-    .map(order => ({
-      title: order.service || order.product_name,
-      date: order.dateOrdered?.slice(0, 10) || order.created_at?.slice(0, 10),
-      status: order.status,
+    .map((o) => ({
+      title: o.service,
+      date: o.dateOrdered?.slice(0, 10),
+      status: o.status,
     }));
 
   const notifications = [...liveNotifications, ...backendNotifications].slice(0, 5);
 
-  // ============================================================
-  // RENDER UI
-  // ============================================================
   return (
     <section className="relative w-full px-6 py-30 bg-white text-gray-800">
       <motion.h2
@@ -239,13 +236,14 @@ function Transactions() {
       </motion.h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Orders Table */}
         <motion.div
           className="md:col-span-2 h-[450px] rounded-2xl backdrop-blur-xl bg-white/50 shadow-lg border border-gray-200 p-6 flex flex-col"
           initial={{ opacity: 0, x: -40 }}
           animate={{ opacity: 1, x: 0 }}
         >
-          <h3 className="text-2xl font-bold mb-6 flex items-center">Project Summary</h3>
+          <h3 className="text-2xl font-bold mb-6 flex items-center">
+            Project Summary
+          </h3>
 
           <div className="overflow-x-auto overflow-y-auto max-h-[450px]">
             <table className="min-w-full table-fixed border-collapse text-sm md:text-base">
@@ -253,7 +251,6 @@ function Transactions() {
                 <tr className="text-left text-gray-600">
                   <th className="py-2 w-[25%]">Service</th>
                   <th className="w-[20%]">Date Ordered</th>
-                  <th className="w-[15%]">Urgency</th>
                   <th className="w-[10%] text-center">File</th>
                   <th className="w-[15%] text-center">Status</th>
                   <th className="w-[10%]">Est. Price</th>
@@ -265,50 +262,58 @@ function Transactions() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-4">Loading...</td>
+                    <td colSpan={8} className="text-center py-4">
+                      Loading...
+                    </td>
                   </tr>
                 ) : orders.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-4">No orders found.</td>
+                    <td colSpan={8} className="text-center py-4">
+                      No orders found.
+                    </td>
                   </tr>
                 ) : (
                   orders.map((item, index) => {
+                    const orderDate = item.dateOrdered || item.created_at;
 
-                    const disableActions =
-                      ["Ongoing", "Out for Delivery", "Completed", "Cancelled"].includes(item.status) ||
-                      !canEditOrder(item.dateOrdered || item.created_at);
+                    const disableEdit = !canEditOrder(orderDate, item.status);
+                    const disableCancel = !canCancelOrder(orderDate, item.status);
 
                     return (
                       <motion.tr
-                        key={item.id || index}
+                        key={item.enquiryNo}
                         className={`transition-all hover:bg-gray-100 ${
-                          item.status === "Cancelled" ? "bg-gray-100 text-gray-400 opacity-70" : ""
+                          item.status === "Cancelled"
+                            ? "bg-gray-100 text-gray-400 opacity-70"
+                            : ""
                         }`}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
                       >
-
-                        {/* SERVICE */}
                         <td className="py-2 px-2 font-medium w-[25%] truncate">
-                          {item.service || item.product_name}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedOrder(item)}
+                            className="text-left w-full hover:underline"
+                          >
+                            {item.service}
+                          </button>
                         </td>
 
-                        {/* DATE */}
                         <td className="w-[20%] truncate">
-                          {item.dateOrdered?.slice(0,10) || item.created_at?.slice(0,10)}
+                          {orderDate ? String(orderDate).slice(0, 10) : "—"}
                         </td>
 
-                        {/* URGENCY */}
-                        <td className="font-semibold w-[15%] truncate">
-                          {item.urgency}
-                        </td>
-
-                        {/* FILE */}
                         <td className="w-[10%] text-center">
                           {item.file1 ? (
                             <button
-                              onClick={() => setPreviewImage(`http://localhost:5000${item.file1}`) || setShowImageModal(true)}
+                              onClick={() => {
+                                setPreviewImage(
+                                  `http://localhost:5000${item.file1}`
+                                );
+                                setShowImageModal(true);
+                              }}
                               className="text-blue-600 underline hover:text-blue-800"
                             >
                               View
@@ -318,7 +323,6 @@ function Transactions() {
                           )}
                         </td>
 
-                        {/* STATUS */}
                         <td className="w-[15%] text-center">
                           <div className="flex items-center justify-center gap-2">
                             {getStatusIcon(item.status)}
@@ -326,29 +330,34 @@ function Transactions() {
                           </div>
                         </td>
 
-                        {/* EST PRICE */}
                         <td className="font-semibold w-[10%]">
-                          ₱{Number(item.estimated_price).toLocaleString("en-PH")}
+                          ₱
+                          {Number(
+                            item.estimated_price || 0
+                          ).toLocaleString("en-PH")}
                         </td>
 
-                        {/* TOTAL */}
                         <td
                           className={
                             "font-semibold w-[10%] transition-all " +
                             (item._flash ? "price-flash" : "")
                           }
                         >
-                          ₱{Number(item.price || item.total_price || 0).toLocaleString("en-PH")}
+                          ₱
+                          {Number(
+                            item.price || item.total_price || 0
+                          ).toLocaleString("en-PH")}
                         </td>
 
-                        {/* ACTIONS */}
                         <td className="py-2 px-2 w-[20%]">
                           <div className="flex justify-center gap-2">
                             <button
                               onClick={() => setEditOrder(item)}
-                              disabled={disableActions}
+                              disabled={disableEdit}
                               className={`bg-blue-600 text-white text-xs px-3 py-1 rounded-lg shadow transition ${
-                                disableActions ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700"
+                                disableEdit
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : "hover:bg-blue-700"
                               }`}
                             >
                               Edit
@@ -356,16 +365,15 @@ function Transactions() {
 
                             <button
                               onClick={() => setOrderToCancel(item.enquiryNo)}
-                              disabled={!canCancelOrder(item.dateOrdered || item.created_at)}
+                              disabled={disableCancel}
                               className={`bg-red-600 text-white text-xs px-3 py-1 rounded-lg shadow transition ${
-                                !canCancelOrder(item.dateOrdered || item.created_at)
+                                disableCancel
                                   ? "opacity-50 cursor-not-allowed"
                                   : "hover:bg-red-700"
                               }`}
                             >
                               Cancel
                             </button>
-
                           </div>
                         </td>
                       </motion.tr>
@@ -377,17 +385,20 @@ function Transactions() {
           </div>
         </motion.div>
 
-        {/* Notifications */}
         <motion.div
           className="rounded-2xl backdrop-blur-xl bg-white/60 shadow-xl border border-gray-300 p-6 flex flex-col"
           initial={{ opacity: 0, x: 40 }}
           animate={{ opacity: 1, x: 0 }}
         >
-          <h3 className="text-2xl font-bold mb-6">Notifications</h3>
+          <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
+            <Bell size={20} /> Notifications
+          </h3>
 
           <ul className="space-y-3 text-xs flex-1 overflow-y-auto pr-1">
             {notifications.length === 0 ? (
-              <li className="text-center py-2 text-gray-500">No notifications yet.</li>
+              <li className="text-center py-2 text-gray-500">
+                No notifications yet.
+              </li>
             ) : (
               notifications.map((note, index) => (
                 <motion.li
@@ -398,21 +409,29 @@ function Transactions() {
                   className="flex justify-between items-center bg-white p-2 rounded-lg shadow border border-gray-200 text-xs gap-2"
                 >
                   <div className="flex flex-col">
-                    <span className="font-semibold text-gray-700">{note.title}</span>
-                    <span className={`mt-1 inline-block px-2 py-0.5 text-xs rounded-full font-medium ${
-                      note.status === "Pending"
-                        ? "bg-[#D6ECFF] text-[#0057A8]"
-                        : note.status === "Completed"
-                        ? "bg-green-100 text-green-700"
-                        : note.status === "Out for Delivery"
-                        ? "bg-[#FFE1D8] text-[#B2401F]"
-                        : note.status === "Ongoing"
-                        ? "bg-[#FFF4CC] text-[#A07900]"
-                        : "bg-gray-100 text-gray-600"
-                    }`}>
+                    <span className="font-semibold text-gray-700">
+                      {note.title}
+                    </span>
+
+                    <span
+                      className={`mt-1 inline-block px-2 py-0.5 text-xs rounded-full font-medium ${
+                        note.status === "Pending"
+                          ? "bg-[#D6ECFF] text-[#0057A8]"
+                          : note.status === "Completed"
+                          ? "bg-green-100 text-green-700"
+                          : note.status === "Out for Delivery"
+                          ? "bg-[#FFE1D8] text-[#B2401F]"
+                          : note.status === "Ongoing"
+                          ? "bg-[#FFF4CC] text-[#A07900]"
+                          : note.status === "Price Updated"
+                          ? "bg-purple-100 text-purple-700"
+                          : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
                       {note.status}
                     </span>
                   </div>
+
                   <span className="text-gray-500 text-xs">{note.date}</span>
                 </motion.li>
               ))
@@ -421,7 +440,6 @@ function Transactions() {
         </motion.div>
       </div>
 
-      {/* IMAGE MODAL */}
       {showImageModal && (
         <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
           <img
@@ -438,12 +456,10 @@ function Transactions() {
         </div>
       )}
 
-      {/* ORDER DETAILS MODAL */}
       {selectedOrder && (
         <OrderModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />
       )}
 
-      {/* EDIT ORDER MODAL */}
       {editOrder && (
         <EditOrderModal
           order={editOrder}
@@ -452,18 +468,16 @@ function Transactions() {
         />
       )}
 
-      {/* CANCEL CONFIRM MODAL */}
       {orderToCancel && (
         <ConfirmCancelModal
           onClose={() => setOrderToCancel(null)}
           onConfirm={executeCancelOrder}
         />
       )}
-
     </section>
   );
 }
-// --- CONFIRM CANCEL MODAL ---
+
 function ConfirmCancelModal({ onClose, onConfirm }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-[60] p-4">
@@ -477,7 +491,10 @@ function ConfirmCancelModal({ onClose, onConfirm }) {
             <AlertTriangle className="text-red-600" size={32} />
           </div>
 
-          <h3 className="text-xl font-bold text-gray-800 mb-2">Cancel Order?</h3>
+          <h3 className="text-xl font-bold text-gray-800 mb-2">
+            Cancel Order?
+          </h3>
+
           <p className="text-gray-600 mb-6 text-sm">
             Are you sure you want to cancel this order? This action cannot be undone.
           </p>
@@ -485,13 +502,13 @@ function ConfirmCancelModal({ onClose, onConfirm }) {
           <div className="flex gap-3 w-full">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition"
+              className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium"
             >
               No, Keep it
             </button>
             <button
               onClick={onConfirm}
-              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition"
+              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium"
             >
               Yes, Cancel
             </button>
@@ -502,7 +519,6 @@ function ConfirmCancelModal({ onClose, onConfirm }) {
   );
 }
 
-// --- ORDER DETAILS MODAL ---
 function OrderModal({ order, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
@@ -513,35 +529,47 @@ function OrderModal({ order, onClose }) {
       >
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold text-gray-800">Order Details</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-800">
+          <button onClick={onClose} className="text-gray-500">
             <X size={20} />
           </button>
         </div>
 
         <div className="space-y-3 text-gray-700">
-          <p><strong>Status:</strong> {order.status}</p>
-          <p><strong>Service:</strong> {order.service}</p>
-          <p><strong>Date Ordered:</strong> {order.dateOrdered?.slice(0,10)}</p>
-          <p><strong>Urgency:</strong> {order.urgency}</p>
-          <p><strong>Quantity:</strong> {order.quantity}</p>
+          <p>
+            <strong>Status:</strong> {order.status}
+          </p>
+
+          <p>
+            <strong>Service:</strong> {order.service}
+          </p>
+
+          <p>
+            <strong>Date Ordered:</strong>{" "}
+            {order.dateOrdered?.slice(0, 10)}
+          </p>
+
+          <p>
+            <strong>Quantity:</strong> {order.quantity}
+          </p>
 
           {order.details && (
             <div className="mt-4">
               <h4 className="font-semibold text-gray-800 mb-2">Order Details</h4>
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
                 {Object.entries(order.details).map(([key, value]) => (
-                  <p key={key}><strong>{key}:</strong> {String(value)}</p>
+                  <p key={key}>
+                    <strong>{key}:</strong> {String(value)}
+                  </p>
                 ))}
               </div>
             </div>
           )}
-
         </div>
 
         <div className="mt-6 flex justify-end">
           <button
             onClick={onClose}
-            className="bg-blue-600 text-white px-5 py-2 rounded-xl hover:bg-blue-700 transition"
+            className="bg-blue-600 text-white px-5 py-2 rounded-xl"
           >
             Close
           </button>
@@ -551,7 +579,6 @@ function OrderModal({ order, onClose }) {
   );
 }
 
-// --- STATUS ICONS ---
 function getStatusIcon(status) {
   switch (status) {
     case "Pending":
@@ -567,36 +594,35 @@ function getStatusIcon(status) {
   }
 }
 
-// --- PRICE FORMATTER ---
-function formatPrice(amount) {
-  if (!amount || isNaN(amount)) return "—";
-  return "₱" + Number(amount).toLocaleString("en-PH");
-}
-
-// --- EDIT ORDER MODAL ---
 function EditOrderModal({ order, onClose, onUpdated }) {
   const [quantity, setQuantity] = useState(order.quantity);
-  const [urgency, setUrgency] = useState(order.urgency);
-  const [attributes, setAttributes] = useState(
-    Object.entries(order.details || {}).map(([name, value]) => ({
-      name,
-      value
-    }))
-  );
-
-  const [file1, setFile1] = useState(null);
-  const [file2, setFile2] = useState(null);
+  const [productAttributes, setProductAttributes] = useState([]);
+  const [attributeValues, setAttributeValues] = useState(order.details || {});
   const { showToast } = useToast();
+
+  useEffect(() => {
+    const loadAttributes = async () => {
+      try {
+        const res = await fetch(`${API_URL}/attributes/product/${order.product_id}`);
+        const data = await res.json();
+        setProductAttributes(data);
+      } catch {}
+    };
+    loadAttributes();
+  }, [order.product_id]);
 
   const saveUpdates = async () => {
     try {
+      const formattedAttributes = Object.entries(attributeValues).map(
+        ([name, value]) => ({ name, value })
+      );
+
       const res = await fetch(`${API_URL}/orders/edit/${order.enquiryNo}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           quantity,
-          urgency,
-          attributes
+          attributes: formattedAttributes,
         }),
       });
 
@@ -606,8 +632,8 @@ function EditOrderModal({ order, onClose, onUpdated }) {
       showToast("Order updated!");
       onUpdated();
       onClose();
-    } catch (err) {
-      showToast("Server error.");
+    } catch {
+      showToast("Server Error");
     }
   };
 
@@ -618,10 +644,8 @@ function EditOrderModal({ order, onClose, onUpdated }) {
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
       >
-
         <h2 className="text-xl font-bold mb-4">Edit Order</h2>
 
-        {/* Quantity */}
         <label className="font-semibold">Quantity</label>
         <input
           type="number"
@@ -631,60 +655,55 @@ function EditOrderModal({ order, onClose, onUpdated }) {
           className="w-full border p-2 rounded mb-4"
         />
 
-        {/* Urgency */}
-        <label className="font-semibold">Urgency</label>
-        <select
-          value={urgency}
-          onChange={(e) => setUrgency(e.target.value)}
-          className="w-full border p-2 rounded mb-4"
-        >
-          <option>Normal</option>
-          <option>Urgent</option>
-        </select>
+        <label className="font-semibold mb-2 block">Attributes</label>
 
-        {/* Custom Fields */}
-        <label className="font-semibold">Custom Details</label>
-        {attributes.map((attr, index) => (
-          <div key={index} className="flex gap-2 mb-2">
-            <input
-              placeholder="Name"
-              value={attr.name}
-              onChange={(e) =>
-                setAttributes(
-                  attributes.map((a, i) =>
-                    i === index ? { ...a, name: e.target.value } : a
-                  )
-                )
-              }
-              className="w-1/2 border p-2 rounded"
-            />
-            <input
-              placeholder="Value"
-              value={attr.value}
-              onChange={(e) =>
-                setAttributes(
-                  attributes.map((a, i) =>
-                    i === index ? { ...a, value: e.target.value } : a
-                  )
-                )
-              }
-              className="w-1/2 border p-2 rounded"
-            />
-          </div>
-        ))}
+        {productAttributes.length === 0 ? (
+          <p className="text-gray-500">No attributes for this product.</p>
+        ) : (
+          productAttributes.map((attr) => (
+            <div key={attr.attribute_id} className="mb-3">
+              <label className="font-medium">{attr.attribute_name}</label>
 
-        <button
-          onClick={() => setAttributes([...attributes, { name: "", value: "" }])}
-          className="bg-gray-200 text-gray-700 px-3 py-1 rounded mb-4"
-        >
-          + Add Field
-        </button>
+              {attr.input_type === "select" ? (
+                <select
+                  value={attributeValues[attr.attribute_name] || ""}
+                  onChange={(e) =>
+                    setAttributeValues({
+                      ...attributeValues,
+                      [attr.attribute_name]: e.target.value,
+                    })
+                  }
+                  className="w-full border p-2 rounded"
+                >
+                  <option value="">Select option</option>
+                  {attr.options.map((op, i) => (
+                    <option key={i} value={op.option_value}>
+                      {op.option_value}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={attributeValues[attr.attribute_name] || ""}
+                  onChange={(e) =>
+                    setAttributeValues({
+                      ...attributeValues,
+                      [attr.attribute_name]: e.target.value,
+                    })
+                  }
+                  className="w-full border p-2 rounded"
+                />
+              )}
+            </div>
+          ))
+        )}
 
-        {/* Save Button */}
-        <div className="flex justify-end gap-3 mt-4">
+        <div className="flex justify-end gap-3 mt-6">
           <button onClick={onClose} className="px-4 py-2 bg-gray-200 rounded">
             Cancel
           </button>
+
           <button
             onClick={saveUpdates}
             className="px-4 py-2 bg-blue-600 text-white rounded"
@@ -692,7 +711,6 @@ function EditOrderModal({ order, onClose, onUpdated }) {
             Save Changes
           </button>
         </div>
-
       </motion.div>
     </div>
   );

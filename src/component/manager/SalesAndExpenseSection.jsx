@@ -413,7 +413,7 @@ const SalesAndExpenseSection = () => {
     sortBy === "date" ? "Date" : sortBy === "amount" ? "Amount" : "Name";
 
   return (
-    <div className="p-8 rounded-3xl bg-gradient-to-br from-cyan-50 to-white shadow-xl min-h-screen text-gray-900">
+    <div className="p-8 rounded-3xl bg-white shadow-xl min-h-screen text-gray-900">
 
       {/* Filters */}
       <div className="flex flex-col gap-4 mb-6">
@@ -569,7 +569,7 @@ const SalesAndExpenseSection = () => {
                   {topProducts.map((p, idx) => (
                     <li
                       key={p.name}
-                      className="flex justify-between items-center border-b pb-2 last:border-b-0"
+                      className="flex justify-between items-center border-b border-b-gray-200 pb-2 last:border-b-0"
                     >
                       <span className="flex items-center gap-2">
                         <span className="w-6 h-6 rounded-full bg-cyan-100 flex items-center justify-center text-xs font-bold text-cyan-700">
@@ -675,7 +675,7 @@ const SummaryCard = ({ title, value, color }) => (
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.2 }}
-    className="p-6 bg-white border rounded-2xl shadow-sm hover:shadow-md transition"
+    className="p-6 bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition"
   >
     <h3 className="text-sm font-semibold text-gray-600">{title}</h3>
     <p className={`text-2xl font-bold mt-1 ${color}`}>

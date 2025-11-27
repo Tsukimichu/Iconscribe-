@@ -1,4 +1,3 @@
-// backend/routes/orderRoutes.js
 const express = require("express");
 const router = express.Router();
 const db = require("../models/db");
@@ -6,15 +5,9 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-/* ========================================================
-   SETUP UPLOAD FOLDER
-======================================================== */
 const uploadDir = path.join(__dirname, "../uploads/orderfiles");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
-/* ========================================================
-   MULTER STORAGE
-======================================================== */
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) =>
@@ -37,22 +30,20 @@ const upload = multer({
   },
 });
 
-// NOTE: this serves files under whatever prefix this router is mounted.
-// But file paths stored in DB look like `/uploads/orderfiles/...`
 router.use("/uploads", express.static(uploadDir));
 
-/* ========================================================
-   HELPER: INSERT ATTRIBUTES
-======================================================== */
+router.get("/server-time", (req, res) => {
+  return res.json({ now: Date.now() });
+});
+
 async function insertAttributes(order_item_id, attributes) {
   if (!Array.isArray(attributes)) return;
 
   for (const attr of attributes) {
-    if (!attr?.value) continue;
+    if (!attr || !attr.value) continue;
 
     let attributeId = attr.attribute_id || null;
 
-    // Resolve attribute_id from attribute name
     if (!attributeId && attr.name) {
       const [rows] = await db
         .promise()
@@ -67,24 +58,18 @@ async function insertAttributes(order_item_id, attributes) {
     await db
       .promise()
       .query(
-        `INSERT INTO order_item_attributes 
-         (order_item_id, attribute_id, option_id, attribute_value)
-         VALUES (?, ?, ?, ?)`,
+        "INSERT INTO order_item_attributes (order_item_id, attribute_id, option_id, attribute_value) VALUES (?, ?, ?, ?)",
         [order_item_id, attributeId, attr.option_id || null, attr.value]
       );
   }
 }
 
-/* ========================================================
-   CREATE ORDER
-======================================================== */
 router.post("/create", async (req, res) => {
   try {
     const {
       user_id,
       product_id,
       quantity,
-      urgency,
       status,
       attributes,
       estimated_price,
@@ -96,12 +81,16 @@ router.post("/create", async (req, res) => {
         .json({ success: false, message: "Missing required fields" });
     }
 
-    const parsed =
-      typeof attributes === "string"
-        ? JSON.parse(attributes || "[]")
-        : attributes;
+    let parsedAttributes = [];
+    try {
+      parsedAttributes =
+        typeof attributes === "string"
+          ? JSON.parse(attributes || "[]")
+          : attributes || [];
+    } catch (_) {
+      parsedAttributes = [];
+    }
 
-    // Create order
     const [orderResult] = await db
       .promise()
       .query(
@@ -111,18 +100,14 @@ router.post("/create", async (req, res) => {
 
     const order_id = orderResult.insertId;
 
-    // Create order item
     const [itemResult] = await db
       .promise()
       .query(
-        `INSERT INTO orderitems 
-         (order_id, product_id, quantity, urgency, status, estimated_price)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+        "INSERT INTO orderitems (order_id, product_id, quantity, status, estimated_price) VALUES (?, ?, ?, ?, ?)",
         [
           order_id,
           product_id,
           quantity,
-          urgency || "Normal",
           status || "Pending",
           estimated_price || 0,
         ]
@@ -130,7 +115,7 @@ router.post("/create", async (req, res) => {
 
     const order_item_id = itemResult.insertId;
 
-    await insertAttributes(order_item_id, parsed);
+    await insertAttributes(order_item_id, parsedAttributes);
 
     res.json({
       success: true,
@@ -144,11 +129,6 @@ router.post("/create", async (req, res) => {
   }
 });
 
-/* ========================================================
-   FILE UPLOADS (NOW USING order_item_files TABLE)
-======================================================== */
-
-// Single file upload → insert 1 row into order_item_files
 router.post(
   "/upload/single/:id",
   upload.single("file1"),
@@ -167,8 +147,7 @@ router.post(
       await db
         .promise()
         .query(
-          `INSERT INTO order_item_files (order_item_id, file_path, file_type)
-           VALUES (?, ?, ?)`,
+          "INSERT INTO order_item_files (order_item_id, file_path, file_type) VALUES (?, ?, ?)",
           [order_item_id, filePath, fileType]
         );
 
@@ -180,7 +159,6 @@ router.post(
   }
 );
 
-// Double file upload → up to 2 rows into order_item_files
 router.post(
   "/upload/double/:id",
   upload.fields([{ name: "file1" }, { name: "file2" }]),
@@ -211,8 +189,7 @@ router.post(
         await db
           .promise()
           .query(
-            `INSERT INTO order_item_files (order_item_id, file_path, file_type)
-             VALUES (?, ?, ?)`,
+            "INSERT INTO order_item_files (order_item_id, file_path, file_type) VALUES (?, ?, ?)",
             [order_item_id, filePath, fileType]
           );
 
@@ -227,9 +204,6 @@ router.post(
   }
 );
 
-/* ========================================================
-   GET ALL ORDERS (MANAGER VIEW)
-======================================================== */
 router.get("/", async (req, res) => {
   try {
     const [items] = await db.promise().query(`
@@ -249,7 +223,6 @@ router.get("/", async (req, res) => {
         ) AS customer_name,
         o.order_date AS dateOrdered,
         oi.quantity,
-        oi.urgency,
         oi.status,
         oi.estimated_price,
         o.manager_added,
@@ -287,9 +260,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-/* ========================================================
-   GET ORDER COUNTS (for charts)
-======================================================== */
 router.get("/product-order-counts", async (req, res) => {
   try {
     const [rows] = await db.promise().query(`
@@ -307,18 +277,12 @@ router.get("/product-order-counts", async (req, res) => {
   }
 });
 
-/* ========================================================
-   GET ORDER BY ID (details for modal)
-======================================================== */
 router.get("/details/:id", async (req, res) => {
   try {
     const [order] = await db
       .promise()
       .query(
-        `SELECT o.*, u.name AS customer_name, u.email, u.phone AS contact_number, u.address
-         FROM orders o 
-         LEFT JOIN users u ON o.user_id = u.user_id
-         WHERE o.order_id = ?`,
+        "SELECT o.*, u.name AS customer_name, u.email, u.phone AS contact_number, u.address FROM orders o LEFT JOIN users u ON o.user_id = u.user_id WHERE o.order_id = ?",
         [req.params.id]
       );
 
@@ -329,24 +293,13 @@ router.get("/details/:id", async (req, res) => {
     }
 
     const [items] = await db.promise().query(
-      `SELECT 
-        oi.order_item_id AS enquiryNo,
-        p.product_name AS service,
-        oi.quantity, oi.urgency, oi.status,
-        oi.estimated_price
-       FROM orderitems oi
-       JOIN products p ON oi.product_id=p.product_id
-       WHERE oi.order_id=?`,
+      "SELECT oi.order_item_id AS enquiryNo, p.product_name AS service, oi.quantity, oi.status, oi.estimated_price FROM orderitems oi JOIN products p ON oi.product_id=p.product_id WHERE oi.order_id=?",
       [req.params.id]
     );
 
-    // Attach attributes + files from order_item_files
     for (let item of items) {
       const [attrs] = await db.promise().query(
-        `SELECT a.attribute_name, oia.attribute_value
-         FROM order_item_attributes oia
-         JOIN attributes a ON a.attribute_id=oia.attribute_id
-         WHERE oia.order_item_id=?`,
+        "SELECT a.attribute_name, oia.attribute_value FROM order_item_attributes oia JOIN attributes a ON a.attribute_id=oia.attribute_id WHERE oia.order_item_id=?",
         [item.enquiryNo]
       );
 
@@ -361,6 +314,12 @@ router.get("/details/:id", async (req, res) => {
         (acc, a) => ({ ...acc, [a.attribute_name]: a.attribute_value }),
         {}
       );
+
+      item.attributes = attrs.map((a) => ({
+        name: a.attribute_name,
+        value: a.attribute_value,
+      }));
+
       item.files = files.map((f) => f.file_path);
     }
 
@@ -371,9 +330,6 @@ router.get("/details/:id", async (req, res) => {
   }
 });
 
-/* ========================================================
-   UPDATE PRICE (manager adds extra)
-======================================================== */
 router.put("/:orderId/price", async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -392,12 +348,14 @@ router.put("/:orderId/price", async (req, res) => {
         [orderId]
       );
 
+    const [[orderInfo]] = await db.promise().query(
+      "SELECT o.user_id, p.product_name FROM orders o JOIN orderitems oi ON oi.order_id=o.order_id JOIN products p ON oi.product_id=p.product_id WHERE o.order_id=? LIMIT 1",
+      [orderId]
+    );
+
     const [[curr]] = await db
       .promise()
-      .query(
-        "SELECT manager_added FROM orders WHERE order_id=?",
-        [orderId]
-      );
+      .query("SELECT manager_added FROM orders WHERE order_id=?", [orderId]);
 
     const updated = Number(curr.manager_added || 0) + Number(price);
     const total = Number(sum.items_total || 0) + updated;
@@ -410,6 +368,14 @@ router.put("/:orderId/price", async (req, res) => {
         orderId,
       ]);
 
+    if (req.io && orderInfo && orderInfo.user_id) {
+      req.io.to(`user_${orderInfo.user_id}`).emit("orderPriceUpdated", {
+        order_id: Number(orderId),
+        total,
+        service: orderInfo.product_name,
+      });
+    }
+
     res.json({ success: true, total, manager_added: updated });
   } catch (err) {
     console.error("❌ update price error:", err);
@@ -417,15 +383,11 @@ router.put("/:orderId/price", async (req, res) => {
   }
 });
 
-/* ========================================================
-   UPDATE STATUS + AUTO SALE (aligned with sales table)
-======================================================== */
 router.put("/:id/status", async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
   try {
-    // update order item status
     await db
       .promise()
       .query("UPDATE orderitems SET status=? WHERE order_item_id=?", [
@@ -453,7 +415,14 @@ router.put("/:id/status", async (req, res) => {
         .json({ success: false, message: "Order item not found" });
     }
 
-    // Only create sale when marked Completed
+    if (req.io && item.user_id) {
+      req.io.to(`user_${item.user_id}`).emit("orderStatusUpdated", {
+        order_id: item.order_id,
+        service: item.product_name,
+        status,
+      });
+    }
+
     if (status !== "Completed") {
       return res.json({
         success: true,
@@ -461,27 +430,18 @@ router.put("/:id/status", async (req, res) => {
       });
     }
 
-    // Check for duplicate sale
     const [exists] = await db
       .promise()
       .query("SELECT id FROM sales WHERE order_item_id=? LIMIT 1", [id]);
 
-    if (exists.length > 0) {
-      return res.json({
-        success: true,
-        message: "Status updated. Sale already exists.",
-      });
+    if (exists.length === 0) {
+      await db
+        .promise()
+        .query(
+          "INSERT INTO sales (order_item_id, quantity, amount, date) VALUES (?, ?, ?, CURDATE())",
+          [id, item.quantity, item.final_amount]
+        );
     }
-
-    // ✅ Align with current `sales` table:
-    // columns: id, order_item_id, quantity, amount, date  (no `item` column)
-    await db
-      .promise()
-      .query(
-        `INSERT INTO sales (order_item_id, quantity, amount, date)
-         VALUES (?, ?, ?, CURDATE())`,
-        [id, item.quantity, item.final_amount]
-      );
 
     return res.json({
       success: true,
@@ -496,30 +456,29 @@ router.put("/:id/status", async (req, res) => {
   }
 });
 
-/* ========================================================
-   CANCEL ORDER (within 24 hours)
-======================================================== */
 router.post("/:id/cancel", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [[item]] = await db.promise().query(
-      `SELECT oi.order_item_id, o.order_date
+    const [[timeCheck]] = await db.promise().query(
+      `SELECT 
+         TIMESTAMPDIFF(HOUR, o.order_date, NOW()) AS hours_passed,
+         oi.order_item_id,
+         o.user_id,
+         p.product_name
        FROM orderitems oi
-       JOIN orders o ON oi.order_id=o.order_id
-       WHERE oi.order_item_id=?`,
+       JOIN orders o ON oi.order_id = o.order_id
+       JOIN products p ON oi.product_id = p.product_id
+       WHERE oi.order_item_id = ?`,
       [id]
     );
 
-    if (!item) {
+    if (!timeCheck) {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    const diff = new Date() - new Date(item.order_date);
-    if (diff > 24 * 60 * 60 * 1000) {
-      return res
-        .status(400)
-        .json({ message: "Cannot cancel after 24 hours" });
+    if (timeCheck.hours_passed > 24) {
+      return res.status(400).json({ message: "Cannot cancel after 24 hours" });
     }
 
     await db
@@ -528,6 +487,14 @@ router.post("/:id/cancel", async (req, res) => {
         id,
       ]);
 
+    if (req.io && timeCheck.user_id) {
+      req.io.to(`user_${timeCheck.user_id}`).emit("orderStatusUpdated", {
+        order_id: timeCheck.order_item_id,
+        service: timeCheck.product_name,
+        status: "Cancelled",
+      });
+    }
+
     res.json({ success: true, message: "Order cancelled" });
   } catch (err) {
     console.error("❌ Cancel order error:", err);
@@ -535,44 +502,57 @@ router.post("/:id/cancel", async (req, res) => {
   }
 });
 
-/* ========================================================
-   EDIT ORDER (within 12 hours)
-======================================================== */
 router.put("/edit/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { quantity, urgency, attributes } = req.body;
+    const { quantity, attributes } = req.body;
 
-    const [[item]] = await db.promise().query(
-      `SELECT o.order_date
+    const [[timeCheck]] = await db.promise().query(
+      `SELECT 
+         TIMESTAMPDIFF(HOUR, o.order_date, NOW()) AS hours_passed,
+         o.user_id
        FROM orderitems oi
-       JOIN orders o ON oi.order_id=o.order_id
-       WHERE oi.order_item_id=?`,
+       JOIN orders o ON oi.order_id = o.order_id
+       WHERE oi.order_item_id = ?`,
       [id]
     );
 
-    if (!item) {
+    if (!timeCheck) {
       return res.status(404).json({ message: "Order item not found" });
     }
 
-    const diff = new Date() - new Date(item.order_date);
-
-    if (diff > 12 * 60 * 60 * 1000) {
+    if (timeCheck.hours_passed > 12) {
       return res.status(403).json({ message: "Editing time expired" });
     }
 
     await db
       .promise()
       .query(
-        "UPDATE orderitems SET quantity=?, urgency=? WHERE order_item_id=?",
-        [quantity, urgency, id]
+        "UPDATE orderitems SET quantity=? WHERE order_item_id=?",
+        [quantity, id]
       );
 
     await db
       .promise()
       .query("DELETE FROM order_item_attributes WHERE order_item_id=?", [id]);
 
-    await insertAttributes(id, attributes);
+    let parsedAttributes = [];
+    try {
+      parsedAttributes =
+        typeof attributes === "string"
+          ? JSON.parse(attributes || "[]")
+          : attributes || [];
+    } catch (_) {
+      parsedAttributes = [];
+    }
+
+    await insertAttributes(id, parsedAttributes);
+
+    if (req.io && timeCheck.user_id) {
+      req.io.to(`user_${timeCheck.user_id}`).emit("orderEdited", {
+        order_item_id: Number(id),
+      });
+    }
 
     res.json({ success: true, message: "Order updated" });
   } catch (err) {
@@ -581,22 +561,18 @@ router.put("/edit/:id", async (req, res) => {
   }
 });
 
-/* ========================================================
-   GET ORDERS FOR SPECIFIC USER (Client Transactions Page)
-======================================================== */
 router.get("/user/:id", async (req, res) => {
   try {
     const userId = req.params.id;
 
-    // 1. Get user's orders
     const [orderItems] = await db.promise().query(
       `
       SELECT 
         oi.order_item_id AS enquiryNo,
         oi.order_id,
+        oi.product_id,  
         p.product_name AS service,
         oi.quantity,
-        oi.urgency,
         oi.status,
         oi.estimated_price,
         o.order_date AS dateOrdered,
@@ -610,7 +586,6 @@ router.get("/user/:id", async (req, res) => {
       [userId]
     );
 
-    // 2. Get attributes
     const [attrs] = await db.promise().query(
       `
       SELECT 
@@ -622,7 +597,10 @@ router.get("/user/:id", async (req, res) => {
       `
     );
 
-    // 3. Group attributes under each order
+    const [files] = await db
+      .promise()
+      .query("SELECT order_item_id, file_path FROM order_item_files");
+
     const final = orderItems.map((item) => ({
       ...item,
       details: attrs
@@ -634,14 +612,18 @@ router.get("/user/:id", async (req, res) => {
           }),
           {}
         ),
+      file1:
+        files.find((f) => f.order_item_id === item.enquiryNo)?.file_path ||
+        null,
     }));
 
     res.json(final);
   } catch (err) {
     console.error("❌ GET /orders/user/:id error:", err);
-    res.status(500).json({ success: false, message: "Error loading user orders" });
+    res
+      .status(500)
+      .json({ success: false, message: "Error loading user orders" });
   }
 });
-
 
 module.exports = router;

@@ -1,3 +1,4 @@
+// backend/server.js
 require("dotenv").config();
 
 const express = require("express");
@@ -5,6 +6,7 @@ const cors = require("cors");
 const path = require("path");
 const http = require("http");
 const { Server } = require("socket.io");
+const cookieParser = require("cookie-parser");
 
 const userRoutes = require("./routes/userRoutes");
 const maintenanceRoutes = require("./routes/maintenanceRoutes");
@@ -30,7 +32,7 @@ const io = new Server(server, {
   },
 });
 
-// Middleware
+// ====== MIDDLEWARE ======
 app.use(
   cors({
     origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
@@ -38,13 +40,20 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(cookieParser());
 
 // Serve uploaded files publicly
-app.use("/uploads/products", express.static(path.join(__dirname, "uploads/products")));
+app.use(
+  "/uploads/products",
+  express.static(path.join(__dirname, "uploads/products"))
+);
 
+app.use(
+  "/uploads/orderfiles",
+  express.static(path.join(__dirname, "uploads/orderfiles"))
+);
 
-
-// Routes
+// ====== ROUTES ======
 app.use("/api", userRoutes);
 app.use("/api", maintenanceRoutes);
 app.use("/api/products", productRoutes);
@@ -56,12 +65,15 @@ app.use("/api/sessions", sessionRoutes);
 app.use("/api", otpRoutes);
 app.use("/api/attributes", attributesRoutes);
 
-
-// Attach io to req for routes that need it
-app.use("/api/orders", (req, res, next) => {
-  req.io = io;
-  next();
-}, orderRoutes);
+// Attach io to req for routes that need it (orders)
+app.use(
+  "/api/orders",
+  (req, res, next) => {
+    req.io = io;
+    next();
+  },
+  orderRoutes
+);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
@@ -69,7 +81,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: "Internal Server Error" });
 });
 
-// Socket.IO logic
+// ====== SOCKET.IO ======
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
 
@@ -77,14 +89,18 @@ io.on("connection", (socket) => {
     socket.join(conversationId);
   });
 
+  socket.on("joinUserRoom", (userId) => {
+    if (!userId) return;
+    const room = `user_${userId}`;
+    socket.join(room);
+    console.log(`Socket ${socket.id} joined user room: ${room}`);
+  });
+
   socket.on("sendMessage", (msg) => {
-    // already existing in your app
     io.to(msg.conversationId).emit("receiveMessage", msg);
   });
 
-  // NEW: seen status
   socket.on("messageSeen", async ({ conversationId, messageId, seenBy }) => {
-
     io.to(conversationId).emit("messageSeen", {
       conversationId,
       messageId,
@@ -93,8 +109,7 @@ io.on("connection", (socket) => {
   });
 });
 
-
-// Start both Express + Socket.IO on same port
+// Start server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server + Socket.IO running on port ${PORT}`);

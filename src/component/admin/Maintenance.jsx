@@ -18,6 +18,12 @@ const Maintenance = () => {
   const [attrPrice, setAttrPrice] = useState("");
   const [selectedAttrForOption, setSelectedAttrForOption] = useState("");
 
+  // Edit Price Modal
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editAttr, setEditAttr] = useState("");
+  const [editOption, setEditOption] = useState("");
+  const [editPrice, setEditPrice] = useState("");
+
   useEffect(() => {
     fetchStatus();
     fetchAttributes();
@@ -41,6 +47,9 @@ const Maintenance = () => {
     try {
       const res = await fetch(`${API_URL}/attributes`);
       const data = await res.json();
+
+      // data already in shape:
+      // [{ attribute_id, attribute_name, input_type, required, options: [{ option_value, price }] }]
       setAttributes(data || []);
 
       if (!selectedAttrForOption && data.length > 0) {
@@ -142,6 +151,30 @@ const Maintenance = () => {
     }
   };
 
+  const handleSaveEditedPrice = async () => {
+    try {
+      await fetch(
+        `${API_URL}/attributes/${encodeURIComponent(
+          editAttr
+        )}/options/${encodeURIComponent(editOption)}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            price: Number(editPrice) || 0,
+          }),
+        }
+      );
+
+      showToast("Price updated successfully!");
+      setShowEditModal(false);
+      fetchAttributes();
+    } catch (err) {
+      console.error("❌ Failed to update price:", err);
+      alert("Failed to update price.");
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
@@ -151,17 +184,15 @@ const Maintenance = () => {
       <div className="w-full max-w-6xl">
         {/* PAGE TITLE */}
         <h1 className="text-4xl font-extrabold text-cyan-700 mb-6">
-          Maintenance & Attributes Settings
+          System Settings
         </h1>
 
-        {/* ──────────────────── TWO-COLUMN GRID ───────────────────── */}
+        {/* ───────── TWO-COLUMN GRID ───────── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
           {/* LEFT CARD – MAINTENANCE SETTINGS */}
           <div className="space-y-8 h-[680px] bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
-
             {/* Toggle */}
-            <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border">
+            <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-200">
               <div>
                 <h2 className="text-lg font-semibold">Enable Maintenance Mode</h2>
                 <p className="text-sm text-gray-500">
@@ -186,7 +217,7 @@ const Maintenance = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="text-sm">Start Date & Time</label>
-                <div className="flex items-center border rounded-lg p-2 bg-gray-50">
+                <div className="flex items-center border border-gray-200 rounded-lg p-2 bg-gray-50">
                   <Calendar className="w-5 h-5 text-gray-500 mr-2" />
                   <input
                     type="datetime-local"
@@ -199,7 +230,7 @@ const Maintenance = () => {
 
               <div>
                 <label className="text-sm">End Date & Time</label>
-                <div className="flex items-center border rounded-lg p-2 bg-gray-50">
+                <div className="flex items-center border border-gray-200 rounded-lg p-2 bg-gray-50">
                   <Clock className="w-5 h-5 text-gray-500 mr-2" />
                   <input
                     type="datetime-local"
@@ -218,7 +249,7 @@ const Maintenance = () => {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="We are undergoing maintenance…"
-                className="w-full border rounded-lg p-3 text-sm bg-gray-50 outline-none min-h-[120px] resize-none"
+                className="w-full border border-gray-200 rounded-lg p-3 text-sm bg-gray-50 outline-none min-h-[120px] resize-none"
               />
             </div>
 
@@ -253,7 +284,6 @@ const Maintenance = () => {
 
           {/* RIGHT CARD – PREVIEW + ADD ATTRIBUTE */}
           <div className="space-y-8">
-            
             <div className="space-y-8 h-[680px] bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
               {/* Live preview */}
               <div className="h-[200px] bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
@@ -273,7 +303,9 @@ const Maintenance = () => {
                     )}
                   </div>
                 ) : (
-                  <p className="text-gray-500">Maintenance mode is <b>OFF</b>.</p>
+                  <p className="text-gray-500">
+                    Maintenance mode is <b>OFF</b>.
+                  </p>
                 )}
               </div>
 
@@ -286,20 +318,20 @@ const Maintenance = () => {
                     value={attrName}
                     onChange={(e) => setAttrName(e.target.value)}
                     placeholder="Name"
-                    className="border p-2 rounded-lg text-sm"
+                    className="border border-gray-200 p-2 rounded-lg text-sm"
                   />
                   <input
                     value={attrOption}
                     onChange={(e) => setAttrOption(e.target.value)}
                     placeholder="First Option"
-                    className="border p-2 rounded-lg text-sm"
+                    className="border border-gray-200 p-2 rounded-lg text-sm"
                   />
                   <input
                     type="number"
                     value={attrPrice}
                     onChange={(e) => setAttrPrice(e.target.value)}
                     placeholder="Price (₱)"
-                    className="border p-2 rounded-lg text-sm"
+                    className="border border-gray-200 p-2 rounded-lg text-sm"
                   />
                 </div>
 
@@ -319,10 +351,10 @@ const Maintenance = () => {
                   <select
                     value={selectedAttrForOption}
                     onChange={(e) => setSelectedAttrForOption(e.target.value)}
-                    className="border p-2 rounded-lg text-sm"
+                    className="border border-gray-200 p-2 rounded-lg text-sm"
                   >
                     {attributes.map((a) => (
-                      <option key={a.attribute_name} value={a.attribute_name}>
+                      <option key={a.attribute_id} value={a.attribute_name}>
                         {a.attribute_name}
                       </option>
                     ))}
@@ -332,7 +364,7 @@ const Maintenance = () => {
                     value={attrOption}
                     onChange={(e) => setAttrOption(e.target.value)}
                     placeholder="Option"
-                    className="border p-2 rounded-lg text-sm"
+                    className="border border-gray-200 p-2 rounded-lg text-sm"
                   />
 
                   <input
@@ -340,7 +372,7 @@ const Maintenance = () => {
                     value={attrPrice}
                     onChange={(e) => setAttrPrice(e.target.value)}
                     placeholder="Price (₱)"
-                    className="border p-2 rounded-lg text-sm"
+                    className="border border-gray-200 p-2 rounded-lg text-sm"
                   />
                 </div>
 
@@ -355,7 +387,7 @@ const Maintenance = () => {
           </div>
         </div>
 
-        {/* ──────────────────── BOTTOM FULL-WIDTH ATTRIBUTES ───────────────────── */}
+        {/* ───────── EXISTING ATTRIBUTES ───────── */}
         <div className="mt-10 bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
           <h2 className="text-xl font-bold mb-4">Existing Attributes</h2>
 
@@ -363,38 +395,93 @@ const Maintenance = () => {
             <p className="text-sm text-gray-500">No attributes found.</p>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
               {attributes.map((attr) => (
                 <div
-                  key={attr.attribute_name}
+                  key={attr.attribute_id}
                   className="border border-gray-200 rounded-lg p-4 shadow-sm bg-gray-50"
                 >
-                  <p className="font-semibold text-gray-800 mb-2">
+                  {/* Attribute Name */}
+                  <p className="font-semibold text-gray-800 mb-3">
                     {attr.attribute_name}
                   </p>
 
+                  {/* OPTIONS WITH EDIT BUTTON */}
                   <div className="flex flex-wrap gap-2">
                     {attr.options.map((opt, i) => (
-                      <span
+                      <div
                         key={i}
-                        className="px-3 py-1 bg-white border text-xs rounded-full shadow"
+                        className="flex items-center gap-2 px-3 py-1 bg-white border border-gray-200 text-xs rounded-full shadow"
                       >
-                        {opt.value || opt}
-                        {opt.price !== undefined && (
-                          <span className="text-blue-600 font-semibold ml-1">
-                            ₱{opt.price}
-                          </span>
-                        )}
-                      </span>
+                        {/* Option name only (no price here) */}
+                        <span>{opt.option_value}</span>
+
+                        <button
+                          onClick={() => {
+                            setEditAttr(attr.attribute_name);
+                            setEditOption(opt.option_value);
+                            setEditPrice(opt.price ?? 0);
+                            setShowEditModal(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-800 font-medium ml-1"
+                        >
+                          Edit
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </div>
               ))}
-
             </div>
           )}
         </div>
 
+        {/* EDIT PRICE MODAL */}
+        {showEditModal && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-6">
+              <h2 className="text-xl font-bold mb-4 text-gray-800">
+                Edit Price
+              </h2>
+
+              {/* Option name (read only) */}
+              <div className="mb-4">
+                <label className="text-sm text-gray-600">Option</label>
+                <input
+                  value={editOption}
+                  readOnly
+                  className="w-full bg-gray-100 border border-gray-200 p-2 rounded-lg mt-1 text-sm"
+                />
+              </div>
+
+              {/* Price Input */}
+              <div className="mb-4">
+                <label className="text-sm text-gray-600">Price (₱)</label>
+                <input
+                  type="number"
+                  value={editPrice}
+                  onChange={(e) => setEditPrice(e.target.value)}
+                  className="w-full border border-gray-200 p-2 rounded-lg mt-1 text-sm"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleSaveEditedPrice}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </motion.div>
   );

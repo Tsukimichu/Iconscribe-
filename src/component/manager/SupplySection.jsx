@@ -19,7 +19,7 @@ const SupplyMonitoring = () => {
   // ----------------- CATEGORY SETS ----------------- //
   const materialCategories = [
     "Ink & Toner",
-    "Photo Paper",
+    "Printing Paper",
     "PVC / ID Materials",
     "Binding Materials",
     "Packaging Supplies",
@@ -115,7 +115,6 @@ const SupplyMonitoring = () => {
         } else if (cat.includes("Miscellaneous")) {
           groups.Miscellaneous.push(item);
         } else {
-          // Default under Business if it's not utilities/transport/misc
           groups.Business.push(item);
         }
       }
@@ -152,7 +151,7 @@ const SupplyMonitoring = () => {
     plotOptions: {
       bar: {
         borderRadius: 6,
-        distributed: true,   // <-- THIS enables individual bar colors
+        distributed: true,
       },
     },
     colors: [

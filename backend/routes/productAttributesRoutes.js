@@ -3,8 +3,7 @@ const router = express.Router();
 const db = require("../models/db");
 
 // =======================================================
-// GET /attributes  → list of attributes + options
-// shape: [{ attribute_id, attribute_name, input_type, required, options:[] }]
+// GET /attributes → list attributes + options WITH PRICE
 // =======================================================
 router.get("/", async (req, res) => {
   try {
@@ -15,7 +14,8 @@ router.get("/", async (req, res) => {
         a.input_type,
         a.required,
         ao.option_id,
-        ao.option_value
+        ao.option_value,
+        ao.price
       FROM attributes a
       LEFT JOIN attribute_options ao 
         ON ao.attribute_id = a.attribute_id
@@ -36,7 +36,10 @@ router.get("/", async (req, res) => {
       }
 
       if (row.option_id) {
-        map.get(row.attribute_id).options.push(row.option_value);
+        map.get(row.attribute_id).options.push({
+          option_value: row.option_value,
+          price: row.price ?? 0,
+        });
       }
     }
 
@@ -49,13 +52,14 @@ router.get("/", async (req, res) => {
 
 // =======================================================
 // POST /attributes  → create attribute + first option
-// body: { attribute_name, option_value, input_type?, required? }
+// body: { attribute_name, option_value, price?, input_type?, required? }
 // =======================================================
 router.post("/", async (req, res) => {
   try {
     const {
       attribute_name,
       option_value,
+      price = 0,
       input_type = "select",
       required = 0,
     } = req.body;
@@ -78,8 +82,8 @@ router.post("/", async (req, res) => {
     await db
       .promise()
       .query(
-        "INSERT INTO attribute_options (attribute_id, option_value) VALUES (?, ?)",
-        [attribute_id, option_value.trim()]
+        "INSERT INTO attribute_options (attribute_id, option_value, price) VALUES (?, ?, ?)",
+        [attribute_id, option_value.trim(), Number(price) || 0]
       );
 
     res.json({ success: true, attribute_id });
@@ -90,13 +94,13 @@ router.post("/", async (req, res) => {
 });
 
 // =======================================================
-// POST /attributes/:name/options → add option to existing attribute
-// body: { option_value }
+// POST /attributes/:name/options → add option with price
+// body: { option_value, price? }
 // =======================================================
 router.post("/:name/options", async (req, res) => {
   try {
     const { name } = req.params;
-    const { option_value } = req.body;
+    const { option_value, price = 0 } = req.body;
 
     if (!option_value) {
       return res.status(400).json({ error: "option_value is required" });
@@ -118,8 +122,8 @@ router.post("/:name/options", async (req, res) => {
     await db
       .promise()
       .query(
-        "INSERT INTO attribute_options (attribute_id, option_value) VALUES (?, ?)",
-        [attribute_id, option_value.trim()]
+        "INSERT INTO attribute_options (attribute_id, option_value, price) VALUES (?, ?, ?)",
+        [attribute_id, option_value.trim(), Number(price) || 0]
       );
 
     res.json({ success: true });
@@ -145,7 +149,8 @@ router.get("/product/:productId", async (req, res) => {
         a.input_type,
         a.required,
         ao.option_id,
-        ao.option_value
+        ao.option_value,
+        ao.price
       FROM product_attributes pa
       JOIN attributes a ON pa.attribute_id = a.attribute_id
       LEFT JOIN attribute_options ao 
@@ -169,7 +174,10 @@ router.get("/product/:productId", async (req, res) => {
         });
       }
       if (row.option_id) {
-        map.get(row.attribute_id).options.push(row.option_value);
+        map.get(row.attribute_id).options.push({
+          option_value: row.option_value,
+          price: row.price ?? 0,
+        });
       }
     }
 
@@ -225,6 +233,56 @@ router.put("/product/:productId", async (req, res) => {
   } catch (err) {
     console.error("❌ PUT /attributes/product/:productId error:", err);
     res.status(500).json({ error: "Failed to update product attributes" });
+  }
+});
+
+// =======================================================
+// PUT /attributes/:attributeName/options/:oldValue → update price only
+// body: { price }
+// =======================================================
+router.put("/:attributeName/options/:oldValue", async (req, res) => {
+  try {
+    const { attributeName, oldValue } = req.params;
+    const { price } = req.body;
+
+    if (price === undefined || price === null) {
+      return res.status(400).json({ error: "price is required" });
+    }
+
+    const [rows] = await db
+      .promise()
+      .query(
+        "SELECT attribute_id FROM attributes WHERE attribute_name = ? LIMIT 1",
+        [attributeName]
+      );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Attribute not found" });
+    }
+
+    const attribute_id = rows[0].attribute_id;
+
+    const [result] = await db
+      .promise()
+      .query(
+        `
+          UPDATE attribute_options 
+          SET price = ?
+          WHERE attribute_id = ? AND option_value = ?
+        `,
+        [Number(price) || 0, attribute_id, oldValue]
+      );
+
+    if (result.affectedRows === 0) {
+      return res
+        .status(404)
+        .json({ error: "Option not found for this attribute" });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ PUT /attributes/:attributeName/options/:oldValue", err);
+    res.status(500).json({ error: "Failed to update attribute option" });
   }
 });
 

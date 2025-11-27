@@ -10,6 +10,14 @@ import {
 import { API_URL } from "../../api";
 import WalkInOrderModal from "./WalkInOrderModal";
 
+// Small helper component for labels
+const Detail = ({ label, value }) => (
+  <p>
+    <span className="font-bold text-gray-800">{label}:</span>{" "}
+    {value || "—"}
+  </p>
+);
+
 const OrdersSection = () => {
   // =====================================================
   // STATE
@@ -25,7 +33,6 @@ const OrdersSection = () => {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
-  const [previewImage, setPreviewImage] = useState(null);
 
   const [tableView, setTableView] = useState("active"); // active | completed | canceled
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -168,12 +175,6 @@ const OrdersSection = () => {
       )
     ) : null;
 
-  const formatLabel = (key) =>
-    key
-      .replace(/([A-Z])/g, " $1")
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, (char) => char.toUpperCase());
-
   const statusColors = {
     Pending: "bg-gray-100 text-gray-700",
     Ongoing: "bg-yellow-100 text-yellow-700",
@@ -195,8 +196,8 @@ const OrdersSection = () => {
   // =====================================================
   // VIEW MODAL + NAVIGATION (NEXT / PREV + KEYBOARD)
   // =====================================================
-  const openViewModal = async (order) => {
-    const orderId = order.order_id;
+  const openViewModal = async (orderRow) => {
+    const orderId = orderRow.order_id;
     if (!orderId) return alert("Invalid order ID.");
 
     try {
@@ -211,8 +212,15 @@ const OrdersSection = () => {
       // Find current index in displayedOrders (for Next/Prev)
       const index = displayedOrders.findIndex((o) => o.order_id === orderId);
 
+      // Merge table row data (has status, estimated_price, etc.)
+      // with details data (items, files, etc.)
+      const mergedOrder = {
+        ...orderRow,
+        ...data.order,
+      };
+
       setCurrentViewIndex(index);
-      setSelectedOrder(data.order);
+      setSelectedOrder(mergedOrder);
       setShowViewModal(true);
     } catch (err) {
       console.error("Error fetching order details:", err);
@@ -266,8 +274,13 @@ const OrdersSection = () => {
   // PRICE MODAL HANDLERS
   // =====================================================
   const openPriceModal = (order) => {
+    if (order.status !== "Pending") {
+      alert("You can only add/update price when the order is Pending.");
+      return;
+    }
+
     setSelectedOrder(order);
-    setNewPrice(order.price || "");
+    setNewPrice(order.manager_added || "");
     setShowPriceModal(true);
   };
 
@@ -334,16 +347,14 @@ const OrdersSection = () => {
   const confirmSetStatus = async () => {
     if (!selectedOrder) return;
 
+    const itemId = selectedOrder.enquiryNo; // order_item_id
+
     try {
-      // 🔥 Using selectedOrder.order_item_id as you specified
-      const res = await fetch(
-        `${API_URL}/orders/${selectedOrder.order_item_id}/status`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: newStatus }),
-        }
-      );
+      const res = await fetch(`${API_URL}/orders/${itemId}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
 
       const data = await res.json();
 
@@ -352,12 +363,8 @@ const OrdersSection = () => {
         return;
       }
 
-      // Reload list so all tabs (active/completed/canceled) reflect changes
       loadOrders();
-
-      setShowStatusModal(false);
-      setSelectedOrder(null);
-      setNewStatus("");
+      closeStatusModal();
     } catch (err) {
       console.error("❌ Status update failed:", err);
       alert("Status update failed");
@@ -421,6 +428,32 @@ const OrdersSection = () => {
     }
   };
 
+    // Quick sort dropdown (toolbar)
+  const [quickSort, setQuickSort] = useState("none");
+
+  const handleQuickSortChange = (value) => {
+    setQuickSort(value);
+
+    switch (value) {
+      case "date_desc":
+        setSortConfig({ key: "dateOrdered", direction: "desc" });
+        break;
+      case "date_asc":
+        setSortConfig({ key: "dateOrdered", direction: "asc" });
+        break;
+      case "total_desc":
+        setSortConfig({ key: "total_price", direction: "desc" });
+        break;
+      case "total_asc":
+        setSortConfig({ key: "total_price", direction: "asc" });
+        break;
+      default:
+        // reset sorting
+        setSortConfig({ key: null, direction: "asc" });
+    }
+  };
+
+
   // =====================================================
   // RENDER
   // =====================================================
@@ -447,52 +480,76 @@ const OrdersSection = () => {
           </div>
         </div>
 
-        {/* Tabs + Add Walk-in */}
-        <div className="flex justify-start gap-3 mt-2">
-          <button
-            onClick={() => setTableView("active")}
-            className={`px-4 py-2 rounded-lg shadow-sm transition 
-              ${
-                tableView === "active"
-                  ? "bg-cyan-600 text-white"
-                  : "bg-gray-200 text-gray-700"
-              }`}
-          >
-            Active Orders
-          </button>
+        {/* Tabs + Add Walk-in + Sort */}
+        <div className="flex flex-col md:flex-row md:items-center gap-3 mt-2">
+          <div className="flex gap-3">
+            <button
+              onClick={() => setTableView("active")}
+              className={`px-4 py-2 rounded-lg shadow-sm transition 
+                ${
+                  tableView === "active"
+                    ? "bg-cyan-600 text-white"
+                    : "bg-gray-200 text-gray-700"
+                }`}
+            >
+              Active Orders
+            </button>
 
-          <button
-            onClick={() => setTableView("completed")}
-            className={`px-4 py-2 rounded-lg shadow-sm transition 
-              ${
-                tableView === "completed"
-                  ? "bg-cyan-600 text-white"
-                  : "bg-gray-200 text-gray-700"
-              }`}
-          >
-            Completed Orders
-          </button>
+            <button
+              onClick={() => setTableView("completed")}
+              className={`px-4 py-2 rounded-lg shadow-sm transition 
+                ${
+                  tableView === "completed"
+                    ? "bg-cyan-600 text-white"
+                    : "bg-gray-200 text-gray-700"
+                }`}
+            >
+              Completed Orders
+            </button>
 
-          <button
-            onClick={() => setTableView("canceled")}
-            className={`px-4 py-2 rounded-lg shadow-sm transition 
-              ${
-                tableView === "canceled"
-                  ? "bg-cyan-600 text-white"
-                  : "bg-gray-200 text-gray-700"
-              }`}
-          >
-            Canceled Orders
-          </button>
+            <button
+              onClick={() => setTableView("canceled")}
+              className={`px-4 py-2 rounded-lg shadow-sm transition 
+                ${
+                  tableView === "canceled"
+                    ? "bg-cyan-600 text-white"
+                    : "bg-gray-200 text-gray-700"
+                }`}
+            >
+              Canceled Orders
+            </button>
+          </div>
 
-          <button
-            onClick={() => setShowAddOrderModal(true)}
-            className="ml-auto flex items-center gap-2 bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 transition shadow-md"
-          >
-            <PlusCircle size={18} />
-            Add Walk-In Order
-          </button>
+          <div className="flex items-center gap-3 md:ml-auto">
+            {/* Sort dropdown */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600 hidden sm:inline">
+                Sort:
+              </span>
+              <select
+                value={quickSort}
+                onChange={(e) => handleQuickSortChange(e.target.value)}
+                className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              >
+                <option value="none">Default</option>
+                <option value="date_desc">Newest Orders</option>
+                <option value="date_asc">Oldest Orders</option>
+                <option value="total_desc">Highest Total</option>
+                <option value="total_asc">Lowest Total</option>
+              </select>
+            </div>
+
+            {/* Add Walk-in button */}
+            <button
+              onClick={() => setShowAddOrderModal(true)}
+              className="flex items-center gap-2 bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 transition shadow-md"
+            >
+              <PlusCircle size={18} />
+              Add Walk-In Order
+            </button>
+          </div>
         </div>
+
 
         {/* Orders Table */}
         <motion.div
@@ -605,12 +662,21 @@ const OrdersSection = () => {
                           </button>
 
                           {/* ADD PRICE */}
-                          <button
-                            onClick={() => openPriceModal(order)}
-                            className="flex items-center justify-center gap-1 bg-cyan-100 text-cyan-700 px-2 py-2 rounded-lg hover:bg-cyan-200 transition text-sm font-medium"
-                          >
-                            <PlusCircle size={16} />
-                          </button>
+                          {order.status === "Pending" ? (
+                            <button
+                              onClick={() => openPriceModal(order)}
+                              className="flex items-center justify-center gap-1 bg-cyan-100 text-cyan-700 px-2 py-2 rounded-lg hover:bg-cyan-200 transition text-sm font-medium"
+                            >
+                              <PlusCircle size={16} />
+                            </button>
+                          ) : (
+                            <button
+                              disabled
+                              className="flex items-center justify-center gap-1 bg-gray-200 text-gray-400 px-2 py-2 rounded-lg cursor-not-allowed text-sm font-medium"
+                            >
+                              <PlusCircle size={16} />
+                            </button>
+                          )}
                         </>
                       )}
                     </td>
@@ -622,222 +688,207 @@ const OrdersSection = () => {
         </motion.div>
       </motion.div>
 
-      {/* --- View Modal --- */}
+      {/* --- Redesigned View Modal --- */}
       <AnimatePresence>
         {showViewModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
-            className="fixed inset-0 flex items-center justify-center z-50"
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full text-gray-900 overflow-y-auto max-h-[90vh] border border-gray-200"
+              className="bg-white rounded-3xl shadow-2xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-gray-200"
             >
-              <h2 className="text-3xl font-bold mb-6 text-cyan-700 text-center border-b pb-3">
+              {/* HEADER */}
+              <h2 className="text-3xl font-extrabold text-cyan-700 text-center mb-6">
                 Order Details
               </h2>
 
               {selectedOrder ? (
                 <div className="space-y-6">
-                  {/* Basic Order Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
-                    <p>
-                      <span className="font-bold text-gray-800">
-                        Customer Name:
-                      </span>{" "}
-                      {selectedOrder.customer_name || "—"}
-                    </p>
-                    <p>
-                      <span className="font-bold text-gray-800">Email:</span>{" "}
-                      {selectedOrder.email || "—"}
-                    </p>
-                    <p>
-                      <span className="font-bold text-gray-800">
-                        Contact Number:
-                      </span>{" "}
-                      {selectedOrder.contact_number || "—"}
-                    </p>
-                    <p>
-                      <span className="font-bold text-gray-800">
-                        Location:
-                      </span>{" "}
-                      {selectedOrder.location || "—"}
-                    </p>
-                    <p>
-                      <span className="font-bold text-gray-800">
-                        Date Ordered:
-                      </span>{" "}
-                      {selectedOrder.dateOrdered
-                        ? new Date(
-                            selectedOrder.dateOrdered
-                          ).toLocaleDateString()
-                        : "—"}
-                    </p>
-                    <p>
-                      <span className="font-bold text-gray-800">Status:</span>{" "}
-                      {selectedOrder.status || "Pending"}
-                    </p>
-                    <p>
-                      <span className="font-bold text-gray-800">Price:</span>{" "}
-                      {selectedOrder.price != null
-                        ? `₱${selectedOrder.price}`
-                        : "--"}
-                    </p>
+                  {/* CUSTOMER INFORMATION CARD */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 shadow-sm">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4 border-b border-b-gray-200 pb-2">
+                      Customer Information
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 text-sm">
+                      <Detail label="Customer Name" value={selectedOrder.customer_name} />
+                      <Detail label="Email" value={selectedOrder.email} />
+                      <Detail label="Contact Number" value={selectedOrder.contact_number} />
+                      <Detail
+                        label="Location"
+                        value={selectedOrder.location || selectedOrder.address}
+                      />
+                      <Detail
+                        label="Date Ordered"
+                        value={
+                          selectedOrder.order_date
+                            ? new Date(selectedOrder.order_date).toLocaleDateString()
+                            : "—"
+                        }
+                      />
+                      <Detail label="Status" value={selectedOrder.status} />
+                    </div>
                   </div>
 
-                  {/* Items */}
-                  {(selectedOrder.items || []).length > 0 ? (
-                    (selectedOrder.items || []).map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="mt-6 border-t border-gray-200 pt-5"
-                      >
-                        <h3 className="text-lg font-semibold text-cyan-700 mb-3">
-                          {item.service || "Service"}
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
-                          {/* Product-specific details */}
-                          {item.details &&
-                            Object.keys(item.details).map((key) => {
-                              const value = item.details[key];
-                              if (!value) return null;
+                  {/* PRICING CARD */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 shadow-sm">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4 border-b border-b-gray-200 pb-2">
+                      Pricing
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 text-sm">
+                      <Detail
+                        label="Estimated Price"
+                        value={
+                          selectedOrder.estimated_price != null
+                            ? `₱${Number(selectedOrder.estimated_price).toFixed(2)}`
+                            : "—"
+                        }
+                      />
+
+                      <Detail
+                        label="Manager Added"
+                        value={
+                          selectedOrder.manager_added != null
+                            ? `₱${Number(selectedOrder.manager_added).toFixed(2)}`
+                            : "—"
+                        }
+                      />
+                    </div>
+
+                    {/* TOTAL PRICE */}
+                    <div className="mt-4 text-center p-3 bg-green-100 border border-green-300 rounded-xl">
+                      <p className="text-xl font-extrabold text-green-700">
+                        Total Price:{" "}
+                        ₱
+                        {(
+                          Number(selectedOrder.estimated_price || 0) +
+                          Number(selectedOrder.manager_added || 0)
+                        ).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* ORDER ITEMS CARD */}
+                  {(selectedOrder.items || []).map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-gray-50 border border-gray-200 rounded-2xl p-6 shadow-sm"
+                    >
+                      <h3 className="text-xl font-bold text-gray-800 mb-4 border-b border-b-gray-200 pb-2">
+                        {item.service || "Service"}
+                      </h3>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 text-sm">
+                        {item.attributes?.length > 0 &&
+                          item.attributes.map((attr, i) => (
+                            <Detail
+                              key={i}
+                              label={attr.attribute_name || attr.name}
+                              value={attr.option_value || attr.value}
+                            />
+                          ))}
+                      </div>
+
+                      {/* FILES */}
+                      {(item.files || []).length > 0 && (
+                        <div className="mt-4">
+                          <h4 className="font-semibold text-gray-800 mb-2">
+                            Uploaded Files
+                          </h4>
+
+                          <div className="flex gap-3 flex-wrap">
+                            {item.files.map((file, fIdx) => {
+                              const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(file);
+                              const isPDF = /\.pdf$/i.test(file);
+
                               return (
-                                <p key={key}>
-                                  <span className="font-bold text-gray-800">
-                                    {formatLabel(key)}:
-                                  </span>{" "}
-                                  {value}
-                                </p>
+                                <div key={fIdx} className="flex flex-col items-center">
+                                  {isImage && (
+                                    <button
+                                      onClick={() => {
+                                        setImageGallery(item.files);
+                                        setCurrentImageIndex(fIdx);
+                                        setShowImageModal(true);
+                                      }}
+                                      className="px-3 py-1 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-100"
+                                    >
+                                      View Image
+                                    </button>
+                                  )}
+
+                                  {isPDF && (
+                                    <a
+                                      href={`${API_URL.replace("/api", "")}${file}`}
+                                      target="_blank"
+                                      className="px-3 py-1 bg-white border rounded-lg shadow-sm hover:bg-gray-100"
+                                    >
+                                      View PDF
+                                    </a>
+                                  )}
+
+                                  <a
+                                    href={`${API_URL.replace("/api", "")}${file}`}
+                                    download
+                                    className="text-xs text-cyan-600 mt-1 underline"
+                                  >
+                                    Download
+                                  </a>
+                                </div>
                               );
                             })}
-
-                          {/* Uploaded files */}
-                          {(item.files || []).length > 0 && (
-                            <div className="mt-3">
-                              <h4 className="font-semibold text-gray-800 mb-2">
-                                Uploaded Files:
-                              </h4>
-                              <div className="flex flex-wrap gap-3">
-                                {(item.files || []).map((file, fIdx) => {
-                                  const isImage =
-                                    /\.(jpg|jpeg|png|gif|webp)$/i.test(file);
-                                  const isPDF = /\.pdf$/i.test(file);
-                                  return (
-                                    <div
-                                      key={fIdx}
-                                      className="flex flex-col items-center"
-                                    >
-                                      {isImage && (
-                                        <button
-                                          onClick={() => {
-                                            const allImages = (
-                                              item.files || []
-                                            ).filter((f) =>
-                                              /\.(jpg|jpeg|png|gif|webp)$/i.test(
-                                                f
-                                              )
-                                            );
-                                            const startIndex =
-                                              allImages.findIndex(
-                                                (img) => img === file
-                                              );
-                                            setImageGallery(allImages);
-                                            setCurrentImageIndex(
-                                              startIndex >= 0 ? startIndex : 0
-                                            );
-                                            setPreviewImage(
-                                              `http://localhost:5000${file}`
-                                            );
-                                            setShowImageModal(true);
-                                          }}
-                                          className="px-2 py-1 border border-gray-300 rounded bg-gray-100 hover:bg-gray-200 text-sm"
-                                        >
-                                          View Image
-                                        </button>
-                                      )}
-                                      {isPDF && (
-                                        <a
-                                          href={`http://localhost:5000${file}`}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="px-2 py-1 border border-gray-300 rounded bg-gray-100 hover:bg-gray-200 text-sm"
-                                        >
-                                          View PDF
-                                        </a>
-                                      )}
-                                      <a
-                                        href={`http://localhost:5000${file}`}
-                                        download
-                                        className="text-xs text-cyan-600 mt-1 hover:underline"
-                                      >
-                                        Download
-                                      </a>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
+                          </div>
                         </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 italic mt-3">
-                      No items found for this order.
-                    </p>
-                  )}
+                      )}
+                    </div>
+                  ))}
+
+                  {/* NAVIGATION BUTTONS */}
+                  <div className="flex justify-between items-center mt-8">
+                    <button
+                      disabled={currentViewIndex <= 0}
+                      onClick={goToPreviousOrder}
+                      className={`px-5 py-2 rounded-xl font-semibold transition ${
+                        currentViewIndex <= 0
+                          ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                          : "bg-cyan-600 text-white hover:bg-cyan-700"
+                      }`}
+                    >
+                      ← Previous
+                    </button>
+
+                    <button
+                      disabled={currentViewIndex >= displayedOrders.length - 1}
+                      onClick={goToNextOrder}
+                      className={`px-5 py-2 rounded-xl font-semibold transition ${
+                        currentViewIndex >= displayedOrders.length - 1
+                          ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                          : "bg-cyan-600 text-white hover:bg-cyan-700"
+                      }`}
+                    >
+                      Next →
+                    </button>
+                  </div>
+
+                  {/* CLOSE */}
+                  <div className="flex justify-center mt-6">
+                    <button
+                      onClick={closeViewModal}
+                      className="px-8 py-2 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition shadow-md"
+                    >
+                      Close
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <p className="text-gray-500 italic">No order selected.</p>
+                <p className="text-center text-gray-500 italic">No order selected.</p>
               )}
-
-              {/* Navigation Buttons */}
-              <div className="flex justify-between items-center mt-6">
-                <button
-                  disabled={currentViewIndex == null || currentViewIndex <= 0}
-                  onClick={goToPreviousOrder}
-                  className={`px-4 py-2 rounded-lg text-white transition 
-                    ${
-                      currentViewIndex == null || currentViewIndex <= 0
-                        ? "bg-gray-300 cursor-not-allowed"
-                        : "bg-cyan-600 hover:bg-cyan-700"
-                    }`}
-                >
-                  ← Previous
-                </button>
-
-                <button
-                  disabled={
-                    currentViewIndex == null ||
-                    currentViewIndex >= displayedOrders.length - 1
-                  }
-                  onClick={goToNextOrder}
-                  className={`px-4 py-2 rounded-lg text-white transition 
-                    ${
-                      currentViewIndex == null ||
-                      currentViewIndex >= displayedOrders.length - 1
-                        ? "bg-gray-300 cursor-not-allowed"
-                        : "bg-cyan-600 hover:bg-cyan-700"
-                    }`}
-                >
-                  Next →
-                </button>
-              </div>
-
-              {/* Close Button */}
-              <div className="flex justify-center mt-8">
-                <button
-                  onClick={closeViewModal}
-                  className="px-6 py-2 rounded-lg bg-cyan-600 text-white font-semibold hover:bg-cyan-700 transition shadow-md"
-                >
-                  Close
-                </button>
-              </div>
             </motion.div>
           </motion.div>
         )}
@@ -908,7 +959,7 @@ const OrdersSection = () => {
         )}
       </AnimatePresence>
 
-      {/* --- Status Modal --- */}
+      {/* --- Redesigned Status Modal --- */}
       <AnimatePresence>
         {showStatusModal && (
           <motion.div
@@ -918,37 +969,109 @@ const OrdersSection = () => {
             className="fixed inset-0 flex items-center justify-center bg-black/60 z-50"
           >
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
+              initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-lg p-6 max-w-sm w-full text-center"
+              exit={{ scale: 0.85, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full"
             >
-              <h2 className="text-xl font-bold mb-3 text-gray-900">
-                Set Order Status
+              {/* Header */}
+              <h2 className="text-2xl font-bold mb-2 text-gray-900 text-center">
+                Update Order Status
               </h2>
-              <select
-                value={newStatus}
-                onChange={(e) => setNewStatus(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:ring-2 focus:ring-yellow-500 outline-none"
-              >
-                <option>Pending</option>
-                <option>Ongoing</option>
-                <option>Out for Delivery</option>
-                <option>Completed</option>
-                <option>Cancelled</option>
-              </select>
-              <div className="flex justify-center gap-3">
+              <p className="text-sm text-gray-500 text-center mb-4">
+                Choose the new status for this order. This will be visible to the customer.
+              </p>
+
+              {/* Current Status */}
+              {selectedOrder && (
+                <div className="mb-4 text-center">
+                  <p className="text-xs uppercase tracking-wide text-gray-500">
+                    Current Status
+                  </p>
+                  <span
+                    className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-semibold ${
+                      statusColors[selectedOrder.status] ||
+                      "bg-gray-100 text-gray-700"
+                    }`}
+                  >
+                    {selectedOrder.status}
+                  </span>
+                </div>
+              )}
+
+              {/* Status Options */}
+              <div className="mb-5">
+                <p className="text-xs font-semibold text-gray-600 mb-2">
+                  Select New Status
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {["Pending", "Ongoing", "Out for Delivery", "Completed", "Cancelled"].map(
+                    (status) => (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() => setNewStatus(status)}
+                        className={`px-3 py-2 rounded-lg text-sm border transition font-medium
+                          ${
+                            newStatus === status
+                              ? "bg-cyan-600 text-white border-cyan-600 shadow-sm"
+                              : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+                          }`}
+                      >
+                        {status}
+                      </button>
+                    )
+                  )}
+                </div>
+              </div>
+
+              {/* Helper Text */}
+              <div className="mb-5 text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
+                {newStatus === "Completed" && (
+                  <p>
+                    Marking this order as <span className="font-semibold">Completed</span>{" "}
+                    means all items and payments are finalized.
+                  </p>
+                )}
+                {newStatus === "Cancelled" && (
+                  <p>
+                    Marking this order as <span className="font-semibold">Cancelled</span>{" "}
+                    will indicate that this job will no longer proceed.
+                  </p>
+                )}
+                {newStatus === "Ongoing" && (
+                  <p>
+                    <span className="font-semibold">Ongoing</span> means the order is
+                    currently being processed or produced.
+                  </p>
+                )}
+                {newStatus === "Out for Delivery" && (
+                  <p>
+                    <span className="font-semibold">Out for Delivery</span> means the order
+                    is already on its way to the customer.
+                  </p>
+                )}
+                {newStatus === "Pending" && (
+                  <p>
+                    <span className="font-semibold">Pending</span> means this order is still
+                    waiting to be processed.
+                  </p>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3">
                 <button
                   onClick={closeStatusModal}
-                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
+                  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmSetStatus}
-                  className="px-4 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white transition"
+                  className="px-5 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-semibold transition"
                 >
-                  Save
+                  Save Status
                 </button>
               </div>
             </motion.div>
@@ -966,32 +1089,53 @@ const OrdersSection = () => {
             className="fixed inset-0 flex items-center justify-center bg-black/60 z-50"
           >
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
+              initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-lg p-6 max-w-sm w-full text-center"
+              exit={{ scale: 0.85, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full"
             >
-              <h2 className="text-xl font-bold mb-3 text-gray-900">
+              <h2 className="text-xl font-bold mb-4 text-gray-900 text-center">
                 Add / Update Price
               </h2>
+
+              {selectedOrder && (
+                <div className="mb-4 text-sm text-gray-600">
+                  <p>
+                    <span className="font-semibold">Customer:</span>{" "}
+                    {selectedOrder.customer_name || "—"}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Service:</span>{" "}
+                    {selectedOrder.service || "—"}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Estimated Price:</span>{" "}
+                    {selectedOrder.estimated_price != null
+                      ? `₱${Number(selectedOrder.estimated_price).toFixed(2)}`
+                      : "—"}
+                  </p>
+                </div>
+              )}
+
               <input
                 type="number"
                 min="0"
                 value={newPrice}
                 onChange={(e) => setNewPrice(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:ring-2 focus:ring-cyan-500 outline-none"
-                placeholder="Enter price..."
+                className="w-full border border-gray-300 rounded-lg p-3 mb-4 focus:ring-2 focus:ring-cyan-500 outline-none text-lg"
+                placeholder="Enter manager-added amount..."
               />
-              <div className="flex justify-center gap-3">
+
+              <div className="flex justify-end gap-3">
                 <button
                   onClick={closePriceModal}
-                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
+                  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmAddPrice}
-                  className="px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white transition"
+                  className="px-5 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold transition"
                 >
                   Save
                 </button>

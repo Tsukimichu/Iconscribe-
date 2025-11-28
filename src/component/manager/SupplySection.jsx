@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Plus, List, X } from "lucide-react";
+import { Search, Plus, List, X, ChevronDown } from "lucide-react";
 import ReactApexChart from "react-apexcharts";
 import axios from "axios";
 import { useToast } from "../ui/ToastProvider.jsx";
@@ -13,7 +13,8 @@ const SupplyMonitoring = () => {
   const [popupType, setPopupType] = useState(null);
   const [selectedSupply, setSelectedSupply] = useState(null);
   const lowStockThreshold = 5;
-
+  const [sortOpen, setSortOpen] = useState(false);
+  const [sortBy, setSortBy] = useState("default");
   const { showToast } = useToast();
 
   // ----------------- CATEGORY SETS ----------------- //
@@ -94,6 +95,36 @@ const SupplyMonitoring = () => {
   // ======================================================
   // Categorize into: Materials, Business, Utilities, Transport, Misc
   // ======================================================
+
+    const sortedSupplies = useMemo(() => {
+      let arr = [...filteredSupplies];
+
+      switch (sortBy) {
+        case "name-asc":
+          arr.sort((a, b) => a.supply_name.localeCompare(b.supply_name));
+          break;
+        case "name-desc":
+          arr.sort((a, b) => b.supply_name.localeCompare(a.supply_name));
+          break;
+        case "qty-low":
+          arr.sort((a, b) => Number(a.quantity) - Number(b.quantity));
+          break;
+        case "qty-high":
+          arr.sort((a, b) => Number(b.quantity) - Number(a.quantity));
+          break;
+        case "price-low":
+          arr.sort((a, b) => Number(a.price) - Number(b.price));
+          break;
+        case "price-high":
+          arr.sort((a, b) => Number(b.price) - Number(a.price));
+          break;
+        default:
+          break;
+      }
+
+      return arr;
+    }, [filteredSupplies, sortBy]);  
+ 
   const categorizedSupplies = useMemo(() => {
     const groups = {
       Materials: [],
@@ -312,18 +343,100 @@ const SupplyMonitoring = () => {
           <Plus size={18} /> Add Expenses
         </button>
 
-        <button
-          onClick={() =>
-            setSupplies((prev) =>
-              [...prev].sort((a, b) =>
-                a.supply_name.localeCompare(b.supply_name)
-              )
-            )
-          }
-          className="flex items-center gap-2 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300"
-        >
-          <List size={18} /> Sort Items
-        </button>
+        <div className="relative">
+           <span className="text-sm text-gray-600 hidden sm:inline">
+              Sort:
+           </span>
+           
+          <button
+            onClick={() => setSortOpen((prev) => !prev)}
+            className="flex items-center justify-between w-44 px-4 py-2 bg-white border border-gray-300 rounded-xl shadow-sm text-sm text-gray-700 hover:border-cyan-400"
+          >
+            {sortBy === "default"
+              ? "Default"
+              : sortBy === "name-asc"
+              ? "Name (A–Z)"
+              : sortBy === "name-desc"
+              ? "Name (Z–A)"
+              : sortBy === "qty-low"
+              ? "Quantity (v → ʌ)"
+              : sortBy === "qty-high"
+              ? "Quantity (ʌ → v)"
+              : sortBy === "price-low"
+              ? "Price (v → ʌ)"
+              : "Price (ʌ → v)"}
+
+            <ChevronDown className="w-4 h-4" />
+          </button>
+
+          {sortOpen && (
+            <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-xl shadow-lg z-20">
+              <button
+                onClick={() => {
+                  setSortBy("name-asc");
+                  setSortOpen(false);
+                }}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+              >
+                Name (A–Z)
+              </button>
+
+              <button
+                onClick={() => {
+                  setSortBy("name-desc");
+                  setSortOpen(false);
+                }}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+              >
+                Name (Z–A)
+              </button>
+
+              <div className="border-t my-1" />
+
+              <button
+                onClick={() => {
+                  setSortBy("qty-low");
+                  setSortOpen(false);
+                }}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+              >
+                Quantity (v → ʌ)
+              </button>
+
+              <button
+                onClick={() => {
+                  setSortBy("qty-high");
+                  setSortOpen(false);
+                }}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+              >
+                Quantity (ʌ → v)
+              </button>
+
+              <div className="border-t my-1" />
+
+              <button
+                onClick={() => {
+                  setSortBy("price-low");
+                  setSortOpen(false);
+                }}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+              >
+                Price (v → ʌ)
+              </button>
+
+              <button
+                onClick={() => {
+                  setSortBy("price-high");
+                  setSortOpen(false);
+                }}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+              >
+                Price (ʌ → v)
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* CHARTS */}
@@ -365,16 +478,17 @@ const SupplyMonitoring = () => {
 
       {/* TABLES */}
       <div className="space-y-10">
+
         {/* MATERIALS */}
-        {categorizedSupplies.Materials.length > 0 && (
+        {sortedSupplies.filter(s => s.expense_type === "Material").length > 0 && (
           <div>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-cyan-700">Materials</h2>
 
-              {/* TOTAL */}
               <span className="text-lg font-semibold text-green-600">
                 Total: ₱
-                {categorizedSupplies.Materials
+                {sortedSupplies
+                  .filter((s) => s.expense_type === "Material")
                   .reduce((sum, s) => sum + Number(s.price || 0), 0)
                   .toLocaleString()}
               </span>
@@ -396,56 +510,53 @@ const SupplyMonitoring = () => {
                 </thead>
 
                 <tbody>
-                  {categorizedSupplies.Materials.map((s) => {
-                    const isLow = Number(s.quantity) <= lowStockThreshold;
+                  {sortedSupplies
+                    .filter((s) => s.expense_type === "Material")
+                    .map((s) => {
+                      const isLow = Number(s.quantity) <= lowStockThreshold;
 
-                    return (
-                      <tr
-                        key={s.supply_id}
-                        className=" hover:bg-gray-50 h-14 transition"
-                      >
-                        <td className="px-6">{s.supply_name}</td>
+                      return (
+                        <tr
+                          key={s.supply_id}
+                          className="hover:bg-gray-50 h-14 transition"
+                        >
+                          <td className="px-6">{s.supply_name}</td>
+                          <td className="px-6">{s.quantity}</td>
+                          <td className="px-6">{s.unit || "—"}</td>
+                          <td className="px-6">{s.category}</td>
+                          <td className="px-6 text-green-700 font-semibold">
+                            ₱{Number(s.price || 0).toLocaleString()}
+                          </td>
 
-                        <td className="px-6">{s.quantity}</td>
+                          <td className="px-6">
+                            {isLow ? (
+                              <span className="px-3 py-1 rounded-full bg-red-100 text-red-600 text-xs">
+                                Low Stock
+                              </span>
+                            ) : (
+                              <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs">
+                                OK
+                              </span>
+                            )}
+                          </td>
 
-                        <td className="px-6">{s.unit || "—"}</td>
+                          <td className="px-6 text-xs text-gray-500">
+                            {s.created_at
+                              ? new Date(s.created_at).toLocaleDateString()
+                              : "—"}
+                          </td>
 
-                        <td className="px-6">{s.category}</td>
-
-                        <td className="px-6 text-green-700 font-semibold">
-                          ₱{Number(s.price || 0).toLocaleString()}
-                        </td>
-
-                        <td className="px-6">
-                          {isLow ? (
-                            <span className="px-3 py-1 rounded-full bg-red-100 text-red-600 text-xs">
-                              Low Stock
-                            </span>
-                          ) : (
-                            <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs">
-                              OK
-                            </span>
-                          )}
-                        </td>
-
-                        <td className="px-6 text-xs text-gray-500">
-                          {s.created_at
-                            ? new Date(s.created_at).toLocaleDateString()
-                            : "—"}
-                        </td>
-
-                        {/* ACTION BUTTONS (ONLY EDIT) */}
-                        <td className="px-6 flex gap-2">
-                          <button
-                            onClick={() => openPopup("edit", s)}
-                            className="p-2 rounded-full bg-yellow-100 hover:bg-yellow-200 text-yellow-700 transition shadow-sm"
-                          >
-                            <List size={16} />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          <td className="px-6 flex gap-2">
+                            <button
+                              onClick={() => openPopup("edit", s)}
+                              className="p-2 rounded-full bg-yellow-100 hover:bg-yellow-200 text-yellow-700 transition shadow-sm"
+                            >
+                              <List size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
             </div>
@@ -453,15 +564,26 @@ const SupplyMonitoring = () => {
         )}
 
         {/* BUSINESS EXPENSES */}
-        {categorizedSupplies.Business.length > 0 && (
+        {sortedSupplies.filter(s =>
+            s.expense_type !== "Material" &&
+            !["Utilities", "Transportation", "Miscellaneous"].includes(s.category)
+          ).length > 0 && (
           <div>
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-green-700">Business Expenses</h2>
+              <h2 className="text-2xl font-bold text-green-700">
+                Business Expenses
+              </h2>
 
-              {/* TOTAL */}
               <span className="text-lg font-semibold text-green-600">
                 Total: ₱
-                {categorizedSupplies.Business
+                {sortedSupplies
+                  .filter(
+                    (s) =>
+                      s.expense_type !== "Material" &&
+                      !["Utilities", "Transportation", "Miscellaneous"].includes(
+                        s.category
+                      )
+                  )
                   .reduce((sum, s) => sum + Number(s.price || 0), 0)
                   .toLocaleString()}
               </span>
@@ -479,23 +601,31 @@ const SupplyMonitoring = () => {
                 </thead>
 
                 <tbody>
-                  {categorizedSupplies.Business.map((s) => (
-                    <tr
-                      key={s.supply_id}
-                      className=" hover:bg-gray-50 h-14 transition"
-                    >
-                      <td className="px-6">{s.supply_name}</td>
-                      <td className="px-6">{s.category}</td>
-                      <td className="px-6 text-green-700 font-semibold">
-                        ₱{Number(s.price || 0).toLocaleString()}
-                      </td>
-                      <td className="px-6 text-xs text-gray-500">
-                        {s.created_at
-                          ? new Date(s.created_at).toLocaleDateString()
-                          : "—"}
-                      </td>
-                    </tr>
-                  ))}
+                  {sortedSupplies
+                    .filter(
+                      (s) =>
+                        s.expense_type !== "Material" &&
+                        !["Utilities", "Transportation", "Miscellaneous"].includes(
+                          s.category
+                        )
+                    )
+                    .map((s) => (
+                      <tr
+                        key={s.supply_id}
+                        className="hover:bg-gray-50 h-14 transition"
+                      >
+                        <td className="px-6">{s.supply_name}</td>
+                        <td className="px-6">{s.category}</td>
+                        <td className="px-6 text-green-700 font-semibold">
+                          ₱{Number(s.price || 0).toLocaleString()}
+                        </td>
+                        <td className="px-6 text-xs text-gray-500">
+                          {s.created_at
+                            ? new Date(s.created_at).toLocaleDateString()
+                            : "—"}
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
@@ -503,15 +633,15 @@ const SupplyMonitoring = () => {
         )}
 
         {/* UTILITIES */}
-        {categorizedSupplies.Utilities.length > 0 && (
+        {sortedSupplies.filter(s => s.category?.includes("Utilities")).length > 0 && (
           <div>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-indigo-700">Utilities</h2>
 
-              {/* TOTAL */}
               <span className="text-lg font-semibold text-indigo-600">
                 Total: ₱
-                {categorizedSupplies.Utilities
+                {sortedSupplies
+                  .filter((s) => s.category?.includes("Utilities"))
                   .reduce((sum, s) => sum + Number(s.price || 0), 0)
                   .toLocaleString()}
               </span>
@@ -529,23 +659,25 @@ const SupplyMonitoring = () => {
                 </thead>
 
                 <tbody>
-                  {categorizedSupplies.Utilities.map((s) => (
-                    <tr
-                      key={s.supply_id}
-                      className=" hover:bg-gray-50 h-14 transition"
-                    >
-                      <td className="px-6">{s.supply_name}</td>
-                      <td className="px-6">{s.category}</td>
-                      <td className="px-6 text-green-700 font-semibold">
-                        ₱{Number(s.price || 0).toLocaleString()}
-                      </td>
-                      <td className="px-6 text-xs text-gray-500">
-                        {s.created_at
-                          ? new Date(s.created_at).toLocaleDateString()
-                          : "—"}
-                      </td>
-                    </tr>
-                  ))}
+                  {sortedSupplies
+                    .filter((s) => s.category?.includes("Utilities"))
+                    .map((s) => (
+                      <tr
+                        key={s.supply_id}
+                        className="hover:bg-gray-50 h-14 transition"
+                      >
+                        <td className="px-6">{s.supply_name}</td>
+                        <td className="px-6">{s.category}</td>
+                        <td className="px-6 text-green-700 font-semibold">
+                          ₱{Number(s.price || 0).toLocaleString()}
+                        </td>
+                        <td className="px-6 text-xs text-gray-500">
+                          {s.created_at
+                            ? new Date(s.created_at).toLocaleDateString()
+                            : "—"}
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
@@ -553,15 +685,16 @@ const SupplyMonitoring = () => {
         )}
 
         {/* TRANSPORT */}
-        {categorizedSupplies.Transport.length > 0 && (
+        {sortedSupplies.filter(s => s.category?.includes("Transportation")).length >
+          0 && (
           <div>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-orange-600">Transport</h2>
 
-              {/* TOTAL */}
               <span className="text-lg font-semibold text-orange-600">
                 Total: ₱
-                {categorizedSupplies.Transport
+                {sortedSupplies
+                  .filter((s) => s.category?.includes("Transportation"))
                   .reduce((sum, s) => sum + Number(s.price || 0), 0)
                   .toLocaleString()}
               </span>
@@ -579,23 +712,25 @@ const SupplyMonitoring = () => {
                 </thead>
 
                 <tbody>
-                  {categorizedSupplies.Transport.map((s) => (
-                    <tr
-                      key={s.supply_id}
-                      className=" hover:bg-gray-50 h-14 transition"
-                    >
-                      <td className="px-6">{s.supply_name}</td>
-                      <td className="px-6">{s.category}</td>
-                      <td className="px-6 text-green-700 font-semibold">
-                        ₱{Number(s.price || 0).toLocaleString()}
-                      </td>
-                      <td className="px-6 text-xs text-gray-500">
-                        {s.created_at
-                          ? new Date(s.created_at).toLocaleDateString()
-                          : "—"}
-                      </td>
-                    </tr>
-                  ))}
+                  {sortedSupplies
+                    .filter((s) => s.category?.includes("Transportation"))
+                    .map((s) => (
+                      <tr
+                        key={s.supply_id}
+                        className="hover:bg-gray-50 h-14 transition"
+                      >
+                        <td className="px-6">{s.supply_name}</td>
+                        <td className="px-6">{s.category}</td>
+                        <td className="px-6 text-green-700 font-semibold">
+                          ₱{Number(s.price || 0).toLocaleString()}
+                        </td>
+                        <td className="px-6 text-xs text-gray-500">
+                          {s.created_at
+                            ? new Date(s.created_at).toLocaleDateString()
+                            : "—"}
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
@@ -603,15 +738,15 @@ const SupplyMonitoring = () => {
         )}
 
         {/* MISCELLANEOUS */}
-        {categorizedSupplies.Miscellaneous.length > 0 && (
+        {sortedSupplies.filter(s => s.category?.includes("Misc")).length > 0 && (
           <div>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-gray-800">Miscellaneous</h2>
 
-              {/* TOTAL */}
               <span className="text-lg font-semibold text-gray-700">
                 Total: ₱
-                {categorizedSupplies.Miscellaneous
+                {sortedSupplies
+                  .filter((s) => s.category?.includes("Misc"))
                   .reduce((sum, s) => sum + Number(s.price || 0), 0)
                   .toLocaleString()}
               </span>
@@ -629,23 +764,25 @@ const SupplyMonitoring = () => {
                 </thead>
 
                 <tbody>
-                  {categorizedSupplies.Miscellaneous.map((s) => (
-                    <tr
-                      key={s.supply_id}
-                      className=" hover:bg-gray-50 h-14 transition"
-                    >
-                      <td className="px-6">{s.supply_name}</td>
-                      <td className="px-6">{s.category}</td>
-                      <td className="px-6 text-green-700 font-semibold">
-                        ₱{Number(s.price || 0).toLocaleString()}
-                      </td>
-                      <td className="px-6 text-xs text-gray-500">
-                        {s.created_at
-                          ? new Date(s.created_at).toLocaleDateString()
-                          : "—"}
-                      </td>
-                    </tr>
-                  ))}
+                  {sortedSupplies
+                    .filter((s) => s.category?.includes("Misc"))
+                    .map((s) => (
+                      <tr
+                        key={s.supply_id}
+                        className="hover:bg-gray-50 h-14 transition"
+                      >
+                        <td className="px-6">{s.supply_name}</td>
+                        <td className="px-6">{s.category}</td>
+                        <td className="px-6 text-green-700 font-semibold">
+                          ₱{Number(s.price || 0).toLocaleString()}
+                        </td>
+                        <td className="px-6 text-xs text-gray-500">
+                          {s.created_at
+                            ? new Date(s.created_at).toLocaleDateString()
+                            : "—"}
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>

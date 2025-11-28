@@ -6,6 +6,9 @@ import ReactApexChart from "react-apexcharts";
 import axios from "axios";
 import { useToast } from "../ui/ToastProvider.jsx";
 import { API_URL } from "../../api.js";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
 
 const OverviewSection = () => {
   const [activeFilter, setActiveFilter] = useState(null);
@@ -39,7 +42,7 @@ const OverviewSection = () => {
       // --- Sales chart logic ---
       const salesMap = {};
       fetchedOrders.forEach(order => {
-        const key = order.product_name || "Unknown";
+        const key = order.product_name;
         const saleAmount = Number(order.total_price || 0);
         salesMap[key] = (salesMap[key] || 0) + saleAmount;
       });
@@ -56,7 +59,7 @@ const OverviewSection = () => {
     if (!isFirstLoad.current && newOnes.length > 0) {
       const newOrdersList = fetchedOrders.filter(o => newOnes.includes(o.order_id));
 
-      setNewOrders(prev => [...newOrdersList, ...prev].slice(0, 5));
+      setNewOrders(prev => [...newOrdersList, ...prev].slice(0, 10));
 
       showToast(`${newOrdersList.length} new order${newOrdersList.length > 1 ? "s" : ""} received!`, "info");
     }
@@ -236,88 +239,134 @@ const OverviewSection = () => {
     tooltip: { y: { formatter: (val) => `₱${val.toLocaleString()}` } },
   }), []);
 
+  const safeDate = (value) => {
+    if (!value) return "";
+
+    const d = new Date(value);
+
+    return isNaN(d.getTime()) ? "" : d.toLocaleDateString();
+  };
+
+  const productLookup = useRef({});
+
+    useEffect(() => {
+      const fetchProducts = async () => {
+        try {
+          const res = await axios.get(`${API_URL}/products`);
+          const products = Array.isArray(res.data) ? res.data : [];
+
+          const map = {};
+          products.forEach((p) => {
+            map[p.product_id] = p.product_name;
+          });
+
+          productLookup.current = map;
+        } catch (err) {
+          console.error("Error loading products:", err);
+        }
+      };
+
+      fetchProducts();
+    }, []);
 
   const handleExportAll = () => {
-    const reportSections = [];
+    const doc = new jsPDF();
 
-    // --- ORDERS ---
-    reportSections.push("=== ORDERS ===");
-    if (orders.length > 0) {
-      reportSections.push("Order ID,Customer,Product,Date,Status");
-      orders.forEach(order => {
-        reportSections.push([
-          order.order_id,
-          order.customer_name,
-          order.product_name,
-          new Date(order.created_at).toLocaleDateString(),
-          order.status
-        ].join(","));
-      });
-    } else {
-      reportSections.push("No orders found.");
-    }
+    doc.setFontSize(18);
+    doc.text("Full Business Report", 14, 16);
 
-    reportSections.push("\n");
+    let y = 26;
 
-    // --- SALES / PRODUCT TOTALS ---
-    reportSections.push("=== SALES TOTALS ===");
-    if (productTotals.length > 0) {
-      reportSections.push("Product,Total Sales");
-      productTotals.forEach(p => {
-        reportSections.push([
-          p.product_name,
-          Number(p.total_sales || 0)
-        ].join(","));
-      });
-    } else {
-      reportSections.push("No sales data found.");
-    }
+    // ============================
+    // ORDERS SECTION
+    // ============================
+    doc.setFontSize(14);
+    doc.text("Orders", 14, y);
+    y += 6;
 
-    reportSections.push("\n");
+    autoTable(doc, {
+      startY: y,
+      head: [["Customer", "Product", "Qty", "Amount (Php)", "Date", "Status"]],
+      body: orders.map((o) => [
+        o.customer_name || "",
+        o.service || "",
+        o.quantity || 1,
+        `Php ${Number(o.total_price || 0).toLocaleString()}`,
+        safeDate(o.dateOrdered),
+        o.status || "",
+      ]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [59, 130, 246] },
+    });
 
-    // --- ORDER COUNTS PER PRODUCT (Report Donut Chart Data) ---
-    reportSections.push("=== TOTAL ORDERS PER PRODUCT ===");
-    if (orderChartData.categories.length > 0) {
-      reportSections.push("Product,Total Orders");
-      orderChartData.categories.forEach((name, index) => {
-        reportSections.push([name, orderChartData.data[index]].join(","));
-      });
-    } else {
-      reportSections.push("No order count data found.");
-    }
+    y = doc.lastAutoTable.finalY + 12;
 
-    reportSections.push("\n");
+    // ============================
+    // SALES TOTALS
+    // ============================
+    doc.setFontSize(14);
+    doc.text("Sales Totals", 14, y);
+    y += 6;
 
-    // --- EXPENSES ---
-    reportSections.push("=== EXPENSES ===");
-    if (expenses.length > 0) {
-      reportSections.push("ID,Supply Name,Quantity,Unit,Price,Date");
-      expenses.forEach(exp => {
-        reportSections.push([
-          exp.id,
-          exp.supply_name,
-          exp.quantity,
-          exp.unit,
-          exp.price,
-          new Date(exp.date).toLocaleDateString()
-        ].join(","));
-      });
-    } else {
-      reportSections.push("No expenses found.");
-    }
+    autoTable(doc, {
+      startY: y,
+      head: [["Item", "Total Sales (Php)"]],
+      body: productTotals.map((p) => [
+        p.product_name || productLookup.current[p.product_id] || "Unknown",
+        `Php ${Number(p.total_sales || 0).toLocaleString()}`,
+      ]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [34, 197, 94] },
+    });
 
-    // Combine all sections into CSV
-    const csvContent = "data:text/csv;charset=utf-8," + reportSections.join("\n");
-    const encodedUri = encodeURI(csvContent);
+    y = doc.lastAutoTable.finalY + 12;
 
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Full_Report.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // ============================
+    // ORDERS PER PRODUCT
+    // ============================
+    doc.setFontSize(14);
+    doc.text("Total Orders Per Product", 14, y);
+    y += 6;
 
-    showToast({ type: "success", message: "Full report exported successfully!" });
+    autoTable(doc, {
+      startY: y,
+      head: [["Product", "Total Orders"]],
+      body: orderChartData.categories.map((name, i) => [
+        name || "Unknown",
+        orderChartData.data[i] || 0,
+      ]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [245, 158, 11] },
+    });
+
+    y = doc.lastAutoTable.finalY + 12;
+
+    // ============================
+    // EXPENSES
+    // ============================
+    doc.setFontSize(14);
+    doc.text("Expenses", 14, y);
+    y += 6;
+
+    autoTable(doc, {
+      startY: y,
+      head: [["Item", "Qty", "Amount (Php)", "Date"]],
+      body: expenses.map((exp) => [
+        exp.supply_name || "",
+        exp.quantity || 0,
+        `Php ${(Number(exp.quantity) * Number(exp.price)).toLocaleString()}`,
+        safeDate(exp.date),
+      ]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [239, 68, 68] },
+    });
+
+    doc.save("Full_Report.pdf");
+
+    showToast({
+      type: "success",
+      message: "PDF report generated successfully!",
+    });
   };
 
   const aggregatedSales = useMemo(() => {
@@ -387,21 +436,18 @@ return (
                     exit={{ opacity: 0, y: -10 }}
                     className="absolute right-0 mt-2 w-80 bg-white shadow-xl rounded-xl border border-gray-200 z-50"
                   >
-                    <div className="p-4 border-b font-semibold text-gray-700">
+                    <div className="p-4 border-b border-b-gray-200 font-semibold text-gray-700">
                       Notifications
                     </div>
                     {newOrders.length > 0 ? (
                       <ul className="max-h-60 overflow-y-auto divide-y">
                         {newOrders.map((order, i) => (
                           <li key={i} className="p-3 hover:bg-gray-50 text-sm">
-                            <p className="font-medium text-gray-800">
-                              New Order #{order.order_id}
-                            </p>
                             <p className="text-gray-600">
-                              {order.customer_name} — {order.product_name}
+                              {order.customer_name} — {order.service}
                             </p>
                             <p className="text-xs text-gray-400">
-                              {new Date(order.created_at).toLocaleString()}
+                              {new Date(order.dateOrdered).toLocaleString()}
                             </p>
                           </li>
                         ))}
@@ -411,13 +457,13 @@ return (
                         No new orders
                       </p>
                     )}
-                    <div className="border-t">
+                    <div className="border-t border-t-gray-200">
                       <button
                         onClick={() => {
                           setNewOrders([]);
                           setShowNotifications(false);
                         }}
-                        className="w-full text-sm py-2 text-center text-blue-600 hover:bg-blue-50"
+                        className="w-full text-sm py-2 text-center text-blue-600 hover:bg-blue-50 hover:rounded-b-lg "
                       >
                         Clear Notifications
                       </button>
@@ -507,7 +553,6 @@ return (
                 <table className="w-full border border-gray-200 rounded-xl overflow-hidden">
                   <thead className="bg-gray-100 text-gray-700 text-sm">
                     <tr>
-                      <th className="p-3 text-left">Order ID</th>
                       <th className="p-3 text-left">Customer</th>
                       <th className="p-3 text-left">Product</th>
                       <th className="p-3 text-left">Date</th>
@@ -517,10 +562,9 @@ return (
                   <tbody className="text-sm text-gray-600">
                     {groupByStatus(activeFilter).map((order, idx) => (
                       <tr key={idx} className="border-t">
-                        <td className="p-3 font-medium">{order.order_id}</td>
                         <td className="p-3">{order.customer_name}</td>
-                        <td className="p-3">{order.product_name}</td>
-                        <td className="p-3">{new Date(order.created_at).toLocaleDateString()}</td>
+                        <td className="p-3">{order.service}</td>
+                        <td className="p-3">{new Date(order.dateOrdered).toLocaleDateString()}</td>
                         <td className="p-3">{order.status}</td>
                       </tr>
                     ))}

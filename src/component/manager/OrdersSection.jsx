@@ -130,12 +130,18 @@ const OrdersSection = () => {
 
     if (sortConfig.key) {
       filtered.sort((a, b) => {
-        const aVal = a[sortConfig.key];
-        const bVal = b[sortConfig.key];
+        const aVal = a[sortConfig.key] ?? "";
+        const bVal = b[sortConfig.key] ?? "";
 
-        if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
-        if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
-        return 0;
+        if (sortConfig.key.includes("date")) {
+          return sortConfig.direction === "asc"
+            ? new Date(aVal) - new Date(bVal)
+            : new Date(bVal) - new Date(aVal);
+        }
+
+        return sortConfig.direction === "asc"
+          ? aVal > bVal ? 1 : -1
+          : aVal < bVal ? 1 : -1;
       });
     }
 
@@ -436,10 +442,10 @@ const OrdersSection = () => {
 
     switch (value) {
       case "date_desc":
-        setSortConfig({ key: "dateOrdered", direction: "desc" });
+        setSortConfig({ key: "order_date", direction: "desc" });
         break;
       case "date_asc":
-        setSortConfig({ key: "dateOrdered", direction: "asc" });
+        setSortConfig({ key: "order_date", direction: "asc" });
         break;
       case "total_desc":
         setSortConfig({ key: "total_price", direction: "desc" });
@@ -448,10 +454,10 @@ const OrdersSection = () => {
         setSortConfig({ key: "total_price", direction: "asc" });
         break;
       default:
-        // reset sorting
         setSortConfig({ key: null, direction: "asc" });
     }
   };
+
 
 
   // =====================================================

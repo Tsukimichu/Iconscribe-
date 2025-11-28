@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import ReactApexChart from "react-apexcharts";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import { API_URL } from "../../api.js";
 
 const SalesAndExpenseSection = () => {
@@ -14,9 +14,9 @@ const SalesAndExpenseSection = () => {
 
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("date");
+  const [sortOpen, setSortOpen] = useState(false);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("All");
   const [activeTab, setActiveTab] = useState("overview");
 
   // ===========================================================
@@ -128,6 +128,7 @@ const SalesAndExpenseSection = () => {
             r.supply_name,
             r.quantity,
             r.amount,
+            type === "sale" ? "sale" : "expense",
             new Date(r.date).toLocaleDateString(),
             new Date(r.date).toLocaleDateString("en-US", { month: "long" }),
             new Date(r.date).toLocaleDateString("en-US", { month: "short" }),
@@ -148,8 +149,6 @@ const SalesAndExpenseSection = () => {
         }
 
         const cat = categorizeRecord(r, type);
-        if (categoryFilter !== "All" && cat !== categoryFilter) return false;
-
         return true;
       })
       .sort((a, b) => {
@@ -168,11 +167,11 @@ const SalesAndExpenseSection = () => {
 
   const filteredSales = useMemo(
     () => filterAndSort(sales, "sale"),
-    [sales, search, sortBy, dateFrom, dateTo, categoryFilter]
+    [sales, search, sortBy, dateFrom, dateTo]
   );
   const filteredExpenses = useMemo(
     () => filterAndSort(expenses, "expense"),
-    [expenses, search, sortBy, dateFrom, dateTo, categoryFilter]
+    [expenses, search, sortBy, dateFrom, dateTo]
   );
 
   // ===========================================================
@@ -336,74 +335,99 @@ const SalesAndExpenseSection = () => {
   // ===========================================================
   // Export
   // ===========================================================
-  const exportToExcel = (type) => {
-    const records = type === "sales" ? filteredSales : filteredExpenses;
+  const exportExpensesPdf = () => {
+    const doc = new jsPDF();
 
-    const rows = records.map((r) => ({
-      Type: type === "sales" ? "Sale" : "Expense",
-      Item: r.item || r.supply_name || "",
-      Quantity: r.quantity || 1,
-      Amount:
-        type === "sales"
-          ? Number(r.amount || 0)
-          : Number(r.quantity || 0) * Number(r.price || 0),
-      Date: r.date ? new Date(r.date).toLocaleDateString() : "",
-    }));
+    doc.setFontSize(16);
+    doc.text("Expenses Report", 14, 18);
 
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
+    const rows = filteredExpenses.map((r) => [
+      r.supply_name || "",
+      r.quantity || 1,
+      `Php ${(Number(r.quantity || 0) * Number(r.price || 0)).toLocaleString()}`,
+      r.date ? new Date(r.date).toLocaleDateString() : "",
+    ]);
 
-    XLSX.utils.book_append_sheet(
-      wb,
-      ws,
-      type === "sales" ? "Sales" : "Expenses"
-    );
+    autoTable(doc, {
+      startY: 26,
+      head: [["Item", "Qty", "Amount", "Date"]],
+      body: rows,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [200, 0, 0] },
+    });
 
-    XLSX.writeFile(wb, type === "sales" ? "sales.xlsx" : "expenses.xlsx");
+    doc.save("expenses.pdf");
+  };
+
+
+
+  const exportSalesPdf = () => {
+    const doc = new jsPDF();
+
+    doc.setFontSize(16);
+    doc.text("Sales Report", 14, 18);
+
+    const rows = filteredSales.map((r) => [
+      r.item || "",
+      r.quantity || 1,
+      `Php ${Number(r.amount || 0).toLocaleString()}`,
+      r.date ? new Date(r.date).toLocaleDateString() : "",
+    ]);
+
+    autoTable(doc, {
+      startY: 26,
+      head: [["Item", "Qty", "Amount", "Date"]],
+      body: rows,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [0, 150, 0] },
+    });
+
+    doc.save("sales.pdf");
   };
 
   const exportToPdfReport = () => {
     const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text("Sales & Expenses Report", 14, 18);
 
-    doc.setFontSize(10);
-    doc.text(`Total Sales: ₱${totalSales.toLocaleString()}`, 14, 26);
-    doc.text(`Total Expenses: ₱${totalExpenses.toLocaleString()}`, 14, 32);
+    doc.setFontSize(18);
+    doc.text("Sales & Expenses Full Report", 14, 16);
+
+    doc.setFontSize(12);
+    doc.text(`Total Sales: Php ${totalSales.toLocaleString()}`, 14, 26);
+    doc.text(`Total Expenses: Php ${totalExpenses.toLocaleString()}`, 14, 32);
     doc.text(`Profit: ₱${profit.toLocaleString()}`, 14, 38);
 
     const rows = [
       ...filteredSales.map((r) => ({
         type: "Sale",
-        item: r.item || "",
-        qty: r.quantity || 1,
+        item: r.item,
+        qty: r.quantity,
         amount: Number(r.amount || 0),
-        date: r.date ? new Date(r.date).toLocaleDateString() : "",
+        date: new Date(r.date).toLocaleDateString(),
       })),
       ...filteredExpenses.map((r) => ({
         type: "Expense",
-        item: r.supply_name || "",
-        qty: r.quantity || 1,
-        amount: Number(r.quantity || 0) * Number(r.price || 0),
-        date: r.date ? new Date(r.date).toLocaleDateString() : "",
+        item: r.supply_name,
+        qty: r.quantity,
+        amount: Number(r.quantity) * Number(r.price),
+        date: new Date(r.date).toLocaleDateString(),
       })),
     ];
 
-    doc.autoTable({
-      startY: 44,
+    autoTable(doc, {
+      startY: 48,
       head: [["Type", "Item", "Qty", "Amount", "Date"]],
       body: rows.map((r) => [
         r.type,
         r.item,
         r.qty,
-        `₱${r.amount.toLocaleString()}`,
+        `Php ${r.amount.toLocaleString()}`,
         r.date,
       ]),
-      styles: { fontSize: 8 },
+      styles: { fontSize: 9 },
       headStyles: { fillColor: [0, 112, 243] },
     });
 
-    doc.save("sales-expenses-report.pdf");
+    doc.save("full-report.pdf");
   };
 
   // ===========================================================
@@ -448,33 +472,54 @@ const SalesAndExpenseSection = () => {
                 className="px-3 py-2 rounded-lg bg-gray-100 border border-gray-300 text-sm focus:ring-2 focus:ring-cyan-500 outline-none"
               />
             </div>
+            
+            <div className="relative">
+              <span className="text-sm text-gray-600 hidden sm:inline">
+                Sort:
+              </span>    
 
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-3 py-2 rounded-lg bg-gray-100 border border-gray-300 text-sm focus:ring-2 focus:ring-cyan-500 outline-none"
-            >
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  Category: {cat}
-                </option>
-              ))}
-            </select>
+              <button
+                onClick={() => setSortOpen((prev) => !prev)}
+                className="flex items-center justify-between w-40 px-4 py-2 bg-white border border-gray-300 rounded-xl shadow-sm text-sm text-gray-700 hover:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              >
+                {sortLabel}
+                <ChevronDown className="w-4 h-4 ml-2 text-gray-600" />
+              </button>
 
-            <button
-              onClick={() =>
-                setSortBy((prev) =>
-                  prev === "date"
-                    ? "amount"
-                    : prev === "amount"
-                    ? "name"
-                    : "date"
-                )
-              }
-              className="flex items-center gap-1 px-3 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm"
-            >
-              Sort: {sortLabel} <ChevronDown size={14} />
-            </button>
+              {sortOpen && (
+                <div className="absolute mt-1 w-40 bg-white border border-gray-200 rounded-xl shadow-lg z-20">
+                  <button
+                    onClick={() => {
+                      setSortBy("date");
+                      setSortOpen(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                  >
+                    Date (Newest)
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setSortBy("name");
+                      setSortOpen(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                  >
+                    Name (A–Z)
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setSortBy("amount");
+                      setSortOpen(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                  >
+                    Amount (High → Low)
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -596,12 +641,12 @@ const SalesAndExpenseSection = () => {
         <div className="space-y-4">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-2xl font-bold text-green-700">Sales Records</h2>
-            <button
-              onClick={() => exportToExcel("sales")}
-              className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
-            >
-              Export Sales to Excel
-            </button>
+              <button
+                onClick={exportSalesPdf}
+                className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                Export Sales to PDF
+              </button>
           </div>
           <Table data={filteredSales} color="text-green-600" type="sale" />
         </div>
@@ -611,12 +656,12 @@ const SalesAndExpenseSection = () => {
         <div className="space-y-4">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-2xl font-bold text-red-700">Expense Records</h2>
-            <button
-              onClick={() => exportToExcel("expenses")}
-              className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
-            >
-              Export Expenses to Excel
-            </button>
+              <button
+                onClick={exportExpensesPdf}
+                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Export Expenses to PDF
+              </button>
           </div>
           <Table data={filteredExpenses} color="text-red-600" type="expense" />
         </div>
@@ -626,24 +671,24 @@ const SalesAndExpenseSection = () => {
         <div className="space-y-6">
           <div className="flex flex-wrap gap-3 items-center mb-4">
             <button
-              onClick={() => exportToExcel("sales")}
+              onClick={exportSalesPdf}
               className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
             >
-              Export Sales to Excel
+              Sales PDF
             </button>
 
             <button
-              onClick={() => exportToExcel("expenses")}
+              onClick={exportExpensesPdf}
               className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
             >
-              Export Expenses to Excel
+              Expenses PDF
             </button>
 
             <button
               onClick={exportToPdfReport}
               className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
             >
-              Export Full Report (PDF)
+              Full Report PDF
             </button>
           </div>
 

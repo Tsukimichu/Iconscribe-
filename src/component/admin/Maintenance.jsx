@@ -425,21 +425,20 @@ const Maintenance = () => {
               {attributes.map((attr) => (
                 <div
                   key={attr.attribute_id}
-                  className="border border-gray-200 rounded-lg p-4 shadow-sm bg-gray-50"
+                  className="border border-gray-200 h-[160px] overflow-y-auto rounded-lg p-0 shadow-sm bg-gray-50 relative"
                 >
-                  {/* Attribute Name */}
-                  <p className="font-semibold text-gray-800 mb-3">
+                  {/* Attribute Name (STICKY) */}
+                  <p className="font-semibold text-black-700 sticky top-0 bg-gray-100 p-2 border-b border-gray-200 z-10">
                     {attr.attribute_name}
                   </p>
 
                   {/* OPTIONS WITH EDIT BUTTON */}
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 p-4">
                     {attr.options.map((opt, i) => (
                       <div
                         key={i}
                         className="flex items-center gap-2 px-3 py-1 bg-white border border-gray-200 text-xs rounded-full shadow"
                       >
-                        {/* Option name only (no price here) */}
                         <span>{opt.option_value}</span>
 
                         <button

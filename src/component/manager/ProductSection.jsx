@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Search, List, X, Edit, Image as ImageIcon } from "lucide-react";
+import { Search, List, X, Edit, Image as ImageIcon, ChevronDown } from "lucide-react";
 import { API_URL } from "../../api.js";
 import { useToast } from "../../component/ui/ToastProvider.jsx";
 
@@ -18,6 +18,7 @@ const ProductSection = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
   const { showToast } = useToast();
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [popupType, setPopupType] = useState(null);
@@ -434,19 +435,55 @@ const ProductSection = () => {
       {/* Filter */}
       <div className="flex justify-end mb-4">
         <div className="relative">
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="appearance-none bg-gray-200 text-gray-800 px-4 py-2 pr-8 rounded-lg hover:bg-gray-300 transition cursor-pointer focus:ring-2 focus:ring-cyan-400 outline-none"
+          <span className="text-sm text-gray-600 hidden sm:inline">
+            Sort:
+          </span>
+
+          <button
+            onClick={() => setFilterOpen((prev) => !prev)}
+            className="flex items-center justify-between w-40 px-4 py-2 bg-white border border-gray-300 rounded-xl shadow-sm text-sm text-gray-700 hover:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
           >
-            <option value="all">All</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-          <List
-            className="absolute right-2 top-2.5 text-gray-600 pointer-events-none"
-            size={18}
-          />
+            {filter === "all"
+              ? "All Products"
+              : filter === "active"
+              ? "Active"
+              : "Inactive"}
+            <ChevronDown className="w-4 h-4 ml-2 text-gray-600" />
+          </button>
+
+          {filterOpen && (
+            <div className="absolute mt-1 w-40 bg-white border border-gray-200 rounded-xl shadow-lg z-20">
+              <button
+                onClick={() => {
+                  setFilter("all");
+                  setFilterOpen(false);
+                }}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+              >
+                All Products
+              </button>
+
+              <button
+                onClick={() => {
+                  setFilter("active");
+                  setFilterOpen(false);
+                }}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+              >
+                Active
+              </button>
+
+              <button
+                onClick={() => {
+                  setFilter("inactive");
+                  setFilterOpen(false);
+                }}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+              >
+                Inactive
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -460,7 +497,7 @@ const ProductSection = () => {
         <table className="w-full text-left border-collapse">
           <thead className="bg-gray-100">
             <tr>
-              <th className="py-3 px-6">Product Name</th>
+              <th className="py-3 px-6">Name</th>
               <th className="py-3 px-6">Description</th>
               <th className="py-3 px-6">Status</th>
               <th className="py-3 px-6">Actions</th>

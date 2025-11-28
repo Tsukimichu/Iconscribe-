@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Search, List, X, Edit, Image as ImageIcon } from "lucide-react";
 import { API_URL } from "../../api.js";
+import { useToast } from "../../component/ui/ToastProvider.jsx";
 
-// 🔹 FINAL FIX A — use SOCKET URL for correct image path
+// 🔹 use SOCKET URL for correct image path
 const BASE_URL = import.meta.env.VITE_SOCKET_URL;
 
 const statusColors = {
@@ -16,6 +17,7 @@ const ProductSection = () => {
   const [services, setServices] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
+  const { showToast } = useToast();
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [popupType, setPopupType] = useState(null);
@@ -33,6 +35,9 @@ const ProductSection = () => {
 
   const [availableAttributes, setAvailableAttributes] = useState([]);
   const [selectedAttributes, setSelectedAttributes] = useState([]);
+  const [isBackToBack, setIsBackToBack] = useState(false);
+  const [isPickupRequired, setIsPickupRequired] = useState(false);
+  const [productAttributeOptions, setProductAttributeOptions] = useState([]);
 
   // --------------------------------------------------
   // Load products + attributes
@@ -106,21 +111,25 @@ const ProductSection = () => {
   });
 
   // --------------------------------------------------
-  // Load product attributes
+  // Load per-product attributes + options (for EDIT)
   // --------------------------------------------------
   const loadProductAttributes = async (productId) => {
     try {
-      const res = await fetch(`${API_URL}/attributes/product/${productId}`);
-      const data = await res.json();
+      // full structure with selected options
+      const res = await fetch(
+        `${API_URL}/attributes/product/${productId}/full`
+      );
+      const full = await res.json();
 
-      setSelectedAttributes((data || []).map((a) => a.attribute_name));
+      setProductAttributeOptions(full || []);
+      setSelectedAttributes((full || []).map((a) => a.attribute_name));
     } catch (err) {
       console.error("Error loading product attributes:", err);
     }
   };
 
   // --------------------------------------------------
-  // Open Popup
+  // Open / Close Popup
   // --------------------------------------------------
   const openPopup = (type, service = null) => {
     setPopupType(type);
@@ -131,16 +140,15 @@ const ProductSection = () => {
       setDescription(service.description || "");
       setProductType(service.product_type || "General");
       setStatus(service.status || "active");
-
+      setIsBackToBack(service.is_back_to_back === 1);
+      setIsPickupRequired(service.is_pickup_required === 1);
       setImage(null);
-
-      // 🔥 FINAL IMAGE FIX (using VITE_SOCKET_URL)
       setImagePreview(
         service.image ? `${BASE_URL}/uploads/products/${service.image}` : null
       );
-
       loadProductAttributes(service.product_id);
     } else {
+      // create mode
       setTitle("");
       setDescription("");
       setProductType("General");
@@ -148,6 +156,9 @@ const ProductSection = () => {
       setImage(null);
       setImagePreview(null);
       setSelectedAttributes([]);
+      setIsBackToBack(false);
+      setIsPickupRequired(false);
+      setProductAttributeOptions([]);
     }
 
     setIsPopupOpen(true);
@@ -166,10 +177,13 @@ const ProductSection = () => {
     setImagePreview(null);
     setSelectedAttributes([]);
     setIsSaving(false);
+    setIsBackToBack(false);
+    setIsPickupRequired(false);
+    setProductAttributeOptions([]);
   };
 
   // --------------------------------------------------
-  // Save attributes
+  // Save attributes (names) for product
   // --------------------------------------------------
   const saveAttributesForProduct = async (productId) => {
     try {
@@ -180,6 +194,33 @@ const ProductSection = () => {
       });
     } catch (err) {
       console.error("Error saving attributes:", err);
+    }
+  };
+
+  // --------------------------------------------------
+  // Save selected options for product
+  // --------------------------------------------------
+  const saveOptionsForProduct = async (productId) => {
+    // Only save options for attributes that are still selected
+    const selected = productAttributeOptions.flatMap((attr) =>
+      selectedAttributes.includes(attr.attribute_name)
+        ? attr.options
+            .filter((o) => o.selected)
+            .map((o) => ({
+              attribute_id: attr.attribute_id,
+              option_id: o.option_id,
+            }))
+        : []
+    );
+
+    try {
+      await fetch(`${API_URL}/attributes/product/${productId}/options`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selectedOptions: selected }),
+      });
+    } catch (err) {
+      console.error("Error saving product options:", err);
     }
   };
 
@@ -205,7 +246,8 @@ const ProductSection = () => {
         formData.append("description", description.trim());
         formData.append("product_type", productType);
         formData.append("status", dbStatus);
-
+        formData.append("is_back_to_back", isBackToBack ? 1 : 0);
+        formData.append("is_pickup_required", isPickupRequired ? 1 : 0);
         if (image) formData.append("image", image);
 
         const res = await fetch(`${API_URL}/products`, {
@@ -223,6 +265,7 @@ const ProductSection = () => {
         if (selectedAttributes.length > 0) {
           await saveAttributesForProduct(newProduct.product_id);
         }
+        await saveOptionsForProduct(newProduct.product_id);
 
         closePopup();
         return;
@@ -238,15 +281,17 @@ const ProductSection = () => {
             body: JSON.stringify({
               product_name: title,
               description,
-              product_type: productType, // FIX: this was undefined
+              product_type: productType,
               status,
+              is_back_to_back: isBackToBack ? 1 : 0,
+              is_pickup_required: isPickupRequired ? 1 : 0,
             }),
           }
         );
 
         const updated = await res.json();
 
-        // 🔹 update image if selected
+        // update image if selected
         if (image) {
           const imgForm = new FormData();
           imgForm.append("image", image);
@@ -264,6 +309,7 @@ const ProductSection = () => {
         }
 
         await saveAttributesForProduct(selectedService.product_id);
+        await saveOptionsForProduct(selectedService.product_id);
 
         setServices((prev) =>
           prev.map((p) =>
@@ -275,7 +321,7 @@ const ProductSection = () => {
               : p
           )
         );
-
+        showToast("Product updated successfully!", "success");
         closePopup();
         return;
       }
@@ -291,11 +337,65 @@ const ProductSection = () => {
     updateProductStatus(service.product_id, newStatus);
   };
 
-  const toggleAttribute = (attrName) => {
+  // --------------------------------------------------
+  // Attribute + option handlers
+  // --------------------------------------------------
+  const toggleAttribute = (attr) => {
+    // toggle in selectedAttributes (by name)
     setSelectedAttributes((prev) =>
-      prev.includes(attrName)
-        ? prev.filter((n) => n !== attrName)
-        : [...prev, attrName]
+      prev.includes(attr.attribute_name)
+        ? prev.filter((n) => n !== attr.attribute_name)
+        : [...prev, attr.attribute_name]
+    );
+
+    // ensure we have an entry in productAttributeOptions for this attribute
+    setProductAttributeOptions((prev) => {
+      const exists = prev.find(
+        (a) => a.attribute_id === attr.attribute_id
+      );
+      if (exists) return prev;
+
+      return [
+        ...prev,
+        {
+          attribute_id: attr.attribute_id,
+          attribute_name: attr.attribute_name,
+          input_type: attr.input_type,
+          options: (attr.options || []).map((o) => ({
+            option_id: o.option_id,
+            option_value: o.option_value,
+            price: o.price,
+            selected: false,
+          })),
+        },
+      ];
+    });
+  };
+
+  const getSelectedOptionIds = (attribute_id) => {
+    const attr = productAttributeOptions.find(
+      (a) => a.attribute_id === attribute_id
+    );
+    if (!attr) return [];
+    return attr.options.filter((o) => o.selected).map((o) => String(o.option_id));
+  };
+
+  const handleOptionMultiSelectChange = (attribute_id, selectedOptionsList) => {
+    const selectedIds = Array.from(selectedOptionsList).map((o) =>
+      Number(o.value)
+    );
+
+    setProductAttributeOptions((prev) =>
+      prev.map((attr) => {
+        if (attr.attribute_id !== attribute_id) return attr;
+        return {
+          ...attr,
+          options: attr.options.map((opt) => ({
+            ...opt,
+            selected: selectedIds.includes(opt.option_id),
+          })),
+        };
+      })
     );
   };
 
@@ -445,7 +545,8 @@ const ProductSection = () => {
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.25 }}
-            className="relative w-full max-w-3xl bg-white rounded-3xl p-8 shadow-2xl"
+            className="relative w-full max-w-3xl bg-white rounded-3xl p-8 shadow-2xl 
+                      max-h-[90vh] overflow-y-auto"
           >
             {/* Close */}
             <button
@@ -468,7 +569,7 @@ const ProductSection = () => {
             </div>
 
             {/* Modal Content */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
               {/* Text Fields */}
               <div className="space-y-4 md:col-span-2">
                 {/* Product Name */}
@@ -530,6 +631,29 @@ const ProductSection = () => {
                   </div>
                 </div>
 
+                {/* Extra Product Options */}
+                <div className="mt-3 space-y-3">
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={isBackToBack}
+                      onChange={(e) => setIsBackToBack(e.target.checked)}
+                      className="w-4 h-4"
+                    />
+                    Back-to-back printing available
+                  </label>
+
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={isPickupRequired}
+                      onChange={(e) => setIsPickupRequired(e.target.checked)}
+                      className="w-4 h-4"
+                    />
+                    Pick-up requirements
+                  </label>
+                </div>
+
                 {/* Attributes */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -537,6 +661,7 @@ const ProductSection = () => {
                   </label>
                   <p className="text-xs text-gray-500 mb-2">
                     These attributes are defined in Maintenance → Product Attributes.
+                    For select-type attributes, choose which options apply to this product.
                   </p>
 
                   {(() => {
@@ -553,37 +678,80 @@ const ProductSection = () => {
                     const others = [];
 
                     availableAttributes.forEach((a) => {
-                      const n = a.attribute_name.toLowerCase();
+                      const n = (a.attribute_name || "").toLowerCase();
                       if (contactNames.includes(n)) contact.push(a);
                       else others.push(a);
                     });
 
-                    const renderAttr = (attr) => (
-                      <label
-                        key={attr.attribute_name}
-                        className="flex items-center gap-2 text-sm text-gray-700 mb-2"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedAttributes.includes(
-                            attr.attribute_name
-                          )}
-                          onChange={() => toggleAttribute(attr.attribute_name)}
-                          className="w-4 h-4"
-                        />
-                        <span>{attr.attribute_name}</span>
+                    const renderAttr = (attr) => {
+                      const isSelected = selectedAttributes.includes(
+                        attr.attribute_name
+                      );
+                      const prodAttr = productAttributeOptions.find(
+                        (a) => a.attribute_id === attr.attribute_id
+                      );
 
-                        {attr.input_type === "input" ? (
-                          <span className="text-[11px] text-blue-600 font-medium">
-                            → Text Input Field
-                          </span>
-                        ) : (
-                          <span className="text-[10px] text-gray-400">
-                            ({attr.options.join(", ")})
-                          </span>
-                        )}
-                      </label>
-                    );
+                      return (
+                        <div key={attr.attribute_id} className="mb-3">
+                          <label className="flex items-center gap-2 text-sm text-gray-700">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleAttribute(attr)}
+                              className="w-4 h-4"
+                            />
+                            <span>{attr.attribute_name}</span>
+
+                            {attr.input_type === "text" ||
+                            attr.input_type === "input" ? (
+                              <span className="text-[11px] text-blue-600 font-medium">
+                                → Text Input Field
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-gray-400">
+                                {prodAttr
+                                  ? `${prodAttr.options.filter((o) => o.selected).length} selected`
+                                  : `${(attr.options || []).length} options`}
+                              </span>
+                            )}
+                          </label>
+
+                          {/* Dropdown multi-select for select-type attributes */}
+                          {isSelected && attr.input_type === "select" && (
+                            <div className="mt-2 ml-6 space-y-1">
+                              {(prodAttr ? prodAttr.options : attr.options || []).map((opt) => (
+                                <label
+                                  key={opt.option_id}
+                                  className="flex items-center gap-2 text-xs bg-gray-100 px-3 py-1 rounded-lg border border-gray-300"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={opt.selected}
+                                    onChange={() =>
+                                      setProductAttributeOptions((prev) =>
+                                        prev.map((a) => {
+                                          if (a.attribute_id !== attr.attribute_id) return a;
+                                          return {
+                                            ...a,
+                                            options: a.options.map((o) =>
+                                              o.option_id === opt.option_id
+                                                ? { ...o, selected: !o.selected }
+                                                : o
+                                            ),
+                                          };
+                                        })
+                                      )
+                                    }
+                                    className="w-4 h-4"
+                                  />
+                                  {opt.option_value}
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    };
 
                     return (
                       <div className="space-y-4 border border-gray-200 rounded-xl p-3 max-h-56 overflow-y-auto">

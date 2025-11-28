@@ -98,7 +98,16 @@ const Maintenance = () => {
 
   const handleAddAttribute = async () => {
     if (!attrName.trim() || !attrOption.trim()) {
-      return alert("Attribute name and first option are required.");
+      return showToast("Attribute name and first option are required.", "error");
+    }
+
+    // 🔍 Check if attribute already exists
+    const exists = attributes.some(
+      (a) => a.attribute_name.trim().toLowerCase() === attrName.trim().toLowerCase()
+    );
+
+    if (exists) {
+      return showToast("Attribute name already exists!", "error");
     }
 
     try {
@@ -118,13 +127,31 @@ const Maintenance = () => {
       fetchAttributes();
       showToast("Attribute created!");
     } catch (err) {
-      alert("Failed to add attribute.");
+      showToast("Failed to add attribute.", "error");
     }
   };
 
+
   const handleAddOption = async () => {
     if (!selectedAttrForOption || !attrOption.trim()) {
-      return alert("Select an attribute and enter an option.");
+      return showToast("Select an attribute and enter an option.", "error");
+    }
+
+    // ✅ CHECK IF OPTION ALREADY EXISTS
+    const selectedAttr = attributes.find(
+      (a) => a.attribute_name === selectedAttrForOption
+    );
+
+    if (selectedAttr) {
+      const exists = selectedAttr.options.some(
+        (opt) =>
+          opt.option_value.trim().toLowerCase() ===
+          attrOption.trim().toLowerCase()
+      );
+
+      if (exists) {
+        return showToast("This option already exists for this attribute!", "error");
+      }
     }
 
     try {
@@ -147,7 +174,7 @@ const Maintenance = () => {
       fetchAttributes();
       showToast("Option added!");
     } catch (err) {
-      alert("Failed to add option.");
+      showToast("Failed to add option.", "error");
     }
   };
 
@@ -190,7 +217,7 @@ const Maintenance = () => {
         {/* ───────── TWO-COLUMN GRID ───────── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* LEFT CARD – MAINTENANCE SETTINGS */}
-          <div className="space-y-8 h-[680px] bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
+          <div className="space-y-8 h-[730px] bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
             {/* Toggle */}
             <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-200">
               <div>
@@ -265,7 +292,7 @@ const Maintenance = () => {
             </label>
 
             {/* Buttons */}
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-end gap-3 mt-55">
               <button
                 onClick={handleCancel}
                 className="bg-gray-200 px-5 py-2 rounded-lg text-sm hover:bg-gray-300 flex items-center gap-2"
@@ -284,9 +311,9 @@ const Maintenance = () => {
 
           {/* RIGHT CARD – PREVIEW + ADD ATTRIBUTE */}
           <div className="space-y-8">
-            <div className="space-y-8 h-[680px] bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
+            <div className="space-y-8 h-[730px] bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
               {/* Live preview */}
-              <div className="h-[200px] bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
+              <div className="h-[250px] bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
                 <h2 className="text-xl font-semibold mb-4">Live Preview</h2>
 
                 {isMaintenance ? (

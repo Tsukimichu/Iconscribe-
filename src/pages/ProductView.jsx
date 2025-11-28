@@ -242,41 +242,46 @@ const ProductView = () => {
     const loadProduct = async () => {
       try {
         const res = await fetch(`${API_URL}/products/${id}`);
-        const data = await res.json();
-        setProduct(data);
+        const productData = await res.json();
+        setProduct(productData);
 
-        const blocked = [
-          "name",
-          "email",
-          "location",
-          "contact",
-          "phone",
-          "note",
-          "message",
-        ];
+      // Load per-product attribute options
+      const attrRes = await fetch(`${API_URL}/attributes/product/${id}/full`);
+      const attrData = await attrRes.json();
 
-        const filtered = (data.attributes || []).filter(
-          (a) =>
-            !blocked.some((b) =>
-              a.attribute_name?.toLowerCase().includes(b)
-            )
-        );
+      // blocked attributes (name, email, etc.)
+      const blocked = [
+        "name",
+        "email",
+        "location",
+        "contact",
+        "phone",
+        "note",
+        "message",
+      ];
 
-        setAttributes(filtered);
+      // filter attributes properly
+      const filtered = (attrData || []).filter(
+        (a) =>
+          !blocked.some((b) =>
+            a.attribute_name?.toLowerCase().includes(b)
+          )
+      );
 
-        const defaults = {};
-        filtered.forEach((attr) => {
-          const first = attr.options?.[0];
-          const val =
-            typeof first === "string"
-              ? first
-              : first?.option_value || first?.value || "";
-          if (attr.attribute_name) {
-            defaults[attr.attribute_name] = val;
-          }
-        });
+      // set filtered attributes
+      setAttributes(filtered);
 
-        setSelected((prev) => ({ ...prev, ...defaults }));
+      // set defaults
+      const defaults = {};
+      filtered.forEach((attr) => {
+        const first = attr.options?.[0];
+        const val =
+          typeof first === "string"
+            ? first
+            : first?.option_value || first?.value || "";
+        defaults[attr.attribute_name] = val;
+      });
+      setSelected((prev) => ({ ...prev, ...defaults }));
       } catch (err) {
         console.error("Product load error", err);
         showToast("Failed to load product", "error");
@@ -722,38 +727,76 @@ const ProductView = () => {
               )}
             </div>
 
+            {/* SPECIAL PRODUCT CHECKBOXES */}
+            {product?.is_back_to_back === 1 && (
+              <label className="flex items-center gap-2 font-semibold text-black">
+                <input
+                  type="checkbox"
+                  checked={selected.back_to_back || false}
+                  onChange={(e) =>
+                    setSelected((prev) => ({
+                      ...prev,
+                      back_to_back: e.target.checked,
+                    }))
+                  }
+                  className="w-4 h-4"
+                />
+                Back-to-back Printing
+              </label>
+            )}
+
+            {product?.is_pickup_required === 1 && (
+              <label className="flex items-center gap-2 font-semibold text-black">
+                <input
+                  type="checkbox"
+                  checked={selected.pickup_required || false}
+                  onChange={(e) =>
+                    setSelected((prev) => ({
+                      ...prev,
+                      pickup_required: e.target.checked,
+                    }))
+                  }
+                  className="w-4 h-4"
+                />
+                Pick-up Requirement Included
+              </label>
+            )}
+
             {/* ATTRIBUTES */}
             {attributes.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {attributes.map((attr) => (
-                  <div key={attr.attribute_name}>
-                    <label className="font-semibold">
-                      {attr.attribute_name}
-                    </label>
-                    <select
-                      className="mt-1 w-full border border-gray-300 p-3 rounded-xl"
-                      value={selected[attr.attribute_name] || ""}
-                      onChange={(e) =>
-                        setSelected((prev) => ({
-                          ...prev,
-                          [attr.attribute_name]: e.target.value,
-                        }))
-                      }
-                    >
-                      {(attr.options || []).map((opt, i) => {
-                        const val =
-                          typeof opt === "string"
-                            ? opt
-                            : opt.option_value || opt.value;
-                        return (
-                          <option key={i} value={val}>
-                            {val}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </div>
-                ))}
+                  {attributes.map((attr) => (
+                    <div key={attr.attribute_name}>
+                      <label className="font-semibold">
+                        {attr.attribute_name}
+                      </label>
+
+                      <select
+                        className="mt-1 w-full border border-gray-300 p-3 rounded-xl"
+                        value={selected[attr.attribute_name] || ""}
+                        onChange={(e) =>
+                          setSelected((prev) => ({
+                            ...prev,
+                            [attr.attribute_name]: e.target.value,
+                          }))
+                        }
+                      >
+                        {(attr.options || [])
+                          .filter((opt) => opt.selected !== false)
+                          .map((opt, i) => {
+                            const val =
+                              typeof opt === "string"
+                                ? opt
+                                : opt.option_value || opt.value;
+                            return (
+                              <option key={i} value={val}>
+                                {val}
+                              </option>
+                            );
+                          })}
+                      </select>
+                    </div>
+                  ))}
               </div>
             )}
 

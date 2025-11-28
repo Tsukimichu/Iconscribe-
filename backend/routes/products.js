@@ -121,8 +121,9 @@ router.post("/", upload.single("image"), async (req, res) => {
     const [result] = await db.promise().query(
       `
       INSERT INTO products
-        (product_name, description, category, base_price, formula_type, status, image, product_type)
-      VALUES (?, ?, NULL, 0.00, 'per_quantity', ?, ?, ?)
+        (product_name, description, category, base_price, formula_type, status, image, product_type, is_back_to_back, is_pickup_required)
+      VALUES (?, ?, NULL, 0.00, 'per_quantity', ?, ?, ?, ?, ?)
+
       `,
       [product_name, description || null, dbStatus, image, product_type || "General"]
     );
@@ -155,28 +156,50 @@ router.put("/:id", async (req, res) => {
       description,
       product_type,
       status,
+      is_back_to_back,
+      is_pickup_required,
     } = req.body;
 
     const dbStatus = normalizeStatus(status);
+
+    const backToBack = is_back_to_back ? 1 : 0;
+    const pickupRequired = is_pickup_required ? 1 : 0;
 
     await db
       .promise()
       .query(
         `
         UPDATE products
-        SET product_name = ?, description = ?, product_type = ?, status = ?
+        SET 
+          product_name = ?, 
+          description = ?, 
+          product_type = ?, 
+          status = ?,
+          is_back_to_back = ?,
+          is_pickup_required = ?
         WHERE product_id = ?
         `,
-        [product_name, description || null, product_type || "General", dbStatus, id]
+        [
+          product_name,
+          description || null,
+          product_type || "General",
+          dbStatus,
+          backToBack,
+          pickupRequired,
+          id,
+        ]
       );
 
     const [rows] = await db
       .promise()
       .query("SELECT * FROM products WHERE product_id = ?", [id]);
 
-    // attach new image url
-    const base = process.env.CLIENT_ORIGIN?.replace(/\/$/, "") || "http://localhost:5000";
-    rows[0].image_url = rows[0].image ? `${base}/uploads/products/${rows[0].image}` : null;
+    const base =
+      process.env.CLIENT_ORIGIN?.replace(/\/$/, "") ||
+      "http://localhost:5000";
+    rows[0].image_url = rows[0].image
+      ? `${base}/uploads/products/${rows[0].image}`
+      : null;
 
     res.json(rows[0]);
   } catch (err) {
@@ -184,6 +207,7 @@ router.put("/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to update product" });
   }
 });
+
 
 // ====================================================
 // UPDATE product image

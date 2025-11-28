@@ -286,4 +286,149 @@ router.put("/:attributeName/options/:oldValue", async (req, res) => {
   }
 });
 
+
+// GET all attributes + options for specific product
+router.get("/product/:productId/options", async (req, res) => {
+  const { productId } = req.params;
+
+  const sql = `
+    SELECT 
+        pa.attribute_name,
+        pa.input_type,
+        pa.required,
+        pao.option_value,
+        pao.price
+    FROM product_attributes pa
+    JOIN product_attributes_map pam 
+        ON pa.attribute_name = pam.attribute_name
+    LEFT JOIN product_attribute_options pao 
+        ON pa.attribute_name = pao.attribute_name
+    WHERE pam.product_id = ?
+    ORDER BY pa.attribute_name ASC
+  `;
+
+  try {
+    const [rows] = await db.promise().query(sql, [productId]);
+
+    // group by attribute_name
+    const grouped = {};
+    rows.forEach((r) => {
+      if (!grouped[r.attribute_name]) {
+        grouped[r.attribute_name] = {
+          attribute_name: r.attribute_name,
+          input_type: r.input_type,
+          required: r.required,
+          options: [],
+        };
+      }
+
+      if (r.option_value) {
+        grouped[r.attribute_name].options.push({
+          option_value: r.option_value,
+          price: r.price,
+        });
+      }
+    });
+
+    res.json(Object.values(grouped));
+  } catch (err) {
+    console.log("❌ product attribute option error:", err);
+    res.status(500).json({ error: "Failed to load product attribute options" });
+  }
+});
+
+// =======================================================
+// GET /attributes/product/:id/full
+// returns full attributes + all options + which ones selected
+// =======================================================
+router.get("/product/:id/full", async (req, res) => {
+  const { id } = req.params;
+
+  const sql = `
+    SELECT 
+      a.attribute_id,
+      a.attribute_name,
+      a.input_type,
+      ao.option_id,
+      ao.option_value,
+      ao.price,
+      paom.option_id AS selected
+    FROM attributes a
+    LEFT JOIN attribute_options ao ON a.attribute_id = ao.attribute_id
+    LEFT JOIN product_attribute_option_map paom 
+        ON paom.option_id = ao.option_id AND paom.product_id = ?
+    WHERE a.attribute_id IN (
+      SELECT attribute_id FROM product_attributes WHERE product_id = ?
+    )
+    ORDER BY a.attribute_id, ao.option_value;
+  `;
+
+  try {
+    const [rows] = await db.promise().query(sql, [id, id]);
+
+    const grouped = {};
+
+    rows.forEach(r => {
+      if (!grouped[r.attribute_id]) {
+        grouped[r.attribute_id] = {
+          attribute_id: r.attribute_id,
+          attribute_name: r.attribute_name,
+          input_type: r.input_type,
+          options: []
+        };
+      }
+
+      grouped[r.attribute_id].options.push({
+        option_id: r.option_id,
+        option_value: r.option_value,
+        price: r.price,
+        selected: !!r.selected
+      });
+    });
+
+    res.json(Object.values(grouped));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed loading product attribute data" });
+  }
+});
+
+
+// =======================================================
+// PUT /attributes/product/:id/options
+// body: { selectedOptions: [{attribute_id, option_id}] }
+// =======================================================
+router.put("/product/:id/options", async (req, res) => {
+  const { id } = req.params;
+  const { selectedOptions } = req.body;
+
+  try {
+    // Reset all options for that product
+    await db.promise().query(
+      "DELETE FROM product_attribute_option_map WHERE product_id = ?",
+      [id]
+    );
+
+    // Insert new selected options
+    if (selectedOptions.length > 0) {
+      const values = selectedOptions.map(o => [
+        id,
+        o.attribute_id,
+        o.option_id
+      ]);
+
+      await db.promise().query(
+        "INSERT INTO product_attribute_option_map (product_id, attribute_id, option_id) VALUES ?",
+        [values]
+      );
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Save product options error:", err);
+    res.status(500).json({ error: "Failed to save product options" });
+  }
+});
+
+
 module.exports = router;

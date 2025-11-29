@@ -1,13 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { API_URL } from "../../api";
 
-import { computeQuotation } from "../../utils/computeQuotation";
-import { computeBookQuotation } from "../../utils/bookQuotation";
-import { computeBindingQuotation } from "../../utils/computeBindingQuotation";
-import { computeORQuotation } from "../../utils/computeORQuotation";
-import { computeCalendarQuotation } from "../../utils/computeCalendarQuotation";
-
-export default function WalkInOrderModal({
+function WalkInOrderModal({
   show,
   onClose,
   onSubmit,
@@ -17,132 +12,155 @@ export default function WalkInOrderModal({
   setSelectedProduct,
   orderFiles,
   setOrderFiles,
-  showSizeDropdown,
-  setShowSizeDropdown
+  showSizeDropdown, // kept for compatibility if you want to reuse later
+  setShowSizeDropdown,
+  products = [],
 }) {
+  const [productAttributes, setProductAttributes] = useState([]);
+  const [autoPrice, setAutoPrice] = useState(0);
 
-  // ===============================
-  // STATE
-  // ===============================
-  const [quotation, setQuotation] = React.useState(null);
-
-  // ===============================
-  // AUTO-COMPUTE QUOTATION WHEN FIELDS CHANGE
-  // ===============================
-  React.useEffect(() => {
-    autoComputeQuotation();
-  }, [
-    selectedProduct,
-    newOrder.quantity,
-    newOrder.size,
-    newOrder.custom_width,
-    newOrder.custom_height,
-    newOrder.paper_type,
-    newOrder.number_of_pages,
-    newOrder.color_printing,
-    newOrder.calendar_type
-  ]);
-
-  // ===============================
-  // QUOTATION ENGINE
-  // ===============================
-  function autoComputeQuotation() {
-    const p = selectedProduct;
-
-    // --- BOOK ---
-    if (p === "Book") {
-      const result = computeBookQuotation({
-        pages: newOrder.number_of_pages,
-        copies: newOrder.quantity,
-        colored: newOrder.color_printing === "Full Color",
-      });
-
-      setQuotation(result);
-      if (result) {
-        setNewOrder(prev => ({ ...prev, price: result.total }));
-      }
+  // --------------------------
+  // Load attributes for product
+  // --------------------------
+  useEffect(() => {
+    if (!selectedProduct) {
+      setProductAttributes([]);
       return;
     }
 
-    // --- CALENDAR ---
-    if (p === "Calendar") {
-      const result = computeCalendarQuotation({
-        quantity: newOrder.quantity,
-        calendarType: newOrder.calendar_type,
-      });
+    const loadAttributes = async () => {
+      try {
+        const res = await fetch(
+          `${API_URL}/attributes/product/${selectedProduct}/full`
+        );
+        const data = await res.json();
 
-      setQuotation(result);
-      if (result) {
-        setNewOrder(prev => ({ ...prev, price: result.total }));
+        const blocked = [
+          "name",
+          "email",
+          "location",
+          "contact",
+          "phone",
+          "note",
+          "message",
+        ];
+
+        const filtered = (data || []).filter(
+          (a) =>
+            !blocked.some((b) =>
+              (a.attribute_name || "").toLowerCase().includes(b)
+            )
+        );
+
+        setProductAttributes(filtered);
+
+        // set defaults for each attribute (only in newOrder)
+        setNewOrder((prev) => {
+          const updated = { ...prev };
+          filtered.forEach((attr) => {
+            const first = attr.options?.[0];
+            const val =
+              typeof first === "string"
+                ? first
+                : first?.option_value || first?.value || "";
+            if (val && !updated[attr.attribute_name]) {
+              updated[attr.attribute_name] = val;
+            }
+          });
+          return updated;
+        });
+      } catch (err) {
+        console.error("❌ Error loading product attributes (walk-in):", err);
       }
+    };
+
+    loadAttributes();
+  }, [selectedProduct, setNewOrder]);
+
+  // --------------------------
+  // Auto estimate (simple rule)
+  // --------------------------
+  useEffect(() => {
+    if (!selectedProduct) {
+      setAutoPrice(0);
       return;
     }
 
-    // --- OFFICIAL RECEIPT ---
-    if (p === "Official Receipt") {
-      const result = computeORQuotation({
-        quantity: newOrder.quantity,
-      });
-
-      setQuotation(result);
-      if (result) {
-        setNewOrder(prev => ({ ...prev, price: result.total }));
-      }
+    const qty = Number(newOrder.quantity || 0);
+    if (!qty) {
+      setAutoPrice(0);
       return;
     }
 
-    // --- BINDING ---
-    if (p === "Binding") {
-      const result = computeBindingQuotation({
-        quantity: newOrder.quantity,
+    // base price from product (if any)
+    const prod = products.find(
+      (p) => String(p.product_id) === String(selectedProduct)
+    );
+    const basePerCopy = prod && prod.base_price ? Number(prod.base_price) : 0;
+    let total = basePerCopy * qty;
+
+    // add price from selected attribute options
+    productAttributes.forEach((attr) => {
+      const selValue = newOrder[attr.attribute_name];
+      if (!selValue) return;
+
+      const opt = (attr.options || []).find((o) => {
+        const val =
+          typeof o === "string" ? o : o.option_value || o.value || "";
+        return val === selValue;
       });
 
-      setQuotation(result);
-      if (result) {
-        setNewOrder(prev => ({ ...prev, price: result.total }));
-      }
+      if (!opt || typeof opt === "string") return;
+
+      const price = Number(opt.price || 0);
+      total += price * qty;
+    });
+
+    setAutoPrice(total);
+  }, [selectedProduct, products, productAttributes, newOrder]);
+
+  // Safely get the selected product object
+  const selectedProductObj = products.find(
+    (p) => String(p.product_id) === String(selectedProduct)
+  );
+
+  const finalPrice = newOrder.price
+    ? Number(newOrder.price)
+    : Number(autoPrice || 0);
+
+  // Local submit with basic validation (no UI changes)
+  const handleSubmit = () => {
+    if (!newOrder.customer_name || !newOrder.service || !newOrder.price) {
+      alert("Please fill out customer name, service, and price.");
       return;
     }
 
-    // --- FLYERS / POSTER / LABEL / INVITATION / RAFFLE / BROCHURE / CALLING CARD ---
-    const isGeneral = [
-      "Flyers",
-      "Poster",
-      "Label",
-      "Invitation",
-      "Raffle Ticket",
-      "Brochure",
-      "Calling Card"
-    ].includes(p);
+    const body = {
+      user_id: null,
+      order_type: "walk-in",
 
-    if (isGeneral) {
-      const width =
-        newOrder.custom_width ||
-        parseFloat(newOrder.size?.split("x")[0]) ||
-        null;
+      walk_in_name: newOrder.customer_name,
+      walk_in_email: newOrder.email || null,
+      walk_in_contact: newOrder.contact_number || null,
+      walk_in_location: newOrder.location || null,
 
-      const height =
-        newOrder.custom_height ||
-        parseFloat(newOrder.size?.split("x")[1]) ||
-        null;
+      product_id: newOrder.product_id,
+      quantity: newOrder.quantity || 1,
+      status: "Pending",
+      estimated_price: Number(newOrder.price),
 
-      const result = computeQuotation({
-        width,
-        height,
-        copies: newOrder.quantity,
-        colored: newOrder.color_printing === "Yes",
-      });
+      attributes: productAttributes.map((a) => ({
+        name: a.attribute_name,
+        value: newOrder[a.attribute_name] || "",
+      }))
+    };
 
-      setQuotation(result);
-      if (result) {
-        setNewOrder(prev => ({ ...prev, price: result.total }));
-      }
-      return;
-    }
+    onSubmit(body);
+  };
 
-    // No quotation available
-    setQuotation(null);
-  }
+
+  if (!show) return null;
+
   return (
     <AnimatePresence>
       {show && (
@@ -150,1248 +168,313 @@ export default function WalkInOrderModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 flex items-center justify-center bg-black/60 z-50"
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center"
         >
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
+            initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            className="bg-white rounded-2xl shadow-lg p-8 max-w-4xl w-full text-left overflow-y-auto max-h-[90vh]"
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-white rounded-3xl shadow-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-200"
           >
-
-            {/* TITLE */}
-            <h2 className="text-2xl font-bold mb-6 text-cyan-700 text-center">
+            {/* HEADER */}
+            <h2 className="text-3xl font-extrabold text-cyan-700 text-center mb-6">
               Add Walk-In Order
             </h2>
 
-            {/* =============================== */}
             {/* CUSTOMER INFORMATION */}
-            {/* =============================== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input
-                type="text"
-                placeholder="Customer Name"
-                value={newOrder.customer_name}
-                onChange={(e) =>
-                  setNewOrder({ ...newOrder, customer_name: e.target.value })
-                }
-                className="border border-gray-300 rounded-lg p-2"
-              />
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">
+                Customer Information
+              </h3>
 
-              <input
-                type="email"
-                placeholder="Email"
-                value={newOrder.email}
-                onChange={(e) =>
-                  setNewOrder({ ...newOrder, email: e.target.value })
-                }
-                className="border border-gray-300 rounded-lg p-2"
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Customer Name"
+                  value={newOrder.customer_name}
+                  onChange={(e) =>
+                    setNewOrder((prev) => ({
+                      ...prev,
+                      customer_name: e.target.value,
+                    }))
+                  }
+                  className="border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                />
 
-              <input
-                type="text"
-                placeholder="Contact Number"
-                value={newOrder.contact_number}
-                onChange={(e) =>
-                  setNewOrder({ ...newOrder, contact_number: e.target.value })
-                }
-                className="border border-gray-300 rounded-lg p-2"
-              />
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={newOrder.email}
+                  onChange={(e) =>
+                    setNewOrder((prev) => ({
+                      ...prev,
+                      email: e.target.value,
+                    }))
+                  }
+                  className="border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                />
 
-              <input
-                type="text"
-                placeholder="Location"
-                value={newOrder.location}
-                onChange={(e) =>
-                  setNewOrder({ ...newOrder, location: e.target.value })
-                }
-                className="border border-gray-300 rounded-lg p-2"
-              />
+                <input
+                  type="text"
+                  placeholder="Contact Number"
+                  value={newOrder.contact_number}
+                  onChange={(e) =>
+                    setNewOrder((prev) => ({
+                      ...prev,
+                      contact_number: e.target.value,
+                    }))
+                  }
+                  className="border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                />
+
+                <input
+                  type="text"
+                  placeholder="Location"
+                  value={newOrder.location}
+                  onChange={(e) =>
+                    setNewOrder((prev) => ({
+                      ...prev,
+                      location: e.target.value,
+                    }))
+                  }
+                  className="border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-cyan-500 outline-none"
+                />
+              </div>
             </div>
 
-            {/* =============================== */}
-            {/* QUOTATION BREAKDOWN UI */}
-            {/* =============================== */}
-            {quotation && (
-              <div className="mt-8 p-4 border border-cyan-300 bg-cyan-50 rounded-xl">
-                <h3 className="text-xl font-bold text-cyan-700 mb-3">
-                  Quotation Breakdown
-                </h3>
+            {/* PRODUCT SECTION */}
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">
+                Select Product & Options
+              </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                  {Object.entries(quotation).map(([key, value]) => (
-                    <p key={key} className="flex justify-between border-b py-1">
-                      <span className="capitalize font-medium text-gray-700">
-                        {key.replace(/_/g, " ").replace(/([A-Z])/g, " $1")}
-                      </span>
-                      <span className="font-semibold text-gray-900">
-                        {typeof value === "number" ? value.toLocaleString() : value}
-                      </span>
-                    </p>
-                  ))}
-                </div>
-
-                <p className="mt-3 text-lg font-bold text-green-700">
-                  Total: ₱{quotation.total?.toLocaleString()}
-                </p>
-              </div>
-            )}
-
-            {/* =============================== */}
-            {/* PRODUCT SELECTOR */}
-            {/* =============================== */}
-            <div className="mt-6">
-              <label className="font-semibold">Select Product</label>
+              {/* Product Dropdown (dynamic) */}
               <select
-                value={selectedProduct}
+                value={selectedProduct || ""}
                 onChange={(e) => {
-                  setSelectedProduct(e.target.value);
-                  setNewOrder({ ...newOrder, service: e.target.value });
+                  const value = e.target.value;
+                  setSelectedProduct(value);
+
+                  const prod = products.find(
+                    (p) => String(p.product_id) === String(value)
+                  );
+                  setNewOrder((prev) => ({
+                    ...prev,
+                    service: prod ? prod.product_name : "",
+                    product_id: prod ? prod.product_id : null,
+                  }));
                 }}
-                className="border border-gray-300 rounded-lg p-2 w-full mt-1"
+                className="border border-gray-300 rounded-xl px-3 py-2 w-full focus:ring-2 focus:ring-cyan-500 outline-none"
               >
                 <option value="">Choose Product...</option>
-                <option value="Brochure">Brochure</option>
-                <option value="Binding">Binding</option>
-                <option value="Calling Card">Calling Card</option>
-                <option value="Flyers">Flyers</option>
-                <option value="Poster">Poster</option>
-                <option value="Calendar">Calendar</option>
-                <option value="Invitation">Invitation</option>
-                <option value="Book">Book</option>
-                <option value="Label">Label</option>
-                <option value="Official Receipt">Official Receipt</option>
-                <option value="News Letter">News Letter</option>
-                <option value="Raffle Ticket">Raffle Ticket</option>
+                {products.map((p) => (
+                  <option key={p.product_id} value={p.product_id}>
+                    {p.product_name}
+                  </option>
+                ))}
               </select>
-            </div>
 
-            {/* =============================== */}
-            {/* PRODUCT SPECIFIC FORMS */}
-            {/* =============================== */}
-
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-
-              {/* ------------------------------ */}
-              {/* BROCHURE FORM */}
-              {/* ------------------------------ */}
-              {selectedProduct === "Brochure" && (
-                <>
-                  <input
-                    type="number"
-                    placeholder="Number of Copies"
-                    value={newOrder.quantity}
-                    onChange={(e) =>
-                      setNewOrder({ ...newOrder, quantity: e.target.value })
-                    }
-                    className="border border-gray-300 rounded-lg p-2"
-                  />
-
-                  {/* SIZE DROPDOWN */}
-                  <div className="relative w-full">
-                    <div
-                      className="border rounded-lg p-2 w-full flex justify-between items-center cursor-pointer"
-                      onClick={() =>
-                        setShowSizeDropdown(!showSizeDropdown)
-                      }
-                    >
-                      <span>{newOrder.size || "Select Size"}</span>
-
-                      {newOrder.size === "custom" && (
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            placeholder="W"
-                            className="w-14 border rounded p-1 text-sm"
-                            value={newOrder.custom_width || ""}
-                            onChange={(e) =>
-                              setNewOrder({
-                                ...newOrder,
-                                custom_width: e.target.value,
-                              })
-                            }
-                          />
-                          <span className="text-xs font-semibold">x</span>
-                          <input
-                            type="number"
-                            placeholder="H"
-                            className="w-14 border rounded p-1 text-sm"
-                            value={newOrder.custom_height || ""}
-                            onChange={(e) =>
-                              setNewOrder({
-                                ...newOrder,
-                                custom_height: e.target.value,
-                              })
-                            }
-                          />
-                          <span className="text-xs font-semibold">in</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {showSizeDropdown && (
-                      <div className="absolute left-0 right-0 bg-white border rounded-lg shadow-lg mt-1 z-20">
-                        {[
-                          "11” x 17”",
-                          "17” x 22”",
-                          "22” x 34”",
-                          "8.5” x 14”",
-                          "Custom Size",
-                        ].map((option) => (
-                          <div
-                            key={option}
-                            className="p-2 hover:bg-gray-100 cursor-pointer"
-                            onClick={() => {
-                              setNewOrder({ ...newOrder, size: option });
-                              setShowSizeDropdown(false);
-                            }}
-                          >
-                            {option}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <select
-                    value={newOrder.paper_type}
-                    onChange={(e) =>
-                      setNewOrder({ ...newOrder, paper_type: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                  >
-                    <option value="">Paper Type</option>
-                    <option>Matte</option>
-                    <option>Glossy</option>
-                    <option>Book Paper</option>
-                  </select>
-
-                  <select
-                    value={newOrder.lamination}
-                    onChange={(e) =>
-                      setNewOrder({ ...newOrder, lamination: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                  >
-                    <option value="">Select Lamination Type</option>
-                    <option>Yes</option>
-                    <option>No</option>
-                  </select>
-
-                  <select
-                    value={newOrder.color_printing}
-                    onChange={(e) =>
-                      setNewOrder({
-                        ...newOrder,
-                        color_printing: e.target.value,
-                      })
-                    }
-                    className="border rounded-lg p-2"
-                  >
-                    <option value="">Colored?</option>
-                    <option>Yes</option>
-                    <option>No</option>
-                  </select>
-
-                  <label className="flex items-center gap-3 p-2">
-                    <input
-                      type="checkbox"
-                      checked={newOrder.back_to_back || false}
-                      onChange={(e) =>
-                        setNewOrder({
-                          ...newOrder,
-                          back_to_back: e.target.checked,
-                        })
-                      }
-                      className="w-5 h-5 cursor-pointer"
-                    />
-                    <span className="font-semibold">Print Back-to-Back</span>
+              {/* Product-specific fields */}
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Quantity */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Number of Copies
                   </label>
-                </>
-              )}
-
-              {/* ------------------------------ */}
-              {/* BOOK FORM */}
-              {/* ------------------------------ */}
-              {selectedProduct === "Book" && (
-                <>
                   <input
                     type="number"
-                    placeholder="Number of Copies"
+                    min="1"
                     value={newOrder.quantity}
                     onChange={(e) =>
-                      setNewOrder({ ...newOrder, quantity: e.target.value })
+                      setNewOrder((prev) => ({
+                        ...prev,
+                        quantity: e.target.value,
+                      }))
                     }
-                    className="border rounded-lg p-2"
+                    className="border border-gray-300 rounded-xl px-3 py-2 w-full focus:ring-2 focus:ring-cyan-500 outline-none"
+                    placeholder="e.g. 100"
                   />
+                </div>
 
-                  <input
-                    type="number"
-                    placeholder="Number of Pages"
-                    value={newOrder.number_of_pages}
+                {/* Optional free-form details */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Extra Details (optional)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={newOrder.details || ""}
                     onChange={(e) =>
-                      setNewOrder({
-                        ...newOrder,
-                        number_of_pages: e.target.value,
-                      })
+                      setNewOrder((prev) => ({
+                        ...prev,
+                        details: e.target.value,
+                      }))
                     }
-                    className="border rounded-lg p-2"
+                    className="border border-gray-300 rounded-xl px-3 py-2 w-full focus:ring-2 focus:ring-cyan-500 outline-none resize-none"
+                    placeholder="Notes about this job..."
                   />
+                </div>
+              </div>
 
-                  <select
-                    value={newOrder.binding_type}
-                    onChange={(e) =>
-                      setNewOrder({
-                        ...newOrder,
-                        binding_type: e.target.value,
-                      })
-                    }
-                    className="border rounded-lg p-2"
-                  >
-                    <option value="">Select Binding Type</option>
-                    <option>Perfect Binding</option>
-                    <option>Saddle Stitch</option>
-                    <option>Hardcover</option>
-                    <option>Spiral</option>
-                  </select>
+              {/* Dynamic attributes based on product */}
+              {selectedProductObj && productAttributes.length > 0 && (
+                <div className="mt-5 border border-gray-200 rounded-xl p-4 bg-white max-h-64 overflow-y-auto">
+                  <p className="text-xs text-gray-500 mb-2">
+                    These fields depend on the selected product. They are the
+                    same attributes customers can select online.
+                  </p>
 
-                  <select
-                    value={newOrder.book_type}
-                    onChange={(e) =>
-                      setNewOrder({ ...newOrder, book_type: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                  >
-                    <option value="">Select Book Type</option>
-                    <option>Year Book</option>
-                    <option>Coffee Table Book</option>
-                    <option>Souvenir Program</option>
-                  </select>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {productAttributes.map((attr) => (
+                      <div key={attr.attribute_id}>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                          {attr.attribute_name}
+                        </label>
 
-                  <select
-                    value={newOrder.size}
-                    onChange={(e) =>
-                      setNewOrder({ ...newOrder, size: e.target.value })
-                    }
-                    className="border rounded-lg p-2 w-full"
-                  >
-                    <option value="">Select Size</option>
-                    <option>A4 (210 x 297 mm)</option>
-                    <option>Trade Paperback (13 x 20 cm)</option>
-                    <option>5.5&quot; x 8.5&quot;</option>
-                    <option>6&quot; x 9&quot;</option>
-                    <option>5&quot; x 8&quot;</option>
-                    <option value="custom">Custom Size</option>
-                  </select>
+                        {attr.input_type === "select" ? (
+                          <select
+                            className="border border-gray-300 rounded-xl px-3 py-2 w-full focus:ring-2 focus:ring-cyan-500 outline-none text-sm"
+                            value={newOrder[attr.attribute_name] || ""}
+                            onChange={(e) =>
+                              setNewOrder((prev) => ({
+                                ...prev,
+                                [attr.attribute_name]: e.target.value,
+                              }))
+                            }
+                          >
+                            {(attr.options || [])
+                              .filter(
+                                (opt) => opt.option_value || opt.value || opt
+                              )
+                              .map((opt, i) => {
+                                const val =
+                                  typeof opt === "string"
+                                    ? opt
+                                    : opt.option_value || opt.value;
+                                return (
+                                  <option key={i} value={val}>
+                                    {val}
+                                  </option>
+                                );
+                              })}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            className="border border-gray-300 rounded-xl px-3 py-2 w-full focus:ring-2 focus:ring-cyan-500 outline-none text-sm"
+                            value={newOrder[attr.attribute_name] || ""}
+                            onChange={(e) =>
+                              setNewOrder((prev) => ({
+                                ...prev,
+                                [attr.attribute_name]: e.target.value,
+                              }))
+                            }
+                            placeholder={`Enter ${attr.attribute_name}`}
+                          />
+                        )}
 
-                  {newOrder.size === "custom" && (
-                    <div className="flex gap-2 items-center">
-                      <input
-                        type="number"
-                        placeholder="W"
-                        value={newOrder.custom_width || ""}
-                        onChange={(e) =>
-                          setNewOrder({
-                            ...newOrder,
-                            custom_width: e.target.value,
-                          })
-                        }
-                        className="w-16 border rounded p-1"
-                      />
-                      <span>x</span>
-                      <input
-                        type="number"
-                        placeholder="H"
-                        value={newOrder.custom_height || ""}
-                        onChange={(e) =>
-                          setNewOrder({
-                            ...newOrder,
-                            custom_height: e.target.value,
-                          })
-                        }
-                        className="w-16 border rounded p-1"
-                      />
-                    </div>
-                  )}
-
-                  <select
-                    value={newOrder.paper_type}
-                    onChange={(e) =>
-                      setNewOrder({ ...newOrder, paper_type: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                  >
-                    <option value="">Paper Type</option>
-                    <option>Matte</option>
-                    <option>Glossy</option>
-                    <option>Book Paper</option>
-                  </select>
-
-                  <select
-                    value={newOrder.cover_finish}
-                    onChange={(e) =>
-                      setNewOrder({ ...newOrder, cover_finish: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                  >
-                    <option value="">Select Cover Finish</option>
-                    <option>Matte</option>
-                    <option>Glossy</option>
-                    <option>Soft Touch</option>
-                  </select>
-
-                  <select
-                    value={newOrder.color_printing}
-                    onChange={(e) =>
-                      setNewOrder({
-                        ...newOrder,
-                        color_printing: e.target.value,
-                      })
-                    }
-                    className="border rounded-lg p-2"
-                  >
-                    <option value="">Select Color Printing</option>
-                    <option>Full Color</option>
-                    <option>Black & White</option>
-                    <option>Mixed</option>
-                  </select>
-                </>
+                        {/* Show per-option extra price note if it's select */}
+                        {attr.input_type === "select" && (
+                          <p className="text-[11px] text-gray-500 mt-1">
+                            {(() => {
+                              const sel = newOrder[attr.attribute_name];
+                              const opt = (attr.options || []).find((o) => {
+                                const v =
+                                  typeof o === "string"
+                                    ? o
+                                    : o.option_value || o.value || "";
+                                return v === sel;
+                              });
+                              if (!opt || typeof opt === "string") return null;
+                              const p = Number(opt.price || 0);
+                              if (!p) return null;
+                              return `+₱${p.toFixed(2)} per copy`;
+                            })()}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
-
-                {/* ------------------------------ */}
-                {/* FLYERS FORM */}
-                {/* ------------------------------ */}
-                {selectedProduct === "Flyers" && (
-                <>
-                    <input
-                    type="number"
-                    placeholder="Number of Copies (min 1000)"
-                    min="1000"
-                    value={newOrder.quantity}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, quantity: e.target.value })
-                    }
-                    className="border border-gray-300 rounded-lg p-2"
-                    />
-
-                    {/* Size */}
-                    <div className="relative w-full">
-                    <select
-                        value={newOrder.size}
-                        onChange={(e) =>
-                        setNewOrder({ ...newOrder, size: e.target.value })
-                        }
-                        className="border rounded-lg p-2 w-full appearance-none"
-                    >
-                        <option value="">Select Flyer Size</option>
-                        <option>A4</option>
-                        <option>A5</option>
-                        <option>DL</option>
-                        <option value="custom">Custom</option>
-                    </select>
-
-                    {newOrder.size === "custom" && (
-                        <div className="absolute inset-y-0 right-2 flex items-center gap-2">
-                        <input
-                            type="number"
-                            placeholder="W"
-                            value={newOrder.custom_width || ""}
-                            onChange={(e) =>
-                            setNewOrder({ ...newOrder, custom_width: e.target.value })
-                            }
-                            className="w-14 border rounded p-1 text-sm"
-                        />
-
-                        <span className="text-xs font-semibold">x</span>
-
-                        <input
-                            type="number"
-                            placeholder="H"
-                            value={newOrder.custom_height || ""}
-                            onChange={(e) =>
-                            setNewOrder({ ...newOrder, custom_height: e.target.value })
-                            }
-                            className="w-14 border rounded p-1 text-sm"
-                        />
-                        <span className="text-xs font-semibold">in</span>
-                        </div>
-                    )}
-                    </div>
-
-                    {/* Paper Type */}
-                    <select
-                    value={newOrder.paper_type}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, paper_type: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    >
-                    <option value="">Select Paper Type</option>
-                    <option>Glossy</option>
-                    <option>Matte</option>
-                    <option>Premium Card</option>
-                    </select>
-
-                    {/* Lamination */}
-                    <select
-                    value={newOrder.lamination}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, lamination: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    >
-                    <option value="">Select Lamination</option>
-                    <option>Gloss</option>
-                    <option>Matte</option>
-                    <option>UV Coated</option>
-                    </select>
-
-                    {/* Color */}
-                    <select
-                    value={newOrder.color}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, color: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    >
-                    <option value="">Select Color Option</option>
-                    <option>Yes</option>
-                    <option>No</option>
-                    </select>
-
-                    {/* Back-to-Back */}
-                    <label className="flex items-center gap-3 p-2">
-                    <input
-                        type="checkbox"
-                        checked={newOrder.back_to_back || false}
-                        onChange={(e) =>
-                        setNewOrder({ ...newOrder, back_to_back: e.target.checked })
-                        }
-                        className="w-5 h-5 cursor-pointer"
-                    />
-                    <span className="font-semibold">Print Back-to-Back</span>
-                    </label>
-                </>
-                )}
-
-                {/* ------------------------------ */}
-                {/* POSTER FORM */}
-                {/* ------------------------------ */}
-                {selectedProduct === "Poster" && (
-                <>
-                    <input
-                    type="number"
-                    placeholder="Number of Posters (min 100)"
-                    min="100"
-                    value={newOrder.quantity}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, quantity: e.target.value })
-                    }
-                    className="border border-gray-300 rounded-lg p-2"
-                    />
-
-                    {/* Size */}
-                    <div className="relative w-full">
-                    <select
-                        value={newOrder.size}
-                        onChange={(e) =>
-                        setNewOrder({ ...newOrder, size: e.target.value })
-                        }
-                        className="border rounded-lg p-2 w-full"
-                    >
-                        <option value="">Select Poster Size</option>
-                        <option>A3</option>
-                        <option>A2</option>
-                        <option>A1</option>
-                        <option value="custom">Custom</option>
-                    </select>
-
-                    {newOrder.size === "custom" && (
-                        <div className="absolute inset-y-0 right-2 flex items-center gap-2">
-                        <input
-                            type="number"
-                            placeholder="W"
-                            value={newOrder.custom_width || ""}
-                            onChange={(e) =>
-                            setNewOrder({ ...newOrder, custom_width: e.target.value })
-                            }
-                            className="w-14 border rounded p-1 text-sm"
-                        />
-                        <span>x</span>
-                        <input
-                            type="number"
-                            placeholder="H"
-                            value={newOrder.custom_height || ""}
-                            onChange={(e) =>
-                            setNewOrder({ ...newOrder, custom_height: e.target.value })
-                            }
-                            className="w-14 border rounded p-1 text-sm"
-                        />
-                        </div>
-                    )}
-                    </div>
-
-                    {/* Paper Type */}
-                    <select
-                    value={newOrder.paper_type}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, paper_type: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    >
-                    <option value="">Select Paper Type</option>
-                    <option>Glossy</option>
-                    <option>Matte</option>
-                    <option>Premium Card</option>
-                    </select>
-
-                    {/* Lamination */}
-                    <select
-                    value={newOrder.lamination}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, lamination: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    >
-                    <option value="">Select Lamination</option>
-                    <option>Gloss</option>
-                    <option>Matte</option>
-                    <option>UV Coated</option>
-                    </select>
-
-                    {/* Color */}
-                    <select
-                    value={newOrder.color}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, color: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    >
-                    <option value="">Select Color</option>
-                    <option>Full Color</option>
-                    <option>Black & White</option>
-                    </select>
-                </>
-                )}
-
-
-                {/* ------------------------------ */}
-                {/* LABEL FORM */}
-                {/* ------------------------------ */}
-                {selectedProduct === "Label" && (
-                <>
-                    <input
-                    type="number"
-                    placeholder="Number of Copies (min 100)"
-                    min="100"
-                    value={newOrder.quantity}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, quantity: e.target.value })
-                    }
-                    className="border border-gray-300 rounded-lg p-2"
-                    />
-
-                    {/* Size */}
-                    <div className="relative w-full">
-                    <select
-                        value={newOrder.size}
-                        onChange={(e) =>
-                        setNewOrder({ ...newOrder, size: e.target.value })
-                        }
-                        className="border rounded-lg p-2 w-full"
-                    >
-                        <option value="">Select Size</option>
-                        <option>2” x 2”</option>
-                        <option>3” x 3”</option>
-                        <option value="custom">Custom</option>
-                    </select>
-
-                    {newOrder.size === "custom" && (
-                        <div className="absolute inset-y-0 right-2 flex items-center gap-2">
-                        <input
-                            type="number"
-                            placeholder="W"
-                            value={newOrder.custom_width || ""}
-                            onChange={(e) =>
-                            setNewOrder({ ...newOrder, custom_width: e.target.value })
-                            }
-                            className="w-14 border rounded p-1"
-                        />
-                        <span>x</span>
-                        <input
-                            type="number"
-                            placeholder="H"
-                            value={newOrder.custom_height || ""}
-                            onChange={(e) =>
-                            setNewOrder({ ...newOrder, custom_height: e.target.value })
-                            }
-                            className="w-14 border rounded p-1"
-                        />
-                        </div>
-                    )}
-                    </div>
-
-                    {/* Paper Type */}
-                    <select
-                    value={newOrder.paper_type}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, paper_type: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    >
-                    <option value="">Select Paper Type</option>
-                    <option>Matte</option>
-                    <option>Glossy</option>
-                    <option>Transparent</option>
-                    <option>Waterproof Vinyl</option>
-                    </select>
-                </>
-                )}
-
-
-                {/* ------------------------------ */}
-                {/* CALLING CARD FORM */}
-                {/* ------------------------------ */}
-                {selectedProduct === "Calling Card" && (
-                <>
-                    <input
-                    type="text"
-                    placeholder="Card Title"
-                    value={newOrder.card_title}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, card_title: e.target.value })
-                    }
-                    className="border border-gray-300 rounded-lg p-2"
-                    />
-
-                    <input
-                    type="number"
-                    placeholder="Number of Cards (min 100)"
-                    min="100"
-                    value={newOrder.quantity}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, quantity: e.target.value })
-                    }
-                    className="border border-gray-300 rounded-lg p-2"
-                    />
-
-                    {/* Size */}
-                    <div className="relative w-full">
-                    <select
-                        value={newOrder.size}
-                        onChange={(e) =>
-                        setNewOrder({ ...newOrder, size: e.target.value })
-                        }
-                        className="border rounded-lg p-2 w-full"
-                    >
-                        <option value="">Select Size</option>
-                        <option>2” x 3.5”</option>
-                        <option value="custom">Custom</option>
-                    </select>
-
-                    {newOrder.size === "custom" && (
-                        <div className="absolute inset-y-0 right-2 flex items-center gap-2">
-                        <input
-                            type="number"
-                            placeholder="W"
-                            value={newOrder.custom_width || ""}
-                            onChange={(e) =>
-                            setNewOrder({ ...newOrder, custom_width: e.target.value })
-                            }
-                            className="w-14 border rounded p-1"
-                        />
-                        <span>x</span>
-                        <input
-                            type="number"
-                            placeholder="H"
-                            value={newOrder.custom_height || ""}
-                            onChange={(e) =>
-                            setNewOrder({ ...newOrder, custom_height: e.target.value })
-                            }
-                            className="w-14 border rounded p-1"
-                        />
-                        </div>
-                    )}
-                    </div>
-
-                    {/* Paper Type */}
-                    <select
-                    value={newOrder.paper_type}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, paper_type: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    >
-                    <option value="">Select Type of Paper</option>
-                    <option>Matte</option>
-                    <option>Glossy</option>
-                    <option>Textured</option>
-                    </select>
-                </>
-                )}
-
-
-
-
-                {/* ------------------------------ */}
-                {/* CALENDAR FORM */}
-                {/* ------------------------------ */}
-                {selectedProduct === "Calendar" && (
-                <>
-                    <input
-                    type="number"
-                    placeholder="Number of Sets (min 100)"
-                    min="100"
-                    value={newOrder.quantity}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, quantity: e.target.value })
-                    }
-                    className="border border-gray-300 rounded-lg p-2"
-                    />
-
-                    <select
-                    value={newOrder.color}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, color: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    >
-                    <option value="">Select Color</option>
-                    <option>Single Colored</option>
-                    <option>More Than 1 Color</option>
-                    </select>
-
-                    <select
-                    value={newOrder.calendar_type}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, calendar_type: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    >
-                    <option value="">Select Calendar Type</option>
-                    <option>Single Month (12 pages)</option>
-                    <option>Double Month (6 pages)</option>
-                    </select>
-
-                    {/* Size */}
-                    <div className="relative w-full">
-                    <select
-                        value={newOrder.size}
-                        onChange={(e) =>
-                        setNewOrder({ ...newOrder, size: e.target.value })
-                        }
-                        className="border rounded-lg p-2 w-full"
-                    >
-                        <option value="">Select Size</option>
-                        <option>11”x17”</option>
-                        <option>17”x22”</option>
-                        <option>22”x34”</option>
-                        <option>8 1/2”x14”</option>
-                        <option value="custom">Custom Size</option>
-                    </select>
-
-                    {newOrder.size === "custom" && (
-                        <div className="absolute inset-y-0 right-2 flex items-center gap-2">
-                        <input
-                            type="number"
-                            placeholder="W"
-                            value={newOrder.custom_width || ""}
-                            onChange={(e) =>
-                            setNewOrder({ ...newOrder, custom_width: e.target.value })
-                            }
-                            className="w-14 border rounded p-1"
-                        />
-                        <span>x</span>
-                        <input
-                            type="number"
-                            placeholder="H"
-                            value={newOrder.custom_height || ""}
-                            onChange={(e) =>
-                            setNewOrder({ ...newOrder, custom_height: e.target.value })
-                            }
-                            className="w-14 border rounded p-1"
-                        />
-                        </div>
-                    )}
-                    </div>
-                </>
-                )}
-
-
-                {/* ------------------------------ */}
-                {/* INVITATION FORM */}
-                {/* ------------------------------ */}
-                {selectedProduct === "Invitation" && (
-                <>
-                    <input
-                    type="text"
-                    placeholder="Event Name"
-                    value={newOrder.event_name}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, event_name: e.target.value })
-                    }
-                    className="border border-gray-300 rounded-lg p-2"
-                    />
-
-                    <input
-                    type="number"
-                    placeholder="Number of Copies (min 50)"
-                    min="50"
-                    value={newOrder.quantity}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, quantity: e.target.value })
-                    }
-                    className="border border-gray-300 rounded-lg p-2"
-                    />
-
-                    {/* Size */}
-                    <div className="relative w-full">
-                    <select
-                        value={newOrder.size}
-                        onChange={(e) =>
-                        setNewOrder({ ...newOrder, size: e.target.value })
-                        }
-                        className="border rounded-lg p-2 w-full"
-                    >
-                        <option value="">Select Size</option>
-                        <option>5x7 inches</option>
-                        <option>4x6 inches</option>
-                        <option value="custom">Custom</option>
-                    </select>
-
-                    {newOrder.size === "custom" && (
-                        <div className="absolute inset-y-0 right-2 flex items-center gap-2">
-                        <input
-                            type="number"
-                            placeholder="W"
-                            value={newOrder.custom_width || ""}
-                            onChange={(e) =>
-                            setNewOrder({ ...newOrder, custom_width: e.target.value })
-                            }
-                            className="w-14 border rounded p-1"
-                        />
-                        <span>x</span>
-                        <input
-                            type="number"
-                            placeholder="H"
-                            value={newOrder.custom_height || ""}
-                            onChange={(e) =>
-                            setNewOrder({ ...newOrder, custom_height: e.target.value })
-                            }
-                            className="w-14 border rounded p-1"
-                        />
-                        </div>
-                    )}
-                    </div>
-
-                    <select
-                    value={newOrder.paper_type}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, paper_type: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    >
-                    <option value="">Select Paper Type</option>
-                    <option>Carbonized</option>
-                    <option>Colored</option>
-                    <option>Plain</option>
-                    </select>
-
-                    <select
-                    value={newOrder.print_method}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, print_method: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    >
-                    <option value="">Select Print Method</option>
-                    <option>Computer Printout</option>
-                    <option>Offset Machine</option>
-                    </select>
-                </>
-                )}
-
-
-
-
-                {/* ------------------------------ */}
-                {/* OFFICIAL RECEIPT FORM */}
-                {/* ------------------------------ */}
-                {selectedProduct === "Official Receipt" && (
-                <>
-                    <input
-                    type="text"
-                    placeholder="Business Name"
-                    value={newOrder.business_name}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, business_name: e.target.value })
-                    }
-                    className="border border-gray-300 rounded-lg p-2"
-                    />
-
-                    <input
-                    type="number"
-                    placeholder="Quantity (min 100)"
-                    min="100"
-                    value={newOrder.quantity}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, quantity: e.target.value })
-                    }
-                    className="border border-gray-300 rounded-lg p-2"
-                    />
-
-                    <select
-                    value={newOrder.paper_type}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, paper_type: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    >
-                    <option value="">Select Paper Type</option>
-                    <option>Carbonized</option>
-                    <option>Colored Bondpaper</option>
-                    </select>
-
-                    <select
-                    value={newOrder.booklet_finish}
-                    onChange={(e) =>
-                        setNewOrder({
-                        ...newOrder,
-                        booklet_finish: e.target.value,
-                        })
-                    }
-                    className="border rounded-lg p-2"
-                    >
-                    <option value="">Select Booklet Finish</option>
-                    <option>Padded</option>
-                    <option>Stapled</option>
-                    <option>Loose</option>
-                    </select>
-                </>
-                )}
-
-
-                {/* ------------------------------ */}
-                {/* NEWS LETTER FORM */}
-                {/* ------------------------------ */}
-                {selectedProduct === "News Letter" && (
-                <>
-                    <input
-                    type="text"
-                    placeholder="Business Name"
-                    value={newOrder.business_name}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, business_name: e.target.value })
-                    }
-                    className="border border-gray-300 rounded-lg p-2"
-                    />
-
-                    <input
-                    type="number"
-                    placeholder="Number of Copies (min 100)"
-                    min="100"
-                    value={newOrder.quantity}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, quantity: e.target.value })
-                    }
-                    className="border border-gray-300 rounded-lg p-2"
-                    />
-
-                    <select
-                    value={newOrder.color}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, color: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    >
-                    <option value="">Select Print Type</option>
-                    <option>Black & White</option>
-                    <option>Full Color</option>
-                    </select>
-
-                    <select
-                    value={newOrder.layout}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, layout: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    >
-                    <option value="">Select Layout</option>
-                    <option>Single Page</option>
-                    <option>Multi-Page</option>
-                    </select>
-                </>
-                )}
-                
-
-                {/* ------------------------------ */}
-                {/* RAFFLE TICKET FORM */}
-                {/* ------------------------------ */}
-                {selectedProduct === "Raffle Ticket" && (
-                <>
-                    <input
-                    type="text"
-                    placeholder="Business Name"
-                    value={newOrder.business_name}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, business_name: e.target.value })
-                    }
-                    className="border border-gray-300 rounded-lg p-2"
-                    />
-
-                    <input
-                    type="number"
-                    placeholder="Number of Tickets (min 50)"
-                    min="50"
-                    value={newOrder.quantity}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, quantity: e.target.value })
-                    }
-                    className="border border-gray-300 rounded-lg p-2"
-                    />
-
-                    {/* Size */}
-                    <div className="relative w-full">
-                    <select
-                        value={newOrder.size}
-                        onChange={(e) =>
-                        setNewOrder({ ...newOrder, size: e.target.value })
-                        }
-                        className="border rounded-lg p-2 w-full"
-                    >
-                        <option value="">Select Size</option>
-                        <option>2” x 5” (Standard)</option>
-                        <option value="custom">Custom</option>
-                    </select>
-
-                    {newOrder.size === "custom" && (
-                        <div className="absolute inset-y-0 right-2 flex items-center gap-2">
-                        <input
-                            type="number"
-                            placeholder="W"
-                            value={newOrder.custom_width || ""}
-                            onChange={(e) =>
-                            setNewOrder({ ...newOrder, custom_width: e.target.value })
-                            }
-                            className="w-14 border rounded p-1"
-                        />
-                        <span>x</span>
-                        <input
-                            type="number"
-                            placeholder="H"
-                            value={newOrder.custom_height || ""}
-                            onChange={(e) =>
-                            setNewOrder({ ...newOrder, custom_height: e.target.value })
-                            }
-                            className="w-14 border rounded p-1"
-                        />
-                        </div>
-                    )}
-                    </div>
-
-                    <select
-                    value={newOrder.with_stub}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, with_stub: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    >
-                    <option value="">With Stub?</option>
-                    <option>Yes</option>
-                    <option>No</option>
-                    </select>
-                </>
-                )}
-
-
-
-
-                {/* ------------------------------ */}
-                {/* BINDING FORM */}
-                {/* ------------------------------ */}
-                {selectedProduct === "Binding" && (
-                <>
-                    <input
-                    type="number"
-                    placeholder="Number of Books"
-                    value={newOrder.quantity}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, quantity: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    />
-
-                    <input
-                    type="number"
-                    placeholder="Page Count"
-                    value={newOrder.number_of_pages}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, number_of_pages: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    />
-
-                    <select
-                    value={newOrder.binding_type}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, binding_type: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    >
-                    <option value="">Binding Type</option>
-                    <option>Perfect Binding</option>
-                    <option>Saddle Stitch</option>
-                    <option>Spiral</option>
-                    <option>Ring Binding</option>
-                    </select>
-
-                    <select
-                    value={newOrder.paper_type}
-                    onChange={(e) =>
-                        setNewOrder({ ...newOrder, paper_type: e.target.value })
-                    }
-                    className="border rounded-lg p-2"
-                    >
-                    <option value="">Paper Type</option>
-                    <option>Matte</option>
-                    <option>Glossy</option>
-                    <option>Bond Paper</option>
-                    <option>Book Paper</option>
-                    </select>
-                </>
-                )}
             </div>
 
-            {/* =============================== */}
             {/* FILE UPLOAD */}
-            {/* =============================== */}
-            <div className="mt-6">
-              <label className="font-semibold text-gray-700">
-                Upload File (optional)
-              </label>
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">
+                Upload Files (Optional)
+              </h3>
+
               <input
                 type="file"
                 multiple
-                accept="image/*,.pdf"
-                onChange={(e) => setOrderFiles([...e.target.files])}
-                className="border rounded-lg p-2 w-full mt-1"
+                accept="image/*,.pdf,.doc,.docx"
+                onChange={(e) => setOrderFiles(Array.from(e.target.files || []))}
+                className="border border-gray-300 rounded-xl px-3 py-2 w-full focus:ring-2 focus:ring-cyan-500 outline-none bg-white"
               />
+
+              {orderFiles && orderFiles.length > 0 && (
+                <p className="mt-2 text-xs text-gray-500">
+                  {orderFiles.length} file(s) selected.
+                </p>
+              )}
             </div>
 
-            {/* =============================== */}
+            {/* PRICE SUMMARY */}
+            <div className="bg-green-50 border border-green-300 rounded-2xl p-4 shadow-sm mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <p className="text-sm text-gray-600">
+                    System Estimated Price (based on attributes)
+                  </p>
+                  <p className="text-xl font-bold text-green-700">
+                    ₱{Number(autoPrice || 0).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-gray-500 italic">
+                    You can override this below. Final price will be saved to
+                    the order.
+                  </p>
+                </div>
+
+                <div className="w-full sm:w-64">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1 text-right sm:text-left">
+                    Final Price (required)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={newOrder.price}
+                    onChange={(e) =>
+                      setNewOrder((prev) => ({
+                        ...prev,
+                        price: e.target.value,
+                      }))
+                    }
+                    className="border border-gray-300 rounded-xl px-3 py-2 w-full text-right focus:ring-2 focus:ring-cyan-500 outline-none"
+                    placeholder="Enter final agreed price"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-3 text-center">
+                <p className="text-lg font-extrabold text-green-800">
+                  Total to be recorded: ₱{finalPrice.toLocaleString()}
+                </p>
+              </div>
+            </div>
+
             {/* BUTTONS */}
-            {/* =============================== */}
-            <div className="flex justify-center gap-3 mt-6">
+            <div className="flex justify-end gap-3 mt-4">
               <button
                 onClick={onClose}
-                className="px-5 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium"
+                className="px-6 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium shadow-sm transition"
               >
                 Cancel
               </button>
 
               <button
-                onClick={onSubmit}
-                className="px-5 py-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold"
+                onClick={handleSubmit}
+                className="px-6 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold shadow-md transition"
               >
                 Add Order
               </button>
@@ -1402,3 +485,5 @@ export default function WalkInOrderModal({
     </AnimatePresence>
   );
 }
+
+export default WalkInOrderModal;

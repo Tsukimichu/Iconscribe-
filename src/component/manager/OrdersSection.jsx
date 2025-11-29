@@ -23,6 +23,8 @@ const OrdersSection = () => {
   // STATE
   // =====================================================
   const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState([]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
 
@@ -52,41 +54,50 @@ const OrdersSection = () => {
     email: "",
     contact_number: "",
     location: "",
-    date_ordered: "",
-    status: "Pending",
-    service: "",
-    price: "",
-    // Product Specifics
     quantity: "",
-    size: "",
-    paper_type: "",
-    color_printing: "",
-    binding_type: "",
-    material: "",
     details: "",
-    // NEW FIELDS FOR BROCHURE
-    lamination: "",
-    back_to_back: false,
+    price: "",
+    service: "",
+    product_id: null,
   });
 
   // Handle file uploads (for walk-in)
   const [orderFiles, setOrderFiles] = useState([]);
 
   // =====================================================
-  // LOAD ORDERS
+  // LOAD ORDERS + PRODUCTS
   // =====================================================
   const loadOrders = () => {
     fetch(`${API_URL}/orders`)
       .then((res) => res.json())
       .then((data) => {
         const arr = Array.isArray(data) ? data : [];
-        setOrders(arr);
+        setOrders(
+          arr.map(o => ({
+            ...o,
+            customer_name: o.customer_name || o.walk_in_name || "Walk-in Customer",
+            email: o.email || o.walk_in_email || "",
+            contact_number: o.contact_number || o.walk_in_contact || "",
+            location: o.location || o.walk_in_location || "",
+          }))
+        );
       })
       .catch((err) => console.error("❌ Error loading orders:", err));
   };
 
+  const loadProducts = () => {
+    fetch(`${API_URL}/products`)
+      .then((res) => res.json())
+      .then((data) => {
+        const arr = Array.isArray(data) ? data : [];
+        setProducts(arr);
+      })
+      .catch((err) => console.error("❌ Error loading products:", err));
+  };
+
   useEffect(() => {
     loadOrders();
+    loadProducts();
   }, []);
 
   // =====================================================
@@ -140,8 +151,12 @@ const OrdersSection = () => {
         }
 
         return sortConfig.direction === "asc"
-          ? aVal > bVal ? 1 : -1
-          : aVal < bVal ? 1 : -1;
+          ? aVal > bVal
+            ? 1
+            : -1
+          : aVal < bVal
+          ? 1
+          : -1;
       });
     }
 
@@ -218,8 +233,7 @@ const OrdersSection = () => {
       // Find current index in displayedOrders (for Next/Prev)
       const index = displayedOrders.findIndex((o) => o.order_id === orderId);
 
-      // Merge table row data (has status, estimated_price, etc.)
-      // with details data (items, files, etc.)
+      // Merge table row data with details data
       const mergedOrder = {
         ...orderRow,
         ...data.order,
@@ -378,63 +392,33 @@ const OrdersSection = () => {
   };
 
   // =====================================================
-  // WALK-IN ORDER HANDLERS
+  // WALK-IN ORDER HANDLER
   // =====================================================
-  const handleAddOrder = async () => {
-    const { customer_name, service, price } = newOrder;
-
-    if (!customer_name.trim() || !service || !price) {
-      return alert(
-        "Please fill in all required fields (Customer, Service, and Price)."
-      );
-    }
-
+  const handleAddOrder = async (body) => {
     try {
-      const formData = new FormData();
-      Object.entries(newOrder).forEach(([key, value]) => {
-        if (value) formData.append(key, value);
-      });
-      formData.append("source", "walk-in");
-
-      orderFiles.forEach((file) => formData.append("files", file));
-
-      const res = await fetch(`${API_URL}/orders`, {
+      const res = await fetch(`${API_URL}/orders/create`, {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
       });
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.message || "Failed to add order");
-
-      if (data.success) {
-        loadOrders();
-        setShowAddOrderModal(false);
-        setNewOrder({
-          customer_name: "",
-          email: "",
-          contact_number: "",
-          location: "",
-          date_ordered: "",
-          status: "Pending",
-          service: "",
-          price: "",
-          number_of_pages: "",
-          binding_type: "",
-          paper_type: "",
-          cover_finish: "",
-          color_printing: "",
-          book_type: "",
-        });
-        setOrderFiles([]);
+      if (!data.success) {
+        console.error("❌ Walk-in Add Error:", data);
+        alert(data.message || "Error adding walk-in order");
+        return;
       }
+
+      loadOrders();
+      setShowAddOrderModal(false);
+
     } catch (err) {
-      console.error("Error adding walk-in order:", err);
-      alert("Server error while adding order. Please try again later.");
+      console.error("❌ Add Walk-in Error:", err);
     }
   };
 
-    // Quick sort dropdown (toolbar)
+  // Quick sort dropdown (toolbar)
   const [quickSort, setQuickSort] = useState("none");
 
   const handleQuickSortChange = (value) => {
@@ -457,8 +441,6 @@ const OrdersSection = () => {
         setSortConfig({ key: null, direction: "asc" });
     }
   };
-
-
 
   // =====================================================
   // RENDER
@@ -556,7 +538,6 @@ const OrdersSection = () => {
           </div>
         </div>
 
-
         {/* Orders Table */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
@@ -604,7 +585,15 @@ const OrdersSection = () => {
                     <td className="py-3 px-6">{order.service}</td>
 
                     {/* Customer Name */}
-                    <td className="py-3 px-6">{order.customer_name}</td>
+                    <td className="py-3 px-6 flex items-center gap-2">
+                      {order.customer_name}
+
+                      {order.order_type === "walk-in" && (
+                        <span className="px-2 py-0.5 text-[10px] bg-indigo-100 text-indigo-700 rounded-full">
+                          Walk-In
+                        </span>
+                      )}
+                    </td>
 
                     {/* Date Ordered */}
                     <td className="py-3 px-6">
@@ -723,13 +712,38 @@ const OrdersSection = () => {
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 text-sm">
-                      <Detail label="Customer Name" value={selectedOrder.customer_name} />
-                      <Detail label="Email" value={selectedOrder.email} />
-                      <Detail label="Contact Number" value={selectedOrder.contact_number} />
-                      <Detail
-                        label="Location"
-                        value={selectedOrder.location || selectedOrder.address}
-                      />
+                          <Detail
+                            label="Customer Name"
+                            value={
+                              selectedOrder.customer_name ||
+                              selectedOrder.walk_in_name ||
+                              "Walk-In Customer"
+                            }
+                          />
+
+                          <Detail
+                            label="Email"
+                            value={selectedOrder.email || selectedOrder.walk_in_email || "—"}
+                          />
+
+                          <Detail
+                            label="Contact Number"
+                            value={selectedOrder.contact_number || selectedOrder.walk_in_contact || "—"}
+                          />
+
+                          <Detail
+                            label="Location"
+                            value={
+                              selectedOrder.location ||
+                              selectedOrder.walk_in_location ||
+                              selectedOrder.address ||
+                              "—"
+                            }
+                          />
+
+                          {selectedOrder.order_type === "walk-in" && (
+                            <p className="text-xs text-indigo-600 font-semibold mt-1">Walk-In Order</p>
+                          )}
                       <Detail
                         label="Date Ordered"
                         value={
@@ -1164,6 +1178,7 @@ const OrdersSection = () => {
         setOrderFiles={setOrderFiles}
         showSizeDropdown={showSizeDropdown}
         setShowSizeDropdown={setShowSizeDropdown}
+        products={products}
       />
     </div>
   );

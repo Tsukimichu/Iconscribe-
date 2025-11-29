@@ -4,6 +4,8 @@ const db = require("../models/db");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const sendEmail = require("../utils/sendEmail");
+
 
 const uploadDir = path.join(__dirname, "../uploads/orderfiles");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -73,14 +75,26 @@ router.post("/create", async (req, res) => {
       status,
       attributes,
       estimated_price,
+      order_type,
+
+      // NEW WALK-IN FIELDS
+      walk_in_name,
+      walk_in_email,
+      walk_in_contact,
+      walk_in_location
     } = req.body;
 
-    if (!user_id || !product_id || !quantity) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing required fields" });
+    if (!product_id || !quantity) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields (product_id, quantity)"
+      });
     }
 
+    // Identify type of customer
+    const finalOrderType = order_type || (user_id ? "customer" : "walk-in");
+
+    // Parse attributes safely
     let parsedAttributes = [];
     try {
       parsedAttributes =
@@ -91,43 +105,59 @@ router.post("/create", async (req, res) => {
       parsedAttributes = [];
     }
 
-    const [orderResult] = await db
-      .promise()
-      .query(
-        "INSERT INTO orders (user_id, order_date, total) VALUES (?, NOW(), 0)",
-        [user_id]
-      );
+    // INSERT → orders
+    const [orderResult] = await db.promise().query(
+      `
+      INSERT INTO orders 
+      (user_id, walk_in_name, walk_in_email, walk_in_contact, walk_in_location, order_date, order_type, manager_added, total)
+      VALUES (?, ?, ?, ?, ?, NOW(), ?, 0, 0)
+      `,
+      [
+        user_id || null,
+        walk_in_name || null,
+        walk_in_email || null,
+        walk_in_contact || null,
+        walk_in_location || null,
+        finalOrderType
+      ]
+    );
 
     const order_id = orderResult.insertId;
 
-    const [itemResult] = await db
-      .promise()
-      .query(
-        "INSERT INTO orderitems (order_id, product_id, quantity, status, estimated_price) VALUES (?, ?, ?, ?, ?)",
-        [
-          order_id,
-          product_id,
-          quantity,
-          status || "Pending",
-          estimated_price || 0,
-        ]
-      );
+    // INSERT → orderitems
+    const [itemResult] = await db.promise().query(
+      `
+      INSERT INTO orderitems 
+      (order_id, product_id, quantity, status, estimated_price)
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [
+        order_id,
+        product_id,
+        quantity,
+        status || "Pending",
+        estimated_price || 0
+      ]
+    );
 
     const order_item_id = itemResult.insertId;
 
+    // Attach attributes
     await insertAttributes(order_item_id, parsedAttributes);
 
     res.json({
       success: true,
       message: "Order placed!",
       order_id,
-      order_item_id,
+      order_item_id
     });
+
   } catch (err) {
     console.error("❌ Create order error:", err);
     res.status(500).json({ success: false, message: "Database error" });
   }
 });
+
 
 router.post(
   "/upload/single/:id",
@@ -388,6 +418,7 @@ router.put("/:id/status", async (req, res) => {
   const { status } = req.body;
 
   try {
+    // 1) Update status in orderitems
     await db
       .promise()
       .query("UPDATE orderitems SET status=? WHERE order_item_id=?", [
@@ -395,17 +426,20 @@ router.put("/:id/status", async (req, res) => {
         id,
       ]);
 
+    // 2) Get order + product + walk-in info
     const [[item]] = await db.promise().query(
       `SELECT 
          oi.order_id, 
          o.user_id, 
+         o.walk_in_name,
+         o.walk_in_email,
          p.product_name, 
          oi.quantity,
          (oi.estimated_price + IFNULL(o.manager_added, 0)) AS final_amount
        FROM orderitems oi
-       JOIN orders o ON oi.order_id=o.order_id
-       JOIN products p ON oi.product_id=p.product_id
-       WHERE oi.order_item_id=?`,
+       JOIN orders o ON oi.order_id = o.order_id
+       JOIN products p ON oi.product_id = p.product_id
+       WHERE oi.order_item_id = ?`,
       [id]
     );
 
@@ -415,6 +449,7 @@ router.put("/:id/status", async (req, res) => {
         .json({ success: false, message: "Order item not found" });
     }
 
+    // 3) SOCKET notification for logged-in user (existing behavior)
     if (req.io && item.user_id) {
       req.io.to(`user_${item.user_id}`).emit("orderStatusUpdated", {
         order_id: item.order_id,
@@ -423,6 +458,56 @@ router.put("/:id/status", async (req, res) => {
       });
     }
 
+    // 4) EMAIL notification for WALK-IN customer
+    if (item.walk_in_email) {
+      try {
+        const subject = `Your ${item.product_name} order is now ${status}`;
+
+        const html = `
+          <div style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6;">
+            <h2 style="color: #0088cc;">Order Status Update</h2>
+
+            <p>Hi ${item.walk_in_name || "Customer"},</p>
+
+            <p>
+              We wanted to let you know that your order for
+              <strong>"${item.product_name}"</strong> has been updated.
+            </p>
+
+            <div style="
+              background: #f5faff;
+              border-left: 4px solid #0088cc;
+              padding: 12px 15px;
+              margin: 15px 0;
+            ">
+              <p style="margin: 0; font-size: 15px;">
+                <strong>New Status:</strong>
+                <span style="color: #0088cc; font-weight: bold;">${status}</span>
+              </p>
+            </div>
+
+            <p>
+              If you have any questions or need help with your order,
+              you may reply to this email and we will assist you shortly.
+            </p>
+
+            <p style="margin-top: 30px;">Thank you for choosing our services!</p>
+
+            <p style="font-weight: bold; margin: 0;">IconScribe Printing Services</p>
+            <p style="font-size: 12px; color: #777;">
+              This is an automated message. Please do not share your personal information.
+            </p>
+          </div>
+        `;
+
+        await sendEmail(item.walk_in_email, subject, html);
+      } catch (emailErr) {
+        console.error("❌ Failed to send status email:", emailErr);
+      }
+    }
+
+
+    // 5) If not Completed → no sales entry, just return
     if (status !== "Completed") {
       return res.json({
         success: true,
@@ -430,6 +515,7 @@ router.put("/:id/status", async (req, res) => {
       });
     }
 
+    // 6) If Completed → ensure sales entry exists
     const [exists] = await db
       .promise()
       .query("SELECT id FROM sales WHERE order_item_id=? LIMIT 1", [id]);
@@ -455,6 +541,7 @@ router.put("/:id/status", async (req, res) => {
     });
   }
 });
+
 
 router.post("/:id/cancel", async (req, res) => {
   try {

@@ -12,7 +12,6 @@ const OverviewSection = () => {
   const [orders, setOrders] = useState([]);
   const [newOrders, setNewOrders] = useState([]);
   const previousOrderIds = useRef(new Set());
-  const [showNotifications, setShowNotifications] = useState(false);
   const [orderChartData, setOrderChartData] = useState({
     categories: [],
     data: [],
@@ -48,18 +47,6 @@ const OverviewSection = () => {
         categories: Object.keys(salesMap),
         data: Object.values(salesMap),
       });
-
-    // --- New orders notification logic  ---
-    const currentIds = new Set(fetchedOrders.map(o => o.order_id));
-    const newOnes = [...currentIds].filter(id => !previousOrderIds.current.has(id));
-
-    if (!isFirstLoad.current && newOnes.length > 0) {
-      const newOrdersList = fetchedOrders.filter(o => newOnes.includes(o.order_id));
-
-      setNewOrders(prev => [...newOrdersList, ...prev].slice(0, 5));
-
-      showToast(`${newOrdersList.length} new order${newOrdersList.length > 1 ? "s" : ""} received!`, "info");
-    }
 
     // Update reference for next poll
     previousOrderIds.current = currentIds;

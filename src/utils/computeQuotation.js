@@ -1,70 +1,65 @@
-
-/**
- * @param {Object} params
- * @param {number} params.width 
- * @param {number} params.height
- * @param {number} params.copies
- * @param {boolean} params.colored
- * @param {number} [params.paperCost=20] 
- * @param {number} [params.plateCost=500]
- * @param {number} [params.runCost=400]
- * @param {number} [params.multiplier=2]
- * @returns {Object}
- */
-
 export function computeQuotation({
   width,
   height,
   copies,
   colored,
-  paperCost = 20,
-  plateCost = 500,
-  runCost = 400,
+  backToBack = false,
+  paperCost = 20,    // cost per 25x38 sheet
+  platePrice = 500, 
+  runPrice = 400,
   multiplier = 2,
 }) {
-  // If any required input is missing, return nothing
-  if (!width || !height || !copies) {
-    return null;
-  }
+  if (!width || !height || !copies) return null;
 
-  // Compute how many "outs" (fit per 25x38 sheet)
+  // --- SHEET SIZE ---
   const sheetWidth = 25;
   const sheetHeight = 38;
+
+  // How many fit on a 25x38 sheet
   const perRow = Math.floor(sheetWidth / width);
   const perCol = Math.floor(sheetHeight / height);
-  const outs = perRow * perCol || 1;
+  const outs = Math.max(perRow * perCol, 1);
 
-  // Compute number of sheets needed
+  // Sheets needed
   const sheetsNeeded = Math.ceil(copies / outs);
 
+  // Spoilage (3% waste standard)
+  const waste = Math.ceil(sheetsNeeded * 0.03);
+  const totalSheets = sheetsNeeded + waste;
+
   // Paper cost
-  const totalPaperCost = sheetsNeeded * paperCost;
+  const paperTotal = totalSheets * paperCost;
 
-  // Plate cost
-  const plateCount = colored ? 4 : 1;
-  const totalPlateCost = plateCount * plateCost;
+  // Plates per side
+  const platesPerSide = colored ? 4 : 1;
 
-  // Run cost
-  const totalRunCost = plateCount * runCost;
+  // TOTAL plates
+  const plateCount = backToBack
+    ? platesPerSide * 2       // front + back
+    : platesPerSide;          // only front
 
-  // Compute total base cost
-  const baseCost = totalPaperCost + totalPlateCost + totalRunCost;
+  const plateTotal = plateCount * platePrice;
 
-  // Apply markup or profit multiplier
+  // RUN cost
+  const runTotal = plateCount * runPrice;
+
+  // Base cost
+  const baseCost = paperTotal + plateTotal + runTotal;
+
+  // Final cost
   const total = baseCost * multiplier;
 
-  // Compute price per copy
-  const perCopy = Math.ceil(total / copies);
-
-  // Return detailed breakdown
   return {
     outs,
     sheetsNeeded,
-    totalPaperCost,
-    totalPlateCost,
-    totalRunCost,
+    waste,
+    totalSheets,
+    paperTotal,
+    plateCount,
+    plateTotal,
+    runTotal,
     baseCost,
     total,
-    perCopy,
+    perCopy: Math.ceil(total / copies),
   };
 }

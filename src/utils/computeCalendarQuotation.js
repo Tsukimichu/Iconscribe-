@@ -1,37 +1,31 @@
-/**
- * Calendar Quotation Calculator
- *
- * @param {Object} params
- * @param {number} params.quantity          - Number of calendar sets
- * @param {string} params.calendarType      - "Single Month (12 pages)" or "Double Month (6 pages)"
- * @returns {Object|null}
- */
-
 export function computeCalendarQuotation({
   quantity,
   calendarType,
+  priceBelow600 = 30,
+  price600Plus = 28,
 }) {
   const qty = Number(quantity);
-
   if (!qty || qty <= 0 || !calendarType) return null;
 
-  // Base price condition
-  const pricePerCalendar = qty < 600 ? 30 : 28;
+  // Determine price per calendar based on quantity
+  const pricePerCalendar = qty < 600 ? priceBelow600 : price600Plus;
 
-  // Determine multiplier
-  let multiplier = 12; // default: single month
+  // Determine pages/multiplier
+  const type = calendarType.toLowerCase();
 
-  if (calendarType.toLowerCase().includes("double")) {
-    multiplier = 6;
+  let pages = 12; // Single-month default
+
+  if (type.includes("double") || type.includes("6") || type.includes("two")) {
+    pages = 6;
   }
 
   // Total cost
-  const total = qty * pricePerCalendar * multiplier;
+  const total = qty * pricePerCalendar * pages;
 
   return {
     quantity: qty,
     pricePerCalendar,
-    multiplier,
+    pages,
     total,
     perSet: total / qty,
   };

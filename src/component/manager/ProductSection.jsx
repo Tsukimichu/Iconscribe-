@@ -136,6 +136,23 @@ const ProductSection = () => {
     setPopupType(type);
     setSelectedService(service);
 
+    // Preload attribute options structure safely
+    if (type === "create") {
+      setProductAttributeOptions(
+        availableAttributes.map(attr => ({
+          attribute_id: attr.attribute_id,
+          attribute_name: attr.attribute_name,
+          input_type: attr.input_type,
+          options: attr.options.map(o => ({
+            option_id: o.option_id,
+            option_value: o.option_value,
+            price: o.price,
+            selected: false,
+          }))
+        }))
+      );
+    }
+
     if (type === "edit" && service) {
       setTitle(service.product_name);
       setDescription(service.description || "");
@@ -206,7 +223,7 @@ const ProductSection = () => {
     const selected = productAttributeOptions.flatMap((attr) =>
       selectedAttributes.includes(attr.attribute_name)
         ? attr.options
-            .filter((o) => o.selected)
+            .filter((o) => o.selected && o.option_id != null)
             .map((o) => ({
               attribute_id: attr.attribute_id,
               option_id: o.option_id,
@@ -728,6 +745,8 @@ const ProductSection = () => {
                         (a) => a.attribute_id === attr.attribute_id
                       );
 
+                      if (!prodAttr) return null;
+
                       return (
                         <div key={attr.attribute_id} className="mb-3">
                           <label className="flex items-center gap-2 text-sm text-gray-700">
@@ -756,7 +775,7 @@ const ProductSection = () => {
                           {/* Dropdown multi-select for select-type attributes */}
                           {isSelected && attr.input_type === "select" && (
                             <div className="mt-2 ml-6 space-y-1">
-                              {(prodAttr ? prodAttr.options : attr.options || []).map((opt) => (
+                             {prodAttr?.options.map((opt) => (
                                 <label
                                   key={opt.option_id}
                                   className="flex items-center gap-2 text-xs bg-gray-100 px-3 py-1 rounded-lg border border-gray-300"
@@ -768,6 +787,8 @@ const ProductSection = () => {
                                       setProductAttributeOptions((prev) =>
                                         prev.map((a) => {
                                           if (a.attribute_id !== attr.attribute_id) return a;
+                                          
+                                          // MULTI-SELECT LOGIC (default)
                                           return {
                                             ...a,
                                             options: a.options.map((o) =>

@@ -1,39 +1,45 @@
-/**
- * Official Receipt (OR) Quotation Calculator
- *
- * @param {Object} params
- * @param {number} params.quantity                 - Number of OR booklets
- * @param {number} [params.paperCost=20]           - Cost per sheet
- * @param {number} [params.multiplier=1.5]         - Optional markup
- * @returns {Object|null}
- */
-
 export function computeORQuotation({
   quantity,
-  paperCost = 20,
+  paperCost = 20,        // cost per sheet
+  platePrice = 500,      // 2 plates (front/back)
+  runPrice = 400,        // per plate
+  parts = 2,             // 2-part NCR by default
   multiplier = 1.5,
 }) {
   const qty = Number(quantity);
-
   if (!qty || qty <= 0) return null;
 
-  // 1 booklet = 50 pages
-  const totalPages = qty * 50;
+  // 1 booklet = 50 sets × number of parts
+  const totalPages = qty * 50 * parts;
 
-  // Divide by 4 (standard 4-page per printed sheet)
+  // Standard: 4 pages per sheet
   const requiredSheets = Math.ceil(totalPages / 4);
 
-  // Cost
-  const baseCost = requiredSheets * paperCost;
+  // Paper cost
+  const paperTotal = requiredSheets * paperCost;
+
+  // Plates (always 2 plates for OR: front & back)
+  const totalPlates = 2;
+  const plateTotal = totalPlates * platePrice;
+
+  // Running cost
+  const runTotal = totalPlates * runPrice;
+
+  // Total cost
+  const baseCost = paperTotal + plateTotal + runTotal;
   const total = baseCost * multiplier;
 
   return {
     quantity: qty,
+    parts,
     totalPages,
     requiredSheets,
     paperCost,
+    paperTotal,
+    totalPlates,
+    plateTotal,
+    runTotal,
     baseCost,
-    multiplier,
     total,
     perBooklet: total / qty,
   };

@@ -350,7 +350,7 @@ const ProductView = () => {
     const pages = Number(pageCount || 0);
 
     // -------------------------------------------------------------
-    // UNIVERSAL ATTRIBUTE EXTRA COST (APPLIES TO ALL PRODUCTS)
+    // UNIVERSAL ATTRIBUTE EXTRA COST (SMART AUTO-DETECTION)
     // -------------------------------------------------------------
     let addonTotal = 0;
 
@@ -369,11 +369,26 @@ const ProductView = () => {
       if (!opt || typeof opt === "string") return;
 
       const price = Number(opt.price || 0);
+      const name = attr.attribute_name.toLowerCase();
 
-      // ⭐ UNIVERSAL RULE:
-      // If product has pages (books, binding, some custom products)
-      if (pages > 0) {
+      // Determine pricing type using smart detection
+      const isPerPage =
+        name.includes("paper") ||
+        name.includes("color") ||
+        name.includes("ink") ||
+        name.includes("finish") ||
+        name.includes("coating");
+
+      const isFlat =
+        name.includes("service") ||
+        name.includes("layout") ||
+        name.includes("design");
+
+      // Apply the correct calculation
+      if (isPerPage && pages > 0) {
         addonTotal += price * pages * copies;
+      } else if (isFlat) {
+        addonTotal += price;
       } else {
         addonTotal += price * copies;
       }
@@ -418,18 +433,53 @@ const ProductView = () => {
         pages,
         copies,
         colored: detectColored(),
+        paperPricePerReam: 3000,   
+        platePrice: 500,
+        runPrice: 400,
+        signaturePages: 8,
+        platesPerSignature: 2,
+        multiplier: 1,
       });
+
       baseCost = q?.total || 0;
     }
 
     else if (mode === "binding") {
-      const q = computeBindingQuotation({ copies });
+      // Find the binding attribute
+      const bindingAttr = attributes.find(a =>
+        /bind/i.test(a.attribute_name)
+      );
+
+      let bindingPrice = 0;
+
+      if (bindingAttr) {
+        const selectedValue = selected[bindingAttr.attribute_name];
+
+        const opt = bindingAttr.options.find(o => {
+          const val = typeof o === "string" ? o : o.option_value;
+          return val === selectedValue;
+        });
+
+        bindingPrice = Number(opt?.price || 0);
+      }
+
+      const q = computeBindingQuotation({
+        copies,
+        bindingPrice,
+      });
+
       baseCost = q?.total || 0;
     }
 
     else if (mode === "or") {
-      const q = computeORQuotation({ quantity: copies });
-      baseCost = q?.total || 0;
+      const q = computeORQuotation({
+        quantity: copies,
+        paperCost: 20,     
+        platePrice: 500,
+        runPrice: 400,
+        parts: 2,          
+        multiplier: 1.5,
+      });
     }
 
     else if (mode === "calendar") {
@@ -481,6 +531,7 @@ const ProductView = () => {
         height,
         copies,
         colored: detectColored(),
+        backToBack: selected.back_to_back === true,
       });
 
       baseCost = q?.total || Number(product.base_price || 0) * copies;
@@ -493,6 +544,80 @@ const ProductView = () => {
 
     setEstimatedPrice(finalTotal);
   }, [product, attributes, selected, quantity, pageCount]);
+
+    const BACK_TO_BACK_PRODUCTS = [
+      "brochure",
+      "flyer",
+      "poster",
+      "invitation",
+      "label",
+      "raffle",
+    ];
+
+    // Normalize product name
+    const pname = (product?.product_name || "").toLowerCase();
+    const supportsBackToBack = BACK_TO_BACK_PRODUCTS.some((p) =>
+      pname.includes(p)
+    );
+
+  // PRODUCTS WITH TEMPLATE + DESIGN BUTTONS
+  const designProducts = [
+    "brochure",
+    "calendar",
+    "calling card",
+    "poster",
+    "flyer",
+    "invitation",
+    "label",
+    "raffle ticket",
+  ];
+
+  // PRODUCTS WITH SINGLE UPLOAD
+  const singleProducts = [
+    "book",
+    "binding",
+    "newsletter"
+  ];
+
+  // PRODUCTS WITH TWO UPLOADS
+  const doubleProducts = [
+    "officialreceipt"
+  ];
+
+  // Decide upload behavior
+  let uploadProps = {};
+
+  // DESIGN & TEMPLATE PRODUCTS
+  if (designProducts.some((p) => pname.includes(p))) {
+    uploadProps = {
+      uploadCount: 1,
+      hasCustomization: true,
+      customLabels: ["Upload Your Design"],
+    };
+  }
+  // SINGLE UPLOAD PRODUCTS
+  else if (singleProducts.some((p) => pname.includes(p))) {
+    uploadProps = {
+      uploadCount: 1,
+      hasCustomization: false,
+      customLabels: ["Upload Your File"]
+    };
+  }
+  // OFFICIAL RECEIPT (Two Uploads)
+  else if (doubleProducts.some((p) => pname.includes(p))) {
+    uploadProps = {
+      uploadCount: 2,
+      hasCustomization: false,
+      customLabels: ["Upload Front", "Upload Back"],
+    };
+  }
+  // DEFAULT — fallback
+  else {
+    uploadProps = {
+      uploadCount: 1,
+    };
+  }
+
 
 
   // -------------- SKELETON -----------------
@@ -728,7 +853,7 @@ const ProductView = () => {
             </div>
 
             {/* SPECIAL PRODUCT CHECKBOXES */}
-            {product?.is_back_to_back === 1 && (
+            {supportsBackToBack && (
               <label className="flex items-center gap-2 font-semibold text-black">
                 <input
                   type="checkbox"
@@ -805,9 +930,14 @@ const ProductView = () => {
               {/* UPLOAD */}
               <div>
                 <UploadSection
-                  uploadCount={1}
-                  onUploadComplete={(res) => {
-                    if (res?.files?.[0]) setFile(res.files[0]);
+                  {...uploadProps}
+                  onUploadComplete={(res, index) => {
+                    if (!res?.files?.[0]) return;
+
+                    setFile((prev) => ({
+                      ...prev,
+                      [index]: res.files[0],
+                    }));
                   }}
                 />
               </div>

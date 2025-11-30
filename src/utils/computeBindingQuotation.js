@@ -1,24 +1,15 @@
-/**
- * Binding Quotation Calculator
- *
- * @param {Object} params
- * @param {number} params.copies              - Number of books
- * @param {number} [params.basePrice=250]     - Base price per copy
- * @returns {Object|null}
- */
-
-export function computeBindingQuotation({ copies, basePrice = 250 }) {
+export function computeBindingQuotation({ copies, bindingPrice }) {
   const copiesNum = Number(copies);
+  const priceNum = Number(bindingPrice);
 
-  if (!copiesNum || copiesNum <= 0) return null;
+  if (!copiesNum || copiesNum <= 0 || !priceNum) return null;
 
-  const total = copiesNum * basePrice;
-  const perCopy = basePrice;
+  const total = copiesNum * priceNum;
 
   return {
     copies: copiesNum,
-    basePrice,
+    bindingPrice: priceNum,
     total,
-    perCopy,
+    perCopy: priceNum,
   };
 }

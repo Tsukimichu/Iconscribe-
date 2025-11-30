@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { API_URL } from "../../api";
 import WalkInOrderModal from "./WalkInOrderModal";
+import { useToast } from "../ui/ToastProvider";
+
 
 // Small helper component for labels
 const Detail = ({ label, value }) => (
@@ -19,6 +21,7 @@ const Detail = ({ label, value }) => (
 );
 
 const OrdersSection = () => {
+  const { showToast } = useToast();
   // =====================================================
   // STATE
   // =====================================================
@@ -36,7 +39,7 @@ const OrdersSection = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
 
-  const [tableView, setTableView] = useState("active"); // active | completed | canceled
+  const [tableView, setTableView] = useState("active");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [currentViewIndex, setCurrentViewIndex] = useState(null);
 
@@ -339,9 +342,10 @@ const OrdersSection = () => {
               : o
           )
         );
+        showToast("Price updated successfully!", "success");
         closePriceModal();
       } else {
-        alert(data.message || "Failed to update price");
+        showToast(data.message || "Failed to update price");
       }
     } catch (err) {
       console.error("❌ Error updating price:", err);
@@ -382,7 +386,8 @@ const OrdersSection = () => {
         alert(data.message || "Failed to update status");
         return;
       }
-
+      showToast("Order status updated!", "success");
+      
       loadOrders();
       closeStatusModal();
     } catch (err) {
@@ -394,12 +399,11 @@ const OrdersSection = () => {
   // =====================================================
   // WALK-IN ORDER HANDLER
   // =====================================================
-  const handleAddOrder = async (body) => {
+  const handleAddOrder = async (formData) => {
     try {
       const res = await fetch(`${API_URL}/orders/create`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
+        body: formData, // <-- directly send the FormData
       });
 
       const data = await res.json();
@@ -410,8 +414,25 @@ const OrdersSection = () => {
         return;
       }
 
+      // Refresh UI
       loadOrders();
       setShowAddOrderModal(false);
+
+      // Reset form
+      setNewOrder({
+        customer_name: "",
+        email: "",
+        contact_number: "",
+        location: "",
+        quantity: "",
+        details: "",
+        price: "",
+        service: "",
+        product_id: null,
+      });
+
+      setOrderFiles([]);
+      setSelectedProduct("");
 
     } catch (err) {
       console.error("❌ Add Walk-in Error:", err);

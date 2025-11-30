@@ -135,27 +135,39 @@ function WalkInOrderModal({
       return;
     }
 
-    const body = {
-      user_id: null,
-      order_type: "walk-in",
+    // Build REAL FormData
+    const form = new FormData();
 
-      walk_in_name: newOrder.customer_name,
-      walk_in_email: newOrder.email || null,
-      walk_in_contact: newOrder.contact_number || null,
-      walk_in_location: newOrder.location || null,
+    form.append("order_type", "walk-in");
+    form.append("user_id", "");
+    form.append("product_id", newOrder.product_id);
+    form.append("quantity", newOrder.quantity || 1);
+    form.append("status", "Pending");
+    form.append("estimated_price", Number(newOrder.price));
 
-      product_id: newOrder.product_id,
-      quantity: newOrder.quantity || 1,
-      status: "Pending",
-      estimated_price: Number(newOrder.price),
+    form.append("walk_in_name", newOrder.customer_name);
+    form.append("walk_in_email", newOrder.email || "");
+    form.append("walk_in_contact", newOrder.contact_number || "");
+    form.append("walk_in_location", newOrder.location || "");
 
-      attributes: productAttributes.map((a) => ({
-        name: a.attribute_name,
-        value: newOrder[a.attribute_name] || "",
-      }))
-    };
+    // Attributes array
+    form.append(
+      "attributes",
+      JSON.stringify(
+        productAttributes.map((a) => ({
+          name: a.attribute_name,
+          value: newOrder[a.attribute_name] || "",
+        }))
+      )
+    );
 
-    onSubmit(body);
+    // Attach files
+    orderFiles.forEach((file) => {
+      form.append("files", file);
+    });
+
+    // Send FormData to parent handler
+    onSubmit(form);
   };
 
 

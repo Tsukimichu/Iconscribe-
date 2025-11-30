@@ -66,9 +66,9 @@ async function insertAttributes(order_item_id, attributes) {
   }
 }
 
-router.post("/create", async (req, res) => {
+router.post("/create", upload.array("files"), async (req, res) => {
   try {
-    const {
+    let {
       user_id,
       product_id,
       quantity,
@@ -76,13 +76,16 @@ router.post("/create", async (req, res) => {
       attributes,
       estimated_price,
       order_type,
-
-      // NEW WALK-IN FIELDS
       walk_in_name,
       walk_in_email,
       walk_in_contact,
       walk_in_location
     } = req.body;
+
+    // Fix user_id = null
+    if (!user_id || user_id === "null" || user_id === "") {
+      user_id = null;
+    }
 
     if (!product_id || !quantity) {
       return res.status(400).json({
@@ -91,7 +94,6 @@ router.post("/create", async (req, res) => {
       });
     }
 
-    // Identify type of customer
     const finalOrderType = order_type || (user_id ? "customer" : "walk-in");
 
     // Parse attributes safely
@@ -99,21 +101,21 @@ router.post("/create", async (req, res) => {
     try {
       parsedAttributes =
         typeof attributes === "string"
-          ? JSON.parse(attributes || "[]")
-          : attributes || [];
-    } catch (_) {
+          ? JSON.parse(attributes)
+          : [];
+    } catch (err) {
       parsedAttributes = [];
     }
 
-    // INSERT → orders
+    // INSERT into orders
     const [orderResult] = await db.promise().query(
       `
-      INSERT INTO orders 
+      INSERT INTO orders
       (user_id, walk_in_name, walk_in_email, walk_in_contact, walk_in_location, order_date, order_type, manager_added, total)
       VALUES (?, ?, ?, ?, ?, NOW(), ?, 0, 0)
       `,
       [
-        user_id || null,
+        user_id,
         walk_in_name || null,
         walk_in_email || null,
         walk_in_contact || null,
@@ -124,10 +126,10 @@ router.post("/create", async (req, res) => {
 
     const order_id = orderResult.insertId;
 
-    // INSERT → orderitems
+    // INSERT into orderitems
     const [itemResult] = await db.promise().query(
       `
-      INSERT INTO orderitems 
+      INSERT INTO orderitems
       (order_id, product_id, quantity, status, estimated_price)
       VALUES (?, ?, ?, ?, ?)
       `,
@@ -142,12 +144,30 @@ router.post("/create", async (req, res) => {
 
     const order_item_id = itemResult.insertId;
 
-    // Attach attributes
+    // INSERT attributes
     await insertAttributes(order_item_id, parsedAttributes);
+
+    // ⬇️⬇️⬇️ SAVE FILES (THIS WAS MISSING)
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        await db.promise().query(
+          `
+          INSERT INTO order_item_files (order_item_id, file_path, file_type)
+          VALUES (?, ?, ?)
+          `,
+          [
+            order_item_id,
+            `/uploads/orderfiles/${file.filename}`,
+            file.mimetype
+          ]
+        );
+      }
+    }
+    // ⬆️⬆️⬆️ REQUIRED FOR IMAGES
 
     res.json({
       success: true,
-      message: "Order placed!",
+      message: "Order placed successfully.",
       order_id,
       order_item_id
     });
@@ -157,6 +177,7 @@ router.post("/create", async (req, res) => {
     res.status(500).json({ success: false, message: "Database error" });
   }
 });
+
 
 
 router.post(

@@ -118,10 +118,10 @@ const SalesAndExpenseSection = () => {
   const filterAndSort = (records, type) =>
     records
       .filter((r) => {
-        const name = String(r.item || r.supply_name || "").toLowerCase();
         const date = parseDateSafe(r.date);
         const searchLower = search.toLowerCase();
 
+        // Search filter
         if (search) {
           const haystack = [
             r.item,
@@ -130,8 +130,6 @@ const SalesAndExpenseSection = () => {
             r.amount,
             type === "sale" ? "sale" : "expense",
             new Date(r.date).toLocaleDateString(),
-            new Date(r.date).toLocaleDateString("en-US", { month: "long" }),
-            new Date(r.date).toLocaleDateString("en-US", { month: "short" }),
           ]
             .join(" ")
             .toLowerCase();
@@ -139,30 +137,40 @@ const SalesAndExpenseSection = () => {
           if (!haystack.includes(searchLower)) return false;
         }
 
+        // Date range filters
         if (dateFrom) {
           const from = parseDateSafe(dateFrom);
           if (from && date && date < from) return false;
         }
+
         if (dateTo) {
           const to = parseDateSafe(dateTo);
           if (to && date && date > to) return false;
         }
 
-        const cat = categorizeRecord(r, type);
         return true;
       })
       .sort((a, b) => {
+        const aDate = parseDateSafe(a.date) || new Date(0);
+        const bDate = parseDateSafe(b.date) || new Date(0);
+
+        if (sortBy === "date") {
+          return bDate - aDate;
+        }
+
         if (sortBy === "amount") {
-          const aAmount = Number(a.amount || 0);
-          const bAmount = Number(b.amount || 0);
+          const aAmount = Number(a.amount || a.price || 0);
+          const bAmount = Number(b.amount || b.price || 0);
           return bAmount - aAmount;
         }
-        if (sortBy === "date") {
-          return new Date(b.date || 0) - new Date(a.date || 0);
+
+        if (sortBy === "name") {
+          const aName = String(a.item || a.supply_name || "").toLowerCase();
+          const bName = String(b.item || b.supply_name || "").toLowerCase();
+          return aName.localeCompare(bName);
         }
-        return String(a.item || a.supply_name || "").localeCompare(
-          String(b.item || b.supply_name || "")
-        );
+
+        return 0;
       });
 
   const filteredSales = useMemo(

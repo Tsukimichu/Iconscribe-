@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Plus, List, X, ChevronDown } from "lucide-react";
+import { Search, Plus, Pencil, X, ChevronDown } from "lucide-react";
 import ReactApexChart from "react-apexcharts";
 import axios from "axios";
 import { useToast } from "../ui/ToastProvider.jsx";
@@ -328,7 +328,7 @@ const SupplyMonitoring = () => {
             placeholder="Search items..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2 w-full sm:w-72 rounded-full bg-gray-100 border border-gray-300"
+            className="pl-10 pr-4 py-2 w-full sm:w-72 rounded-full bg-gray-100 border border-gray-200"
           />
           <Search size={18} className="absolute left-3 top-2.5 text-gray-500" />
         </div>
@@ -350,7 +350,7 @@ const SupplyMonitoring = () => {
            
           <button
             onClick={() => setSortOpen((prev) => !prev)}
-            className="flex items-center justify-between w-44 px-4 py-2 bg-white border border-gray-300 rounded-xl shadow-sm text-sm text-gray-700 hover:border-cyan-400"
+            className="flex items-center justify-between w-44 px-4 py-2 bg-white border border-gray-200 rounded-xl shadow-sm text-sm text-gray-700 hover:border-cyan-400"
           >
             {sortBy === "default"
               ? "Default"
@@ -551,7 +551,7 @@ const SupplyMonitoring = () => {
                               onClick={() => openPopup("edit", s)}
                               className="p-2 rounded-full bg-yellow-100 hover:bg-yellow-200 text-yellow-700 transition shadow-sm"
                             >
-                              <List size={16} />
+                              <Pencil size={16} />
                             </button>
                           </td>
                         </tr>
@@ -829,7 +829,7 @@ const SupplyMonitoring = () => {
                       category: "",
                     })
                   }
-                  className="w-full px-4 py-2 rounded-lg border"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200"
                 >
                   <option value="Material">Material</option>
                   <option value="Business">Business Expense</option>
@@ -846,7 +846,7 @@ const SupplyMonitoring = () => {
                       supply_name: e.target.value,
                     })
                   }
-                  className="w-full px-4 py-2 rounded-lg border"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200"
                 />
 
                 <input
@@ -859,7 +859,7 @@ const SupplyMonitoring = () => {
                       quantity: e.target.value,
                     })
                   }
-                  className="w-full px-4 py-2 rounded-lg border"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200"
                 />
 
                 <select
@@ -867,7 +867,7 @@ const SupplyMonitoring = () => {
                   onChange={(e) =>
                     setNewSupply({ ...newSupply, category: e.target.value })
                   }
-                  className="w-full px-4 py-2 rounded-lg border"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200"
                 >
                   <option value="">Select Category</option>
 
@@ -891,7 +891,7 @@ const SupplyMonitoring = () => {
                       unit: e.target.value,
                     })
                   }
-                  className="w-full px-4 py-2 rounded-lg border"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200"
                 />
 
                 <input
@@ -904,13 +904,13 @@ const SupplyMonitoring = () => {
                       price: e.target.value,
                     })
                   }
-                  className="w-full px-4 py-2 rounded-lg border"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200"
                 />
               </div>
 
               <div className="flex justify-center gap-4 mt-6">
                 <button
-                  className="px-4 py-2 rounded-xl border hover:bg-gray-100"
+                  className="px-4 py-2 rounded-xl border border-gray-200 hover:bg-gray-100"
                   onClick={closePopup}
                 >
                   Cancel

@@ -84,6 +84,7 @@ const ProductSection = () => {
   // Status Toggle
   // --------------------------------------------------
   const updateProductStatus = async (productId, newStatus) => {
+    // Optimistic UI
     setServices((prev) =>
       prev.map((s) =>
         s.product_id === productId ? { ...s, status: newStatus } : s
@@ -91,12 +92,25 @@ const ProductSection = () => {
     );
 
     try {
-      await fetch(`${API_URL}/products/${productId}/status`, {
+      const res = await fetch(`${API_URL}/products/${productId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        showToast("Failed to update product status", "error");
+        return;
+      }
+
+      showToast(
+        `Product marked as ${newStatus === "active" ? "Active" : "Inactive"}`,
+        "success"
+      );
     } catch (err) {
+      showToast("Server error updating status", "error");
       console.error("Error updating product status:", err);
     }
   };
@@ -350,8 +364,9 @@ const ProductSection = () => {
     setIsSaving(false);
   };
 
-  const handleStatusToggle = (service) => {
+  const handleStatusToggle = async (service) => {
     const newStatus = service.status === "active" ? "inactive" : "active";
+    // Optimistic UI update
     updateProductStatus(service.product_id, newStatus);
   };
 

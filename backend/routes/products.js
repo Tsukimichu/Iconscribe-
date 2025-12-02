@@ -241,4 +241,45 @@ router.put("/:id/image", upload.single("image"), async (req, res) => {
   }
 });
 
+// ====================================================
+// UPDATE product status ONLY
+// ====================================================
+router.put("/:id/status", async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    const dbStatus = (status || "").toLowerCase() === "inactive"
+      ? "Inactive"
+      : "Active";
+
+    await db.promise().query(
+      "UPDATE products SET status = ? WHERE product_id = ?",
+      [dbStatus, id]
+    );
+
+    const [[updated]] = await db
+      .promise()
+      .query("SELECT * FROM products WHERE product_id = ?", [id]);
+
+    const base =
+      process.env.CLIENT_ORIGIN?.replace(/\/$/, "") ||
+      "http://localhost:5000";
+
+    updated.image_url = updated.image
+      ? `${base}/uploads/products/${updated.image}`
+      : null;
+
+    res.json({
+      success: true,
+      message: "Status updated successfully",
+      product: updated,
+    });
+  } catch (err) {
+    console.error("❌ PUT /products/:id/status error:", err);
+    res.status(500).json({ error: "Failed to update status" });
+  }
+});
+
+
 module.exports = router;

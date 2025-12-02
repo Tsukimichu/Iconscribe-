@@ -243,6 +243,10 @@ const ProductView = () => {
       try {
         const res = await fetch(`${API_URL}/products/${id}`);
         const productData = await res.json();
+        if (productData.status?.toLowerCase() === "inactive") {
+          setProduct(productData);
+          return;
+        }
         setProduct(productData);
 
       // Load per-product attribute options
@@ -618,7 +622,27 @@ const ProductView = () => {
     };
   }
 
+  // --- HIDE INACTIVE PRODUCTS ---
+  if (product && product.status === "Inactive") {
+    return (
+      <>
+        <Navigation />
+        <div className="p-10 text-center">
+          <h2 className="text-3xl font-bold text-red-600">Product Unavailable</h2>
+          <p className="text-gray-600 mt-3">
+            This product is currently inactive and cannot be viewed.
+          </p>
 
+          <button
+            onClick={() => navigate(-1)}
+            className="mt-6 px-6 py-3 bg-blue-600 text-white rounded-xl"
+          >
+            Go Back
+          </button>
+        </div>
+      </>
+    );
+  }
 
   // -------------- SKELETON -----------------
   if (!product) {

@@ -19,7 +19,8 @@ import OfficialReceipt from "./products/OfficialReceipt.jsx";
 import Flyers from "./products/Flyers.jsx";
 import Posters from "./products/Posters.jsx";
 import Maintenance from "./component/admin/Maintenance.jsx";
-import MaintenanceUser from "./component/MaintenanceUser.jsx";
+import MaintenanceWrapper from "./component/MaintenanceWrapper.jsx";
+import MaintenanceLock from "./component/MaintenanceLock.jsx";
 import ManagerPage from "./component/manager/ManagerPage.jsx";
 import Label from "./products/Label.jsx";
 import Binding from "./products/Binding.jsx";
@@ -101,7 +102,7 @@ const router = createBrowserRouter([
 
   // Maintenance / Customization
   //{ path: "/customize", element: <Customization /> },
-  { path: "/maintenance", element: <MaintenanceUser /> },
+  { path: "/maintenance", element: <MaintenanceLock /> },
   { path: "/template-gallery", element: <TemplateGallery /> },
 
   // Admin routes
@@ -153,7 +154,9 @@ createRoot(document.getElementById("root")).render(
   <StrictMode>
     <AuthProvider>
       <ToastProvider>
-        <RouterProvider router={router} />
+        <MaintenanceWrapper>
+          <RouterProvider router={router} />
+        </MaintenanceWrapper>
       </ToastProvider>
     </AuthProvider>
   </StrictMode>

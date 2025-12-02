@@ -574,7 +574,7 @@ const OrdersSection = () => {
                     { key: "service", label: "Service" },
                     { key: "customer_name", label: "Name" },
                     { key: "dateOrdered", label: "Date Ordered" },
-                    { key: "status", label: "Status" },
+                    { key: "status", label: "Status" },                    
                     { key: "estimated_price", label: "Estimated Price" },
                     { key: "total_price", label: "Total Price" },
                   ].map((col) => (
@@ -587,6 +587,11 @@ const OrdersSection = () => {
                       <SortIcon column={col.key} />
                     </th>
                   ))}
+                      {tableView === "canceled" && (
+                        <th className="py-3 px-6 font-semibold text-gray-700">
+                          Cancel Reason
+                        </th>
+                      )}
                   <th className="py-3 px-6 font-semibold text-center text-gray-700">
                     Actions
                   </th>
@@ -653,6 +658,13 @@ const OrdersSection = () => {
                         <span className="text-gray-400 italic">—</span>
                       )}
                     </td>
+
+                    {/* Reason*/}
+                    {tableView === "canceled" && (
+                      <td className="py-3 px-6 text-red-600 italic text-sm">
+                        {order.cancel_reason || "—"}
+                      </td>
+                    )}
 
                     {/* ACTIONS */}
                     <td className="py-3 px-6 flex justify-end gap-2">
@@ -775,6 +787,13 @@ const OrdersSection = () => {
                       />
                       <Detail label="Status" value={selectedOrder.status} />
                     </div>
+
+                    {selectedOrder.status === "Cancelled" && (
+                      <Detail
+                        label="Cancellation Reason"
+                        value={selectedOrder.cancel_reason || "No reason provided"}
+                      />
+                    )}
                   </div>
 
                   {/* PRICING CARD */}
@@ -827,14 +846,21 @@ const OrdersSection = () => {
                       </h3>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 text-sm">
-                        {item.attributes?.length > 0 &&
-                          item.attributes.map((attr, i) => (
-                            <Detail
-                              key={i}
-                              label={attr.attribute_name || attr.name}
-                              value={attr.option_value || attr.value}
-                            />
-                          ))}
+                          {/* ATTRIBUTES FOR WALK-IN & NEW SYSTEM */}
+                          {item.attributes?.length > 0 ? (
+                            item.attributes.map((attr, i) => (
+                              <Detail
+                                key={i}
+                                label={attr.attribute_name || attr.name}
+                                value={attr.option_value || attr.value}
+                              />
+                            ))
+                          ) : (
+                            /* FALLBACK FOR ONLINE ORDERS USING DETAILS */
+                            Object.entries(item.details || {}).map(([key, val], i) => (
+                              <Detail key={i} label={key} value={val} />
+                            ))
+                          )}
                       </div>
 
                       {/* FILES */}

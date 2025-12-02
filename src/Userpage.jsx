@@ -6,7 +6,7 @@ import Transactions from "./component/Transactions";
 import Aboutus from "./component/Aboutus";
 import ContactUs from "./component/ContactUs";
 import Footer from "./component/footer";
-import MaintenanceUser from "./component/MaintenanceUser";
+import MaintenanceLock from "./component/MaintenanceWrapper.jsx";
 import ChatWidget from "./component/ChatWidget";
 import { useAuth } from "./context/authContext.jsx";
 import { API_URL } from "./api";
@@ -29,7 +29,7 @@ function UserPage() {
   }, []);
 
   return (
-    <MaintenanceUser>
+    <MaintenanceLock>
       <>
         <Nav />
         <main>
@@ -60,10 +60,10 @@ function UserPage() {
           <Footer />
         </footer>
 
-        {/* ✅ Fix: use user?.id instead of user?.user_id */}
+        {/* Fix: use user?.id instead of user?.user_id */}
         {isLoggedIn && <ChatWidget userId={user?.id} managerId={10} />}
       </>
-    </MaintenanceUser>
+    </MaintenanceLock>
   );
 }
 

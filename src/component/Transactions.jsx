@@ -88,29 +88,25 @@ function Transactions() {
     return serverNow - orderTime <= 12 * 60 * 60 * 1000;
   };
 
-  const executeCancelOrder = async () => {
+  const executeCancelOrder = async (reason) => {
     if (!orderToCancel) return;
+
     try {
       const res = await fetch(`${API_URL}/orders/${orderToCancel}/cancel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
       });
 
       const data = await res.json();
+
       if (!data.success) {
         showToast(data.message);
         return setOrderToCancel(null);
       }
 
       showToast("Order cancelled successfully!");
-      sendPushNotification("Order Cancelled", "Your order was cancelled.");
-
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.enquiryNo === orderToCancel ? { ...o, status: "Cancelled" } : o
-        )
-      );
-    } catch {
+    } catch (err) {
       showToast("Failed to cancel order.");
     } finally {
       setOrderToCancel(null);
@@ -471,7 +467,7 @@ function Transactions() {
       {orderToCancel && (
         <ConfirmCancelModal
           onClose={() => setOrderToCancel(null)}
-          onConfirm={executeCancelOrder}
+          onConfirm={(reason) => executeCancelOrder(reason)}
         />
       )}
     </section>
@@ -479,6 +475,41 @@ function Transactions() {
 }
 
 function ConfirmCancelModal({ onClose, onConfirm }) {
+  const [selectedReasons, setSelectedReasons] = useState([]);
+  const [otherReason, setOtherReason] = useState("");
+
+  const reasonsList = [
+    "Changed my mind",
+    "Ordered by mistake",
+    "Takes too long to process",
+    "Wrong item ordered",
+    "Other"
+  ];
+
+  const toggleReason = (reason) => {
+    if (selectedReasons.includes(reason)) {
+      setSelectedReasons(selectedReasons.filter((r) => r !== reason));
+    } else {
+      setSelectedReasons([...selectedReasons, reason]);
+    }
+  };
+
+  const handleConfirm = () => {
+    if (selectedReasons.length === 0) {
+      alert("Please select at least one reason.");
+      return;
+    }
+
+    // Combine the reasons into a single string
+    const finalReason = selectedReasons.includes("Other")
+      ? `${selectedReasons.filter((r) => r !== "Other").join(", ")} ${
+          otherReason ? "- " + otherReason : ""
+        }`
+      : selectedReasons.join(", ");
+
+    onConfirm(finalReason);
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-[60] p-4">
       <motion.div
@@ -486,31 +517,58 @@ function ConfirmCancelModal({ onClose, onConfirm }) {
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
       >
-        <div className="flex flex-col items-center text-center">
-          <div className="bg-red-100 p-3 rounded-full mb-4">
+        <div className="flex flex-col text-center">
+          <div className="bg-red-100 p-3 rounded-full mb-4 mx-auto">
             <AlertTriangle className="text-red-600" size={32} />
           </div>
 
-          <h3 className="text-xl font-bold text-gray-800 mb-2">
+          <h3 className="text-xl font-bold text-gray-800 mb-1">
             Cancel Order?
           </h3>
 
-          <p className="text-gray-600 mb-6 text-sm">
-            Are you sure you want to cancel this order? This action cannot be undone.
+          <p className="text-gray-600 text-sm mb-4">
+            Please tell us why you want to cancel.
           </p>
 
-          <div className="flex gap-3 w-full">
+          {/* REASONS CHECKBOXES */}
+          <div className="text-left space-y-2 mb-4">
+            {reasonsList.map((reason) => (
+              <label key={reason} className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedReasons.includes(reason)}
+                  onChange={() => toggleReason(reason)}
+                  className="mt-1"
+                />
+                <span className="text-sm text-gray-700">{reason}</span>
+              </label>
+            ))}
+          </div>
+
+          {/* OTHER REASON TEXTAREA */}
+          {selectedReasons.includes("Other") && (
+            <textarea
+              placeholder="Write your reason..."
+              value={otherReason}
+              onChange={(e) => setOtherReason(e.target.value)}
+              className="w-full border rounded-lg p-2 text-sm mb-4"
+              rows="3"
+            />
+          )}
+
+          <div className="flex gap-3 w-full mt-3">
             <button
               onClick={onClose}
               className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium"
             >
               No, Keep it
             </button>
+
             <button
-              onClick={onConfirm}
+              onClick={handleConfirm}
               className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium"
             >
-              Yes, Cancel
+              Confirm Cancel
             </button>
           </div>
         </div>

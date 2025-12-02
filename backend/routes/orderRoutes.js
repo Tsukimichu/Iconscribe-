@@ -101,10 +101,31 @@ router.post("/create", upload.array("files"), async (req, res) => {
     try {
       parsedAttributes =
         typeof attributes === "string"
-          ? JSON.parse(attributes)
-          : [];
+          ? JSON.parse(attributes || "[]")
+          : attributes || [];
     } catch (err) {
       parsedAttributes = [];
+    }
+
+    if (!parsedAttributes.length && order_type !== "walk-in") {
+      parsedAttributes = [
+        {
+          name: "Service",
+          value: req.body.service_name || "",
+        },
+        {
+          name: "Quantity",
+          value: quantity,
+        },
+        {
+          name: "Estimated Price",
+          value: estimated_price ?? "",
+        },
+        {
+          name: "Customer Notes",
+          value: req.body.details || "",
+        },
+      ];
     }
 
     // INSERT into orders
@@ -147,7 +168,7 @@ router.post("/create", upload.array("files"), async (req, res) => {
     // INSERT attributes
     await insertAttributes(order_item_id, parsedAttributes);
 
-    // ⬇️⬇️⬇️ SAVE FILES (THIS WAS MISSING)
+    // SAVE FILES (THIS WAS MISSING)
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
         await db.promise().query(
@@ -163,7 +184,6 @@ router.post("/create", upload.array("files"), async (req, res) => {
         );
       }
     }
-    // ⬆️⬆️⬆️ REQUIRED FOR IMAGES
 
     res.json({
       success: true,
@@ -275,6 +295,7 @@ router.get("/", async (req, res) => {
         o.order_date AS dateOrdered,
         oi.quantity,
         oi.status,
+        oi.cancel_reason,
         oi.estimated_price,
         o.manager_added,
         (oi.estimated_price + IFNULL(o.manager_added, 0)) AS total_price
@@ -344,13 +365,26 @@ router.get("/details/:id", async (req, res) => {
     }
 
     const [items] = await db.promise().query(
-      "SELECT oi.order_item_id AS enquiryNo, p.product_name AS service, oi.quantity, oi.status, oi.estimated_price FROM orderitems oi JOIN products p ON oi.product_id=p.product_id WHERE oi.order_id=?",
+      `SELECT 
+          oi.order_item_id AS enquiryNo, 
+          p.product_name AS service, 
+          oi.quantity, 
+          oi.status, 
+          oi.estimated_price 
+       FROM orderitems oi 
+       JOIN products p ON oi.product_id=p.product_id 
+       WHERE oi.order_id=?`,
       [req.params.id]
     );
 
     for (let item of items) {
       const [attrs] = await db.promise().query(
-        "SELECT a.attribute_name, oia.attribute_value FROM order_item_attributes oia JOIN attributes a ON a.attribute_id=oia.attribute_id WHERE oia.order_item_id=?",
+        `SELECT 
+            a.attribute_name, 
+            oia.attribute_value 
+         FROM order_item_attributes oia 
+         JOIN attributes a ON a.attribute_id=oia.attribute_id 
+         WHERE oia.order_item_id=?`,
         [item.enquiryNo]
       );
 
@@ -372,6 +406,18 @@ router.get("/details/:id", async (req, res) => {
       }));
 
       item.files = files.map((f) => f.file_path);
+
+      if (!item.attributes || item.attributes.length === 0) {
+        item.attributes = [
+          { name: "Service", value: item.service },
+          { name: "Quantity", value: item.quantity },
+          { name: "Status", value: item.status },
+          {
+            name: "Estimated Price",
+            value: item.estimated_price ?? "—"
+          },
+        ];
+      }
     }
 
     res.json({ success: true, order: { ...order[0], items } });
@@ -380,6 +426,7 @@ router.get("/details/:id", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
 
 router.put("/:orderId/price", async (req, res) => {
   try {
@@ -567,7 +614,16 @@ router.put("/:id/status", async (req, res) => {
 router.post("/:id/cancel", async (req, res) => {
   try {
     const { id } = req.params;
+    const { reason } = req.body;
 
+    if (!reason || reason.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a cancellation reason",
+      });
+    }
+
+    // Check if within 24 hours
     const [[timeCheck]] = await db.promise().query(
       `SELECT 
          TIMESTAMPDIFF(HOUR, o.order_date, NOW()) AS hours_passed,
@@ -582,31 +638,45 @@ router.post("/:id/cancel", async (req, res) => {
     );
 
     if (!timeCheck) {
-      return res.status(404).json({ message: "Order not found" });
+      return res.status(404).json({ success: false, message: "Order not found" });
     }
 
     if (timeCheck.hours_passed > 24) {
-      return res.status(400).json({ message: "Cannot cancel after 24 hours" });
+      return res.status(400).json({
+        success: false,
+        message: "Cannot cancel after 24 hours",
+      });
     }
 
-    await db
-      .promise()
-      .query("UPDATE orderitems SET status='Cancelled' WHERE order_item_id=?", [
-        id,
-      ]);
+    // Update status + cancellation reason
+    await db.promise().query(
+      `UPDATE orderitems 
+       SET status='Cancelled', cancel_reason=? 
+       WHERE order_item_id=?`,
+      [reason, id]
+    );
 
+    // Notify via socket (if logged in)
     if (req.io && timeCheck.user_id) {
       req.io.to(`user_${timeCheck.user_id}`).emit("orderStatusUpdated", {
         order_id: timeCheck.order_item_id,
         service: timeCheck.product_name,
         status: "Cancelled",
+        reason,
       });
     }
 
-    res.json({ success: true, message: "Order cancelled" });
+    return res.json({
+      success: true,
+      message: "Order cancelled successfully",
+      reason,
+    });
   } catch (err) {
     console.error("❌ Cancel order error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 });
 

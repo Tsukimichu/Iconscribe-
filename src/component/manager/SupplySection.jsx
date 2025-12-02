@@ -338,7 +338,7 @@ const SupplyMonitoring = () => {
       <div className="flex justify-end gap-3 mb-6">
         <button
           onClick={() => openPopup("add")}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          className="flex mt-3 h-[50px] items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
         >
           <Plus size={18} /> Add Expenses
         </button>

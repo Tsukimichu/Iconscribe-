@@ -10,6 +10,8 @@ import React, {
 } from "react";
 import { v4 as uuid } from "uuid";
 import html2canvas from "html2canvas";
+import axios from "axios";
+import { API_URL } from "../api";
 
 const EditorContext = createContext();
 
@@ -44,9 +46,7 @@ function reducer(state, action) {
 
     case "UPDATE_ELEMENT": {
       const updated = state.elements.map((el) =>
-        el.id === action.payload.id
-          ? { ...el, ...action.payload.updates }
-          : el
+        el.id === action.payload.id ? { ...el, ...action.payload.updates } : el
       );
       return {
         ...state,
@@ -134,7 +134,7 @@ export function EditorProvider({ children }) {
 
   const canvasRef = useRef(null);
 
-  // 💾 Auto-save design
+  // 💾 Auto-save editor state
   useEffect(() => {
     localStorage.setItem("editor-state", JSON.stringify(state));
   }, [state]);
@@ -150,7 +150,6 @@ export function EditorProvider({ children }) {
   // ------------------------------------------------------
   // ELEMENT CREATION
   // ------------------------------------------------------
-
   const addText = (overrides = {}) => {
     const { x, y } = getCanvasCenter();
     dispatch({
@@ -187,8 +186,7 @@ export function EditorProvider({ children }) {
         width: 150,
         height: 100,
         background: overrides.background ?? "#ef4444",
-        borderRadius:
-          shapeType === "circle" ? 9999 : overrides.borderRadius ?? 6,
+        borderRadius: shapeType === "circle" ? 9999 : overrides.borderRadius ?? 6,
         opacity: overrides.opacity ?? 1,
         ...overrides,
       },
@@ -214,7 +212,6 @@ export function EditorProvider({ children }) {
     });
   };
 
-  // ⭐ NEW — SVG PATH
   const addPath = (d, overrides = {}) => {
     const { x, y } = getCanvasCenter();
     dispatch({
@@ -236,7 +233,6 @@ export function EditorProvider({ children }) {
     });
   };
 
-  // ⭐ NEW — Masked (Circle) Image
   const addMaskedImage = (src, overrides = {}) => {
     const { x, y } = getCanvasCenter();
     dispatch({
@@ -260,38 +256,29 @@ export function EditorProvider({ children }) {
   // ------------------------------------------------------
   // ELEMENT CONTROLS
   // ------------------------------------------------------
-
   const renameElement = (id, newName) =>
-    dispatch({
-      type: "UPDATE_ELEMENT",
-      payload: { id, updates: { name: newName } },
-    });
+    dispatch({ type: "UPDATE_ELEMENT", payload: { id, updates: { name: newName } } });
 
   const updateElement = (id, updates) =>
     dispatch({ type: "UPDATE_ELEMENT", payload: { id, updates } });
 
-  const selectElement = (id) =>
-    dispatch({ type: "SELECT_ELEMENT", payload: id });
+  const selectElement = (id) => dispatch({ type: "SELECT_ELEMENT", payload: id });
 
-  const deleteElement = (id) =>
-    dispatch({ type: "DELETE_ELEMENT", payload: id });
+  const deleteElement = (id) => dispatch({ type: "DELETE_ELEMENT", payload: id });
 
-  const reorderElements = (list) =>
-    dispatch({ type: "REORDER_ELEMENTS", payload: list });
+  const reorderElements = (list) => dispatch({ type: "REORDER_ELEMENTS", payload: list });
 
   const undo = () => dispatch({ type: "UNDO" });
   const redo = () => dispatch({ type: "REDO" });
 
-  const setElements = (list) =>
-    dispatch({ type: "SET_ELEMENTS", payload: list });
+  const setElements = (list) => dispatch({ type: "SET_ELEMENTS", payload: list });
 
   const toggleElementsPanel = () =>
     dispatch({ type: "TOGGLE_ELEMENTS_PANEL" });
 
   // ------------------------------------------------------
-  // EXPORT
+  // EXPORT FUNCTIONS
   // ------------------------------------------------------
-
   const exportAsImage = async (format = "png") => {
     const canvasEl = document.querySelector("#canvas-area");
     if (!canvasEl) return alert("No canvas found!");
@@ -321,23 +308,33 @@ export function EditorProvider({ children }) {
   };
 
   // ------------------------------------------------------
-  // ⭐ UPDATED TEMPLATE IMPORT (supports paths + maskedImage)
-// ------------------------------------------------------
-  const importFromJSON = (jsonData) => {
+  // IMPORT TEMPLATE / JSON
+  // ------------------------------------------------------
+  const importFromJSON = (jsonData, persist = false) => {
     try {
       const parsed =
         typeof jsonData === "string" ? JSON.parse(jsonData) : jsonData;
 
-      // 1) Your own saved format (from exportAsJSON)
+      // Local saved format
       if (Array.isArray(parsed.elements)) {
         dispatch({ type: "SET_ELEMENTS", payload: parsed.elements });
         if (parsed.canvas) {
           dispatch({ type: "SET_CANVAS_SIZE", payload: parsed.canvas });
         }
+
+        if (persist) {
+          const saved = {
+            ...initialState,
+            elements: parsed.elements,
+            canvas: parsed.canvas || state.canvas,
+          };
+          localStorage.setItem("editor-state", JSON.stringify(saved));
+        }
+
         return;
       }
 
-      // 2) Fabric-style / external JSON with `objects`
+      // Fabric-style format
       let elements = [];
       let maxRight = 0;
       let maxBottom = 0;
@@ -375,7 +372,6 @@ export function EditorProvider({ children }) {
             zIndex: index + 1,
           };
 
-          // --- PATH (curves / waves) ---
           if (o.type === "path") {
             let d = "";
             if (Array.isArray(o.path)) {
@@ -387,13 +383,12 @@ export function EditorProvider({ children }) {
               ...base,
               type: "path",
               d,
-              fill: o.fill || "#000000",
+              fill: o.fill || "#000",
               stroke: o.stroke || null,
               strokeWidth: o.strokeWidth || 0,
             };
           }
 
-          // --- Masked image (if ever present) ---
           if (o.type === "maskedImage") {
             return {
               ...base,
@@ -402,12 +397,7 @@ export function EditorProvider({ children }) {
             };
           }
 
-          // --- TEXT ---
-          if (
-            o.type === "textbox" ||
-            o.type === "text" ||
-            o.type === "i-text"
-          ) {
+          if (o.type === "textbox" || o.type === "text" || o.type === "i-text") {
             return {
               ...base,
               type: "text",
@@ -420,7 +410,6 @@ export function EditorProvider({ children }) {
             };
           }
 
-          // --- IMAGE ---
           if (o.type === "image") {
             return {
               ...base,
@@ -429,45 +418,49 @@ export function EditorProvider({ children }) {
             };
           }
 
-          // --- CIRCLE / ELLIPSE (map to shape: circle) ---
           if (o.type === "circle" || o.type === "ellipse") {
             return {
               ...base,
               type: "shape",
               shape: "circle",
-              background: o.fill || "#000000",
-              borderColor: o.stroke || "#000000",
+              background: o.fill || "#000",
+              borderColor: o.stroke || "#000",
               borderWidth: o.strokeWidth || 0,
               borderRadius: Math.max(width, height) / 2,
             };
           }
 
-          // --- DEFAULT: RECT / OTHER SHAPES ---
           return {
             ...base,
             type: "shape",
             shape: "rect",
-            background: o.fill || "#000000",
-            borderColor: o.stroke || "#000000",
+            background: o.fill || "#000",
+            borderColor: o.stroke || "#000",
             borderWidth: o.strokeWidth || 0,
-            borderRadius:
-              o.rx || o.ry || (o.type === "circle" ? width / 2 : 0),
+            borderRadius: o.rx || o.ry || 0,
           };
         });
       }
 
       dispatch({ type: "SET_ELEMENTS", payload: elements });
 
-      // Canvas auto-size if external JSON
-      dispatch({
-        type: "SET_CANVAS_SIZE",
-        payload: {
-          width: parsed.width || maxRight || state.canvas.width,
-          height: parsed.height || maxBottom || state.canvas.height,
-          aspect: "custom",
-          zoom: state.canvas.zoom,
-        },
-      });
+      const newCanvas = {
+        width: parsed.width || maxRight || state.canvas.width,
+        height: parsed.height || maxBottom || state.canvas.height,
+        aspect: "custom",
+        zoom: state.canvas.zoom,
+      };
+
+      dispatch({ type: "SET_CANVAS_SIZE", payload: newCanvas });
+
+      if (persist) {
+        const saved = {
+          ...initialState,
+          elements,
+          canvas: newCanvas,
+        };
+        localStorage.setItem("editor-state", JSON.stringify(saved));
+      }
     } catch (err) {
       console.error("IMPORT FAILED:", err);
       alert("Invalid template format.");
@@ -481,6 +474,122 @@ export function EditorProvider({ children }) {
     });
 
   // ------------------------------------------------------
+  // ⭐ SAVE: Recent Designs (localStorage)
+  // ------------------------------------------------------
+  const saveCurrentDesign = (info = {}) => {
+    try {
+      const stateJSON = {
+        elements: state.elements,
+        canvas: state.canvas,
+        timestamp: Date.now(),
+      };
+
+      const canvasEl = document.querySelector("#canvas-area");
+      if (!canvasEl) return;
+
+      html2canvas(canvasEl, { scale: 0.3 }).then((canvas) => {
+        const preview = canvas.toDataURL("image/png");
+
+        const entry = {
+          id: uuid(),
+          name: info.name || "Untitled Design",
+          preview,
+          editorState: stateJSON,
+          date: new Date().toISOString(),
+        };
+
+        let list = JSON.parse(localStorage.getItem("recent-designs")) || [];
+        list.unshift(entry);
+        list = list.slice(0, 20);
+
+        localStorage.setItem("recent-designs", JSON.stringify(list));
+      });
+    } catch (err) {
+      console.error("Failed to save recent design", err);
+    }
+  };
+
+  
+
+  // ------------------------------------------------------
+  // SANITIZE CANVAS (Fix html2canvas OKLCH error)
+  // ------------------------------------------------------
+  function forceRemoveOKLCH() {
+    const all = document.querySelectorAll("*");
+
+    all.forEach((el) => {
+      const styles = window.getComputedStyle(el);
+
+      const check = (prop) => styles[prop] && styles[prop].includes("oklch");
+
+      // Replace OKLCH values
+      if (check("color")) el.style.setProperty("color", "rgb(0,0,0)", "important");
+      if (check("backgroundColor")) el.style.setProperty("background-color", "transparent", "important");
+      if (check("borderColor")) el.style.setProperty("border-color", "rgb(0,0,0)", "important");
+
+      // Tailwind Shadows use OKLCH
+      if (check("boxShadow")) el.style.setProperty("box-shadow", "none", "important");
+      if (check("outlineColor")) el.style.setProperty("outline-color", "rgb(0,0,0)", "important");
+
+      // Rings / Ring-offset (Tailwind)
+      if (check("--tw-ring-color")) el.style.setProperty("--tw-ring-color", "transparent", "important");
+      if (check("--tw-ring-offset-color")) el.style.setProperty("--tw-ring-offset-color", "transparent", "important");
+    });
+  }
+
+  // ------------------------------------------------------
+  // SAVE DESIGN TO DB
+  // ------------------------------------------------------
+  const saveDesignToDB = async (userId, designName = "My Design") => {
+    try {
+      console.log("🟦 SENDING SAVE REQUEST...");
+      console.log("USER:", userId, "NAME:", designName);
+
+      const canvasEl = document.querySelector("#canvas-area");
+      if (!canvasEl) {
+        console.error("❌ No canvas found!");
+        return { success: false };
+      }
+
+      forceRemoveOKLCH();
+
+      const previewCanvas = await html2canvas(canvasEl, {
+        backgroundColor: null,
+        useCORS: true,
+        scale: 0.5,
+      });
+
+      const preview_image = previewCanvas.toDataURL("image/png");
+
+      const payload = {
+        user_id: userId,
+        design_name: designName,
+        preview_image,
+        json: JSON.stringify({
+          elements: state.elements,
+          canvas: state.canvas,
+        }),
+      };
+
+      console.log("REQUEST PAYLOAD:", payload);
+      console.log("POST TO:", `${API_URL}/designs/save`);
+
+      const res = await axios.post(`${API_URL}/designs/save`, payload);
+
+      console.log("🟩 SAVE SUCCESS:", res.data);
+      return res.data;
+    } catch (err) {
+      console.error("❌ SAVE TO DB FAILED:", err);
+      if (err.response) {
+        console.error("STATUS:", err.response.status);
+        console.error("RESPONSE:", err.response.data);
+      }
+      return { success: false };
+    }
+  };
+
+
+  // ------------------------------------------------------
   // EXPORTED API
   // ------------------------------------------------------
   const api = {
@@ -490,8 +599,6 @@ export function EditorProvider({ children }) {
     addText,
     addShape,
     addImage,
-
-    // ⭐ NEW
     addPath,
     addMaskedImage,
 
@@ -513,6 +620,10 @@ export function EditorProvider({ children }) {
 
     toggleElementsPanel,
     isElementsPanelOpen: state.isElementsPanelOpen,
+
+    // ⭐ NEW EXPORTS
+    saveCurrentDesign,
+    saveDesignToDB,
   };
 
   return (

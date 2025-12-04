@@ -6,16 +6,7 @@ export default function PropertiesPanel() {
   const { state, updateElement, deleteElement } = useEditor()
   const selected = state.elements.find(e => e.id === state.selectedId)
 
-  if (!selected)
-    return (
-      <div className="p-6 text-gray-400 italic text-center border border-dashed border-gray-200 rounded-xl">
-        No element selected
-      </div>
-    )
-
-  const set = (k, v) => updateElement(selected.id, { [k]: v })
-
-  // Load Google Fonts dynamically
+  // ⭐ Hooks must ALWAYS run before any conditional return
   useEffect(() => {
     if (selected?.fontFamily) {
       const linkId = `google-font-${selected.fontFamily.replace(/\s+/g, '-')}`
@@ -28,6 +19,16 @@ export default function PropertiesPanel() {
       }
     }
   }, [selected?.fontFamily])
+
+  // ⭐ After hooks → you are allowed to return early
+  if (!selected)
+    return (
+      <div className="p-6 text-gray-400 italic text-center border border-dashed border-gray-200 rounded-xl">
+        No element selected
+      </div>
+    )
+
+  const set = (k, v) => updateElement(selected.id, { [k]: v })
 
   const fontOptions = [
     'Arial', 'Verdana', 'Georgia', 'Times New Roman', 'Courier New', 'Tahoma',
@@ -60,6 +61,7 @@ export default function PropertiesPanel() {
       {selected.type === 'text' && (
         <div className={sectionStyle}>
           <h4 className="text-gray-700 font-semibold mb-1">Text</h4>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-gray-600">Font Size</label>
@@ -70,6 +72,7 @@ export default function PropertiesPanel() {
                 className="w-full mt-1 border-gray-300 rounded-lg px-2 py-1 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
               />
             </div>
+
             <div>
               <label className="text-sm font-medium text-gray-600">Font Family</label>
               <select
@@ -79,9 +82,7 @@ export default function PropertiesPanel() {
                 style={{ fontFamily: selected.fontFamily }}
               >
                 {fontOptions.map(f => (
-                  <option key={f} value={f} style={{ fontFamily: f }}>
-                    {f}
-                  </option>
+                  <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
                 ))}
               </select>
             </div>
@@ -97,6 +98,7 @@ export default function PropertiesPanel() {
                 className="w-full h-10 rounded-lg border border-gray-200 mt-1 cursor-pointer"
               />
             </div>
+
             <div>
               <label className="text-sm font-medium text-gray-600">Alignment</label>
               <div className="flex gap-1 mt-1">
@@ -125,6 +127,7 @@ export default function PropertiesPanel() {
               className={`flex-1 p-2 rounded-lg font-bold ${selected.fontWeight === 'bold' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
               <Bold size={16} />
             </button>
+
             <button
               onClick={() => set('fontStyle', selected.fontStyle === 'italic' ? 'normal' : 'italic')}
               className={`flex-1 p-2 rounded-lg italic ${selected.fontStyle === 'italic' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
@@ -138,6 +141,7 @@ export default function PropertiesPanel() {
       {selected.type === 'shape' && (
         <div className={sectionStyle}>
           <h4 className="text-gray-700 font-semibold mb-1">Shape</h4>
+
           <label className="text-sm font-medium text-gray-600">Fill Color</label>
           <input
             type="color"
@@ -152,6 +156,7 @@ export default function PropertiesPanel() {
       {selected.type === 'image' && (
         <div className={sectionStyle}>
           <h4 className="text-gray-700 font-semibold mb-1">Image</h4>
+
           <label className="text-sm font-medium text-gray-600">Image URL</label>
           <input
             className="w-full mt-1 border-gray-300 rounded-lg px-2 py-1 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-400"

@@ -35,6 +35,7 @@ import { AuthProvider } from "./context/authContext.jsx";
 
 // Product View Page
 import ProductView from "./pages/ProductView.jsx";
+import SavedDesignsPage from "./pages/SavedDesignsPage.jsx";
 
 
 // Canva-style Editor imports
@@ -83,6 +84,17 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
+
+  // Saved Designs Page
+  {
+    path: "/my-designs",
+    element: (
+      <ProtectedRoute allowedRoles={["user", "manager", "admin"]}>
+        <SavedDesignsPage />
+      </ProtectedRoute>
+    ),
+  },
+
 
   // Products (public)
 
@@ -138,12 +150,11 @@ const router = createBrowserRouter([
     path: "/editor",
     element: (
       <ProtectedRoute allowedRoles={["user", "manager", "admin"]}>
-        <EditorProvider>
-          <EditorPage />
-        </EditorProvider>
+        <EditorPage />
       </ProtectedRoute>
     ),
   },
+
 
   // Unauthorized page
   { path: "/unauthorized", element: <Unauthorized /> },
@@ -153,11 +164,14 @@ const router = createBrowserRouter([
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <AuthProvider>
-      <ToastProvider>
-        <MaintenanceWrapper>
-          <RouterProvider router={router} />
-        </MaintenanceWrapper>
-      </ToastProvider>
+      <EditorProvider>
+        <ToastProvider>
+          <MaintenanceWrapper>
+            <RouterProvider router={router} />
+          </MaintenanceWrapper>
+        </ToastProvider>
+      </EditorProvider>
     </AuthProvider>
   </StrictMode>
 );
+

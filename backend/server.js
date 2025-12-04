@@ -19,6 +19,7 @@ const backupRoutes = require("./routes/backupRoutes");
 const sessionRoutes = require("./routes/sessionRoutes");
 const otpRoutes = require("./routes/otpRoutes");
 const attributesRoutes = require("./routes/productAttributesRoutes");
+const designRoutes = require("./routes/designRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -64,6 +65,7 @@ app.use("/api/backup", backupRoutes);
 app.use("/api/sessions", sessionRoutes);
 app.use("/api", otpRoutes);
 app.use("/api/attributes", attributesRoutes);
+app.use("/api/designs", designRoutes);
 
 // Attach io to req for routes that need it (orders)
 app.use(

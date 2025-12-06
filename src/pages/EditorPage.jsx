@@ -14,38 +14,78 @@ import { useAuth } from "../context/authContext";
 
 export default function EditorPage() {
   const { user } = useAuth();
-  const { saveDesignToDB } = useEditor();
-  const [saveModalOpen, setSaveModalOpen] = useState(false);
   const { showToast } = useToast();
-
-  const handleSaveDesign = async (designName) => {
-    setSaveModalOpen(false);
-
-    const res = await saveDesignToDB(user?.user_id, designName);
-
-    if (res.success) {
-      showToast("Design saved successfully!", "success");
-    } else {
-      showToast("Failed to save design.", "error");
-    }
-  };
-
-  const MIN_WIDTH = 1024;
-  const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < MIN_WIDTH);
-
-  const [showElements, setShowElements] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-
   const location = useLocation();
+
   const template = location.state?.template || null;
   const recentDesignId = location.state?.recentDesignId || null;
+  const savedDesignJSON = location.state?.savedDesignJSON || null;
+  const savedDesignId = location.state?.design_id || null;
+  const savedDesignName = location.state?.design_name || "";
 
   const {
     importFromJSON,
     saveCurrentDesign,
+    saveDesignToDB,
+    activeDesignId,
     setActiveDesignId,
   } = useEditor();
 
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [currentDesignName, setCurrentDesignName] =
+    useState(savedDesignName || "");
+
+  const MIN_WIDTH = 1024;
+  const [isSmallScreen, setIsSmallScreen] = useState(
+    window.innerWidth < MIN_WIDTH
+  );
+
+  const [showElements, setShowElements] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  // --------------------------------------------------
+  // Sync activeDesignId when opening saved design
+  // --------------------------------------------------
+  useEffect(() => {
+    setActiveDesignId(savedDesignId || null);
+  }, [savedDesignId, setActiveDesignId]);
+
+  // --------------------------------------------------
+  // Save New Design (always create new)
+  // --------------------------------------------------
+  const saveNewDesign = async (name) => {
+    const res = await saveDesignToDB(user?.user_id, name, true); // forceNew = true
+    if (res?.success) {
+      showToast("New design saved!", "success");
+      setCurrentDesignName(name);
+      // After Save New, we treat it as a "new" design still (no ID known from backend)
+      setActiveDesignId(null);
+    } else {
+      showToast("Failed to save new design.", "error");
+    }
+  };
+
+  // --------------------------------------------------
+  // Save Changes (update existing)
+  // --------------------------------------------------
+  const saveExistingDesign = async (name) => {
+    if (!activeDesignId) {
+      showToast("No existing design selected to update.", "error");
+      return;
+    }
+
+    const res = await saveDesignToDB(user?.user_id, name, false);
+    if (res?.success) {
+      showToast("Changes saved!", "success");
+      setCurrentDesignName(name);
+    } else {
+      showToast("Failed to save changes.", "error");
+    }
+  };
+
+  // --------------------------------------------------
+  // Responsive watcher
+  // --------------------------------------------------
   useEffect(() => {
     const handleResize = () =>
       setIsSmallScreen(window.innerWidth < MIN_WIDTH);
@@ -54,10 +94,28 @@ export default function EditorPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // LOADING LOGIC IDENTICAL — no shrink
+  // --------------------------------------------------
+  // Load saved design from DB
+  // --------------------------------------------------
   useEffect(() => {
-    if (isSmallScreen || loaded) return;
+    if (!savedDesignJSON || loaded) return;
 
+    try {
+      const parsed = JSON.parse(savedDesignJSON);
+      importFromJSON(parsed, true);
+      setLoaded(true);
+    } catch (err) {
+      console.error("Failed to load saved design JSON:", err);
+    }
+  }, [savedDesignJSON, importFromJSON, loaded]);
+
+  // --------------------------------------------------
+  // Load recent design or template (if not loading saved design)
+// --------------------------------------------------
+  useEffect(() => {
+    if (isSmallScreen || loaded || savedDesignJSON) return;
+
+    // Load from localStorage recent designs
     if (recentDesignId) {
       try {
         const raw = localStorage.getItem("recent-designs");
@@ -65,11 +123,11 @@ export default function EditorPage() {
 
         const list = JSON.parse(raw);
         const found = list.find((d) => d.id === recentDesignId);
-
         if (!found) return;
 
         importFromJSON(found.editorState, true);
-        setActiveDesignId(found.id);
+        setActiveDesignId(null);
+        setCurrentDesignName(found.name);
         setLoaded(true);
       } catch (err) {
         console.error("Failed to load recent design:", err);
@@ -77,45 +135,52 @@ export default function EditorPage() {
       return;
     }
 
-    if (!template) return;
+    // Load template
+    if (template) {
+      const loadTemplate = async () => {
+        try {
+          let jsonData = template.json;
 
-    const loadTemplate = async () => {
-      try {
-        let jsonData = template.json;
+          if (typeof jsonData === "string" && jsonData.endsWith(".json")) {
+            const response = await fetch(jsonData);
+            jsonData = await response.json();
+          }
 
-        if (typeof jsonData === "string" && jsonData.endsWith(".json")) {
-          const response = await fetch(jsonData);
-          jsonData = await response.json();
+          importFromJSON(jsonData, true);
+          setActiveDesignId(null);
+          setCurrentDesignName(template.name);
+          setLoaded(true);
+
+          setTimeout(() => {
+            saveCurrentDesign({
+              name: template.name,
+              category: template.category,
+              templateCategory: template.category,
+              templateId: template.id,
+              preview: template.preview,
+            });
+          }, 600);
+        } catch (err) {
+          console.error("Error loading template:", err);
         }
+      };
 
-        importFromJSON(jsonData, true);
-        setLoaded(true);
-
-        setTimeout(() => {
-          saveCurrentDesign({
-            name: template.name,
-            category: template.category,
-            templateCategory: template.category,
-            templateId: template.id,
-            preview: template.preview,
-          });
-        }, 600);
-      } catch (err) {
-        console.error("Error loading template:", err);
-      }
-    };
-
-    loadTemplate();
+      loadTemplate();
+    }
   }, [
     template,
     recentDesignId,
     importFromJSON,
     saveCurrentDesign,
-    setActiveDesignId,
+    savedDesignJSON,
     loaded,
     isSmallScreen,
+    setActiveDesignId,
   ]);
 
+  // --------------------------------------------------
+  // Small screen warning
+  // --------------------------------------------------
   if (isSmallScreen) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-50 px-6 text-center">
@@ -127,11 +192,14 @@ export default function EditorPage() {
     );
   }
 
+  // --------------------------------------------------
+  // Render
+  // --------------------------------------------------
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       <header className="bg-white z-20 w-full flex justify-center px-2 py-3">
         <Toolbar
-          onElementsClick={() => setShowElements(prev => !prev)}
+          onElementsClick={() => setShowElements((prev) => !prev)}
           onSave={() => setSaveModalOpen(true)}
         />
       </header>
@@ -159,7 +227,10 @@ export default function EditorPage() {
       <SaveDesignModal
         open={saveModalOpen}
         onClose={() => setSaveModalOpen(false)}
-        onSave={handleSaveDesign}
+        onSaveNew={saveNewDesign}
+        onSaveExisting={saveExistingDesign}
+        initialName={currentDesignName}
+        isEditingExisting={!!activeDesignId}
       />
     </div>
   );

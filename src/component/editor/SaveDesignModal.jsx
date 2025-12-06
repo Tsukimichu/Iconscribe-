@@ -1,17 +1,35 @@
 // src/component/editor/SaveDesignModal.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 
-export default function SaveDesignModal({ open, onClose, onSave }) {
+export default function SaveDesignModal({
+  open,
+  onClose,
+  onSaveNew,
+  onSaveExisting,
+  initialName,
+  isEditingExisting,
+}) {
   const [name, setName] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      setName(initialName || "");
+    }
+  }, [open, initialName]);
 
   if (!open) return null;
 
-  const handleSave = () => {
+  const handleSaveNew = () => {
     if (!name.trim()) return;
-    onSave(name);
-    setName("");
+    onSaveNew(name.trim());
+    onClose();
+  };
+
+  const handleSaveExisting = () => {
+    if (!name.trim()) return;
+    onSaveExisting(name.trim());
     onClose();
   };
 
@@ -28,8 +46,13 @@ export default function SaveDesignModal({ open, onClose, onSave }) {
       >
         {/* HEADER */}
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">Save Design</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <h2 className="text-xl font-semibold text-gray-800">
+            {isEditingExisting ? "Save Changes" : "Save Design"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
             <X size={22} />
           </button>
         </div>
@@ -51,12 +74,24 @@ export default function SaveDesignModal({ open, onClose, onSave }) {
           >
             Cancel
           </button>
+
+          {/* Save New */}
           <button
-            onClick={handleSave}
+            onClick={handleSaveNew}
             className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold"
           >
-            Save
+            Save New
           </button>
+
+          {/* Save Changes (only if editing existing) */}
+          {isEditingExisting && (
+            <button
+              onClick={handleSaveExisting}
+              className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold"
+            >
+              Save Changes
+            </button>
+          )}
         </div>
       </motion.div>
     </motion.div>

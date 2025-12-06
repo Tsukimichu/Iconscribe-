@@ -1,110 +1,138 @@
 {
-  "width": 1080,
-  "height": 500,
-  "background": "#F8F7F3",
-  "objects": [
+  "canvas": {
+    "width": 1080,
+    "height": 500,
+    "background": "#F8F7F3"
+  },
+  "elements": [
+    
     {
+      "id": "bg-base",
       "type": "rect",
-      "left": 0,
-      "top": 0,
+      "x": 0,
+      "y": 0,
       "width": 1080,
       "height": 500,
-      "fill": "#F8F7F3"
+      "fill": "#F8F7F3",
+      "selectable": false,
+      "zIndex": 0
     },
-
     {
+      "id": "bg-border",
       "type": "rect",
-      "left": 20,
-      "top": 20,
+      "x": 20,
+      "y": 20,
       "width": 1040,
       "height": 460,
       "fill": "transparent",
       "stroke": "#4A4A8A",
-      "strokeWidth": 4
+      "strokeWidth": 4,
+      "selectable": false,
+      "zIndex": 1
+    },
+
+   
+    {
+      "id": "deco-blob",
+      "type": "path",
+      "x": 720,
+      "y": 200,
+      "width": 80,
+      "height": 80,
+      "pathData": "M40 0 C50 30 80 30 60 60 C80 90 50 90 40 120 C30 90 0 90 20 60 C0 30 30 30 40 0 Z",
+      "fill": "#C94A4A",
+      "selectable": true,
+      "zIndex": 5
+    },
+ 
+    {
+      "id": "deco-star-blue",
+      "type": "path",
+      "x": 810,
+      "y": 200,
+      "width": 80,
+      "height": 80,
+      "pathData": "M40 0 L48 28 L78 28 L52 45 L62 75 L40 56 L18 75 L28 45 L2 28 L32 28 Z",
+      "fill": "#3A3F9F",
+      "selectable": true,
+      "zIndex": 5
     },
 
     {
+      "id": "deco-star-red",
+      "type": "path",
+      "x": 900,
+      "y": 200,
+      "width": 80,
+      "height": 80,
+      "pathData": "M40 0 L50 20 L72 20 L55 35 L62 58 L40 45 L18 58 L25 35 L8 20 L30 20 Z",
+      "fill": "#D02A2A",
+      "selectable": true,
+      "zIndex": 5
+    },
+
+ 
+    {
+      "id": "text-top",
       "type": "textbox",
-      "left": 80,
-      "top": 120,
+      "x": 80,
+      "y": 120,
       "width": 900,
+      "height": "auto",
       "text": "ITS PATHETIC",
       "fontSize": 82,
       "fontWeight": "900",
       "fontFamily": "Arial",
       "fill": "#3A3F9F",
       "textAlign": "left",
-      "lineHeight": 1.0
+      "lineHeight": 1.0,
+      "zIndex": 10
     },
-
     {
+      "id": "text-mid",
       "type": "textbox",
-      "left": 80,
-      "top": 215,
+      "x": 80,
+      "y": 215,
       "width": 900,
+      "height": "auto",
       "text": "but atleast",
       "fontSize": 72,
       "fontStyle": "italic",
       "fontFamily": "Georgia",
       "fill": "#B02020",
       "textAlign": "left",
-      "lineHeight": 1.0
+      "lineHeight": 1.0,
+      "zIndex": 10
     },
-
     {
+      "id": "text-bottom",
       "type": "textbox",
-      "left": 80,
-      "top": 300,
+      "x": 80,
+      "y": 300,
       "width": 900,
+      "height": "auto",
       "text": "YOU ARE TOO",
       "fontSize": 82,
       "fontWeight": "900",
       "fontFamily": "Arial",
       "fill": "#3A3F9F",
       "textAlign": "left",
-      "lineHeight": 1.0
+      "lineHeight": 1.0,
+      "zIndex": 10
     },
-
     {
-      "type": "path",
-      "left": 720,
-      "top": 200,
-      "width": 80,
-      "height": 80,
-      "fill": "#C94A4A",
-      "d": "M40 0 C50 30 80 30 60 60 C80 90 50 90 40 120 C30 90 0 90 20 60 C0 30 30 30 40 0 Z"
-    },
-
-    {
-      "type": "path",
-      "left": 810,
-      "top": 200,
-      "width": 80,
-      "height": 80,
-      "fill": "#3A3F9F",
-      "d": "M40 0 L48 28 L78 28 L52 45 L62 75 L40 56 L18 75 L28 45 L2 28 L32 28 Z"
-    },
-
-    {
-      "type": "path",
-      "left": 900,
-      "top": 200,
-      "width": 80,
-      "height": 80,
-      "fill": "#D02A2A",
-      "d": "M40 0 L50 20 L72 20 L55 35 L62 58 L40 45 L18 58 L25 35 L8 20 L30 20 Z"
-    },
-
-    {
+      "id": "text-credit",
       "type": "textbox",
-      "left": 800,
-      "top": 420,
+      "x": 800,
+      "y": 420,
       "width": 260,
+      "height": "auto",
       "text": "@andi.phics",
       "fontSize": 28,
       "fontFamily": "Arial",
       "fill": "#B02020",
-      "textAlign": "right"
+      "textAlign": "right",
+      "zIndex": 10
     }
   ]
 }

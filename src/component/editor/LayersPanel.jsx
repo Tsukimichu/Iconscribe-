@@ -14,7 +14,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2, Pencil } from "lucide-react";
+import { GripVertical, Trash2, Pencil, Layers } from "lucide-react";
 
 export default function LayersPanel() {
   const { state, selectElement, reorderElements, deleteElement, renameElement } =
@@ -27,6 +27,7 @@ export default function LayersPanel() {
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
+  // Visual order for the list
   const visualOrder = useMemo(() => [...state.elements].reverse(), [state.elements]);
 
   const handleDragEnd = useCallback(
@@ -44,12 +45,20 @@ export default function LayersPanel() {
   );
 
   return (
-    <div className="bg-white border-2 border-blue-400 rounded-2xl shadow-md overflow-hidden">
-      <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 text-white font-semibold text-lg select-none">
-        Layers
+    <div className="bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden flex flex-col h-full">
+      {/* HEADER */}
+      <div className="bg-white px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-gray-800">
+          <Layers size={18} className="text-blue-600" />
+          <h3 className="font-bold text-base tracking-tight">Layers</h3>
+        </div>
+        <span className="text-xs font-semibold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+          {state.elements.length}
+        </span>
       </div>
 
-      <div className="p-4">
+      {/* LIST AREA */}
+      <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -59,7 +68,7 @@ export default function LayersPanel() {
             items={visualOrder.map((el) => el.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="space-y-2">
+            <div className="space-y-1">
               {visualOrder.map((el) => (
                 <SortableLayerItem
                   key={el.id}
@@ -73,6 +82,12 @@ export default function LayersPanel() {
             </div>
           </SortableContext>
         </DndContext>
+        
+        {visualOrder.length === 0 && (
+          <div className="text-center py-10 text-gray-400 text-sm">
+            No layers yet
+          </div>
+        )}
       </div>
     </div>
   );
@@ -94,7 +109,7 @@ const SortableLayerItem = React.memo(function SortableLayerItem({
   const [isEditing, setIsEditing] = useState(false);
   const [tempName, setTempName] = useState(el.name || el.type);
 
-  // Sync with external updates (persistent name)
+  // Sync with external updates
   useEffect(() => {
     if (!isEditing) setTempName(el.name || el.type);
   }, [el.name, el.type, isEditing]);
@@ -108,7 +123,8 @@ const SortableLayerItem = React.memo(function SortableLayerItem({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 50 : "auto",
+    opacity: isDragging ? 0.8 : 1,
   };
 
   return (
@@ -116,76 +132,95 @@ const SortableLayerItem = React.memo(function SortableLayerItem({
       ref={setNodeRef}
       style={style}
       onClick={() => selectElement(el.id)}
-      className={`flex items-center justify-between border rounded-xl p-2.5 shadow-sm group cursor-pointer transition-all select-none
+      className={`
+        group relative flex items-center justify-between 
+        px-3 py-2.5 rounded-lg text-sm cursor-pointer transition-all duration-200 border border-transparent
         ${
           isSelected
-            ? "bg-blue-50 border-blue-400 ring-2 ring-blue-300"
-            : "bg-white border-zinc-200 hover:bg-zinc-100"
+            ? "bg-blue-50 text-blue-700 border-blue-200 shadow-sm"
+            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
         } 
-        ${isDragging ? "ring-2 ring-blue-400" : ""}`}
+        ${isDragging ? "shadow-lg bg-white scale-105" : ""}
+      `}
     >
-      <div className="flex items-center gap-2 w-full">
+      <div className="flex items-center gap-3 w-full overflow-hidden">
+        {/* DRAG HANDLE */}
         <button
           {...attributes}
           {...listeners}
           onClick={(e) => e.stopPropagation()}
-          className="cursor-grab text-zinc-400 hover:text-zinc-600 active:cursor-grabbing"
+          className={`
+            cursor-grab active:cursor-grabbing transition-colors
+            ${isSelected ? "text-blue-300 hover:text-blue-500" : "text-gray-300 hover:text-gray-500"}
+          `}
         >
-          <GripVertical size={16} />
+          <GripVertical size={14} />
         </button>
 
-        {isEditing ? (
-          <input
-            value={tempName}
-            onChange={(e) => setTempName(e.target.value)}
-            onBlur={handleRename}
-            onKeyDown={(e) => e.key === "Enter" && handleRename()}
-            autoFocus
-            className="text-sm font-medium bg-white border border-blue-300 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-400 w-full"
-            onClick={(e) => e.stopPropagation()}
-          />
-        ) : (
-          <div
-            onDoubleClick={(e) => {
-              e.stopPropagation();
-              setIsEditing(true);
-            }}
-            className="flex items-center justify-between w-full"
-          >
-            <span
-              className={`text-sm font-medium truncate transition-colors ${
-                isSelected
-                  ? "text-blue-700"
-                  : "text-zinc-700 group-hover:text-blue-600"
-              }`}
-            >
-              {el.name || el.type}{" "}
-              <span className="text-zinc-400">— {el.id.slice(0, 4)}</span>
-            </span>
-            <button
-              onClick={(e) => {
+        {/* NAME / INPUT */}
+        <div className="flex-1 min-w-0">
+          {isEditing ? (
+            <input
+              value={tempName}
+              onChange={(e) => setTempName(e.target.value)}
+              onBlur={handleRename}
+              onKeyDown={(e) => e.key === "Enter" && handleRename()}
+              autoFocus
+              onClick={(e) => e.stopPropagation()}
+              className="w-full bg-white text-gray-900 border border-blue-400 rounded px-1.5 py-0.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+            />
+          ) : (
+            <div
+              className="flex items-center gap-2 w-full"
+              onDoubleClick={(e) => {
                 e.stopPropagation();
                 setIsEditing(true);
               }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-blue-500 ml-2"
-              title="Rename"
             >
-              <Pencil size={14} />
-            </button>
-          </div>
-        )}
+              <span className="font-medium truncate select-none">
+                {el.name || el.type}
+              </span>
+              
+              {/* Subtle ID display */}
+              <span className={`text-[10px] font-mono opacity-0 group-hover:opacity-100 transition-opacity ${isSelected ? "text-blue-400" : "text-gray-300"}`}>
+                #{el.id.slice(-4)}
+              </span>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditing(true);
+                }}
+                className={`ml-auto opacity-0 group-hover:opacity-100 transition-all transform scale-90 hover:scale-110 hover:text-blue-600 ${isSelected ? "text-blue-400" : "text-gray-400"}`}
+                title="Rename"
+              >
+                <Pencil size={12} />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          deleteElement(el.id);
-        }}
-        className="p-1.5 text-zinc-500 hover:text-red-500 rounded-lg hover:bg-red-100 transition-colors"
-        title="Delete layer"
-      >
-        <Trash2 size={16} />
-      </button>
+      {/* DELETE BUTTON - Only visible on hover */}
+      {!isEditing && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            deleteElement(el.id);
+          }}
+          className={`
+            ml-2 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100
+            ${
+              isSelected 
+                ? "hover:bg-blue-200 text-blue-400 hover:text-blue-700" 
+                : "hover:bg-red-50 text-gray-400 hover:text-red-500"
+            }
+          `}
+          title="Delete layer"
+        >
+          <Trash2 size={14} />
+        </button>
+      )}
     </div>
   );
 });

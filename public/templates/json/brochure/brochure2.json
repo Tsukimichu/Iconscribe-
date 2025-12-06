@@ -1,155 +1,215 @@
 {
-  "version": "5.3.0",
-  "background": "#FFFFFF",
-  "width": 1056,
-  "height": 816,
-  "objects": [
-
-
-    { "type": "rect", "left": 0, "top": 0, "width": 352, "height": 816, "fill": "#1B1B1B" },
-    { "type": "rect", "left": 352, "top": 0, "width": 352, "height": 816, "fill": "#222222" },
-    { "type": "rect", "left": 704, "top": 0, "width": 352, "height": 816, "fill": "#1B1B1B" },
-
+  "canvas": {
+    "width": 1056,
+    "height": 816,
+    "background": "#1B1B1B"
+  },
+  "elements": [
+    
+    {
+      "id": "bg-col-left",
+      "type": "rect",
+      "x": 0,
+      "y": 0,
+      "width": 352,
+      "height": 816,
+      "fill": "#1B1B1B",
+      "selectable": false,
+      "zIndex": 0
+    },
+    {
+      "id": "bg-col-mid",
+      "type": "rect",
+      "x": 352,
+      "y": 0,
+      "width": 352,
+      "height": 816,
+      "fill": "#222222",
+      "selectable": false,
+      "zIndex": 0
+    },
+    {
+      "id": "bg-col-right",
+      "type": "rect",
+      "x": 704,
+      "y": 0,
+      "width": 352,
+      "height": 816,
+      "fill": "#1B1B1B",
+      "selectable": false,
+      "zIndex": 0
+    },
 
 
     {
-      "type": "textbox",
-      "left": 30,
-      "top": 60,
+      "id": "img-box-about",
+      "type": "rect",
+      "x": 30,
+      "y": 200,
       "width": 292,
+      "height": 200,
+      "fill": "#FFFFFF",
+      "stroke": "#F6B03C",
+      "strokeWidth": 2,
+      "borderRadius": 8,
+      "zIndex": 5
+    },
+    {
+      "id": "img-box-services",
+      "type": "rect",
+      "x": 392,
+      "y": 300,
+      "width": 292,
+      "height": 200,
+      "fill": "#FFFFFF",
+      "stroke": "#F6B03C",
+      "strokeWidth": 2,
+      "borderRadius": 8,
+      "zIndex": 5
+    },
+    {
+      "id": "img-box-contact",
+      "type": "rect",
+      "x": 744,
+      "y": 250,
+      "width": 292,
+      "height": 200,
+      "fill": "#FFFFFF",
+      "stroke": "#F6B03C",
+      "strokeWidth": 2,
+      "borderRadius": 8,
+      "zIndex": 5
+    },
+
+
+    {
+      "id": "title-about",
+      "type": "textbox",
+      "x": 30,
+      "y": 60,
+      "width": 292,
+      "height": "auto",
       "text": "ABOUT US",
       "fontSize": 32,
       "fontWeight": "bold",
-      "fill": "#F6B03C"
+      "fill": "#F6B03C",
+      "fontFamily": "Arial",
+      "zIndex": 10
     },
-
     {
+      "id": "text-about",
       "type": "textbox",
-      "left": 30,
-      "top": 110,
+      "x": 30,
+      "y": 110,
       "width": 292,
+      "height": "auto",
       "text": "We create digital strategies, branding, and marketing campaigns that drive results.",
       "fontSize": 16,
       "fill": "#FFFFFF",
-      "lineHeight": 1.4
-    },
-
-    {
-      "type": "rect",
-      "left": 30,
-      "top": 200,
-      "width": 292,
-      "height": 200,
-      "fill": "#FFFFFF",
-      "stroke": "#F6B03C",
-      "strokeWidth": 2,
-      "rx": 8,
-      "ry": 8
+      "lineHeight": 1.4,
+      "fontFamily": "Arial",
+      "zIndex": 10
     },
     {
+      "id": "label-img-about",
       "type": "textbox",
-      "left": 30,
-      "top": 270,
+      "x": 30,
+      "y": 270,
       "width": 292,
+      "height": "auto",
       "text": "Image Placeholder",
       "fontSize": 14,
       "fill": "#777777",
-      "textAlign": "center"
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "zIndex": 11
     },
 
-
-
     {
+      "id": "title-services",
       "type": "textbox",
-      "left": 392,
-      "top": 60,
+      "x": 392,
+      "y": 60,
       "width": 292,
+      "height": "auto",
       "text": "SERVICES",
       "fontSize": 32,
       "fontWeight": "bold",
-      "fill": "#F6B03C"
+      "fill": "#F6B03C",
+      "fontFamily": "Arial",
+      "zIndex": 10
     },
-
     {
+      "id": "text-services",
       "type": "textbox",
-      "left": 392,
-      "top": 110,
+      "x": 392,
+      "y": 110,
       "width": 292,
+      "height": "auto",
       "text": "• Digital Marketing\n• Social Media Management\n• Paid Advertising\n• Creative Production\n• SEO & Content Strategy",
       "fontSize": 16,
       "fill": "#FFFFFF",
-      "lineHeight": 1.5
-    },
-
-    {
-      "type": "rect",
-      "left": 392,
-      "top": 300,
-      "width": 292,
-      "height": 200,
-      "fill": "#FFFFFF",
-      "stroke": "#F6B03C",
-      "strokeWidth": 2,
-      "rx": 8,
-      "ry": 8
+      "lineHeight": 1.5,
+      "fontFamily": "Arial",
+      "zIndex": 10
     },
     {
+      "id": "label-img-services",
       "type": "textbox",
-      "left": 392,
-      "top": 370,
+      "x": 392,
+      "y": 370,
       "width": 292,
+      "height": "auto",
       "text": "Image Placeholder",
       "fontSize": 14,
       "fill": "#777777",
-      "textAlign": "center"
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "zIndex": 11
     },
 
 
-
     {
+      "id": "title-contact",
       "type": "textbox",
-      "left": 744,
-      "top": 60,
+      "x": 744,
+      "y": 60,
       "width": 292,
+      "height": "auto",
       "text": "CONTACT US",
       "fontSize": 32,
       "fontWeight": "bold",
-      "fill": "#F6B03C"
+      "fill": "#F6B03C",
+      "fontFamily": "Arial",
+      "zIndex": 10
     },
-
     {
+      "id": "text-contact",
       "type": "textbox",
-      "left": 744,
-      "top": 110,
+      "x": 744,
+      "y": 110,
       "width": 292,
+      "height": "auto",
       "text": "Phone: +123 456 7890\nEmail: hello@agency.com\nWebsite: www.agency.com\nAddress: Anywhere St., City",
       "fontSize": 16,
       "fill": "#FFFFFF",
-      "lineHeight": 1.4
-    },
-
-    {
-      "type": "rect",
-      "left": 744,
-      "top": 250,
-      "width": 292,
-      "height": 200,
-      "fill": "#FFFFFF",
-      "stroke": "#F6B03C",
-      "strokeWidth": 2,
-      "rx": 8,
-      "ry": 8
+      "lineHeight": 1.4,
+      "fontFamily": "Arial",
+      "zIndex": 10
     },
     {
+      "id": "label-img-contact",
       "type": "textbox",
-      "left": 744,
-      "top": 320,
+      "x": 744,
+      "y": 320,
       "width": 292,
+      "height": "auto",
       "text": "Logo Placeholder",
       "fontSize": 14,
       "fill": "#777777",
-      "textAlign": "center"
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "zIndex": 11
     }
-
   ]
 }

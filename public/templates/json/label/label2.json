@@ -1,137 +1,203 @@
 {
-  "version": "5.3.0",
-  "background": "#FFF5E6",
-  "width": 600,
-  "height": 300,
-  "objects": [
-
-    { "type": "rect", "left": 0, "top": 0, "width": 600, "height": 300, "fill": "#FFF5E6" },
-
+  "canvas": {
+    "width": 600,
+    "height": 300,
+    "background": "#FFF5E6"
+  },
+  "elements": [
+    
     {
+      "id": "bg-base",
       "type": "rect",
-      "left": 0,
-      "top": 95,
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 300,
+      "fill": "#FFF5E6",
+      "selectable": false,
+      "zIndex": 0
+    },
+    {
+      "id": "bg-strip-orange",
+      "type": "rect",
+      "x": 0,
+      "y": 95,
       "width": 600,
       "height": 145,
-      "fill": "#F7B72F"
+      "fill": "#F7B72F",
+      "selectable": false,
+      "zIndex": 1
     },
 
+    
     {
+      "id": "circle-badge-bg",
       "type": "circle",
-      "left": 240,
-      "top": 85,
-      "radius": 65,
+      "x": 240,
+      "y": 85,
+      "width": 130,
+      "height": 130,
       "fill": "#F7B72F",
       "stroke": "#E8832E",
-      "strokeWidth": 3
+      "strokeWidth": 3,
+      "borderRadius": 9999,
+      "zIndex": 5
     },
 
+    
     {
+      "id": "icon-jar-body",
       "type": "rect",
-      "left": 270,
-      "top": 122,
+      "x": 270,
+      "y": 122,
       "width": 70,
       "height": 48,
-      "rx": 10,
-      "ry": 10,
       "fill": "#C5E4FF",
       "stroke": "#DE7A1C",
-      "strokeWidth": 1
+      "strokeWidth": 1,
+      "borderRadius": 10,
+      "zIndex": 6
     },
-    { "type": "rect", "left": 270, "top": 144, "width": 70, "height": 22, "fill": "#B7E8B3" },
-    { "type": "circle", "left": 292, "top": 131, "radius": 4, "fill": "#FFD740" },
-
+    
     {
+      "id": "icon-jar-liquid",
+      "type": "rect",
+      "x": 270,
+      "y": 144,
+      "width": 70,
+      "height": 22,
+      "fill": "#B7E8B3",
+      
+      "borderRadius": 0, 
+      "zIndex": 7
+    },
+    
+    {
+      "id": "icon-jar-dot",
+      "type": "circle",
+      "x": 292,
+      "y": 131,
+      "width": 8,
+      "height": 8,
+      "fill": "#FFD740",
+      "borderRadius": 9999,
+      "zIndex": 8
+    },
+
+   
+    {
+      "id": "text-title",
       "type": "textbox",
-      "left": 40,
-      "top": 112,
+      "x": 40,
+      "y": 112,
       "width": 240,
+      "height": "auto",
       "text": "APRICOT JAM",
       "fontSize": 24,
       "fontWeight": "bold",
       "fontFamily": "Arial",
       "fill": "#2B1B0F",
-      "textAlign": "left"
+      "textAlign": "left",
+      "zIndex": 10
     },
     {
+      "id": "text-subtitle",
       "type": "textbox",
-      "left": 40,
-      "top": 140,
+      "x": 40,
+      "y": 140,
       "width": 230,
+      "height": "auto",
       "text": "made with love",
       "fontSize": 14,
       "fontFamily": "Arial",
       "fill": "#5C4033",
-      "textAlign": "left"
+      "textAlign": "left",
+      "zIndex": 10
     },
-
     {
+      "id": "label-ingredients",
       "type": "textbox",
-      "left": 40,
-      "top": 162,
+      "x": 40,
+      "y": 162,
       "width": 240,
+      "height": "auto",
       "text": "Ingredients:",
       "fontSize": 14,
       "fontWeight": "bold",
       "fontFamily": "Arial",
-      "fill": "#5C4033"
+      "fill": "#5C4033",
+      "zIndex": 10
     },
     {
+      "id": "text-ingredients-list",
       "type": "textbox",
-      "left": 40,
-      "top": 183,
+      "x": 40,
+      "y": 183,
       "width": 240,
+      "height": "auto",
       "text": "Apricot, Ginger, Cinnamon,\nHoney, Lemon juice,\nSugar, Salt.",
       "fontSize": 13,
       "fontFamily": "Arial",
       "fill": "#5C4033",
-      "lineHeight": 1.2
+      "lineHeight": 1.2,
+      "zIndex": 10
     },
 
+    
     {
+      "id": "label-expiry",
       "type": "textbox",
-      "left": 415,
-      "top": 115,
+      "x": 415,
+      "y": 115,
       "width": 150,
+      "height": "auto",
       "text": "Expiry date:",
       "fontSize": 13,
       "fontWeight": "bold",
       "fontFamily": "Arial",
-      "fill": "#5C4033"
+      "fill": "#5C4033",
+      "zIndex": 10
     },
     {
+      "id": "text-expiry-val",
       "type": "textbox",
-      "left": 415,
-      "top": 133,
+      "x": 415,
+      "y": 133,
       "width": 150,
+      "height": "auto",
       "text": "02/05/2025",
       "fontSize": 13,
       "fontFamily": "Arial",
-      "fill": "#5C4033"
+      "fill": "#5C4033",
+      "zIndex": 10
     },
-
     {
+      "id": "text-barcode",
       "type": "textbox",
-      "left": 380,
-      "top": 175,
+      "x": 380,
+      "y": 175,
       "width": 200,
+      "height": "auto",
       "text": "|||||||||||||||||||",
       "fontSize": 20,
       "fontFamily": "Courier New",
       "fill": "#000000",
-      "textAlign": "center"
+      "textAlign": "center",
+      "zIndex": 10
     },
     {
+      "id": "text-url",
       "type": "textbox",
-      "left": 380,
-      "top": 200,
+      "x": 380,
+      "y": 200,
       "width": 200,
+      "height": "auto",
       "text": "www.reallygreatsite.com",
       "fontSize": 12,
       "fontFamily": "Arial",
       "fill": "#5C4033",
-      "textAlign": "center"
+      "textAlign": "center",
+      "zIndex": 10
     }
-
   ]
 }

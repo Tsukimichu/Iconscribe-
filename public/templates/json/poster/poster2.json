@@ -1,139 +1,173 @@
 {
-  "version": "5.3.0",
-  "background": "#ffffff",
-  "width": 1080,
-  "height": 1350,
-  "objects": [
-
+  "canvas": {
+    "width": 1080,
+    "height": 1350,
+    "background": "#ffffff"
+  },
+  "elements": [
+    
     {
+      "id": "bg-left-blue",
       "type": "rect",
-      "left": 0,
-      "top": 0,
+      "x": 0,
+      "y": 0,
       "width": 1080,
       "height": 1350,
-      "fill": "#1B76D1"
+      "fill": "#1B76D1",
+      "selectable": false,
+      "zIndex": 0
     },
     {
+      "id": "bg-stripe-yellow",
       "type": "rect",
-      "left": 480,
-      "top": 0,
+      "x": 480,
+      "y": 0,
       "width": 320,
       "height": 1350,
-      "fill": "#F9BE2C"
+      "fill": "#F9BE2C",
+      "selectable": false,
+      "zIndex": 1
     },
 
+   
     {
-      "type": "path",
-      "left": -40,
-      "top": 200,
+      "id": "circle-overlay-left",
+      "type": "circle",
+      "x": -40,
+      "y": 200,
       "width": 420,
       "height": 420,
       "fill": "rgba(255,255,255,0.10)",
-      "d": "M210 0 C326 0 420 94 420 210 C420 326 326 420 210 420 C94 420 0 326 0 210 C0 94 94 0 210 0 Z"
+      "borderRadius": 9999,
+      "selectable": false,
+      "zIndex": 2
     },
-
     {
-      "type": "path",
-      "left": 540,
-      "top": 760,
+      "id": "circle-overlay-right",
+      "type": "circle",
+      "x": 540,
+      "y": 760,
       "width": 360,
       "height": 360,
       "fill": "rgba(255,255,255,0.18)",
-      "d": "M180 0 C279 0 360 81 360 180 C360 279 279 360 180 360 C81 360 0 279 0 180 C0 81 81 0 180 0 Z"
+      "borderRadius": 9999,
+      "selectable": false,
+      "zIndex": 2
     },
 
+    
     {
+      "id": "text-hero-we-are",
       "type": "textbox",
-      "left": 120,
-      "top": 260,
+      "x": 120,
+      "y": 260,
       "width": 650,
+      "height": "auto",
       "text": "WE ARE",
       "fontSize": 150,
       "fontWeight": "bold",
       "fontFamily": "Arial",
       "fill": "#ffffff",
-      "textAlign": "left"
+      "textAlign": "left",
+      "zIndex": 10
     },
-
     {
+      "id": "text-hero-hiring",
       "type": "textbox",
-      "left": 120,
-      "top": 430,
+      "x": 120,
+      "y": 430,
       "width": 800,
+      "height": "auto",
       "text": "HIRING",
       "fontSize": 170,
       "fontWeight": "bold",
       "fontFamily": "Arial",
       "fill": "#ffffff",
-      "textAlign": "left"
+      "textAlign": "left",
+      "zIndex": 10
     },
-
     {
+      "id": "text-sub-1",
       "type": "textbox",
-      "left": 125,
-      "top": 640,
+      "x": 125,
+      "y": 640,
       "width": 600,
+      "height": "auto",
       "text": "JOIN OUR TEAM",
       "fontSize": 48,
       "fontWeight": "bold",
       "fontFamily": "Arial",
-      "fill": "rgba(255,255,255,0.92)"
+      "fill": "rgba(255,255,255,0.92)",
+      "zIndex": 10
     },
-
     {
+      "id": "text-sub-2",
       "type": "textbox",
-      "left": 125,
-      "top": 700,
+      "x": 125,
+      "y": 700,
       "width": 600,
+      "height": "auto",
       "text": "NOW HIRING FREELANCERS",
       "fontSize": 36,
       "fontFamily": "Arial",
-      "fill": "rgba(255,255,255,0.92)"
+      "fill": "rgba(255,255,255,0.92)",
+      "zIndex": 10
     },
 
+    
     {
+      "id": "btn-job-1-bg",
       "type": "rect",
-      "left": 125,
-      "top": 830,
+      "x": 125,
+      "y": 830,
       "width": 360,
       "height": 120,
       "fill": "#ffffff",
-      "rx": 22,
-      "ry": 22
+      "borderRadius": 22,
+      "zIndex": 10
     },
     {
+      "id": "btn-job-1-text",
       "type": "textbox",
-      "left": 155,
-      "top": 868,
+      "x": 155,
+      "y": 868,
       "width": 300,
+      "height": "auto",
       "text": "GRAPHIC DESIGNER",
       "fontSize": 34,
       "fontWeight": "bold",
       "fontFamily": "Arial",
-      "fill": "#1B76D1"
+      "fill": "#1B76D1",
+      "textAlign": "center",
+      "zIndex": 11
     },
 
+    
     {
+      "id": "btn-job-2-bg",
       "type": "rect",
-      "left": 125,
-      "top": 1000,
+      "x": 125,
+      "y": 1000,
       "width": 360,
       "height": 120,
       "fill": "#ffffff",
-      "rx": 22,
-      "ry": 22
+      "borderRadius": 22,
+      "zIndex": 10
     },
     {
+      "id": "btn-job-2-text",
       "type": "textbox",
-      "left": 155,
-      "top": 1038,
+      "x": 155,
+      "y": 1038,
       "width": 300,
+      "height": "auto",
       "text": "MARKETING STAFF",
       "fontSize": 34,
       "fontWeight": "bold",
       "fontFamily": "Arial",
-      "fill": "#1B76D1"
+      "fill": "#1B76D1",
+      "textAlign": "center",
+      "zIndex": 11
     }
-
   ]
 }

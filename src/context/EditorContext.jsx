@@ -6,7 +6,7 @@ import React, {
   useReducer,
   useContext,
   useRef,
-  useEffect,
+  useState,
 } from "react";
 import { v4 as uuid } from "uuid";
 import html2canvas from "html2canvas";
@@ -123,21 +123,12 @@ function reducer(state, action) {
 // 🧭 Provider
 // ------------------------------------------------------
 export function EditorProvider({ children }) {
-  const [state, dispatch] = useReducer(reducer, initialState, (init) => {
-    try {
-      const saved = localStorage.getItem("editor-state");
-      return saved ? JSON.parse(saved) : init;
-    } catch {
-      return init;
-    }
-  });
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  // Tracks which DB design we are editing (null = new design)
+  const [activeDesignId, setActiveDesignId] = useState(null);
 
   const canvasRef = useRef(null);
-
-  // 💾 Auto-save editor state
-  useEffect(() => {
-    localStorage.setItem("editor-state", JSON.stringify(state));
-  }, [state]);
 
   // ------------------------------------------------------
   // Helpers
@@ -186,7 +177,8 @@ export function EditorProvider({ children }) {
         width: 150,
         height: 100,
         background: overrides.background ?? "#ef4444",
-        borderRadius: shapeType === "circle" ? 9999 : overrides.borderRadius ?? 6,
+        borderRadius:
+          shapeType === "circle" ? 9999 : overrides.borderRadius ?? 6,
         opacity: overrides.opacity ?? 1,
         ...overrides,
       },
@@ -257,21 +249,28 @@ export function EditorProvider({ children }) {
   // ELEMENT CONTROLS
   // ------------------------------------------------------
   const renameElement = (id, newName) =>
-    dispatch({ type: "UPDATE_ELEMENT", payload: { id, updates: { name: newName } } });
+    dispatch({
+      type: "UPDATE_ELEMENT",
+      payload: { id, updates: { name: newName } },
+    });
 
   const updateElement = (id, updates) =>
     dispatch({ type: "UPDATE_ELEMENT", payload: { id, updates } });
 
-  const selectElement = (id) => dispatch({ type: "SELECT_ELEMENT", payload: id });
+  const selectElement = (id) =>
+    dispatch({ type: "SELECT_ELEMENT", payload: id });
 
-  const deleteElement = (id) => dispatch({ type: "DELETE_ELEMENT", payload: id });
+  const deleteElement = (id) =>
+    dispatch({ type: "DELETE_ELEMENT", payload: id });
 
-  const reorderElements = (list) => dispatch({ type: "REORDER_ELEMENTS", payload: list });
+  const reorderElements = (list) =>
+    dispatch({ type: "REORDER_ELEMENTS", payload: list });
 
   const undo = () => dispatch({ type: "UNDO" });
   const redo = () => dispatch({ type: "REDO" });
 
-  const setElements = (list) => dispatch({ type: "SET_ELEMENTS", payload: list });
+  const setElements = (list) =>
+    dispatch({ type: "SET_ELEMENTS", payload: list });
 
   const toggleElementsPanel = () =>
     dispatch({ type: "TOGGLE_ELEMENTS_PANEL" });
@@ -321,16 +320,6 @@ export function EditorProvider({ children }) {
         if (parsed.canvas) {
           dispatch({ type: "SET_CANVAS_SIZE", payload: parsed.canvas });
         }
-
-        if (persist) {
-          const saved = {
-            ...initialState,
-            elements: parsed.elements,
-            canvas: parsed.canvas || state.canvas,
-          };
-          localStorage.setItem("editor-state", JSON.stringify(saved));
-        }
-
         return;
       }
 
@@ -397,7 +386,11 @@ export function EditorProvider({ children }) {
             };
           }
 
-          if (o.type === "textbox" || o.type === "text" || o.type === "i-text") {
+          if (
+            o.type === "textbox" ||
+            o.type === "text" ||
+            o.type === "i-text"
+          ) {
             return {
               ...base,
               type: "text",
@@ -452,15 +445,6 @@ export function EditorProvider({ children }) {
       };
 
       dispatch({ type: "SET_CANVAS_SIZE", payload: newCanvas });
-
-      if (persist) {
-        const saved = {
-          ...initialState,
-          elements,
-          canvas: newCanvas,
-        };
-        localStorage.setItem("editor-state", JSON.stringify(saved));
-      }
     } catch (err) {
       console.error("IMPORT FAILED:", err);
       alert("Invalid template format.");
@@ -475,7 +459,7 @@ export function EditorProvider({ children }) {
 
   // ------------------------------------------------------
   // ⭐ SAVE: Recent Designs (localStorage)
-  // ------------------------------------------------------
+// ------------------------------------------------------
   const saveCurrentDesign = (info = {}) => {
     try {
       const stateJSON = {
@@ -509,11 +493,9 @@ export function EditorProvider({ children }) {
     }
   };
 
-  
-
   // ------------------------------------------------------
   // SANITIZE CANVAS (Fix html2canvas OKLCH error)
-  // ------------------------------------------------------
+// ------------------------------------------------------
   function forceRemoveOKLCH() {
     const all = document.querySelectorAll("*");
 
@@ -522,28 +504,47 @@ export function EditorProvider({ children }) {
 
       const check = (prop) => styles[prop] && styles[prop].includes("oklch");
 
-      // Replace OKLCH values
-      if (check("color")) el.style.setProperty("color", "rgb(0,0,0)", "important");
-      if (check("backgroundColor")) el.style.setProperty("background-color", "transparent", "important");
-      if (check("borderColor")) el.style.setProperty("border-color", "rgb(0,0,0)", "important");
+      if (check("color"))
+        el.style.setProperty("color", "rgb(0,0,0)", "important");
+      if (check("backgroundColor"))
+        el.style.setProperty(
+          "background-color",
+          "transparent",
+          "important"
+        );
+      if (check("borderColor"))
+        el.style.setProperty("border-color", "rgb(0,0,0)", "important");
 
-      // Tailwind Shadows use OKLCH
-      if (check("boxShadow")) el.style.setProperty("box-shadow", "none", "important");
-      if (check("outlineColor")) el.style.setProperty("outline-color", "rgb(0,0,0)", "important");
+      if (check("boxShadow"))
+        el.style.setProperty("box-shadow", "none", "important");
+      if (check("outlineColor"))
+        el.style.setProperty("outline-color", "rgb(0,0,0)", "important");
 
-      // Rings / Ring-offset (Tailwind)
-      if (check("--tw-ring-color")) el.style.setProperty("--tw-ring-color", "transparent", "important");
-      if (check("--tw-ring-offset-color")) el.style.setProperty("--tw-ring-offset-color", "transparent", "important");
+      if (check("--tw-ring-color"))
+        el.style.setProperty("--tw-ring-color", "transparent", "important");
+      if (check("--tw-ring-offset-color"))
+        el.style.setProperty(
+          "--tw-ring-offset-color",
+          "transparent",
+          "important"
+        );
     });
   }
 
   // ------------------------------------------------------
-  // SAVE DESIGN TO DB
-  // ------------------------------------------------------
-  const saveDesignToDB = async (userId, designName = "My Design") => {
+  // SAVE DESIGN TO DB (CREATE or UPDATE)
+// ------------------------------------------------------
+  // forceNew = true  → always create new design (Save New)
+  // forceNew = false → update if activeDesignId exists, else create
+  const saveDesignToDB = async (
+    userId,
+    designName = "My Design",
+    forceNew = false
+  ) => {
     try {
       console.log("🟦 SENDING SAVE REQUEST...");
       console.log("USER:", userId, "NAME:", designName);
+      console.log("ACTIVE DESIGN ID:", activeDesignId, "forceNew:", forceNew);
 
       const canvasEl = document.querySelector("#canvas-area");
       if (!canvasEl) {
@@ -571,10 +572,20 @@ export function EditorProvider({ children }) {
         }),
       };
 
-      console.log("REQUEST PAYLOAD:", payload);
-      console.log("POST TO:", `${API_URL}/designs/save`);
+      let res;
 
-      const res = await axios.post(`${API_URL}/designs/save`, payload);
+      if (!forceNew && activeDesignId) {
+        // UPDATE existing
+        console.log("🔄 Updating existing design:", activeDesignId);
+        res = await axios.put(
+          `${API_URL}/designs/update/${activeDesignId}`,
+          payload
+        );
+      } else {
+        // CREATE new
+        console.log("🆕 Creating new design...");
+        res = await axios.post(`${API_URL}/designs/save`, payload);
+      }
 
       console.log("🟩 SAVE SUCCESS:", res.data);
       return res.data;
@@ -587,7 +598,6 @@ export function EditorProvider({ children }) {
       return { success: false };
     }
   };
-
 
   // ------------------------------------------------------
   // EXPORTED API
@@ -621,7 +631,9 @@ export function EditorProvider({ children }) {
     toggleElementsPanel,
     isElementsPanelOpen: state.isElementsPanelOpen,
 
-    // ⭐ NEW EXPORTS
+    activeDesignId,
+    setActiveDesignId,
+
     saveCurrentDesign,
     saveDesignToDB,
   };

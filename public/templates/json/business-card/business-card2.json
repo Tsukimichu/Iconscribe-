@@ -1,156 +1,197 @@
 {
-  "width": 1080,
-  "height": 600,
-  "background": "#FFFFFF",
-  "objects": [
-    {
-      "type": "rect",
-      "left": 0,
-      "top": 0,
-      "width": 540,
-      "height": 600,
-      "fill": "#ECE7E2"
-    },
+  "canvas": {
+    "width": 1080,
+    "height": 600,
+    "background": "#FFFFFF"
+  },
+  "elements": [
 
     {
+      "id": "bg-split-left",
       "type": "rect",
-      "left": 540,
-      "top": 0,
+      "x": 0,
+      "y": 0,
       "width": 540,
       "height": 600,
-      "fill": "#2A3A63"
+      "fill": "#ECE7E2",
+      "selectable": false,
+      "zIndex": 0
+    },
+    {
+      "id": "bg-split-right",
+      "type": "rect",
+      "x": 540,
+      "y": 0,
+      "width": 540,
+      "height": 600,
+      "fill": "#2A3A63",
+      "selectable": false,
+      "zIndex": 0
     },
 
+   
     {
+      "id": "logo-abstract-path",
       "type": "path",
-      "left": 120,
-      "top": 130,
+      "x": 170, 
+      "y": 80,
       "width": 200,
       "height": 200,
-      "d": "M100 10 C 60 45, 40 90, 50 140 C 70 200, 130 200, 150 140 C 160 90, 140 45, 100 10 Z M100 40 C 80 70, 70 110, 80 150 C 90 180, 110 180, 120 150 C 130 110, 120 70, 100 40 Z",
+      "pathData": "M100 10 C 60 45, 40 90, 50 140 C 70 200, 130 200, 150 140 C 160 90, 140 45, 100 10 Z M100 40 C 80 70, 70 110, 80 150 C 90 180, 110 180, 120 150 C 130 110, 120 70, 100 40 Z",
       "fill": "none",
       "stroke": "#2A3A63",
-      "strokeWidth": 6
+      "strokeWidth": 6,
+      "selectable": true,
+      "zIndex": 5
     },
 
+   
     {
+      "id": "text-company",
       "type": "textbox",
-      "left": 120,
-      "top": 310,
-      "width": 350,
+      "x": 40,
+      "y": 320,
+      "width": 460,
+      "height": "auto",
       "text": "YOUR COMPANY",
-      "fontSize": 40,
+      "fontSize": 36,
       "fontFamily": "Arial",
       "fontWeight": "bold",
       "fill": "#3A2F2F",
-      "textAlign": "left"
+      "textAlign": "center",
+      "zIndex": 10
     },
-
     {
+      "id": "text-tagline",
       "type": "textbox",
-      "left": 120,
-      "top": 360,
-      "width": 350,
-      "text": "YOUR TAGLINE",
-      "fontSize": 26,
+      "x": 40,
+      "y": 370,
+      "width": 460,
+      "height": "auto",
+      "text": "YOUR TAGLINE GOES HERE",
+      "fontSize": 20,
       "fontFamily": "Arial",
       "fill": "#4C5A80",
-      "textAlign": "left"
+      "textAlign": "center",
+      "zIndex": 10
     },
 
+   
     {
+      "id": "text-name",
       "type": "textbox",
-      "left": 620,
-      "top": 140,
-      "width": 400,
+      "x": 600,
+      "y": 120,
+      "width": 440,
+      "height": "auto",
       "text": "YOUR NAME",
-      "fontSize": 48,
+      "fontSize": 44,
       "fontFamily": "Arial",
       "fontWeight": "bold",
       "fill": "#FFFFFF",
-      "textAlign": "left"
+      "textAlign": "left",
+      "zIndex": 10
     },
-
     {
+      "id": "text-role",
       "type": "textbox",
-      "left": 620,
-      "top": 200,
-      "width": 400,
+      "x": 600,
+      "y": 175,
+      "width": 440,
+      "height": "auto",
       "text": "MANAGING DIRECTOR",
-      "fontSize": 26,
+      "fontSize": 22,
       "fontFamily": "Arial",
       "fill": "#D1D5DB",
-      "textAlign": "left"
+      "textAlign": "left",
+      "zIndex": 10
     },
 
+    
     {
+      "id": "icon-loc",
       "type": "textbox",
-      "left": 620,
-      "top": 300,
-      "width": 30,
+      "x": 600,
+      "y": 280,
+      "width": 40,
+      "height": "auto",
       "text": "📍",
-      "fontSize": 32,
-      "fontFamily": "Arial",
+      "fontSize": 28,
       "fill": "#FFFFFF",
-      "textAlign": "center"
+      "textAlign": "center",
+      "zIndex": 11
     },
     {
+      "id": "text-loc",
       "type": "textbox",
-      "left": 660,
-      "top": 305,
-      "width": 380,
+      "x": 650,
+      "y": 285,
+      "width": 390,
+      "height": "auto",
       "text": "123 Anywhere St., Any City",
-      "fontSize": 24,
+      "fontSize": 20,
       "fontFamily": "Arial",
       "fill": "#FFFFFF",
-      "textAlign": "left"
+      "textAlign": "left",
+      "zIndex": 10
     },
 
+    
     {
+      "id": "icon-email",
       "type": "textbox",
-      "left": 620,
-      "top": 355,
-      "width": 30,
+      "x": 600,
+      "y": 340,
+      "width": 40,
+      "height": "auto",
       "text": "✉️",
-      "fontSize": 30,
-      "fontFamily": "Arial",
+      "fontSize": 26,
       "fill": "#FFFFFF",
-      "textAlign": "center"
+      "textAlign": "center",
+      "zIndex": 11
     },
     {
+      "id": "text-email",
       "type": "textbox",
-      "left": 660,
-      "top": 360,
-      "width": 380,
+      "x": 650,
+      "y": 345,
+      "width": 390,
+      "height": "auto",
       "text": "hello@reallygreatsite.com",
-      "fontSize": 24,
+      "fontSize": 20,
       "fontFamily": "Arial",
       "fill": "#FFFFFF",
-      "textAlign": "left"
+      "textAlign": "left",
+      "zIndex": 10
     },
 
-  
+    
     {
+      "id": "icon-phone",
       "type": "textbox",
-      "left": 620,
-      "top": 410,
-      "width": 30,
+      "x": 600,
+      "y": 400,
+      "width": 40,
+      "height": "auto",
       "text": "📞",
-      "fontSize": 30,
-      "fontFamily": "Arial",
+      "fontSize": 26,
       "fill": "#FFFFFF",
-      "textAlign": "center"
+      "textAlign": "center",
+      "zIndex": 11
     },
     {
+      "id": "text-phone",
       "type": "textbox",
-      "left": 660,
-      "top": 414,
-      "width": 380,
+      "x": 650,
+      "y": 405,
+      "width": 390,
+      "height": "auto",
       "text": "+123-456-7890",
-      "fontSize": 24,
+      "fontSize": 20,
       "fontFamily": "Arial",
       "fill": "#FFFFFF",
-      "textAlign": "left"
+      "textAlign": "left",
+      "zIndex": 10
     }
   ]
 }

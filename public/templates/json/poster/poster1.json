@@ -1,132 +1,97 @@
 {
-  "version": "5.3.0",
-  "background": "#EEF4F8",
-  "objects": [
+  "canvas": {
+    "width": 1200,
+    "height": 628,
+    "background": "#000000"
+  },
+  "elements": [
+    
     {
+      "id": "bg-image-main",
+      "type": "image",
+      "x": 0,
+      "y": 0,
+      "width": 1200,
+      "height": 628,
+      "src": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+      "objectFit": "cover",
+      "selectable": false,
+      "zIndex": 0
+    },
+
+    
+    {
+      "id": "bg-overlay-dimmer",
       "type": "rect",
-      "left": 0,
-      "top": 0,
-      "width": 1080,
-      "height": 600,
-      "fill": "#EEF4F8"
+      "x": 0,
+      "y": 0,
+      "width": 1200,
+      "height": 628,
+      "fill": "#1a1a1a",
+      "opacity": 0.7,
+      "selectable": false,
+      "zIndex": 1
     },
 
+    
     {
-      "type": "path",
-      "left": 0,
-      "top": 0,
-      "width": 1080,
-      "height": 260,
-      "fill": "#9DCFFB",
-      "d": "M0 0 L1080 0 L1080 180 Q540 260 0 180 Z"
-    },
-
-    {
-      "type": "circle",
-      "left": 820,
-      "top": 40,
-      "radius": 90,
-      "fill": "#70B5FF",
-      "opacity": 0.55
-    },
-
-    {
-      "type": "circle",
-      "left": -40,
-      "top": 120,
-      "radius": 110,
-      "fill": "#6EE7C2",
-      "opacity": 0.55
-    },
-
-    {
+      "id": "text-eyebrow",
       "type": "textbox",
-      "left": 0,
-      "top": 70,
-      "width": 1080,
-      "text": "Minimal Pastel Design",
-      "fontSize": 42,
-      "fontFamily": "Arial",
+      "x": 100,
+      "y": 150,
+      "width": 1000,
+      "height": "auto",
+      "text": "WEB DESIGN",
+      "fontSize": 24,
       "fontWeight": "bold",
-      "fill": "#1E293B",
-      "textAlign": "center"
-    },
-
-    {
-      "type": "textbox",
-      "left": 0,
-      "top": 125,
-      "width": 1080,
-      "text": "Clean • Strong • Modern",
-      "fontSize": 22,
       "fontFamily": "Arial",
-      "fill": "#334155",
-      "textAlign": "center"
+      "fill": "#facc15",
+      "textAlign": "center",
+      "letterSpacing": 4,
+      "zIndex": 10
     },
-
     {
-      "type": "rect",
-      "left": 140,
-      "top": 240,
-      "width": 800,
-      "height": 260,
+      "id": "text-headline",
+      "type": "textbox",
+      "x": 100,
+      "y": 200,
+      "width": 1000,
+      "height": "auto",
+      "text": "AGENCY",
+      "fontSize": 120,
+      "fontWeight": "900",
+      "fontFamily": "Arial",
       "fill": "#FFFFFF",
-      "stroke": "#D0D7E2",
-      "strokeWidth": 2,
-      "rx": 22,
-      "ry": 22
+      "textAlign": "center",
+      "zIndex": 10
     },
 
+    
     {
+      "id": "btn-cta-bg",
       "type": "rect",
-      "left": 260,
-      "top": 285,
-      "width": 560,
-      "height": 150,
-      "fill": "#D9ECFF",
-      "rx": 18,
-      "ry": 18,
-      "stroke": "#B7DBFF",
-      "strokeWidth": 1.5
+      "x": 500,
+      "y": 360,
+      "width": 200,
+      "height": 60,
+      "fill": "#facc15",
+      "borderRadius": 30,
+      "zIndex": 15
     },
-
     {
+      "id": "btn-cta-text",
       "type": "textbox",
-      "left": 280,
-      "top": 305,
-      "width": 520,
-      "text": "• Richer modern color blend\n• Stronger background contrast\n• Clean balanced composition",
-      "fontSize": 22,
+      "x": 500,
+      "y": 378,
+      "width": 200,
+      "height": "auto",
+      "text": "LEARN MORE",
+      "fontSize": 20,
+      "fontWeight": "bold",
       "fontFamily": "Arial",
-      "fill": "#1E293B",
-      "lineHeight": 1.35
-    },
-
-    {
-      "type": "circle",
-      "left": 240,
-      "top": 430,
-      "radius": 16,
-      "fill": "#5CD9B2"
-    },
-
-    {
-      "type": "circle",
-      "left": 820,
-      "top": 430,
-      "radius": 16,
-      "fill": "#52A9FF"
-    },
-
-    {
-      "type": "rect",
-      "left": 510,
-      "top": 470,
-      "width": 70,
-      "height": 8,
-      "fill": "#94A3B8",
-      "rx": 4,
-      "ry": 4
+      "fill": "#000000",
+      "textAlign": "center",
+      "zIndex": 16
     }
   ]
 }
